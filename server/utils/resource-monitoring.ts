@@ -51,13 +51,31 @@ class ResourceMonitor extends EventEmitter {
     return ResourceMonitor.instance;
   }
 
-  start(): void {
+  async start(): Promise<void> {
     if (this.monitoring) return;
     
     this.monitoring = true;
-    this.interval = setInterval(() => {
-      this.checkResources();
-    }, 30000); // Check every 30 seconds to reduce overhead
+    
+    try {
+      // Use minimal polling instead of aggressive intervals
+      const { minimalPolling } = await import('./minimal-polling');
+      
+      minimalPolling.startSmartPolling(
+        'resource-monitoring',
+        async () => this.checkResources(),
+        {
+          initialInterval: 60000, // 1 minute
+          maxInterval: 300000, // 5 minutes
+          backoffMultiplier: 1.5,
+          condition: () => this.monitoring
+        }
+      );
+    } catch (error) {
+      console.warn('Resource monitoring fallback to simple interval');
+      setInterval(() => {
+        this.checkResources();
+      }, 120000); // 2 minutes fallback
+    }
     
     console.log('🔍 Resource monitoring started');
   }

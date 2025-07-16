@@ -39,11 +39,28 @@ class PerformanceMonitor extends EventEmitter {
     return PerformanceMonitor.instance;
   }
 
-  private startMonitoring(): void {
-    this.monitoringInterval = setInterval(() => {
-      this.collectMetrics();
-      this.checkAlerts();
-    }, 60000); // Monitor every minute - much less aggressive
+  private async startMonitoring(): Promise<void> {
+    try {
+      // Use conditional polling for performance monitoring
+      const { minimalPolling } = await import('./minimal-polling');
+      
+      minimalPolling.startConditionalPolling(
+        'performance-monitoring',
+        async () => {
+          this.collectMetrics();
+          this.checkAlerts();
+          return this.getCurrentMetrics();
+        },
+        () => this.activeRequests > 0 || this.totalErrors > 0,
+        120000 // 2 minutes when idle
+      );
+    } catch (error) {
+      console.warn('Performance monitoring fallback to simple interval');
+      setInterval(() => {
+        this.collectMetrics();
+        this.checkAlerts();
+      }, 180000); // 3 minutes fallback
+    }
   }
 
   private collectMetrics(): void {

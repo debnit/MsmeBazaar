@@ -16,11 +16,68 @@ import { startupOptimizer } from "./utils/startup-optimizer";
 import { performanceMonitor } from "./utils/performance-monitor";
 import { memoryManager } from "./utils/memory-manager";
 import { resourceMonitor } from "./utils/resource-monitoring";
+import { atomicOperations } from "./utils/atomic-operations";
+import { lowDependencyManager } from "./utils/low-dependency-manager";
+import { minimalPolling } from "./utils/minimal-polling";
+import { hardwareOptimization } from "./utils/hardware-optimization";
+import { serviceFactory } from "./architecture/solid-principles";
+import { shardingService } from "./architecture/sharding-system";
+import { stagedLoader, onDemandLoader } from "./architecture/staged-loading";
+import { bootManager, resourceManager } from "./architecture/boot-optimization";
+import { cacheManager, cacheInvalidator, cacheWarmup } from "./architecture/advanced-caching";
+import { memoryOptimizations } from "./architecture/memory-efficient-systems";
 
-// Initialize mission-critical mode
+// Initialize mission-critical mode with advanced optimizations
 console.log('⚡ Starting in mission-critical performance mode...');
 
 const app = express();
+
+// Initialize advanced architecture patterns
+(async () => {
+  try {
+    // 1. Initialize boot optimization (warm vs cold boot)
+    await bootManager.boot();
+    
+    // 2. Initialize hardware optimization
+    await hardwareOptimization.optimizeCPUUsage();
+    await hardwareOptimization.optimizeMemoryUsage();
+    await hardwareOptimization.optimizeIOOperations();
+    
+    // 3. Initialize staged loading system
+    await stagedLoader.loadAllStages();
+    
+    // 4. Initialize advanced caching
+    await cacheWarmup.warmupAll();
+    
+    // 4.5. Initialize memory-efficient systems
+    console.log('🧠 Initializing memory-efficient systems...');
+    // Memory optimizations are already initialized as singleton
+    
+    // 5. Initialize sharding system
+    console.log('🔄 Initializing database sharding...');
+    const userRepo = new (await import('./architecture/sharding-system')).ShardedUserRepository(shardingService.userShard);
+    const msmeRepo = new (await import('./architecture/sharding-system')).ShardedMSMERepository(shardingService.msmeShard);
+    
+    // 6. Initialize low dependency manager
+    const moduleOrder = lowDependencyManager.getInitializationOrder();
+    console.log(`📦 Module initialization order: ${moduleOrder.join(' → ')}`);
+    
+    // 7. Replace aggressive polling with minimal polling
+    minimalPolling.startConditionalPolling(
+      'health-check',
+      async () => ({ status: 'healthy', timestamp: Date.now() }),
+      () => process.env.NODE_ENV === 'production',
+      120000 // 2 minutes
+    );
+    
+    // 8. Schedule cache warmup
+    await cacheWarmup.scheduleWarmup(300000); // 5 minutes
+    
+    console.log('✅ Advanced architecture patterns initialized');
+  } catch (error) {
+    console.warn('⚠️ Some optimizations failed:', error.message);
+  }
+})();
 
 // Initialize instant response system
 initializeInstantResponses();

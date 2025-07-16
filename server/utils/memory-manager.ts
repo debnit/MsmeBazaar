@@ -1,11 +1,11 @@
 // Advanced memory management and garbage collection
 class MemoryManager {
   private static instance: MemoryManager;
-  private memoryThreshold = 150 * 1024 * 1024; // 150MB threshold - reduced for better performance
+  private memoryThreshold = 100 * 1024 * 1024; // 100MB threshold - memory-efficient
   private gcInterval: NodeJS.Timeout | null = null;
   private memoryCache = new Map<string, any>();
   private cacheSize = 0;
-  private maxCacheSize = 50 * 1024 * 1024; // 50MB cache limit - reduced
+  private maxCacheSize = 20 * 1024 * 1024; // 20MB cache limit - memory-efficient
 
   private constructor() {
     this.startMemoryMonitoring();
@@ -18,10 +18,23 @@ class MemoryManager {
     return MemoryManager.instance;
   }
 
-  private startMemoryMonitoring(): void {
-    this.gcInterval = setInterval(() => {
-      this.checkMemoryUsage();
-    }, 120000); // Check every 2 minutes to reduce overhead
+  private async startMemoryMonitoring(): Promise<void> {
+    // Use event-driven memory management instead of polling
+    try {
+      const { minimalPolling } = await import('./minimal-polling');
+      
+      minimalPolling.startEventDrivenPolling(
+        'memory-management',
+        async () => this.checkMemoryUsage(),
+        ['SIGTERM', 'SIGINT', 'uncaughtException'],
+        180000 // 3 minutes when no events
+      );
+    } catch (error) {
+      console.warn('Memory monitoring fallback to simple interval');
+      setInterval(() => {
+        this.checkMemoryUsage();
+      }, 300000); // 5 minutes fallback
+    }
   }
 
   private checkMemoryUsage(): void {
@@ -48,9 +61,21 @@ class MemoryManager {
   }
 
   private cleanupLargeObjects(): void {
-    // Clear temporary variables
+    // Memory-efficient cleanup
     if (global.tempStorage) {
       global.tempStorage.clear();
+    }
+    
+    // Clear only non-essential modules from cache
+    const nonEssentialModules = Object.keys(require.cache).filter(key => 
+      key.includes('node_modules') && !key.includes('express') && !key.includes('drizzle')
+    );
+    
+    // Clear only if memory pressure is high
+    if (this.getMemoryStats().heapUsed > this.memoryThreshold * 0.8) {
+      nonEssentialModules.slice(0, 10).forEach(key => {
+        delete require.cache[key];
+      });
     }
     
     // Clear cache if too large
