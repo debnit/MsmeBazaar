@@ -2,11 +2,18 @@ import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { monitoringService } from "./services/monitoring";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+
+// Initialize crash detection
+monitoringService.crashDetector();
+
+// Performance monitoring middleware
+app.use(monitoringService.performanceTracker());
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -41,9 +48,12 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
+
+    // Record error for monitoring
+    monitoringService.recordError(err, req, status >= 500 ? 'high' : 'medium');
 
     res.status(status).json({ message });
     throw err;
@@ -68,5 +78,6 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    log(`monitoring enabled - crash detection active`);
   });
 })();

@@ -1,280 +1,446 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useMutation } from '@tanstack/react-query';
-import { useLocation } from 'wouter';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Phone, MessageSquare, ArrowRight } from 'lucide-react';
-
-const phoneSchema = z.object({
-  phone: z.string().regex(/^[6-9]\d{9}$/, 'Please enter a valid 10-digit mobile number')
-});
-
-const otpSchema = z.object({
-  otp: z.string().length(6, 'OTP must be 6 digits')
-});
-
-type PhoneForm = z.infer<typeof phoneSchema>;
-type OTPForm = z.infer<typeof otpSchema>;
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Smartphone, Mail, Lock, User, Building2, UserCheck, Timer } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+import { useLocation } from 'wouter';
+import { useToast } from '@/hooks/use-toast';
+import { authService } from '@/lib/auth';
 
 export default function MobileLogin() {
-  const [, navigate] = useLocation();
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user, isLoading } = useAuth();
+  
+  // Form states
+  const [activeTab, setActiveTab] = useState<'otp' | 'email'>('otp');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [otp, setOtp] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [role, setRole] = useState<string>('buyer');
+  const [isRegister, setIsRegister] = useState(false);
+  
+  // UI states
+  const [otpSent, setOtpSent] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const [error, setError] = useState('');
 
-  const phoneForm = useForm<PhoneForm>({
-    resolver: zodResolver(phoneSchema),
-    defaultValues: { phone: '' }
-  });
+  // Redirect if already logged in
+  if (user && !isLoading) {
+    setLocation('/dashboard');
+    return null;
+  }
 
-  const otpForm = useForm<OTPForm>({
-    resolver: zodResolver(otpSchema),
-    defaultValues: { otp: '' }
-  });
-
-  const sendOTPMutation = useMutation({
-    mutationFn: async (data: PhoneForm) => {
-      return await apiRequest('/api/auth/send-otp', {
-        method: 'POST',
-        body: JSON.stringify({ phoneNumber: data.phone })
-      });
-    },
-    onSuccess: (data) => {
-      if (data.success) {
-        setPhoneNumber(phoneForm.getValues('phone'));
-        setStep('otp');
-        toast({
-          title: 'OTP Sent',
-          description: 'Please check your phone for the verification code'
-        });
-      } else {
-        toast({
-          title: 'Error',
-          description: data.message || 'Failed to send OTP',
-          variant: 'destructive'
-        });
-      }
-    },
-    onError: (error) => {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to send OTP',
-        variant: 'destructive'
-      });
+  const formatPhoneNumber = (value: string) => {
+    // Remove all non-digits
+    const digits = value.replace(/\D/g, '');
+    
+    // Add country code if not present
+    if (digits.length > 0 && !digits.startsWith('91')) {
+      return `+91${digits}`;
     }
-  });
+    
+    return digits.startsWith('91') ? `+${digits}` : digits;
+  };
 
-  const verifyOTPMutation = useMutation({
-    mutationFn: async (data: OTPForm) => {
-      return await apiRequest('/api/auth/verify-otp', {
-        method: 'POST',
-        body: JSON.stringify({ 
-          phoneNumber: phoneNumber,
-          otp: data.otp 
-        })
-      });
-    },
-    onSuccess: (data) => {
-      if (data.success) {
-        // Store token and navigate to dashboard
-        if (data.token) {
-          localStorage.setItem('token', data.token);
+  const validatePhoneNumber = (phone: string) => {
+    const cleanPhone = phone.replace(/\D/g, '');
+    return cleanPhone.length >= 10 && cleanPhone.length <= 13;
+  };
+
+  const startCountdown = () => {
+    setCountdown(60);
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
         }
-        toast({
-          title: 'Login Successful',
-          description: 'Welcome to MSMESquare!'
-        });
-        navigate('/dashboard');
-      } else {
-        toast({
-          title: 'Verification Failed',
-          description: data.message || 'Invalid OTP',
-          variant: 'destructive'
-        });
-      }
-    },
-    onError: (error) => {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to verify OTP',
-        variant: 'destructive'
+        return prev - 1;
       });
-    }
-  });
+    }, 1000);
+  };
 
-  const resendOTPMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest('/api/auth/resend-otp', {
-        method: 'POST',
-        body: JSON.stringify({ phoneNumber: phoneNumber })
-      });
-    },
-    onSuccess: (data) => {
-      if (data.success) {
+  const handleSendOTP = async () => {
+    if (!validatePhoneNumber(phoneNumber)) {
+      setError('Please enter a valid phone number');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      const formattedPhone = formatPhoneNumber(phoneNumber);
+      const response = await authService.sendOTP(formattedPhone);
+      
+      if (response.success) {
+        setOtpSent(true);
+        startCountdown();
         toast({
-          title: 'OTP Resent',
-          description: 'A new verification code has been sent to your phone'
+          title: "OTP Sent",
+          description: "Please check your phone for the verification code",
         });
       } else {
-        toast({
-          title: 'Error',
-          description: data.message || 'Failed to resend OTP',
-          variant: 'destructive'
-        });
+        setError(response.message || 'Failed to send OTP');
       }
-    },
-    onError: (error) => {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to resend OTP',
-        variant: 'destructive'
-      });
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to send OTP');
+    } finally {
+      setIsSubmitting(false);
     }
-  });
-
-  const onPhoneSubmit = (data: PhoneForm) => {
-    sendOTPMutation.mutate(data);
   };
 
-  const onOTPSubmit = (data: OTPForm) => {
-    verifyOTPMutation.mutate(data);
+  const handleVerifyOTP = async () => {
+    if (!otp || otp.length !== 6) {
+      setError('Please enter a valid 6-digit OTP');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      const formattedPhone = formatPhoneNumber(phoneNumber);
+      const response = await authService.verifyOTP(formattedPhone, otp);
+      
+      if (response.success && response.user && response.token) {
+        authService.setToken(response.token);
+        toast({
+          title: "Login Successful",
+          description: "Welcome to MSMESquare!",
+        });
+        setLocation('/dashboard');
+      } else {
+        setError(response.message || 'Invalid OTP');
+      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'OTP verification failed');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleResendOTP = () => {
-    resendOTPMutation.mutate();
+  const handleEmailAuth = async () => {
+    if (!email || !password) {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      let response;
+      
+      if (isRegister) {
+        if (!firstName || !role) {
+          setError('Please fill in all required fields');
+          return;
+        }
+        
+        response = await authService.register({
+          email,
+          password,
+          firstName,
+          lastName,
+          role,
+        });
+      } else {
+        response = await authService.login({ email, password });
+      }
+      
+      if (response.success && response.user && response.token) {
+        authService.setToken(response.token);
+        toast({
+          title: isRegister ? "Registration Successful" : "Login Successful",
+          description: "Welcome to MSMESquare!",
+        });
+        setLocation('/dashboard');
+      } else {
+        setError(response.message || (isRegister ? 'Registration failed' : 'Login failed'));
+      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Authentication failed');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleBackToPhone = () => {
-    setStep('phone');
-    setPhoneNumber('');
-    phoneForm.reset();
-    otpForm.reset();
+  const handleResendOTP = async () => {
+    if (countdown > 0) return;
+    
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      const formattedPhone = formatPhoneNumber(phoneNumber);
+      const response = await authService.resendOTP(formattedPhone);
+      
+      if (response.success) {
+        startCountdown();
+        toast({
+          title: "OTP Resent",
+          description: "A new verification code has been sent to your phone",
+        });
+      } else {
+        setError(response.message || 'Failed to resend OTP');
+      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to resend OTP');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const roleOptions = [
+    { value: 'buyer', label: 'Buyer', icon: Building2, description: 'Looking to acquire MSMEs' },
+    { value: 'seller', label: 'Seller', icon: User, description: 'MSME owner looking to sell' },
+    { value: 'agent', label: 'Agent', icon: UserCheck, description: 'Facilitate transactions' },
+    { value: 'nbfc', label: 'NBFC', icon: Building2, description: 'Provide financing solutions' },
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-gray-900">
-            {step === 'phone' ? 'Mobile Login' : 'Verify OTP'}
-          </CardTitle>
-          <CardDescription>
-            {step === 'phone' 
-              ? 'Enter your mobile number to get started' 
-              : `Enter the 6-digit code sent to +91 ${phoneNumber}`
-            }
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {step === 'phone' ? (
-            <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="phone">Mobile Number</Label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <div className="absolute left-10 top-3 text-sm text-gray-500">+91</div>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="Enter 10-digit mobile number"
-                    className="pl-16"
-                    {...phoneForm.register('phone')}
-                    maxLength={10}
-                  />
+      <div className="w-full max-w-md space-y-6">
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold text-gray-900">MSMESquare</h1>
+          <p className="text-gray-600">National MSME Marketplace</p>
+          <Badge variant="outline" className="bg-green-50 text-green-700">
+            Secure & Trusted Platform
+          </Badge>
+        </div>
+
+        {/* Auth Card */}
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-center">Welcome Back</CardTitle>
+            <CardDescription className="text-center">
+              Choose your preferred authentication method
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'otp' | 'email')}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="otp" className="flex items-center space-x-2">
+                  <Smartphone className="h-4 w-4" />
+                  <span>Mobile OTP</span>
+                </TabsTrigger>
+                <TabsTrigger value="email" className="flex items-center space-x-2">
+                  <Mail className="h-4 w-4" />
+                  <span>Email</span>
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Mobile OTP Tab */}
+              <TabsContent value="otp" className="space-y-4">
+                {!otpSent ? (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Mobile Number</Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="+91 98765 43210"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        className="text-lg"
+                      />
+                      <p className="text-sm text-gray-500">
+                        We'll send a 6-digit verification code to this number
+                      </p>
+                    </div>
+                    
+                    <Button 
+                      onClick={handleSendOTP} 
+                      disabled={isSubmitting || !phoneNumber}
+                      className="w-full"
+                    >
+                      {isSubmitting ? 'Sending...' : 'Send OTP'}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="otp">Verification Code</Label>
+                      <Input
+                        id="otp"
+                        type="text"
+                        placeholder="Enter 6-digit OTP"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        className="text-lg text-center tracking-widest"
+                        maxLength={6}
+                      />
+                      <p className="text-sm text-gray-500">
+                        Code sent to {phoneNumber}
+                      </p>
+                    </div>
+                    
+                    <Button 
+                      onClick={handleVerifyOTP} 
+                      disabled={isSubmitting || otp.length !== 6}
+                      className="w-full"
+                    >
+                      {isSubmitting ? 'Verifying...' : 'Verify & Login'}
+                    </Button>
+                    
+                    <div className="flex items-center justify-between">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setOtpSent(false)}
+                      >
+                        Change Number
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={handleResendOTP}
+                        disabled={countdown > 0 || isSubmitting}
+                      >
+                        {countdown > 0 ? (
+                          <span className="flex items-center space-x-1">
+                            <Timer className="h-4 w-4" />
+                            <span>{countdown}s</span>
+                          </span>
+                        ) : (
+                          'Resend OTP'
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Email Tab */}
+              <TabsContent value="email" className="space-y-4">
+                <div className="flex items-center justify-center space-x-2 mb-4">
+                  <Button
+                    variant={!isRegister ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setIsRegister(false)}
+                  >
+                    Login
+                  </Button>
+                  <Button
+                    variant={isRegister ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setIsRegister(true)}
+                  >
+                    Register
+                  </Button>
                 </div>
-                {phoneForm.formState.errors.phone && (
-                  <p className="text-sm text-red-500">{phoneForm.formState.errors.phone.message}</p>
-                )}
-              </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full"
-                disabled={sendOTPMutation.isPending}
-              >
-                {sendOTPMutation.isPending ? (
-                  <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Sending OTP...
+
+                <div className="space-y-4">
+                  {isRegister && (
+                    <>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label htmlFor="firstName">First Name *</Label>
+                          <Input
+                            id="firstName"
+                            value={firstName}
+                            onChange={(e) => setFirstName(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="lastName">Last Name</Label>
+                          <Input
+                            id="lastName"
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="role">Role *</Label>
+                        <Select value={role} onValueChange={setRole}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select your role" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {roleOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                <div className="flex items-center space-x-2">
+                                  <option.icon className="h-4 w-4" />
+                                  <div>
+                                    <div className="font-medium">{option.label}</div>
+                                    <div className="text-sm text-gray-500">{option.description}</div>
+                                  </div>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  )}
+
+                  <div>
+                    <Label htmlFor="email">Email Address</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="your@email.com"
+                    />
                   </div>
-                ) : (
-                  <div className="flex items-center">
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    Send OTP
+
+                  <div>
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter your password"
+                    />
                   </div>
-                )}
-              </Button>
-            </form>
-          ) : (
-            <form onSubmit={otpForm.handleSubmit(onOTPSubmit)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="otp">Verification Code</Label>
-                <Input
-                  id="otp"
-                  type="text"
-                  placeholder="Enter 6-digit OTP"
-                  className="text-center text-lg tracking-widest"
-                  {...otpForm.register('otp')}
-                  maxLength={6}
-                />
-                {otpForm.formState.errors.otp && (
-                  <p className="text-sm text-red-500">{otpForm.formState.errors.otp.message}</p>
-                )}
-              </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full"
-                disabled={verifyOTPMutation.isPending}
-              >
-                {verifyOTPMutation.isPending ? (
-                  <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Verifying...
-                  </div>
-                ) : (
-                  <div className="flex items-center">
-                    <ArrowRight className="mr-2 h-4 w-4" />
-                    Verify & Login
-                  </div>
-                )}
-              </Button>
-              
-              <div className="flex flex-col space-y-2 text-sm">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={handleResendOTP}
-                  disabled={resendOTPMutation.isPending}
-                  className="text-blue-600 hover:text-blue-700"
-                >
-                  {resendOTPMutation.isPending ? 'Resending...' : 'Resend OTP'}
-                </Button>
-                
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={handleBackToPhone}
-                  className="text-gray-600 hover:text-gray-700"
-                >
-                  Change Mobile Number
-                </Button>
-              </div>
-            </form>
-          )}
-          
-          <div className="text-center text-sm text-gray-500">
-            By continuing, you agree to our Terms of Service and Privacy Policy
+
+                  <Button 
+                    onClick={handleEmailAuth} 
+                    disabled={isSubmitting}
+                    className="w-full"
+                  >
+                    {isSubmitting ? 'Processing...' : isRegister ? 'Register' : 'Login'}
+                  </Button>
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            {error && (
+              <Alert variant="destructive" className="mt-4">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Footer */}
+        <div className="text-center text-sm text-gray-500 space-y-2">
+          <p>Secure authentication powered by JWT & OTP</p>
+          <div className="flex items-center justify-center space-x-4">
+            <Badge variant="outline">🔒 Secure</Badge>
+            <Badge variant="outline">🇮🇳 Made in India</Badge>
+            <Badge variant="outline">📱 Mobile First</Badge>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

@@ -8,6 +8,8 @@ import { findMatches } from "./services/matchmaking";
 import { generateDocument } from "./services/document-generation";
 import { checkCompliance } from "./services/compliance";
 import { mobileAuth } from "./auth/mobile-auth";
+import { monitoringService } from "./services/monitoring";
+import { escrowService } from "./services/escrow";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 
@@ -210,6 +212,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Resend OTP error:", error);
       res.status(500).json({ success: false, message: "Failed to resend OTP" });
+    }
+  });
+
+  // Monitoring routes
+  app.get("/api/monitoring/health", authenticateToken, requireRole("admin"), async (req, res) => {
+    try {
+      const metrics = monitoringService.getHealthMetrics();
+      res.json(metrics);
+    } catch (error) {
+      console.error("Health metrics error:", error);
+      res.status(500).json({ message: "Failed to fetch health metrics" });
+    }
+  });
+
+  app.get("/api/monitoring/crash-rate", authenticateToken, requireRole("admin"), async (req, res) => {
+    try {
+      const hours = parseInt(req.query.hours as string) || 24;
+      const crashRate = monitoringService.getCrashRate(hours);
+      res.json({ crashRate, period: `${hours} hours` });
+    } catch (error) {
+      console.error("Crash rate error:", error);
+      res.status(500).json({ message: "Failed to fetch crash rate" });
+    }
+  });
+
+  app.get("/api/monitoring/errors", authenticateToken, requireRole("admin"), async (req, res) => {
+    try {
+      const errorsByRoute = monitoringService.getErrorsByRoute();
+      const slowRoutes = monitoringService.getSlowRoutes();
+      res.json({ errorsByRoute, slowRoutes });
+    } catch (error) {
+      console.error("Error analytics error:", error);
+      res.status(500).json({ message: "Failed to fetch error analytics" });
+    }
+  });
+
+  // Escrow routes
+  app.post("/api/escrow/create", authenticateToken, async (req, res) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const escrowData = {
+        ...req.body,
+        buyerId: authReq.user.userId // Ensure buyer is the authenticated user
+      };
+      
+      const escrowAccount = await escrowService.createEscrowAccount(escrowData);
+      res.json(escrowAccount);
+    } catch (error) {
+      console.error("Escrow creation error:", error);
+      res.status(400).json({ message: error.message || "Failed to create escrow account" });
+    }
+  });
+
+  app.post("/api/escrow/:escrowId/fund", authenticateToken, async (req, res) => {
+    try {
+      const escrowId = parseInt(req.params.escrowId);
+      const { paymentMethod, transactionId } = req.body;
+      
+      const success = await escrowService.fundEscrowAccount(escrowId, paymentMethod, transactionId);
+      res.json({ success });
+    } catch (error) {
+      console.error("Escrow funding error:", error);
+      res.status(400).json({ message: error.message || "Failed to fund escrow account" });
+    }
+  });
+
+  app.post("/api/escrow/milestone/complete", authenticateToken, async (req, res) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const milestoneData = {
+        ...req.body,
+        completedBy: authReq.user.userId
+      };
+      
+      const success = await escrowService.completeMilestone(milestoneData);
+      res.json({ success });
+    } catch (error) {
+      console.error("Milestone completion error:", error);
+      res.status(400).json({ message: error.message || "Failed to complete milestone" });
+    }
+  });
+
+  app.post("/api/escrow/:escrowId/release", authenticateToken, async (req, res) => {
+    try {
+      const escrowId = parseInt(req.params.escrowId);
+      const success = await escrowService.releaseFunds(escrowId);
+      res.json({ success });
+    } catch (error) {
+      console.error("Escrow release error:", error);
+      res.status(400).json({ message: error.message || "Failed to release funds" });
+    }
+  });
+
+  app.post("/api/escrow/:escrowId/refund", authenticateToken, async (req, res) => {
+    try {
+      const escrowId = parseInt(req.params.escrowId);
+      const { reason } = req.body;
+      const success = await escrowService.refundFunds(escrowId, reason);
+      res.json({ success });
+    } catch (error) {
+      console.error("Escrow refund error:", error);
+      res.status(400).json({ message: error.message || "Failed to refund funds" });
+    }
+  });
+
+  app.get("/api/escrow/:escrowId", authenticateToken, async (req, res) => {
+    try {
+      const escrowId = parseInt(req.params.escrowId);
+      const escrow = await escrowService.getEscrowAccount(escrowId);
+      
+      if (!escrow) {
+        return res.status(404).json({ message: "Escrow account not found" });
+      }
+      
+      res.json(escrow);
+    } catch (error) {
+      console.error("Escrow fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch escrow account" });
+    }
+  });
+
+  app.get("/api/escrow/user/:userId", authenticateToken, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const authReq = req as AuthenticatedRequest;
+      
+      // Users can only view their own escrows unless they're admin
+      if (authReq.user.userId !== userId && authReq.user.role !== 'admin') {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      const escrows = await escrowService.getEscrowsByUser(userId);
+      res.json(escrows);
+    } catch (error) {
+      console.error("User escrows fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch user escrows" });
+    }
+  });
+
+  app.get("/api/escrow/analytics", authenticateToken, requireRole("admin"), async (req, res) => {
+    try {
+      const analytics = await escrowService.getEscrowAnalytics();
+      res.json(analytics);
+    } catch (error) {
+      console.error("Escrow analytics error:", error);
+      res.status(500).json({ message: "Failed to fetch escrow analytics" });
     }
   });
 
