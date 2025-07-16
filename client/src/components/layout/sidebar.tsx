@@ -12,7 +12,8 @@ import {
   Settings,
   Home,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Calculator
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
@@ -58,6 +59,7 @@ export default function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
       { href: "/admin/users", icon: Users, label: "Users" },
       { href: "/admin/listings", icon: Building, label: "Listings" },
       { href: "/admin/approvals", icon: FileText, label: "Approvals" },
+      { href: "/vaas-demo", icon: Calculator, label: "VaaS Demo" },
       { href: "/admin/system", icon: Settings, label: "System" },
     ]
   };

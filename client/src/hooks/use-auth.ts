@@ -1,176 +1,220 @@
-import React, { createContext, ReactNode, useContext } from "react";
-import { useQuery, useMutation, UseMutationResult } from "@tanstack/react-query";
-import { User } from "@shared/schema";
-import { authService, type AuthUser } from "@/lib/auth";
-import { useToast } from "@/hooks/use-toast";
-import { resourceManager } from "@/utils/resource-manager";
-import { queryClient } from "@/lib/queryClient";
+import { useState, useEffect, useCallback } from 'react';
+import { apiRequest } from '@/lib/api-client';
 
-type AuthContextType = {
-  user: AuthUser | null;
-  isLoading: boolean;
-  error: Error | null;
+interface User {
+  id: number;
+  email: string;
+  role: 'admin' | 'seller' | 'buyer' | 'agent' | 'nbfc';
+  name: string;
+  permissions?: string[];
+}
+
+interface AuthState {
+  user: User | null;
   isAuthenticated: boolean;
-  loginMutation: UseMutationResult<any, Error, { email: string; password: string }>;
-  logoutMutation: UseMutationResult<void, Error, void>;
-  sendOTPMutation: UseMutationResult<any, Error, string>;
-  verifyOTPMutation: UseMutationResult<any, Error, { phoneNumber: string; otp: string }>;
-};
-
-export const AuthContext = createContext<AuthContextType | null>(null);
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  // Use toast hook at the top level (following React rules)
-  const { toast } = useToast();
-  const [authResourceAcquired, setAuthResourceAcquired] = React.useState(false);
-
-  // Acquire resource for auth provider
-  React.useEffect(() => {
-    const acquireResources = async () => {
-      try {
-        const acquired = await resourceManager.acquireResource('auth-provider', 'AuthProvider', 5000);
-        setAuthResourceAcquired(acquired);
-      } catch (error) {
-        console.warn('Failed to acquire auth resource:', error);
-      }
-    };
-
-    acquireResources();
-
-    return () => {
-      if (authResourceAcquired) {
-        resourceManager.releaseResource('auth-provider', 'AuthProvider');
-      }
-    };
-  }, [authResourceAcquired]);
-
-  // Safe toast function that respects resource acquisition (synchronous)
-  const safeToast = React.useCallback((props: any) => {
-    if (authResourceAcquired) {
-      toast(props);
-    } else {
-      // Fallback behavior when resource not acquired
-      console.warn('Auth resource not acquired, skipping toast:', props.title);
-    }
-  }, [toast, authResourceAcquired]);
-
-  const {
-    data: user,
-    error,
-    isLoading,
-  } = useQuery<AuthUser | null>({
-    queryKey: ["/api/auth/me"],
-    queryFn: authService.getCurrentUser,
-    retry: false,
-    // Add placeholder user for development
-    initialData: process.env.NODE_ENV === 'development' ? {
-      id: 1,
-      email: 'test@example.com',
-      firstName: 'Test',
-      lastName: 'User',
-      role: 'buyer' as const,
-      isVerified: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    } : null,
-  });
-
-  const loginMutation = useMutation({
-    mutationFn: authService.login,
-    onSuccess: (data) => {
-      if (data.success && data.user) {
-        queryClient.setQueryData(["/api/auth/me"], data.user);
-        if (data.token) {
-          authService.setToken(data.token);
-        }
-      }
-    },
-    onError: (error: Error) => {
-      safeToast({
-        title: "Login failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const logoutMutation = useMutation({
-    mutationFn: authService.logout,
-    onSuccess: () => {
-      queryClient.setQueryData(["/api/auth/me"], null);
-      authService.removeToken();
-    },
-    onError: (error: Error) => {
-      safeToast({
-        title: "Logout failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const sendOTPMutation = useMutation({
-    mutationFn: authService.sendOTP,
-    onSuccess: (data) => {
-      if (data.success) {
-        safeToast({
-          title: "OTP sent successfully",
-          description: "Please check your phone for the verification code",
-          variant: "success",
-        });
-      }
-    },
-    onError: (error: Error) => {
-      safeToast({
-        title: "Failed to send OTP",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const verifyOTPMutation = useMutation({
-    mutationFn: ({ phoneNumber, otp }: { phoneNumber: string; otp: string }) =>
-      authService.verifyOTP(phoneNumber, otp),
-    onSuccess: (data) => {
-      if (data.success && data.user) {
-        queryClient.setQueryData(["/api/auth/me"], data.user);
-        if (data.token) {
-          authService.setToken(data.token);
-        }
-      }
-    },
-    onError: (error: Error) => {
-      safeToast({
-        title: "OTP verification failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const contextValue = {
-    user: user || null,
-    isLoading,
-    error,
-    isAuthenticated: !!user,
-    loginMutation,
-    logoutMutation,
-    sendOTPMutation,
-    verifyOTPMutation,
-  };
-
-  return React.createElement(
-    AuthContext.Provider,
-    { value: contextValue },
-    children
-  );
+  isLoading: boolean;
+  error: string | null;
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
+  const [state, setState] = useState<AuthState>({
+    user: null,
+    isAuthenticated: false,
+    isLoading: true,
+    error: null
+  });
+
+  const getToken = useCallback(() => {
+    // Improved token fallback strategy
+    return localStorage.getItem('token') || 
+           sessionStorage.getItem('token') || 
+           null;
+  }, []);
+
+  const setToken = useCallback((token: string, remember: boolean = true) => {
+    if (remember) {
+      localStorage.setItem('token', token);
+      sessionStorage.removeItem('token');
+    } else {
+      sessionStorage.setItem('token', token);
+      localStorage.removeItem('token');
+    }
+  }, []);
+
+  const removeToken = useCallback(() => {
+    localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
+  }, []);
+
+  const login = useCallback(async (email: string, password: string, remember: boolean = true) => {
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
+    
+    try {
+      const response = await apiRequest('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+      });
+
+      const { user, token } = response;
+      setToken(token, remember);
+      
+      setState({
+        user,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null
+      });
+
+      return { success: true, user };
+    } catch (error: any) {
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error.message || 'Login failed'
+      }));
+      
+      return { success: false, error: error.message };
+    }
+  }, [setToken]);
+
+  const logout = useCallback(() => {
+    removeToken();
+    setState({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null
+    });
+  }, [removeToken]);
+
+  const register = useCallback(async (userData: {
+    email: string;
+    password: string;
+    name: string;
+    role: string;
+  }) => {
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
+    
+    try {
+      const response = await apiRequest('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(userData)
+      });
+
+      const { user, token } = response;
+      setToken(token);
+      
+      setState({
+        user,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null
+      });
+
+      return { success: true, user };
+    } catch (error: any) {
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error.message || 'Registration failed'
+      }));
+      
+      return { success: false, error: error.message };
+    }
+  }, [setToken]);
+
+  const switchRole = useCallback(async (newRole: string) => {
+    if (!state.user || state.user.role !== 'admin') {
+      throw new Error('Only administrators can switch roles');
+    }
+
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
+    
+    try {
+      const response = await apiRequest('/api/auth/switch-role', {
+        method: 'POST',
+        body: JSON.stringify({ role: newRole })
+      });
+
+      const { user } = response;
+      setState(prev => ({
+        ...prev,
+        user,
+        isLoading: false,
+        error: null
+      }));
+
+      return { success: true, user };
+    } catch (error: any) {
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error.message || 'Role switch failed'
+      }));
+      
+      throw error;
+    }
+  }, [state.user]);
+
+  const refreshUser = useCallback(async () => {
+    const token = getToken();
+    if (!token) {
+      setState(prev => ({ ...prev, isLoading: false }));
+      return;
+    }
+
+    try {
+      const user = await apiRequest('/api/auth/me');
+      setState({
+        user,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null
+      });
+    } catch (error: any) {
+      // Handle auth failures
+      if (error.status === 401 || error.status === 403) {
+        removeToken();
+        setState({
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+          error: null
+        });
+      } else {
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: error.message || 'Failed to refresh user'
+        }));
+      }
+    }
+  }, [getToken, removeToken]);
+
+  const hasPermission = useCallback((permission: string) => {
+    if (!state.user) return false;
+    if (state.user.role === 'admin') return true;
+    return state.user.permissions?.includes(permission) || false;
+  }, [state.user]);
+
+  const hasAnyPermission = useCallback((permissions: string[]) => {
+    return permissions.some(permission => hasPermission(permission));
+  }, [hasPermission]);
+
+  useEffect(() => {
+    refreshUser();
+  }, [refreshUser]);
+
+  return {
+    ...state,
+    login,
+    logout,
+    register,
+    switchRole,
+    refreshUser,
+    hasPermission,
+    hasAnyPermission,
+    getToken,
+    isAdmin: state.user?.role === 'admin'
+  };
 }

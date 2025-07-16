@@ -332,6 +332,46 @@ export const insertComplianceRecordSchema = createInsertSchema(complianceRecords
   updatedAt: true,
 });
 
+// VaaS (Valuation-as-a-Service) Tables
+export const valuationRequests = pgTable("valuation_requests", {
+  id: text("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
+  msmeId: integer("msme_id").references(() => msmeListings.id),
+  requestData: text("request_data").notNull(),
+  status: text("status").notNull().default("pending"),
+  tier: text("tier").notNull(),
+  amount: integer("amount").notNull(),
+  paymentId: text("payment_id"),
+  result: text("result"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const valuationReports = pgTable("valuation_reports", {
+  id: text("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
+  msmeId: integer("msme_id").references(() => msmeListings.id),
+  estimatedValue: integer("estimated_value").notNull(),
+  confidence: real("confidence").notNull(),
+  methodology: text("methodology"),
+  reportPath: text("report_path"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertValuationRequestSchema = createInsertSchema(valuationRequests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertValuationReportSchema = createInsertSchema(valuationReports).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // AI and Analytics Tables
 export const vectorEmbeddings = pgTable("vector_embeddings", {
   id: serial("id").primaryKey(),
@@ -397,6 +437,10 @@ export type VectorEmbedding = typeof vectorEmbeddings.$inferSelect;
 export type Conversation = typeof conversations.$inferSelect;
 export type KnowledgeBase = typeof knowledgeBase.$inferSelect;
 export type AuditLog = typeof auditLogs.$inferSelect;
+export type ValuationRequest = typeof valuationRequests.$inferSelect;
+export type InsertValuationRequest = z.infer<typeof insertValuationRequestSchema>;
+export type ValuationReport = typeof valuationReports.$inferSelect;
+export type InsertValuationReport = z.infer<typeof insertValuationReportSchema>;
 
 // Escrow accounts table
 export const escrowAccounts = pgTable("escrow_accounts", {

@@ -1650,6 +1650,10 @@ async function loadFullRoutes(app: Express) {
   // Mount AI and Analytics routes
   app.use("/api/ai-analytics", aiAnalyticsRouter);
 
+  // VaaS (Valuation-as-a-Service) routes
+  const vaasRoutes = await import('./routes/vaas-api');
+  app.use("/api/vaas", vaasRoutes.default);
+
   // Admin routes
   app.get("/api/admin/users", authenticateToken, requireRole("admin"), async (req, res) => {
     try {
