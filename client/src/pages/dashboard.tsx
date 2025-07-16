@@ -27,7 +27,7 @@ export default function Dashboard() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Building className="h-8 w-8 text-blue-600 mr-2" />
-              <h1 className="text-xl font-bold text-gray-900">MSMEAtlas</h1>
+              <h1 className="text-xl font-bold text-gray-900">MSMESquare</h1>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="outline" onClick={() => window.location.href = '/api/auth/logout'}>

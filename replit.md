@@ -1,8 +1,8 @@
-# MSMEAtlas - Replit Project Guide
+# MSMESquare - Replit Project Guide
 
 ## Overview
 
-MSMEAtlas is a comprehensive fintech marketplace designed to connect MSMEs (Micro, Small & Medium Enterprises) with buyers, sellers, agents, and NBFCs (Non-Banking Financial Companies) for seamless business acquisition financing in India. The platform serves as a one-stop solution for MSME transactions, loan applications, and compliance management.
+MSMESquare is a comprehensive fintech marketplace designed to connect MSMEs (Micro, Small & Medium Enterprises) with buyers, sellers, agents, and NBFCs (Non-Banking Financial Companies) for seamless business acquisition financing in India. The platform serves as a one-stop solution for MSME transactions, loan applications, and compliance management.
 
 ## User Preferences
 
@@ -11,11 +11,12 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes
 
 ### July 16, 2025
+- **Project Rebranding**: Changed project name from MSMEAtlas to MSMESquare across all UI components
 - **Language Localization System**: Implemented comprehensive multilingual support for English, Hindi, and Odia to serve low-literacy MSME users across India and Odisha
 - **Geographic Proximity Service**: Added distance-based matchmaking using Haversine formula with coordinates for all 30 Odisha districts
 - **Enhanced Matchmaking**: Updated algorithms to incorporate geographic proximity scoring (20% weight) and distance filtering
 - **Accessibility Features**: Added text-to-speech toolbar and language selector for improved user experience
-- **Authentication System**: Fixed all TypeScript authentication errors with proper type casting for AuthenticatedRequest
+- **Authentication System**: Fixed JWT token authentication with cookie support for better browser compatibility
 - **Frontend Components**: Created localized landing page and dashboard with multilingual content support
 
 ## System Architecture

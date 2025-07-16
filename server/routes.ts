@@ -26,6 +26,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { expiresIn: "7d" }
       );
       
+      // Set cookie for browser compatibility
+      res.cookie('auth_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      });
+      
       res.json({ user: { ...user, password: undefined }, token });
     } catch (error) {
       console.error("Registration error:", error);
@@ -54,7 +61,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { expiresIn: "7d" }
       );
       
-      res.json({ user: { ...user, password: undefined }, token });
+      // Set cookie for browser compatibility
+      res.cookie('auth_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      });
+      
+      // Redirect to dashboard after successful login
+      res.redirect('/');
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ message: "Login failed" });
@@ -73,6 +88,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Get user error:", error);
       res.status(500).json({ message: "Failed to get user" });
     }
+  });
+
+  // Simple login page route for testing
+  app.get("/api/auth/login", (req, res) => {
+    res.send(`
+      <html>
+        <body>
+          <h2>MSMESquare Login</h2>
+          <form action="/api/auth/login" method="post">
+            <div>
+              <label>Email:</label>
+              <input type="email" name="email" required>
+            </div>
+            <div>
+              <label>Password:</label>
+              <input type="password" name="password" required>
+            </div>
+            <button type="submit">Login</button>
+          </form>
+          <p><a href="/api/auth/register-page">Don't have an account? Register here</a></p>
+        </body>
+      </html>
+    `);
+  });
+
+  // Simple register page route for testing
+  app.get("/api/auth/register-page", (req, res) => {
+    res.send(`
+      <html>
+        <body>
+          <h2>MSMESquare Register</h2>
+          <form action="/api/auth/register" method="post">
+            <div>
+              <label>Email:</label>
+              <input type="email" name="email" required>
+            </div>
+            <div>
+              <label>Password:</label>
+              <input type="password" name="password" required>
+            </div>
+            <div>
+              <label>First Name:</label>
+              <input type="text" name="firstName" required>
+            </div>
+            <div>
+              <label>Last Name:</label>
+              <input type="text" name="lastName" required>
+            </div>
+            <div>
+              <label>Role:</label>
+              <select name="role" required>
+                <option value="seller">Seller</option>
+                <option value="buyer">Buyer</option>
+                <option value="agent">Agent</option>
+                <option value="nbfc">NBFC</option>
+              </select>
+            </div>
+            <button type="submit">Register</button>
+          </form>
+          <p><a href="/api/auth/login">Already have an account? Login here</a></p>
+        </body>
+      </html>
+    `);
   });
 
   // NBFC routes

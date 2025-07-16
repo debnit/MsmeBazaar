@@ -16,7 +16,7 @@ export default function Landing() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Building className="h-8 w-8 text-blue-600 mr-2" />
-              <h1 className="text-xl font-bold text-gray-900">MSMEAtlas</h1>
+              <h1 className="text-xl font-bold text-gray-900">MSMESquare</h1>
             </div>
             <div className="flex items-center space-x-4">
               <LanguageSelector />
@@ -33,7 +33,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center">
             <h2 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-              {t('hero.title')} <span className="text-blue-600">MSMEAtlas</span>
+              {t('hero.title')} <span className="text-blue-600">MSMESquare</span>
             </h2>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
               {t('hero.subtitle')}
@@ -141,7 +141,7 @@ export default function Landing() {
             <div>
               <div className="flex items-center mb-4">
                 <Building className="h-6 w-6 text-blue-400 mr-2" />
-                <span className="text-lg font-semibold">MSMEAtlas</span>
+                <span className="text-lg font-semibold">MSMESquare</span>
               </div>
               <p className="text-gray-400">{t('footer.description')}</p>
             </div>
@@ -171,7 +171,7 @@ export default function Landing() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 MSMEAtlas. {t('footer.rights')}</p>
+            <p>&copy; 2024 MSMESquare. {t('footer.rights')}</p>
           </div>
         </div>
       </footer>
