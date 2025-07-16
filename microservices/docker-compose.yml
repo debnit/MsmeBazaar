@@ -233,8 +233,16 @@ services:
       - DOCUSIGN_USER_ID=${DOCUSIGN_USER_ID}
       - DOCUSIGN_ACCOUNT_ID=${DOCUSIGN_ACCOUNT_ID}
       - DOCUSIGN_PRIVATE_KEY=${DOCUSIGN_PRIVATE_KEY}
+      - DOCUSIGN_BASE_URL=${DOCUSIGN_BASE_URL:-https://demo.docusign.net/restapi}
+      - SMTP_SERVER=${SMTP_SERVER}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
     ports:
       - "8006:8006"
+    volumes:
+      - eaas_templates:/app/templates
+      - eaas_documents:/app/documents
     depends_on:
       postgres:
         condition: service_healthy
@@ -248,9 +256,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 128M
+          memory: 256M
         reservations:
-          memory: 64M
+          memory: 128M
 
   agent-service:
     build:
@@ -454,6 +462,8 @@ volumes:
   elasticsearch_data:
   valuation_models:
   grafana_data:
+  eaas_templates:
+  eaas_documents:
 
 networks:
   default:
