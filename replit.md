@@ -57,6 +57,14 @@ Preferred communication style: Simple, everyday language.
 - **Load Balancing**: Implemented Nginx-based load balancing with circuit breakers and health checks
 - **Independent Scaling**: Each service can scale independently with dedicated memory management (128MB per service)
 - **Performance Enhancement**: Achieved 40-60% response time reduction and 200-300% throughput increase through service decomposition
+- **Production ML Infrastructure**: Implemented XGBoost/CatBoost models on FastAPI server with confidence-based fallback to heuristic valuation
+- **Real-Time Buyer Scoring**: Built continuous feedback loop system with Redis Streams for real-time buyer behavior analysis and personalization
+- **Razorpay Integration**: Complete payment, escrow, and agent payout system with automatic balance tracking and transaction processing
+- **WhatsApp Business Integration**: Flow-based onboarding system with automated retention campaigns and chat-led user acquisition
+- **BullMQ Queue System**: Comprehensive async job processing for valuations, matchmaking, notifications, and document generation
+- **Self-Service Tools**: Agent dashboards, NBFC loan product uploads, and automated MSME listing approval workflows
+- **Retention System**: Email/WhatsApp nudge campaigns with engagement tracking and churn prediction
+- **Smart Analytics**: Real-time dashboards for agents, NBFCs, and admins with predictive insights and performance metrics
 
 ## System Architecture
 

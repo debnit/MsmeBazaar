@@ -1,124 +1,164 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15
+  # Main application
+  app:
+    build: .
+    ports:
+      - "5000:5000"
     environment:
-      POSTGRES_DB: msme_square
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/msme_atlas
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - ML_SERVICE_URL=http://ml-service:8000
+      - ML_API_KEY=${ML_API_KEY:-your-secure-api-key}
+    depends_on:
+      - postgres
+      - redis
+      - ml-service
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - msme-network
+    restart: unless-stopped
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=msme_atlas
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./deploy/init.sql:/docker-entrypoint-initdb.d/init.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - msme-network
+    restart: unless-stopped
 
+  # Redis for caching and queues
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
-    command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
+    networks:
+      - msme-network
+    restart: unless-stopped
+
+  # ML Service with FastAPI
+  ml-service:
+    build: 
+      context: ./server/ml
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - ML_API_KEY=${ML_API_KEY:-your-secure-api-key}
+    volumes:
+      - ./server/ml:/app
+      - ml_models:/app/models
+    networks:
+      - msme-network
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - msme-network
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  server:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: development
+  # Background worker
+  worker:
+    build: .
+    command: npm run worker
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/msme_square
-      - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=your-jwt-secret-here
-      - MSG91_AUTH_KEY=${MSG91_AUTH_KEY}
-      - PORT=5000
-    ports:
-      - "5000:5000"
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/msme_atlas
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - ML_SERVICE_URL=http://ml-service:8000
+      - ML_API_KEY=${ML_API_KEY:-your-secure-api-key}
+    depends_on:
+      - postgres
+      - redis
+      - ml-service
     volumes:
       - .:/app
       - /app/node_modules
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     networks:
       - msme-network
-    command: npm run dev
+    restart: unless-stopped
 
-  client:
-    build:
-      context: .
-      dockerfile: Dockerfile.client
-    environment:
-      - NODE_ENV=development
-      - VITE_API_URL=http://localhost:5000
-    ports:
-      - "3000:3000"
-    volumes:
-      - .:/app
-      - /app/node_modules
-    depends_on:
-      - server
-    networks:
-      - msme-network
-    command: npm run dev:client
-
-  scheduler:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: development
-    environment:
-      - NODE_ENV=development
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/msme_square
-      - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=your-jwt-secret-here
-    volumes:
-      - .:/app
-      - /app/node_modules
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - msme-network
-    command: npm run scheduler
-
+  # Nginx reverse proxy
   nginx:
     image: nginx:alpine
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./deploy/nginx.conf:/etc/nginx/nginx.conf
-      - ./deploy/ssl:/etc/nginx/ssl
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
     depends_on:
-      - client
-      - server
+      - app
     networks:
       - msme-network
+    restart: unless-stopped
 
-volumes:
-  postgres_data:
-  redis_data:
+  # Monitoring with Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - msme-network
+    restart: unless-stopped
+
+  # Grafana for monitoring dashboards
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana:/etc/grafana/provisioning
+    networks:
+      - msme-network
+    restart: unless-stopped
+
+  # Jupyter notebook for ML development
+  jupyter:
+    build:
+      context: ./server/ml
+      dockerfile: Dockerfile.jupyter
+    ports:
+      - "8888:8888"
+    environment:
+      - JUPYTER_TOKEN=your-jupyter-token
+    volumes:
+      - ./server/ml:/app
+      - ml_models:/app/models
+      - ./notebooks:/app/notebooks
+    networks:
+      - msme-network
+    restart: unless-stopped
 
 networks:
   msme-network:
     driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  ml_models:
+  prometheus_data:
+  grafana_data:
