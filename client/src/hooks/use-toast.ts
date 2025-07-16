@@ -1,9 +1,4 @@
-import {
-  useState,
-  useEffect,
-  ReactNode,
-  ReactElement
-} from "react";
+import React, { useState, useEffect, ReactNode, ReactElement } from "react";
 
 export type ToastActionElement = ReactElement;
 

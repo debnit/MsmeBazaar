@@ -1,0 +1,124 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # Nginx API Gateway
+  - job_name: "nginx-gateway"
+    static_configs:
+      - targets: ["nginx:80"]
+    metrics_path: "/metrics"
+    scrape_interval: 30s
+
+  # Auth Service
+  - job_name: "auth-service"
+    static_configs:
+      - targets: ["auth-service:8001"]
+    metrics_path: "/metrics"
+    scrape_interval: 30s
+
+  # User Profile Service
+  - job_name: "user-profile-service"
+    static_configs:
+      - targets: ["user-profile-service:8002"]
+    metrics_path: "/metrics"
+    scrape_interval: 30s
+
+  # MSME Listing Service
+  - job_name: "msme-listing-service"
+    static_configs:
+      - targets: ["msme-listing-service:8003"]
+    metrics_path: "/metrics"
+    scrape_interval: 30s
+
+  # Search & Matchmaking Service
+  - job_name: "search-matchmaking-service"
+    static_configs:
+      - targets: ["search-matchmaking-service:8004"]
+    metrics_path: "/metrics"
+    scrape_interval: 30s
+
+  # Valuation Engine
+  - job_name: "valuation-engine"
+    static_configs:
+      - targets: ["valuation-engine:8005"]
+    metrics_path: "/metrics"
+    scrape_interval: 30s
+
+  # EaaS Service
+  - job_name: "eaas-service"
+    static_configs:
+      - targets: ["eaas-service:8006"]
+    metrics_path: "/metrics"
+    scrape_interval: 30s
+
+  # Agent Service
+  - job_name: "agent-service"
+    static_configs:
+      - targets: ["agent-service:8007"]
+    metrics_path: "/metrics"
+    scrape_interval: 30s
+
+  # Escrow & Payments Service
+  - job_name: "escrow-payments-service"
+    static_configs:
+      - targets: ["escrow-payments-service:8008"]
+    metrics_path: "/metrics"
+    scrape_interval: 30s
+
+  # Notification Service
+  - job_name: "notification-service"
+    static_configs:
+      - targets: ["notification-service:8009"]
+    metrics_path: "/metrics"
+    scrape_interval: 30s
+
+  # Audit & Compliance Service
+  - job_name: "audit-compliance-service"
+    static_configs:
+      - targets: ["audit-compliance-service:8010"]
+    metrics_path: "/metrics"
+    scrape_interval: 30s
+
+  # Database Services
+  - job_name: "postgres"
+    static_configs:
+      - targets: ["postgres:5432"]
+    scrape_interval: 30s
+
+  - job_name: "redis"
+    static_configs:
+      - targets: ["redis:6379"]
+    scrape_interval: 30s
+
+  - job_name: "elasticsearch"
+    static_configs:
+      - targets: ["elasticsearch:9200"]
+    scrape_interval: 30s
+
+  # Health checks for all services
+  - job_name: "health-checks"
+    static_configs:
+      - targets: 
+        - "auth-service:8001"
+        - "user-profile-service:8002"
+        - "msme-listing-service:8003"
+        - "search-matchmaking-service:8004"
+        - "valuation-engine:8005"
+        - "eaas-service:8006"
+        - "agent-service:8007"
+        - "escrow-payments-service:8008"
+        - "notification-service:8009"
+        - "audit-compliance-service:8010"
+    metrics_path: "/health"
+    scrape_interval: 10s
+    scrape_timeout: 5s

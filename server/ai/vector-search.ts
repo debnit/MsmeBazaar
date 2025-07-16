@@ -56,12 +56,20 @@ export class MSMEVectorSearch {
   private dimension: number;
 
   constructor() {
+    const pineconeApiKey = process.env.PINECONE_API_KEY;
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+    
+    if (!pineconeApiKey || !openaiApiKey) {
+      console.warn('Pinecone or OpenAI API keys not found. Vector search will be disabled.');
+      return;
+    }
+    
     this.pinecone = new Pinecone({
-      apiKey: process.env.PINECONE_API_KEY || '',
+      apiKey: pineconeApiKey,
     });
     
     this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY || '',
+      apiKey: openaiApiKey,
     });
     
     this.indexName = process.env.PINECONE_INDEX_NAME || 'msme-matchmaking';

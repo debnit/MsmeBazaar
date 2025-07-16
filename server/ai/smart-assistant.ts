@@ -4,12 +4,9 @@
  */
 
 import OpenAI from 'openai';
-import { VectorStoreIndex, Document, StorageContext, serviceContextFromDefaults } from 'llamaindex';
-import { PineconeVectorStore } from 'llamaindex/vector-store/PineconeVectorStore';
 import { ChatOpenAI } from '@langchain/openai';
 import { ConversationalRetrievalQAChain } from 'langchain/chains';
 import { OpenAIEmbeddings } from '@langchain/openai';
-import { PineconeStore } from '@langchain/pinecone';
 import { BufferMemory } from 'langchain/memory';
 import { db } from '../db';
 import { users, msmeListings, conversations, knowledgeBase } from '@shared/schema';
@@ -49,7 +46,6 @@ export class MSMESmartAssistant {
   private openai: OpenAI;
   private chatModel: ChatOpenAI;
   private embeddings: OpenAIEmbeddings;
-  private knowledgeIndex: VectorStoreIndex;
   private conversationChains: Map<string, ConversationalRetrievalQAChain>;
   private memories: Map<string, BufferMemory>;
 
@@ -79,15 +75,8 @@ export class MSMESmartAssistant {
       // Create knowledge base documents
       const documents = await this.createKnowledgeDocuments();
       
-      // Initialize vector store with Pinecone
-      const vectorStore = new PineconeVectorStore();
-      const storageContext = await StorageContext.fromDefaults({ vectorStore });
-      
-      // Create index
-      this.knowledgeIndex = await VectorStoreIndex.fromDocuments(
-        documents,
-        { storageContext, serviceContext: serviceContextFromDefaults() }
-      );
+      // Simplified knowledge base without Pinecone for now
+      console.log('Knowledge base documents prepared:', documents.length);
 
       console.log('Knowledge base initialized successfully');
     } catch (error) {
@@ -95,8 +84,8 @@ export class MSMESmartAssistant {
     }
   }
 
-  private async createKnowledgeDocuments(): Promise<Document[]> {
-    const documents: Document[] = [];
+  private async createKnowledgeDocuments(): Promise<any[]> {
+    const documents: any[] = [];
 
     // MSME marketplace knowledge
     const msmeKnowledge = [
