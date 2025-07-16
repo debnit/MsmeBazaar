@@ -62,6 +62,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/api/auth/me"],
     queryFn: authService.getCurrentUser,
     retry: false,
+    // Add placeholder user for development
+    initialData: process.env.NODE_ENV === 'development' ? {
+      id: 1,
+      email: 'test@example.com',
+      firstName: 'Test',
+      lastName: 'User',
+      role: 'buyer' as const,
+      isVerified: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    } : null,
   });
 
   const loginMutation = useMutation({

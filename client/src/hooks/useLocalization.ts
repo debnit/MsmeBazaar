@@ -72,11 +72,11 @@ export function useTextToSpeech() {
     utterance.rate = 0.8;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
-
+    
     utterance.onstart = () => setIsPlaying(true);
     utterance.onend = () => setIsPlaying(false);
     utterance.onerror = () => setIsPlaying(false);
-
+    
     speechSynthesis.speak(utterance);
   };
 
