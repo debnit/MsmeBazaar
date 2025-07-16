@@ -382,6 +382,25 @@ export class SafeToastManager {
     }
   }
 
+  // Synchronous subscribe for React hooks
+  public subscribeSync(listener: (toasts: any[]) => void): () => void {
+    const startTime = performance.now();
+    
+    try {
+      const unsubscribe = this.stateManager.subscribe('toasts', listener);
+      
+      const duration = performance.now() - startTime;
+      if (duration > 10) {
+        console.warn(`SafeToastManager.subscribeSync took ${duration.toFixed(2)}ms`);
+      }
+      
+      return unsubscribe;
+    } catch (error) {
+      console.error('SafeToastManager.subscribeSync failed:', error);
+      return () => {};
+    }
+  }
+
   // Async helper methods
   private async getToastsAsync(): Promise<any[]> {
     return new Promise((resolve) => {

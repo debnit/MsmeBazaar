@@ -9,9 +9,9 @@ export function ModernToaster() {
     return null
   }
 
-  // Handle async dismiss
-  const handleDismiss = async (toastId: string) => {
-    await dismiss(toastId)
+  // Handle dismiss (synchronous)
+  const handleDismiss = (toastId: string) => {
+    dismiss(toastId)
   }
 
   return (

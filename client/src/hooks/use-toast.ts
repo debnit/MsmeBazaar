@@ -19,7 +19,7 @@ const TOAST_REMOVE_DELAY = 3000 // 3 seconds
 type ToasterToast = ToastProps
 
 // Global toast function for use outside of React components
-const toast = traceFunction(async (props: {
+const toast = traceFunction((props: {
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
@@ -28,8 +28,8 @@ const toast = traceFunction(async (props: {
   try {
     const id = Math.random().toString(36).slice(2, 9);
     
-    // Use async toast manager
-    await safeToastManager.addToast({
+    // Use async toast manager but don't await (fire and forget)
+    safeToastManager.addToast({
       id,
       title: props.title,
       description: props.description,
@@ -37,15 +37,15 @@ const toast = traceFunction(async (props: {
       variant: props.variant || 'default'
     });
     
-    // Auto-dismiss after delay (async)
-    setTimeout(async () => {
-      await safeToastManager.removeToast(id);
+    // Auto-dismiss after delay (async internally)
+    setTimeout(() => {
+      safeToastManager.removeToast(id);
     }, TOAST_REMOVE_DELAY);
     
-    const update = async (updatedProps: ToasterToast) => {
+    const update = (updatedProps: ToasterToast) => {
       try {
-        await safeToastManager.removeToast(id);
-        await safeToastManager.addToast({
+        safeToastManager.removeToast(id);
+        safeToastManager.addToast({
           ...updatedProps,
           id
         });
@@ -54,9 +54,9 @@ const toast = traceFunction(async (props: {
       }
     };
     
-    const dismiss = async () => {
+    const dismiss = () => {
       try {
-        await safeToastManager.removeToast(id);
+        safeToastManager.removeToast(id);
       } catch (error) {
         console.warn('Toast dismiss failed:', error);
       }
@@ -71,8 +71,8 @@ const toast = traceFunction(async (props: {
     console.warn('Toast creation failed:', error);
     return {
       id: '',
-      dismiss: async () => {},
-      update: async () => {},
+      dismiss: () => {},
+      update: () => {},
     };
   }
 }, 'toast');
@@ -83,42 +83,30 @@ const useToast = traceFunction(() => {
 
   React.useEffect(() => {
     const traceId = functionTracer.startTrace('useToast.subscribe');
-    let unsubscribe: (() => void) | undefined;
     
-    // Async subscription setup
-    const setupSubscription = async () => {
+    // Synchronous subscription setup (async internally)
+    const unsubscribe = safeToastManager.subscribeSync((newToasts) => {
       try {
-        unsubscribe = await safeToastManager.subscribe((newToasts) => {
-          try {
-            if (Array.isArray(newToasts)) {
-              setToasts([...newToasts]);
-            }
-          } catch (error) {
-            console.warn('Safe toast listener failed:', error);
-            setToasts([]);
-          }
-        });
-        
-        functionTracer.endTrace(traceId);
+        if (Array.isArray(newToasts)) {
+          setToasts([...newToasts]);
+        }
       } catch (error) {
-        console.error('Failed to setup toast subscription:', error);
-        functionTracer.endTrace(traceId, undefined, error as Error);
+        console.warn('Safe toast listener failed:', error);
+        setToasts([]);
       }
-    };
+    });
     
-    setupSubscription();
+    functionTracer.endTrace(traceId);
     
     return () => {
       const cleanupTraceId = functionTracer.startTrace('useToast.cleanup');
-      if (unsubscribe) {
-        unsubscribe();
-      }
+      unsubscribe();
       functionTracer.endTrace(cleanupTraceId);
     };
   }, []);
 
-  // Toast function for use within React components (async)
-  const reactToast = React.useCallback(async (props: {
+  // Toast function for use within React components (synchronous)
+  const reactToast = React.useCallback((props: {
     title?: React.ReactNode;
     description?: React.ReactNode;
     action?: ToastActionElement;
@@ -126,7 +114,7 @@ const useToast = traceFunction(() => {
   }) => {
     const traceId = functionTracer.startTrace('useToast.reactToast', [props]);
     try {
-      const result = await toast(props);
+      const result = toast(props);
       functionTracer.endTrace(traceId, result);
       return result;
     } catch (error) {
@@ -135,15 +123,15 @@ const useToast = traceFunction(() => {
     }
   }, []);
 
-  // Dismiss function (async)
-  const dismiss = React.useCallback(async (toastId?: string) => {
+  // Dismiss function (synchronous)
+  const dismiss = React.useCallback((toastId?: string) => {
     const traceId = functionTracer.startTrace('useToast.dismiss', [toastId]);
     
     try {
       if (toastId) {
-        await safeToastManager.removeToast(toastId);
+        safeToastManager.removeToast(toastId);
       } else {
-        await safeToastManager.clearToasts();
+        safeToastManager.clearToasts();
       }
       functionTracer.endTrace(traceId);
     } catch (error) {
