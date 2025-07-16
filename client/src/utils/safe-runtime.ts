@@ -285,7 +285,7 @@ export class SafeToastManager {
     id: string;
     title?: string;
     description?: string;
-    variant?: 'default' | 'destructive';
+    variant?: 'default' | 'destructive' | 'success' | 'warning';
     action?: any;
   }): void {
     const startTime = performance.now();

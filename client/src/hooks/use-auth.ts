@@ -105,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         safeToast({
           title: "OTP sent successfully",
           description: "Please check your phone for the verification code",
+          variant: "success",
         });
       }
     },

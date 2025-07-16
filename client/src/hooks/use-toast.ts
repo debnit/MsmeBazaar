@@ -1,28 +1,29 @@
 import * as React from "react"
 
-import type {
-  ToastActionElement,
-  ToastProps,
-} from "@/components/ui/toast"
+// Modern toast types without deprecated components
+export type ToastActionElement = React.ReactElement
+
+export type ToastProps = {
+  id: string
+  title?: React.ReactNode
+  description?: React.ReactNode
+  action?: ToastActionElement
+  variant?: 'default' | 'destructive' | 'success' | 'warning'
+}
 
 import { safeToastManager } from "@/utils/safe-runtime"
 import { functionTracer, traceFunction } from "@/utils/function-tracer"
 
 const TOAST_REMOVE_DELAY = 3000 // 3 seconds
 
-type ToasterToast = ToastProps & {
-  id: string
-  title?: React.ReactNode
-  description?: React.ReactNode
-  action?: ToastActionElement
-}
+type ToasterToast = ToastProps
 
 // Global toast function for use outside of React components
 const toast = traceFunction((props: {
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
-  variant?: 'default' | 'destructive';
+  variant?: 'default' | 'destructive' | 'success' | 'warning';
 }) => {
   try {
     const id = Math.random().toString(36).slice(2, 9);
@@ -108,7 +109,7 @@ const useToast = traceFunction(() => {
     title?: React.ReactNode;
     description?: React.ReactNode;
     action?: ToastActionElement;
-    variant?: 'default' | 'destructive';
+    variant?: 'default' | 'destructive' | 'success' | 'warning';
   }) => {
     const traceId = functionTracer.startTrace('useToast.reactToast', [props]);
     const result = toast(props);
