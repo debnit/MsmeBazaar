@@ -7,10 +7,14 @@ import Navbar from "@/components/layout/navbar";
 import { dashboardApi } from "@/lib/api";
 
 export default function AgentDashboard() {
-  const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ["/api/dashboard/stats"],
-    queryFn: dashboardApi.getStats,
-  });
+  // Mock data for development
+  const stats = {
+    totalAssignments: 3,
+    activeAssignments: 2,
+    completedDeals: 1,
+    totalCommissions: "12.65"
+  };
+  const statsLoading = false;
 
   const mockAssignments = [
     {

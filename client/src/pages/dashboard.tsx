@@ -50,6 +50,15 @@ export default function Dashboard() {
               <h1 className="text-xl font-bold text-gray-900">MSMESquare</h1>
             </div>
             <div className="flex items-center space-x-4">
+              <Button variant="outline" asChild>
+                <a href="/seller/dashboard">Seller Dashboard</a>
+              </Button>
+              <Button variant="outline" asChild>
+                <a href="/buyer/dashboard">Buyer Dashboard</a>
+              </Button>
+              <Button variant="outline" asChild>
+                <a href="/agent/dashboard">Agent Dashboard</a>
+              </Button>
               <Button variant="outline" onClick={() => window.location.href = '/api/auth/logout'}>
                 {t('nav.logout')}
               </Button>

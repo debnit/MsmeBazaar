@@ -31,7 +31,12 @@ export default function ListingCard({ listing, showActions = true }: ListingCard
   const [isExpanded, setIsExpanded] = useState(false);
 
   const expressInterestMutation = useMutation({
-    mutationFn: (data: any) => buyerApi.createInterest(data),
+    mutationFn: (data: any) => {
+      // Mock API call - in real implementation this would call buyerApi.createInterest(data)
+      return new Promise((resolve) => {
+        setTimeout(() => resolve({ success: true }), 500);
+      });
+    },
     onSuccess: () => {
       toast({
         title: "Interest Expressed",

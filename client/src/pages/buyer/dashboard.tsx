@@ -15,15 +15,54 @@ import Navbar from "@/components/layout/navbar";
 import { dashboardApi, buyerApi } from "@/lib/api";
 
 export default function BuyerDashboard() {
-  const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ["/api/dashboard/stats"],
-    queryFn: dashboardApi.getStats,
-  });
+  // Mock data for development
+  const stats = {
+    totalViewed: 28,
+    totalInterests: 5,
+    activeInterests: 3,
+    completedDeals: 1
+  };
+  const statsLoading = false;
 
-  const { data: interests, isLoading: interestsLoading } = useQuery({
-    queryKey: ["/api/buyer/interests"],
-    queryFn: buyerApi.getInterests,
-  });
+  const interests = [
+    {
+      id: 1,
+      msme: {
+        companyName: "Mumbai Textiles Pvt Ltd",
+        industry: "Textiles",
+        askingPrice: "2.5",
+        location: "Mumbai, Maharashtra"
+      },
+      status: "active",
+      interestDate: "2024-01-15",
+      lastUpdated: "2024-01-20"
+    },
+    {
+      id: 2,
+      msme: {
+        companyName: "Pune Food Processing Ltd",
+        industry: "Food Processing",
+        askingPrice: "1.8",
+        location: "Pune, Maharashtra"
+      },
+      status: "accepted",
+      interestDate: "2024-01-10",
+      lastUpdated: "2024-01-18"
+    },
+    {
+      id: 3,
+      msme: {
+        companyName: "Chennai Auto Parts Ltd",
+        industry: "Automotive",
+        askingPrice: "3.2",
+        location: "Chennai, Tamil Nadu"
+      },
+      status: "withdrawn",
+      interestDate: "2024-01-05",
+      lastUpdated: "2024-01-12"
+    }
+  ];
+  const interestsLoading = false;
 
   const getInterestStatusBadge = (status: string) => {
     switch (status) {

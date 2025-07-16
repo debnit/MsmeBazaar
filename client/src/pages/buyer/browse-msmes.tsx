@@ -22,10 +22,78 @@ export default function BrowseMsmes() {
     search: "",
   });
 
-  const { data: listings, isLoading } = useQuery({
-    queryKey: ["/api/msme/listings", filters],
-    queryFn: () => msmeApi.getListings(filters),
-  });
+  // Mock data for development
+  const listings = [
+    {
+      id: 1,
+      companyName: "Mumbai Textiles Pvt Ltd",
+      industry: "Textiles",
+      subIndustry: "Garment Manufacturing",
+      city: "Mumbai",
+      state: "Maharashtra",
+      askingPrice: 2.5,
+      annualTurnover: 5.2,
+      netProfit: 0.8,
+      employeeCount: 45,
+      establishedYear: 2010,
+      description: "Well-established textile manufacturing company with strong client base",
+      status: "active",
+      rating: 4.2,
+      isDistressed: false
+    },
+    {
+      id: 2,
+      companyName: "Pune Food Processing Ltd",
+      industry: "Food Processing",
+      subIndustry: "Packaged Foods",
+      city: "Pune",
+      state: "Maharashtra",
+      askingPrice: 1.8,
+      annualTurnover: 3.1,
+      netProfit: 0.5,
+      employeeCount: 32,
+      establishedYear: 2015,
+      description: "Modern food processing unit with automated packaging systems",
+      status: "active",
+      rating: 4.5,
+      isDistressed: false
+    },
+    {
+      id: 3,
+      companyName: "Chennai Auto Parts Ltd",
+      industry: "Automotive",
+      subIndustry: "Components",
+      city: "Chennai",
+      state: "Tamil Nadu",
+      askingPrice: 3.2,
+      annualTurnover: 6.8,
+      netProfit: 1.2,
+      employeeCount: 67,
+      establishedYear: 2008,
+      description: "Leading automotive components manufacturer with OEM partnerships",
+      status: "active",
+      rating: 4.8,
+      isDistressed: false
+    },
+    {
+      id: 4,
+      companyName: "Bangalore Tech Solutions",
+      industry: "Information Technology",
+      subIndustry: "Software Development",
+      city: "Bangalore",
+      state: "Karnataka",
+      askingPrice: 2.1,
+      annualTurnover: 4.2,
+      netProfit: 0.9,
+      employeeCount: 28,
+      establishedYear: 2018,
+      description: "Growing software development company with international clients",
+      status: "active",
+      rating: 4.3,
+      isDistressed: false
+    }
+  ];
+  const isLoading = false;
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));

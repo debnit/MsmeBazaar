@@ -11,15 +11,48 @@ import { dashboardApi, msmeApi } from "@/lib/api";
 export default function SellerDashboard() {
   const { user } = useAuth();
   
-  const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ["/api/dashboard/stats"],
-    queryFn: dashboardApi.getStats,
-  });
+  // Mock data for development
+  const stats = {
+    totalListings: 3,
+    activeListings: 2,
+    totalViews: 450,
+    totalInquiries: 25
+  };
+  const statsLoading = false;
 
-  const { data: listings, isLoading: listingsLoading } = useQuery({
-    queryKey: ["/api/msme/my-listings"],
-    queryFn: msmeApi.getMyListings,
-  });
+  const listings = [
+    {
+      id: 1,
+      companyName: "Mumbai Textiles Pvt Ltd",
+      industry: "Textiles",
+      askingPrice: "2.5",
+      status: "active",
+      views: 125,
+      inquiries: 8,
+      location: "Mumbai, Maharashtra"
+    },
+    {
+      id: 2,
+      companyName: "Pune Food Processing Ltd",
+      industry: "Food Processing",
+      askingPrice: "1.8",
+      status: "under_review",
+      views: 89,
+      inquiries: 5,
+      location: "Pune, Maharashtra"
+    },
+    {
+      id: 3,
+      companyName: "Chennai Auto Parts Ltd",
+      industry: "Automotive",
+      askingPrice: "3.2",
+      status: "draft",
+      views: 0,
+      inquiries: 0,
+      location: "Chennai, Tamil Nadu"
+    }
+  ];
+  const listingsLoading = false;
 
   const getStatusBadge = (status: string) => {
     switch (status) {

@@ -42,43 +42,23 @@ function Router() {
           <Route path="/" component={Dashboard} />
           
           {/* Seller routes */}
-          {user.role === "seller" && (
-            <>
-              <Route path="/seller/dashboard" component={SellerDashboard} />
-              <Route path="/seller/listing/new" component={SellerListingForm} />
-              <Route path="/seller/listing/edit/:id" component={SellerListingForm} />
-            </>
-          )}
+          <Route path="/seller/dashboard" component={SellerDashboard} />
+          <Route path="/seller/listing/new" component={SellerListingForm} />
+          <Route path="/seller/listing/edit/:id" component={SellerListingForm} />
           
           {/* Buyer routes */}
-          {user.role === "buyer" && (
-            <>
-              <Route path="/buyer/dashboard" component={BuyerDashboard} />
-              <Route path="/buyer/browse" component={BuyerBrowseMsmes} />
-            </>
-          )}
+          <Route path="/buyer/dashboard" component={BuyerDashboard} />
+          <Route path="/buyer/browse" component={BuyerBrowseMsmes} />
           
           {/* Agent routes */}
-          {user.role === "agent" && (
-            <>
-              <Route path="/agent/dashboard" component={AgentDashboard} />
-            </>
-          )}
+          <Route path="/agent/dashboard" component={AgentDashboard} />
           
           {/* NBFC routes */}
-          {user.role === "nbfc" && (
-            <>
-              <Route path="/nbfc/dashboard" component={NbfcDashboard} />
-              <Route path="/nbfc/loan-applications" component={NbfcLoanApplications} />
-            </>
-          )}
+          <Route path="/nbfc/dashboard" component={NbfcDashboard} />
+          <Route path="/nbfc/loan-applications" component={NbfcLoanApplications} />
           
           {/* Admin routes */}
-          {user.role === "admin" && (
-            <>
-              <Route path="/admin/dashboard" component={AdminDashboard} />
-            </>
-          )}
+          <Route path="/admin/dashboard" component={AdminDashboard} />
         </>
       )}
       
