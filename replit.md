@@ -65,6 +65,15 @@ Preferred communication style: Simple, everyday language.
 - **Self-Service Tools**: Agent dashboards, NBFC loan product uploads, and automated MSME listing approval workflows
 - **Retention System**: Email/WhatsApp nudge campaigns with engagement tracking and churn prediction
 - **Smart Analytics**: Real-time dashboards for agents, NBFCs, and admins with predictive insights and performance metrics
+- **AI Copilot Service**: Implemented GPT-4o powered AI assistant with marketplace-specific knowledge base for agents, buyers, and sellers
+- **BNPL/Invoice Financing**: Added instant credit scoring and buy-now-pay-later financing with NBFC partnerships and real-time approvals
+- **ML Recommendation Engine**: Built collaborative filtering system with user behavior embeddings for personalized business recommendations
+- **Agent Gamification**: Created comprehensive leaderboards, badges, streaks, and achievement system to boost agent engagement and retention
+- **Offline-First PWA**: Implemented service worker with IndexedDB caching and background sync for unstable connectivity areas
+- **White-Label Platform**: Built complete white-labeling system for NBFCs and DSA networks with custom branding and workflows
+- **ESG Compliance Automation**: Automated ESG reporting, sustainability metrics, and creditworthiness assessments for regulatory compliance
+- **Kubernetes Infrastructure**: Complete K8s deployment with Prometheus monitoring, Grafana dashboards, and automated deployment scripts
+- **Feature Flag System**: Implemented gradual rollout capabilities with A/B testing support for safe feature deployment
 
 ## System Architecture
 
