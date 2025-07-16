@@ -72,3 +72,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+axios.get('http://localhost:8000/api/admin/msmes')

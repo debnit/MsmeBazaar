@@ -32,8 +32,10 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertMsmeListingSchema, insertLoanApplicationSchema, insertBuyerInterestSchema, insertNbfcDetailsSchema, insertLoanProductSchema, insertComplianceRecordSchema } from "@shared/schema";
+import { insertUserSchema, insertMsmeListingSchema, insertLoanApplicationSchema, insertBuyerInterestSchema, insertNbfcDetailsSchema, insertLoanProductSchema, insertComplianceRecordSchema, subscriptionPlans, userSubscriptions } from "@shared/schema";
 import { authenticateToken, type AuthenticatedRequest } from "./middleware/auth";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 import { 
   requirePermission, 
   requireAllPermissions, 
@@ -42,15 +44,17 @@ import {
   requireRole,
   PERMISSIONS 
 } from "./middleware/rbac";
-import { validateValuation } from "./services/valuation";
+import { calculateValuation } from "./services/valuation";
 import { findMatches } from "./services/matchmaking";
 import { generateDocument } from "./services/document-generation";
-import { checkCompliance } from "./services/compliance";
+import { complianceService } from "./services/compliance";
 import { mobileAuth } from "./auth/mobile-auth";
 import { monitoringService } from "./services/monitoring";
 import { escrowService } from "./services/escrow";
+import { monetizationService } from "./services/monetization";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
+import Stripe from "stripe";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
@@ -1344,6 +1348,247 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Dashboard stats error:", error);
       res.status(500).json({ message: "Failed to get dashboard stats" });
+    }
+  });
+
+  // Initialize Stripe
+  const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2023-10-16",
+  }) : null;
+
+  // Monetization routes
+  
+  // Get subscription plans
+  app.get("/api/subscription/plans", async (req, res) => {
+    try {
+      const plans = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.isActive, true));
+      res.json(plans);
+    } catch (error) {
+      console.error("Get subscription plans error:", error);
+      res.status(500).json({ message: "Failed to get subscription plans" });
+    }
+  });
+
+  // Create subscription for Pro plan
+  app.post("/api/subscription/create", authenticateToken, async (req, res) => {
+    try {
+      if (!stripe) {
+        return res.status(500).json({ message: "Stripe not configured" });
+      }
+
+      const authReq = req as AuthenticatedRequest;
+      const { planId } = req.body;
+
+      // Get plan details
+      const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, planId));
+      if (!plan) {
+        return res.status(404).json({ message: "Plan not found" });
+      }
+
+      // Create payment intent
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(plan.price * 100), // Convert to paise
+        currency: "inr",
+        metadata: {
+          type: "subscription",
+          userId: authReq.user.userId.toString(),
+          planId: planId.toString()
+        }
+      });
+
+      res.json({ clientSecret: paymentIntent.client_secret });
+    } catch (error) {
+      console.error("Create subscription error:", error);
+      res.status(500).json({ message: "Failed to create subscription" });
+    }
+  });
+
+  // Get user's subscription status
+  app.get("/api/subscription/status", authenticateToken, async (req, res) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const subscription = await storage.getUserActiveSubscription(authReq.user.userId);
+      
+      if (!subscription) {
+        return res.json({ plan: "free", status: "inactive" });
+      }
+
+      const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, subscription.planId));
+      
+      res.json({
+        plan: plan?.name || "free",
+        status: subscription.status,
+        endDate: subscription.endDate,
+        features: plan?.features || []
+      });
+    } catch (error) {
+      console.error("Get subscription status error:", error);
+      res.status(500).json({ message: "Failed to get subscription status" });
+    }
+  });
+
+  // Valuation PDF payment
+  app.post("/api/valuation/pay", authenticateToken, async (req, res) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const { msmeId, amount = 299 } = req.body;
+
+      const result = await monetizationService.createValuationPayment(
+        authReq.user.userId,
+        msmeId,
+        amount
+      );
+
+      res.json({ clientSecret: result.paymentIntent.client_secret });
+    } catch (error) {
+      console.error("Valuation payment error:", error);
+      res.status(500).json({ message: "Failed to create valuation payment" });
+    }
+  });
+
+  // Matchmaking report payment
+  app.post("/api/matchmaking/pay", authenticateToken, async (req, res) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const { msmeId, amount = 99 } = req.body;
+
+      const result = await monetizationService.createMatchmakingReportPayment(
+        authReq.user.userId,
+        msmeId,
+        amount
+      );
+
+      res.json({ clientSecret: result.paymentIntent.client_secret });
+    } catch (error) {
+      console.error("Matchmaking payment error:", error);
+      res.status(500).json({ message: "Failed to create matchmaking payment" });
+    }
+  });
+
+  // Purchase lead (for sellers)
+  app.post("/api/leads/purchase", authenticateToken, requireRole("seller"), async (req, res) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const { buyerId, msmeId, creditsRequired = 1 } = req.body;
+
+      const result = await monetizationService.purchaseLead(
+        authReq.user.userId,
+        buyerId,
+        msmeId,
+        creditsRequired
+      );
+
+      res.json(result);
+    } catch (error) {
+      console.error("Purchase lead error:", error);
+      res.status(500).json({ message: "Failed to purchase lead" });
+    }
+  });
+
+  // Get lead credits (for sellers)
+  app.get("/api/leads/credits", authenticateToken, requireRole("seller"), async (req, res) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const credits = await storage.getLeadCredits(authReq.user.userId);
+      
+      res.json(credits || { 
+        totalCredits: 0, 
+        usedCredits: 0, 
+        remainingCredits: 0 
+      });
+    } catch (error) {
+      console.error("Get lead credits error:", error);
+      res.status(500).json({ message: "Failed to get lead credits" });
+    }
+  });
+
+  // Create API access (for banks/NBFCs)
+  app.post("/api/api-access/create", authenticateToken, requireAnyPermission(["api_access_create"]), async (req, res) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const { planType = "basic" } = req.body;
+
+      const apiKey = await monetizationService.createApiAccess(
+        authReq.user.userId,
+        planType
+      );
+
+      res.json({ apiKey });
+    } catch (error) {
+      console.error("Create API access error:", error);
+      res.status(500).json({ message: "Failed to create API access" });
+    }
+  });
+
+  // Get revenue analytics (admin only)
+  app.get("/api/revenue/analytics", authenticateToken, requireRole("admin"), async (req, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+      
+      const analytics = await monetizationService.getRevenueAnalytics(
+        startDate ? new Date(startDate as string) : undefined,
+        endDate ? new Date(endDate as string) : undefined
+      );
+
+      res.json(analytics);
+    } catch (error) {
+      console.error("Revenue analytics error:", error);
+      res.status(500).json({ message: "Failed to get revenue analytics" });
+    }
+  });
+
+  // Agent commission routes
+  app.get("/api/agent/commissions", authenticateToken, requireRole("agent"), async (req, res) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const commissions = await storage.getAgentCommissions(authReq.user.userId);
+      res.json(commissions);
+    } catch (error) {
+      console.error("Get agent commissions error:", error);
+      res.status(500).json({ message: "Failed to get commissions" });
+    }
+  });
+
+  // Webhook for processing completed payments
+  app.post("/api/webhook/stripe", express.raw({ type: "application/json" }), async (req, res) => {
+    try {
+      if (!stripe) {
+        return res.status(500).json({ message: "Stripe not configured" });
+      }
+
+      const sig = req.headers["stripe-signature"];
+      const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+      if (!sig || !endpointSecret) {
+        return res.status(400).json({ message: "Missing webhook signature" });
+      }
+
+      const event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+
+      if (event.type === "payment_intent.succeeded") {
+        const paymentIntent = event.data.object;
+        const { type, userId, msmeId } = paymentIntent.metadata;
+
+        await monetizationService.processCompletedPayment(paymentIntent.id, type);
+
+        // Handle subscription activation
+        if (type === "subscription") {
+          const { planId } = paymentIntent.metadata;
+          // Create user subscription record
+          await db.insert(userSubscriptions).values({
+            userId: parseInt(userId),
+            planId: parseInt(planId),
+            status: "active",
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+          });
+        }
+      }
+
+      res.json({ received: true });
+    } catch (error) {
+      console.error("Webhook error:", error);
+      res.status(400).json({ message: "Webhook error" });
     }
   });
 

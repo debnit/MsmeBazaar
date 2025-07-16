@@ -367,3 +367,12 @@ export class MLValuationEngine {
 }
 
 export const valuationEngine = new MLValuationEngine();
+
+
+//only move it to Python later if you need:
+
+//batch processing,
+
+//secure valuation API,
+
+//or server-side automation.

@@ -7,6 +7,14 @@ import {
   agentAssignments,
   loanProducts,
   complianceRecords,
+  agentCommissions,
+  valuationPayments,
+  matchmakingReportPayments,
+  leadCredits,
+  leadPurchases,
+  apiAccess,
+  platformRevenue,
+  userSubscriptions,
   type User,
   type InsertUser,
   type NbfcDetails,
@@ -23,6 +31,21 @@ import {
   type InsertLoanProduct,
   type ComplianceRecord,
   type InsertComplianceRecord,
+  type AgentCommission,
+  type InsertAgentCommission,
+  type ValuationPayment,
+  type InsertValuationPayment,
+  type MatchmakingReportPayment,
+  type InsertMatchmakingReportPayment,
+  type LeadCredit,
+  type InsertLeadCredit,
+  type LeadPurchase,
+  type InsertLeadPurchase,
+  type ApiAccess,
+  type InsertApiAccess,
+  type PlatformRevenue,
+  type InsertPlatformRevenue,
+  type UserSubscription,
 } from "@shared/schema";
 import { db } from "../db";
 import { eq, and, desc, ilike, sql, or } from "drizzle-orm";
@@ -79,6 +102,35 @@ export interface IStorage {
   
   // Analytics
   getDashboardStats(userId: number, role: string): Promise<any>;
+  
+  // Monetization operations
+  createAgentCommission(commission: InsertAgentCommission): Promise<AgentCommission>;
+  getAgentCommissions(agentId: number): Promise<AgentCommission[]>;
+  updateAgentCommission(id: number, commission: Partial<InsertAgentCommission>): Promise<AgentCommission>;
+  
+  createValuationPayment(payment: InsertValuationPayment): Promise<ValuationPayment>;
+  getValuationPaymentByPaymentId(paymentId: string): Promise<ValuationPayment | undefined>;
+  updateValuationPayment(paymentId: string, payment: Partial<InsertValuationPayment>): Promise<ValuationPayment>;
+  
+  createMatchmakingReportPayment(payment: InsertMatchmakingReportPayment): Promise<MatchmakingReportPayment>;
+  getMatchmakingReportPaymentByPaymentId(paymentId: string): Promise<MatchmakingReportPayment | undefined>;
+  updateMatchmakingReportPayment(paymentId: string, payment: Partial<InsertMatchmakingReportPayment>): Promise<MatchmakingReportPayment>;
+  
+  createLeadCredit(credit: InsertLeadCredit): Promise<LeadCredit>;
+  getLeadCredits(userId: number): Promise<LeadCredit | undefined>;
+  updateLeadCredits(userId: number, credit: Partial<InsertLeadCredit>): Promise<LeadCredit>;
+  
+  createLeadPurchase(purchase: InsertLeadPurchase): Promise<LeadPurchase>;
+  getLeadPurchases(sellerId: number): Promise<LeadPurchase[]>;
+  
+  createApiAccess(access: InsertApiAccess): Promise<ApiAccess>;
+  getApiAccess(apiKey: string): Promise<ApiAccess | undefined>;
+  updateApiAccess(id: number, access: Partial<InsertApiAccess>): Promise<ApiAccess>;
+  
+  createPlatformRevenue(revenue: InsertPlatformRevenue): Promise<PlatformRevenue>;
+  getPlatformRevenue(filters?: { startDate?: Date; endDate?: Date; status?: string }): Promise<PlatformRevenue[]>;
+  
+  getUserActiveSubscription(userId: number): Promise<UserSubscription | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -702,6 +754,188 @@ export class DatabaseStorage implements IStorage {
       averagePrice: avgPrice?.avg || 0,
       topIndustries: industriesCounts,
     };
+  }
+
+  // Monetization operations
+  async createAgentCommission(commission: InsertAgentCommission): Promise<AgentCommission> {
+    const [result] = await db
+      .insert(agentCommissions)
+      .values(commission)
+      .returning();
+    return result;
+  }
+
+  async getAgentCommissions(agentId: number): Promise<AgentCommission[]> {
+    return await db
+      .select()
+      .from(agentCommissions)
+      .where(eq(agentCommissions.agentId, agentId))
+      .orderBy(desc(agentCommissions.createdAt));
+  }
+
+  async updateAgentCommission(id: number, commission: Partial<InsertAgentCommission>): Promise<AgentCommission> {
+    const [result] = await db
+      .update(agentCommissions)
+      .set(commission)
+      .where(eq(agentCommissions.id, id))
+      .returning();
+    return result;
+  }
+
+  async createValuationPayment(payment: InsertValuationPayment): Promise<ValuationPayment> {
+    const [result] = await db
+      .insert(valuationPayments)
+      .values(payment)
+      .returning();
+    return result;
+  }
+
+  async getValuationPaymentByPaymentId(paymentId: string): Promise<ValuationPayment | undefined> {
+    const [result] = await db
+      .select()
+      .from(valuationPayments)
+      .where(eq(valuationPayments.paymentId, paymentId));
+    return result;
+  }
+
+  async updateValuationPayment(paymentId: string, payment: Partial<InsertValuationPayment>): Promise<ValuationPayment> {
+    const [result] = await db
+      .update(valuationPayments)
+      .set(payment)
+      .where(eq(valuationPayments.paymentId, paymentId))
+      .returning();
+    return result;
+  }
+
+  async createMatchmakingReportPayment(payment: InsertMatchmakingReportPayment): Promise<MatchmakingReportPayment> {
+    const [result] = await db
+      .insert(matchmakingReportPayments)
+      .values(payment)
+      .returning();
+    return result;
+  }
+
+  async getMatchmakingReportPaymentByPaymentId(paymentId: string): Promise<MatchmakingReportPayment | undefined> {
+    const [result] = await db
+      .select()
+      .from(matchmakingReportPayments)
+      .where(eq(matchmakingReportPayments.paymentId, paymentId));
+    return result;
+  }
+
+  async updateMatchmakingReportPayment(paymentId: string, payment: Partial<InsertMatchmakingReportPayment>): Promise<MatchmakingReportPayment> {
+    const [result] = await db
+      .update(matchmakingReportPayments)
+      .set(payment)
+      .where(eq(matchmakingReportPayments.paymentId, paymentId))
+      .returning();
+    return result;
+  }
+
+  async createLeadCredit(credit: InsertLeadCredit): Promise<LeadCredit> {
+    const [result] = await db
+      .insert(leadCredits)
+      .values(credit)
+      .returning();
+    return result;
+  }
+
+  async getLeadCredits(userId: number): Promise<LeadCredit | undefined> {
+    const [result] = await db
+      .select()
+      .from(leadCredits)
+      .where(eq(leadCredits.userId, userId));
+    return result;
+  }
+
+  async updateLeadCredits(userId: number, credit: Partial<InsertLeadCredit>): Promise<LeadCredit> {
+    const [result] = await db
+      .update(leadCredits)
+      .set({ ...credit, updatedAt: new Date() })
+      .where(eq(leadCredits.userId, userId))
+      .returning();
+    return result;
+  }
+
+  async createLeadPurchase(purchase: InsertLeadPurchase): Promise<LeadPurchase> {
+    const [result] = await db
+      .insert(leadPurchases)
+      .values(purchase)
+      .returning();
+    return result;
+  }
+
+  async getLeadPurchases(sellerId: number): Promise<LeadPurchase[]> {
+    return await db
+      .select()
+      .from(leadPurchases)
+      .where(eq(leadPurchases.sellerId, sellerId))
+      .orderBy(desc(leadPurchases.purchasedAt));
+  }
+
+  async createApiAccess(access: InsertApiAccess): Promise<ApiAccess> {
+    const [result] = await db
+      .insert(apiAccess)
+      .values(access)
+      .returning();
+    return result;
+  }
+
+  async getApiAccess(apiKey: string): Promise<ApiAccess | undefined> {
+    const [result] = await db
+      .select()
+      .from(apiAccess)
+      .where(eq(apiAccess.apiKey, apiKey));
+    return result;
+  }
+
+  async updateApiAccess(id: number, access: Partial<InsertApiAccess>): Promise<ApiAccess> {
+    const [result] = await db
+      .update(apiAccess)
+      .set({ ...access, updatedAt: new Date() })
+      .where(eq(apiAccess.id, id))
+      .returning();
+    return result;
+  }
+
+  async createPlatformRevenue(revenue: InsertPlatformRevenue): Promise<PlatformRevenue> {
+    const [result] = await db
+      .insert(platformRevenue)
+      .values(revenue)
+      .returning();
+    return result;
+  }
+
+  async getPlatformRevenue(filters?: { startDate?: Date; endDate?: Date; status?: string }): Promise<PlatformRevenue[]> {
+    let query = db.select().from(platformRevenue);
+    
+    if (filters?.startDate) {
+      query = query.where(sql`${platformRevenue.createdAt} >= ${filters.startDate}`);
+    }
+    
+    if (filters?.endDate) {
+      query = query.where(sql`${platformRevenue.createdAt} <= ${filters.endDate}`);
+    }
+    
+    if (filters?.status) {
+      query = query.where(eq(platformRevenue.status, filters.status));
+    }
+    
+    return await query.orderBy(desc(platformRevenue.createdAt));
+  }
+
+  async getUserActiveSubscription(userId: number): Promise<UserSubscription | undefined> {
+    const [result] = await db
+      .select()
+      .from(userSubscriptions)
+      .where(
+        and(
+          eq(userSubscriptions.userId, userId),
+          eq(userSubscriptions.status, 'active'),
+          sql`${userSubscriptions.endDate} > NOW()`
+        )
+      );
+    return result;
   }
 }
 

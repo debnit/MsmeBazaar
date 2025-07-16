@@ -434,6 +434,150 @@ export const notificationPreferences = pgTable("notification_preferences", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Subscription plans
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  displayName: varchar("display_name", { length: 100 }).notNull(),
+  description: text("description"),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("INR"),
+  billingCycle: varchar("billing_cycle", { length: 20 }).default("monthly"), // monthly, yearly
+  features: json("features"), // JSON array of features
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User subscriptions
+export const userSubscriptions = pgTable("user_subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  planId: integer("plan_id").references(() => subscriptionPlans.id).notNull(),
+  status: varchar("status", { length: 20 }).default("active"), // active, cancelled, expired, pending
+  startDate: timestamp("start_date").defaultNow(),
+  endDate: timestamp("end_date"),
+  autoRenew: boolean("auto_renew").default(true),
+  paymentMethod: varchar("payment_method", { length: 50 }),
+  transactionId: varchar("transaction_id", { length: 100 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Buyer contact limits tracking
+export const buyerContactLimits = pgTable("buyer_contact_limits", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  msmeId: integer("msme_id").references(() => msmeListings.id).notNull(),
+  contactedAt: timestamp("contacted_at").defaultNow(),
+  contactType: varchar("contact_type", { length: 50 }), // email, phone, message
+  monthYear: varchar("month_year", { length: 7 }), // Format: YYYY-MM for tracking monthly limits
+});
+
+// Valuation access tracking
+export const valuationAccess = pgTable("valuation_access", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  msmeId: integer("msme_id").references(() => msmeListings.id).notNull(),
+  accessType: varchar("access_type", { length: 20 }), // summary, full_pdf
+  accessedAt: timestamp("accessed_at").defaultNow(),
+  monthYear: varchar("month_year", { length: 7 }), // Format: YYYY-MM for tracking monthly limits
+});
+
+// Agent commission tracking
+export const agentCommissions = pgTable("agent_commissions", {
+  id: serial("id").primaryKey(),
+  agentId: integer("agent_id").references(() => users.id).notNull(),
+  dealId: integer("deal_id").references(() => loanApplications.id).notNull(),
+  msmeId: integer("msme_id").references(() => msmeListings.id).notNull(),
+  commissionRate: decimal("commission_rate", { precision: 5, scale: 2 }).notNull(), // Percentage
+  dealValue: decimal("deal_value", { precision: 15, scale: 2 }).notNull(),
+  commissionAmount: decimal("commission_amount", { precision: 15, scale: 2 }).notNull(),
+  status: varchar("status", { length: 20 }).default("pending"), // pending, paid, cancelled
+  paidAt: timestamp("paid_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Valuation payments
+export const valuationPayments = pgTable("valuation_payments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  msmeId: integer("msme_id").references(() => msmeListings.id).notNull(),
+  paymentId: varchar("payment_id", { length: 100 }).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("INR"),
+  status: varchar("status", { length: 20 }).default("pending"), // pending, completed, failed
+  pdfGenerated: boolean("pdf_generated").default(false),
+  pdfUrl: varchar("pdf_url", { length: 500 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Matchmaking report payments
+export const matchmakingReportPayments = pgTable("matchmaking_report_payments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  msmeId: integer("msme_id").references(() => msmeListings.id).notNull(),
+  paymentId: varchar("payment_id", { length: 100 }).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("INR"),
+  status: varchar("status", { length: 20 }).default("pending"), // pending, completed, failed
+  reportGenerated: boolean("report_generated").default(false),
+  reportUrl: varchar("report_url", { length: 500 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Lead credits for MSMEs
+export const leadCredits = pgTable("lead_credits", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(), // MSME seller
+  totalCredits: integer("total_credits").default(0),
+  usedCredits: integer("used_credits").default(0),
+  remainingCredits: integer("remaining_credits").default(0),
+  lastPurchaseAt: timestamp("last_purchase_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Lead purchases
+export const leadPurchases = pgTable("lead_purchases", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").references(() => users.id).notNull(), // MSME seller
+  buyerId: integer("buyer_id").references(() => users.id).notNull(), // Buyer info being purchased
+  msmeId: integer("msme_id").references(() => msmeListings.id).notNull(),
+  creditsUsed: integer("credits_used").default(1),
+  contactInfo: json("contact_info"), // Buyer's contact details
+  purchasedAt: timestamp("purchased_at").defaultNow(),
+});
+
+// API access for banks/NBFCs
+export const apiAccess = pgTable("api_access", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  apiKey: varchar("api_key", { length: 100 }).unique().notNull(),
+  planType: varchar("plan_type", { length: 50 }).notNull(), // basic, premium, enterprise
+  requestsLimit: integer("requests_limit").default(1000),
+  requestsUsed: integer("requests_used").default(0),
+  isActive: boolean("is_active").default(true),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Platform revenue tracking
+export const platformRevenue = pgTable("platform_revenue", {
+  id: serial("id").primaryKey(),
+  source: varchar("source", { length: 50 }).notNull(), // commission, valuation, matchmaking, escrow, leads, api, success_fee
+  userId: integer("user_id").references(() => users.id),
+  dealId: integer("deal_id").references(() => loanApplications.id),
+  msmeId: integer("msme_id").references(() => msmeListings.id),
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("INR"),
+  percentage: decimal("percentage", { precision: 5, scale: 2 }), // For percentage-based fees
+  status: varchar("status", { length: 20 }).default("pending"), // pending, collected, refunded
+  metadata: json("metadata"), // Additional context
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Escrow and notification types
 export const insertEscrowAccountSchema = createInsertSchema(escrowAccounts).omit({
   id: true,
@@ -470,6 +614,65 @@ export const insertNotificationPreferenceSchema = createInsertSchema(notificatio
   updatedAt: true,
 });
 
+export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserSubscriptionSchema = createInsertSchema(userSubscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertBuyerContactLimitSchema = createInsertSchema(buyerContactLimits).omit({
+  id: true,
+  contactedAt: true,
+});
+
+export const insertValuationAccessSchema = createInsertSchema(valuationAccess).omit({
+  id: true,
+  accessedAt: true,
+});
+
+export const insertAgentCommissionSchema = createInsertSchema(agentCommissions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertValuationPaymentSchema = createInsertSchema(valuationPayments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertMatchmakingReportPaymentSchema = createInsertSchema(matchmakingReportPayments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertLeadCreditSchema = createInsertSchema(leadCredits).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertLeadPurchaseSchema = createInsertSchema(leadPurchases).omit({
+  id: true,
+  purchasedAt: true,
+});
+
+export const insertApiAccessSchema = createInsertSchema(apiAccess).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPlatformRevenueSchema = createInsertSchema(platformRevenue).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type EscrowAccount = typeof escrowAccounts.$inferSelect;
 export type InsertEscrowAccount = z.infer<typeof insertEscrowAccountSchema>;
 export type EscrowMilestone = typeof escrowMilestones.$inferSelect;
@@ -482,3 +685,25 @@ export type NotificationHistoryRecord = typeof notificationHistory.$inferSelect;
 export type InsertNotificationHistory = z.infer<typeof insertNotificationHistorySchema>;
 export type NotificationPreference = typeof notificationPreferences.$inferSelect;
 export type InsertNotificationPreference = z.infer<typeof insertNotificationPreferenceSchema>;
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
+export type UserSubscription = typeof userSubscriptions.$inferSelect;
+export type InsertUserSubscription = z.infer<typeof insertUserSubscriptionSchema>;
+export type BuyerContactLimit = typeof buyerContactLimits.$inferSelect;
+export type InsertBuyerContactLimit = z.infer<typeof insertBuyerContactLimitSchema>;
+export type ValuationAccess = typeof valuationAccess.$inferSelect;
+export type InsertValuationAccess = z.infer<typeof insertValuationAccessSchema>;
+export type AgentCommission = typeof agentCommissions.$inferSelect;
+export type InsertAgentCommission = z.infer<typeof insertAgentCommissionSchema>;
+export type ValuationPayment = typeof valuationPayments.$inferSelect;
+export type InsertValuationPayment = z.infer<typeof insertValuationPaymentSchema>;
+export type MatchmakingReportPayment = typeof matchmakingReportPayments.$inferSelect;
+export type InsertMatchmakingReportPayment = z.infer<typeof insertMatchmakingReportPaymentSchema>;
+export type LeadCredit = typeof leadCredits.$inferSelect;
+export type InsertLeadCredit = z.infer<typeof insertLeadCreditSchema>;
+export type LeadPurchase = typeof leadPurchases.$inferSelect;
+export type InsertLeadPurchase = z.infer<typeof insertLeadPurchaseSchema>;
+export type ApiAccess = typeof apiAccess.$inferSelect;
+export type InsertApiAccess = z.infer<typeof insertApiAccessSchema>;
+export type PlatformRevenue = typeof platformRevenue.$inferSelect;
+export type InsertPlatformRevenue = z.infer<typeof insertPlatformRevenueSchema>;

@@ -2,8 +2,21 @@ import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { setupSwagger } from "./swagger";
+import { setupModernDocs } from "./docs/openapi";
 import { monitoringService, monitoringMiddleware } from "./services/monitoring";
+
+// Infrastructure imports
+import { initializeSentry, setupMonitoring } from "./infrastructure/monitoring";
+import { queueManager } from "./infrastructure/queue";
+import { mlScheduler } from "./infrastructure/scheduler";
+import { 
+  securityHeaders, 
+  subscriptionBasedRateLimit, 
+  abuseDetection, 
+  ipProtection, 
+  auditLogger 
+} from "./middleware/security";
+import { circuitBreakers } from "./infrastructure/scaling";
 
 const app = express();
 app.use(express.json());
@@ -44,8 +57,8 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Setup Swagger documentation
-  setupSwagger(app);
+  // Setup modern OpenAPI 3.0 documentation
+  setupModernDocs(app);
   
   const server = await registerRoutes(app);
 
@@ -68,7 +81,10 @@ app.use((req, res, next) => {
     });
 
     res.status(status).json({ message });
-    throw err;
+    // Don't re-throw error as it will crash the server
+    if (status >= 500) {
+      console.error('Server error:', err);
+    }
   });
 
   // importantly only setup vite in development and after
