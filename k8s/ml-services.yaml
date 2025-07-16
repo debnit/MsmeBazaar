@@ -1,0 +1,286 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-valuation
+  namespace: msme-platform
+  labels:
+    app: ml-valuation
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ml-valuation
+  template:
+    metadata:
+      labels:
+        app: ml-valuation
+    spec:
+      containers:
+      - name: ml-valuation
+        image: msme-ml:latest
+        command: ["python", "ml_services/valuation_model.py"]
+        ports:
+        - containerPort: 8001
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: msme-secrets
+              key: DATABASE_URL
+        envFrom:
+        - configMapRef:
+            name: msme-config
+        livenessProbe:
+          httpGet:
+            path: /valuation/health
+            port: 8001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /valuation/health
+            port: 8001
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: ml-models
+          mountPath: /app/models
+      volumes:
+      - name: ml-models
+        persistentVolumeClaim:
+          claimName: ml-models-pvc
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-buyer-scoring
+  namespace: msme-platform
+  labels:
+    app: ml-buyer-scoring
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ml-buyer-scoring
+  template:
+    metadata:
+      labels:
+        app: ml-buyer-scoring
+    spec:
+      containers:
+      - name: ml-buyer-scoring
+        image: msme-ml:latest
+        command: ["python", "ml_services/buyer_scoring.py"]
+        ports:
+        - containerPort: 8002
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: msme-secrets
+              key: DATABASE_URL
+        envFrom:
+        - configMapRef:
+            name: msme-config
+        livenessProbe:
+          httpGet:
+            path: /buyer/health
+            port: 8002
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /buyer/health
+            port: 8002
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: ml-models
+          mountPath: /app/models
+      volumes:
+      - name: ml-models
+        persistentVolumeClaim:
+          claimName: ml-models-pvc
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-queue
+  namespace: msme-platform
+  labels:
+    app: ml-queue
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-queue
+  template:
+    metadata:
+      labels:
+        app: ml-queue
+    spec:
+      containers:
+      - name: ml-queue
+        image: msme-ml:latest
+        command: ["python", "ml_services/queue_system.py"]
+        ports:
+        - containerPort: 8003
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: msme-secrets
+              key: DATABASE_URL
+        envFrom:
+        - configMapRef:
+            name: msme-config
+        livenessProbe:
+          httpGet:
+            path: /tasks/health
+            port: 8003
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /tasks/health
+            port: 8003
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-worker
+  namespace: msme-platform
+  labels:
+    app: celery-worker
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: celery-worker
+  template:
+    metadata:
+      labels:
+        app: celery-worker
+    spec:
+      containers:
+      - name: celery-worker
+        image: msme-ml:latest
+        command: ["celery", "-A", "ml_services.queue_system", "worker", "--loglevel=info", "--concurrency=2"]
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: msme-secrets
+              key: DATABASE_URL
+        envFrom:
+        - configMapRef:
+            name: msme-config
+        livenessProbe:
+          exec:
+            command:
+            - celery
+            - -A
+            - ml_services.queue_system
+            - inspect
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: ml-models
+          mountPath: /app/models
+      volumes:
+      - name: ml-models
+        persistentVolumeClaim:
+          claimName: ml-models-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-valuation-service
+  namespace: msme-platform
+spec:
+  selector:
+    app: ml-valuation
+  ports:
+    - protocol: TCP
+      port: 8001
+      targetPort: 8001
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-buyer-scoring-service
+  namespace: msme-platform
+spec:
+  selector:
+    app: ml-buyer-scoring
+  ports:
+    - protocol: TCP
+      port: 8002
+      targetPort: 8002
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-queue-service
+  namespace: msme-platform
+spec:
+  selector:
+    app: ml-queue
+  ports:
+    - protocol: TCP
+      port: 8003
+      targetPort: 8003
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ml-models-pvc
+  namespace: msme-platform
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: standard

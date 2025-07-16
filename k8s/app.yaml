@@ -1,0 +1,125 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: msme-app
+  namespace: msme-platform
+  labels:
+    app: msme-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: msme-app
+  template:
+    metadata:
+      labels:
+        app: msme-app
+    spec:
+      containers:
+      - name: msme-app
+        image: msme-app:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: msme-secrets
+              key: DATABASE_URL
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: msme-secrets
+              key: JWT_SECRET
+        - name: RAZORPAY_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: msme-secrets
+              key: RAZORPAY_KEY_ID
+        - name: RAZORPAY_KEY_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: msme-secrets
+              key: RAZORPAY_KEY_SECRET
+        - name: SENTRY_DSN
+          valueFrom:
+            secretKeyRef:
+              name: msme-secrets
+              key: SENTRY_DSN
+        envFrom:
+        - configMapRef:
+            name: msme-config
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        volumeMounts:
+        - name: uploads
+          mountPath: /app/uploads
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: uploads
+        persistentVolumeClaim:
+          claimName: uploads-pvc
+      - name: logs
+        persistentVolumeClaim:
+          claimName: logs-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: msme-app-service
+  namespace: msme-platform
+spec:
+  selector:
+    app: msme-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: uploads-pvc
+  namespace: msme-platform
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: standard
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: logs-pvc
+  namespace: msme-platform
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: standard

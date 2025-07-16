@@ -1,23 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: msme-square
+  name: msme-platform
   labels:
-    name: msme-square
+    name: msme-platform
     environment: production
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: msme-square-staging
-  labels:
-    name: msme-square-staging
-    environment: staging
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: msme-square-monitoring
-  labels:
-    name: msme-square-monitoring
-    environment: monitoring

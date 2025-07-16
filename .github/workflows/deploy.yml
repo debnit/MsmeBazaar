@@ -1,0 +1,321 @@
+name: Deploy MSMESquare
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '20'
+  PYTHON_VERSION: '3.11'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        pip install uv
+        uv sync
+    
+    - name: Run linting
+      run: |
+        npm run lint
+    
+    - name: Run type checking
+      run: |
+        npm run type-check
+    
+    - name: Run tests
+      run: |
+        npm run test
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379
+        NODE_ENV: test
+    
+    - name: Run ML model tests
+      run: |
+        source .venv/bin/activate
+        python -m pytest ml_services/tests/
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+    
+    - name: Build and push main app
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Build and push ML services
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.ml
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-ml:${{ github.sha }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy-staging:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: staging
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to Railway (Staging)
+      uses: railway-app/railway-deploy@v0.1.0
+      with:
+        railway-token: ${{ secrets.RAILWAY_TOKEN }}
+        service: msme-staging
+        environment: staging
+        variables: |
+          NODE_ENV=staging
+          DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}
+          JWT_SECRET=${{ secrets.STAGING_JWT_SECRET }}
+          RAZORPAY_KEY_ID=${{ secrets.STAGING_RAZORPAY_KEY_ID }}
+          RAZORPAY_KEY_SECRET=${{ secrets.STAGING_RAZORPAY_KEY_SECRET }}
+          SENTRY_DSN=${{ secrets.STAGING_SENTRY_DSN }}
+          REDIS_URL=${{ secrets.STAGING_REDIS_URL }}
+          TYPESENSE_HOST=${{ secrets.STAGING_TYPESENSE_HOST }}
+          TYPESENSE_API_KEY=${{ secrets.STAGING_TYPESENSE_API_KEY }}
+    
+    - name: Run staging tests
+      run: |
+        curl -f ${{ secrets.STAGING_URL }}/health
+        curl -f ${{ secrets.STAGING_URL }}/api/health
+
+  deploy-production:
+    needs: [build, deploy-staging]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+    
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --name msme-production-cluster
+    
+    - name: Deploy to Kubernetes
+      run: |
+        # Update image tags in k8s manifests
+        sed -i "s|image: msme-app:latest|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}|g" k8s/app.yaml
+        sed -i "s|image: msme-ml:latest|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-ml:${{ github.sha }}|g" k8s/ml-services.yaml
+        
+        # Apply manifests
+        kubectl apply -f k8s/namespace.yaml
+        kubectl apply -f k8s/configmap.yaml
+        kubectl apply -f k8s/secrets.yaml
+        kubectl apply -f k8s/postgres.yaml
+        kubectl apply -f k8s/redis.yaml
+        kubectl apply -f k8s/app.yaml
+        kubectl apply -f k8s/ml-services.yaml
+        kubectl apply -f k8s/ingress.yaml
+        
+        # Wait for deployment to complete
+        kubectl rollout status deployment/msme-app -n msme-platform --timeout=300s
+        kubectl rollout status deployment/ml-valuation -n msme-platform --timeout=300s
+        kubectl rollout status deployment/ml-buyer-scoring -n msme-platform --timeout=300s
+    
+    - name: Run production health checks
+      run: |
+        kubectl get pods -n msme-platform
+        kubectl get services -n msme-platform
+        kubectl get ingress -n msme-platform
+        
+        # Wait for services to be ready
+        kubectl wait --for=condition=ready pod -l app=msme-app -n msme-platform --timeout=300s
+        kubectl wait --for=condition=ready pod -l app=ml-valuation -n msme-platform --timeout=300s
+        kubectl wait --for=condition=ready pod -l app=ml-buyer-scoring -n msme-platform --timeout=300s
+    
+    - name: Run smoke tests
+      run: |
+        # Get the load balancer URL
+        export LB_URL=$(kubectl get ingress msme-ingress -n msme-platform -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+        
+        # Run smoke tests
+        curl -f http://$LB_URL/health
+        curl -f http://$LB_URL/api/health
+        curl -f http://$LB_URL/api/valuation/health
+        curl -f http://$LB_URL/api/buyer/health
+        curl -f http://$LB_URL/api/tasks/health
+    
+    - name: Notify deployment success
+      if: success()
+      run: |
+        curl -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+          -H 'Content-Type: application/json' \
+          -d '{
+            "text": "🚀 MSMESquare production deployment successful!",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*MSMESquare Production Deployment* ✅\n\n*Commit:* `${{ github.sha }}`\n*Branch:* `${{ github.ref_name }}`\n*Actor:* ${{ github.actor }}\n\n*Services deployed:*\n• Main Application\n• ML Valuation Service\n• ML Buyer Scoring Service\n• Queue System\n• Database & Redis\n• Monitoring Stack"
+                }
+              }
+            ]
+          }'
+    
+    - name: Notify deployment failure
+      if: failure()
+      run: |
+        curl -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+          -H 'Content-Type: application/json' \
+          -d '{
+            "text": "❌ MSMESquare production deployment failed!",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*MSMESquare Production Deployment* ❌\n\n*Commit:* `${{ github.sha }}`\n*Branch:* `${{ github.ref_name }}`\n*Actor:* ${{ github.actor }}\n\nPlease check the deployment logs and fix the issues."
+                }
+              }
+            ]
+          }'
+
+  security-scan:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+    
+    - name: Run npm audit
+      run: npm audit --audit-level=high
+    
+    - name: Run Python security scan
+      run: |
+        pip install safety
+        safety check --json > safety-report.json || true
+        cat safety-report.json
+
+  performance-test:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup k6
+      uses: grafana/k6-action@v0.3.0
+      with:
+        filename: tests/performance/load-test.js
+        flags: --out influxdb=http://influxdb:8086/k6
+      env:
+        BASE_URL: ${{ secrets.STAGING_URL }}
+    
+    - name: Upload performance results
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-results
+        path: results/

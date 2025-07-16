@@ -1,34 +1,119 @@
 version: '3.8'
 
 services:
-  # Main application
+  # Web Application
   app:
     build: .
     ports:
       - "5000:5000"
     environment:
-      - NODE_ENV=development
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/msme_atlas
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - ML_SERVICE_URL=http://ml-service:8000
-      - ML_API_KEY=${ML_API_KEY:-your-secure-api-key}
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/msme_db
+      - REDIS_URL=redis://redis:6379
+      - TYPESENSE_HOST=typesense
+      - TYPESENSE_PORT=8108
+      - TYPESENSE_API_KEY=xyz
+      - SENTRY_DSN=${SENTRY_DSN}
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
     depends_on:
       - postgres
       - redis
-      - ml-service
+      - typesense
     volumes:
-      - .:/app
-      - /app/node_modules
-    networks:
-      - msme-network
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
-  # PostgreSQL database
+  # ML Services
+  ml-valuation:
+    build: 
+      context: .
+      dockerfile: Dockerfile.ml
+    ports:
+      - "8001:8001"
+    command: python ml_services/valuation_model.py
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/msme_db
+      - REDIS_URL=redis://redis:6379
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    depends_on:
+      - postgres
+      - redis
+      - mlflow
+    volumes:
+      - ./ml_models:/app/models
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/valuation/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  ml-buyer-scoring:
+    build: 
+      context: .
+      dockerfile: Dockerfile.ml
+    ports:
+      - "8002:8002"
+    command: python ml_services/buyer_scoring.py
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/msme_db
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./ml_models:/app/models
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/buyer/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  ml-queue:
+    build: 
+      context: .
+      dockerfile: Dockerfile.ml
+    ports:
+      - "8003:8003"
+    command: python ml_services/queue_system.py
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/msme_db
+      - REDIS_URL=redis://redis:6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./ml_models:/app/models
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/tasks/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Database
   postgres:
     image: postgres:15-alpine
     environment:
-      - POSTGRES_DB=msme_atlas
+      - POSTGRES_DB=msme_db
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
     ports:
@@ -36,92 +121,155 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - msme-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # Redis for caching and queues
+  # Redis
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    networks:
-      - msme-network
-    restart: unless-stopped
-
-  # ML Service with FastAPI
-  ml-service:
-    build: 
-      context: ./server/ml
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    environment:
-      - ML_API_KEY=${ML_API_KEY:-your-secure-api-key}
-    volumes:
-      - ./server/ml:/app
-      - ml_models:/app/models
-    networks:
-      - msme-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # Background worker
-  worker:
-    build: .
-    command: npm run worker
+  # Typesense Search
+  typesense:
+    image: typesense/typesense:0.25.1
+    ports:
+      - "8108:8108"
     environment:
-      - NODE_ENV=development
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/msme_atlas
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - ML_SERVICE_URL=http://ml-service:8000
-      - ML_API_KEY=${ML_API_KEY:-your-secure-api-key}
+      - TYPESENSE_DATA_DIR=/data
+      - TYPESENSE_API_KEY=xyz
+      - TYPESENSE_ENABLE_CORS=true
+    volumes:
+      - typesense_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8108/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MLflow Tracking Server
+  mlflow:
+    image: python:3.11-slim
+    ports:
+      - "5001:5000"
+    environment:
+      - BACKEND_STORE_URI=postgresql://postgres:password@postgres:5432/mlflow_db
+      - DEFAULT_ARTIFACT_ROOT=/mlflow/artifacts
+    volumes:
+      - mlflow_artifacts:/mlflow/artifacts
+      - ./mlflow:/mlflow
+    command: >
+      bash -c "
+        pip install mlflow psycopg2-binary &&
+        mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri postgresql://postgres:password@postgres:5432/mlflow_db --default-artifact-root /mlflow/artifacts
+      "
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Celery Worker
+  celery-worker:
+    build: 
+      context: .
+      dockerfile: Dockerfile.ml
+    command: celery -A ml_services.queue_system worker --loglevel=info --concurrency=4
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/msme_db
+      - REDIS_URL=redis://redis:6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
       - postgres
       - redis
-      - ml-service
     volumes:
-      - .:/app
-      - /app/node_modules
-    networks:
-      - msme-network
+      - ./ml_models:/app/models
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "celery", "-A", "ml_services.queue_system", "inspect", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Celery Beat Scheduler
+  celery-beat:
+    build: 
+      context: .
+      dockerfile: Dockerfile.ml
+    command: celery -A ml_services.queue_system beat --loglevel=info
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/msme_db
+      - REDIS_URL=redis://redis:6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./ml_models:/app/models
+      - ./logs:/app/logs
     restart: unless-stopped
 
-  # Nginx reverse proxy
+  # Nginx Load Balancer
   nginx:
     image: nginx:alpine
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
     depends_on:
       - app
-    networks:
-      - msme-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # Monitoring with Prometheus
+  # Prometheus Monitoring
   prometheus:
     image: prom/prometheus:latest
     ports:
       - "9090:9090"
     volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
-    networks:
-      - msme-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # Grafana for monitoring dashboards
+  # Grafana Dashboard
   grafana:
     image: grafana/grafana:latest
     ports:
@@ -130,35 +278,40 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana:/etc/grafana/provisioning
-    networks:
-      - msme-network
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # Jupyter notebook for ML development
-  jupyter:
-    build:
-      context: ./server/ml
-      dockerfile: Dockerfile.jupyter
+  # Jaeger Tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
     ports:
-      - "8888:8888"
+      - "16686:16686"
+      - "14250:14250"
     environment:
-      - JUPYTER_TOKEN=your-jupyter-token
-    volumes:
-      - ./server/ml:/app
-      - ml_models:/app/models
-      - ./notebooks:/app/notebooks
-    networks:
-      - msme-network
+      - COLLECTOR_OTLP_ENABLED=true
     restart: unless-stopped
-
-networks:
-  msme-network:
-    driver: bridge
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:16686/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   postgres_data:
   redis_data:
-  ml_models:
+  typesense_data:
+  mlflow_artifacts:
   prometheus_data:
   grafana_data:
+
+networks:
+  default:
+    driver: bridge
