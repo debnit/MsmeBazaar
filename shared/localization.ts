@@ -661,6 +661,363 @@ export const translations: LocalizedContent = {
     en: 'Registration Failed',
     hi: 'पंजीकरण असफल',
     or: 'ପଞ୍ଜୀକରଣ ବିଫଳ'
+  },
+
+  // Gamification Elements
+  'gamification.level.beginner': {
+    en: 'Beginner Trader',
+    hi: 'शुरुआती व्यापारी',
+    or: 'ପ୍ରାରମ୍ଭିକ ବ୍ୟବସାୟୀ'
+  },
+  'gamification.level.explorer': {
+    en: 'Business Explorer',
+    hi: 'व्यापार अन्वेषक',
+    or: 'ବ୍ୟବସାୟ ଅନ୍ଵେଷକ'
+  },
+  'gamification.level.expert': {
+    en: 'Deal Expert',
+    hi: 'डील विशेषज्ञ',
+    or: 'ଡିଲ୍ ବିଶେଷଜ୍ଞ'
+  },
+  'gamification.level.master': {
+    en: 'MSME Master',
+    hi: 'एमएसएमई मास्टर',
+    or: 'MSME ମାଷ୍ଟର'
+  },
+  'gamification.points.earned': {
+    en: 'Points Earned',
+    hi: 'अंक अर्जित',
+    or: 'ପଏଣ୍ଟ ଅର୍ଜିତ'
+  },
+  'gamification.badges.firstLogin': {
+    en: 'Welcome Badge',
+    hi: 'स्वागत बैज',
+    or: 'ସ୍ୱାଗତ ବ୍ୟାଜ୍'
+  },
+  'gamification.badges.profileComplete': {
+    en: 'Profile Pro',
+    hi: 'प्रोफाइल प्रो',
+    or: 'ପ୍ରୋଫାଇଲ୍ ପ୍ରୋ'
+  },
+  'gamification.badges.firstListing': {
+    en: 'First Seller',
+    hi: 'पहला विक्रेता',
+    or: 'ପ୍ରଥମ ବିକ୍ରେତା'
+  },
+  'gamification.badges.dealMaker': {
+    en: 'Deal Maker',
+    hi: 'डील मेकर',
+    or: 'ଡିଲ୍ ମେକର'
+  },
+  'gamification.achievements.title': {
+    en: 'Your Achievements',
+    hi: 'आपकी उपलब्धियां',
+    or: 'ଆପଣଙ୍କ ସଫଳତା'
+  },
+  'gamification.progress.title': {
+    en: 'Your Progress',
+    hi: 'आपकी प्रगति',
+    or: 'ଆପଣଙ୍କ ପ୍ରଗତି'
+  },
+  'gamification.challenge.weekly': {
+    en: 'Weekly Challenge',
+    hi: 'साप्ताहिक चुनौती',
+    or: 'ସାପ୍ତାହିକ ଚ୍ୟାଲେଞ୍ଜ'
+  },
+  'gamification.reward.coins': {
+    en: 'MSMECoins',
+    hi: 'एमएसएमई कॉइन्स',
+    or: 'MSME କଏନ୍ସ'
+  },
+  'gamification.streak.login': {
+    en: 'Login Streak',
+    hi: 'लॉगिन स्ट्रीक',
+    or: 'ଲଗଇନ୍ ସ୍ଟ୍ରିକ୍'
+  },
+  'gamification.milestone.reached': {
+    en: 'Milestone Reached!',
+    hi: 'मील का पत्थर पहुंच गया!',
+    or: 'ମାଇଲଷ୍ଟୋନ ପହଞ୍ଚିଲା!'
+  },
+  'gamification.next.level': {
+    en: 'Next Level',
+    hi: 'अगला स्तर',
+    or: 'ପରବର୍ତ୍ତୀ ସ୍ତର'
+  },
+  'gamification.leaderboard.title': {
+    en: 'Top Performers',
+    hi: 'शीर्ष प्रदर्शनकर्ता',
+    or: 'ଶୀର୍ଷ ପ୍ରଦର୍ଶନକାରୀ'
+  },
+  'gamification.tutorial.complete': {
+    en: 'Tutorial Complete!',
+    hi: 'ट्यूटोरियल पूर्ण!',
+    or: 'ଟ୍ୟୁଟୋରିଆଲ୍ ସମ୍ପୂର୍ଣ୍ଣ!'
+  },
+  'gamification.social.share': {
+    en: 'Share Achievement',
+    hi: 'उपलब्धि साझा करें',
+    or: 'ସଫଳତା ସାଝା କରନ୍ତୁ'
+  },
+  'gamification.referral.bonus': {
+    en: 'Referral Bonus',
+    hi: 'रेफरल बोनस',
+    or: 'ରେଫରାଲ୍ ବୋନସ୍'
+  },
+  'gamification.daily.task': {
+    en: 'Daily Task',
+    hi: 'दैनिक कार्य',
+    or: 'ଦୈନିକ କାର୍ଯ୍ୟ'
+  },
+  'gamification.spin.wheel': {
+    en: 'Spin the Wheel',
+    hi: 'व्हील घुमाएं',
+    or: 'ଚକ ଘୁରାନ୍ତୁ'
+  },
+  'gamification.treasure.hunt': {
+    en: 'Business Treasure Hunt',
+    hi: 'व्यावसायिक खजाना खोज',
+    or: 'ବ୍ୟବସାୟ ଖଜାନା ଖୋଜ'
+  },
+  'gamification.community.rank': {
+    en: 'Community Rank',
+    hi: 'समुदाय रैंक',
+    or: 'ସମ୍ପ୍ରଦାୟ ରାଙ୍କ'
+  },
+  'gamification.instant.reward': {
+    en: 'Instant Reward!',
+    hi: 'तुरंत पुरस्कार!',
+    or: 'ତୁରନ୍ତ ପୁରସ୍କାର!'
+  },
+  'gamification.power.user': {
+    en: 'Power User',
+    hi: 'पावर उपयोगकर्ता',
+    or: 'ପାୱାର ଉପଯୋଗକର୍ତ୍ତା'
+  },
+  'gamification.mission.complete': {
+    en: 'Mission Complete!',
+    hi: 'मिशन पूर्ण!',
+    or: 'ମିସନ୍ ସମ୍ପୂର୍ଣ୍ଣ!'
+  },
+  'gamification.unlock.feature': {
+    en: 'Feature Unlocked!',
+    hi: 'सुविधा अनलॉक!',
+    or: 'ଫିଚର ଅନଲକ୍!'
+  },
+  'gamification.business.score': {
+    en: 'Business Score',
+    hi: 'व्यावसायिक स्कोर',
+    or: 'ବ୍ୟବସାୟ ସ୍କୋର'
+  },
+  'gamification.trust.rating': {
+    en: 'Trust Rating',
+    hi: 'विश्वास रेटिंग',
+    or: 'ବିଶ୍ୱାସ ରେଟିଂ'
+  },
+  'gamification.success.story': {
+    en: 'Success Story Shared',
+    hi: 'सफलता की कहानी साझा की',
+    or: 'ସଫଳତା କାହାଣୀ ସାଝା'
+  },
+  'gamification.mentor.badge': {
+    en: 'Community Mentor',
+    hi: 'समुदाय मेंटर',
+    or: 'ସମ୍ପ୍ରଦାୟ ମେଣ୍ଟର'
+  },
+  'gamification.early.adopter': {
+    en: 'Early Adopter',
+    hi: 'प्रारंभिक अपनाने वाला',
+    or: 'ପ୍ରାରମ୍ଭିକ ଗ୍ରହଣକାରୀ'
+  },
+  'gamification.feedback.champion': {
+    en: 'Feedback Champion',
+    hi: 'फीडबैक चैंपियन',
+    or: 'ଫିଡବ୍ୟାକ ଚାମ୍ପିଅନ୍'
+  },
+  'gamification.network.builder': {
+    en: 'Network Builder',
+    hi: 'नेटवर्क बिल्डर',
+    or: 'ନେଟୱର୍କ ବିଲ୍ଡର'
+  },
+  'gamification.verified.business': {
+    en: 'Verified Business',
+    hi: 'सत्यापित व्यवसाय',
+    or: 'ଯାଞ୍ଚିତ ବ୍ୟବସାୟ'
+  },
+  'gamification.engagement.streak': {
+    en: 'Engagement Streak',
+    hi: 'व्यस्तता स्ट्रीक',
+    or: 'ଯୋଗଦାନ ସ୍ଟ୍ରିକ୍'
+  },
+  'gamification.discovery.points': {
+    en: 'Discovery Points',
+    hi: 'खोज अंक',
+    or: 'ଆବିଷ୍କାର ପଏଣ୍ଟ'
+  },
+  'gamification.collaboration.bonus': {
+    en: 'Collaboration Bonus',
+    hi: 'सहयोग बोनस',
+    or: 'ସହଯୋଗ ବୋନସ୍'
+  },
+  'gamification.innovation.award': {
+    en: 'Innovation Award',
+    hi: 'नवाचार पुरस्कार',
+    or: 'ନବାଚାର ପୁରସ୍କାର'
+  },
+  'gamification.seasonal.event': {
+    en: 'Seasonal Event',
+    hi: 'मौसमी कार्यक्रम',
+    or: 'ମୌସୁମୀ ଘଟଣା'
+  },
+  'gamification.exclusive.access': {
+    en: 'Exclusive Access',
+    hi: 'विशेष पहुंच',
+    or: 'ବିଶେଷ ଆକ୍ସେସ୍'
+  },
+  'gamification.congratulations': {
+    en: 'Congratulations!',
+    hi: 'बधाई हो!',
+    or: 'ଅଭିନନ୍ଦନ!'
+  },
+  'gamification.keep.going': {
+    en: 'Keep Going!',
+    hi: 'जारी रखें!',
+    or: 'ଜାରି ରଖନ୍ତୁ!'
+  },
+  'gamification.almost.there': {
+    en: 'Almost There!',
+    hi: 'लगभग वहां!',
+    or: 'ପ୍ରାୟ ସେଠାରେ!'
+  },
+  'gamification.challenge.accepted': {
+    en: 'Challenge Accepted!',
+    hi: 'चुनौती स्वीकार की!',
+    or: 'ଚ୍ୟାଲେଞ୍ଜ ଗ୍ରହଣ!'
+  },
+  'gamification.level.up': {
+    en: 'Level Up!',
+    hi: 'स्तर बढ़ाएं!',
+    or: 'ସ୍ତର ବଢ଼ାନ୍ତୁ!'
+  },
+  'gamification.bonus.unlocked': {
+    en: 'Bonus Unlocked!',
+    hi: 'बोनस अनलॉक!',
+    or: 'ବୋନସ୍ ଅନଲକ୍!'
+  },
+  'gamification.special.offer': {
+    en: 'Special Offer',
+    hi: 'विशेष प्रस्ताव',
+    or: 'ବିଶେଷ ଅଫର'
+  },
+  'gamification.limited.time': {
+    en: 'Limited Time',
+    hi: 'सीमित समय',
+    or: 'ସୀମିତ ସମୟ'
+  },
+  'gamification.mystery.reward': {
+    en: 'Mystery Reward',
+    hi: 'रहस्यमय पुरस्कार',
+    or: 'ରହସ୍ୟମୟ ପୁରସ୍କାର'
+  },
+  'gamification.premium.access': {
+    en: 'Premium Access',
+    hi: 'प्रीमियम पहुंच',
+    or: 'ପ୍ରିମିୟମ ଆକ୍ସେସ୍'
+  },
+  'gamification.vip.status': {
+    en: 'VIP Status',
+    hi: 'वीआईपी स्थिति',
+    or: 'VIP ସ୍ଥିତି'
+  },
+  'gamification.golden.opportunity': {
+    en: 'Golden Opportunity',
+    hi: 'सुनहरा अवसर',
+    or: 'ସୁବର୍ଣ୍ଣ ସୁଯୋଗ'
+  },
+  'gamification.jackpot.winner': {
+    en: 'Jackpot Winner!',
+    hi: 'जैकपॉट विजेता!',
+    or: 'ଜ୍ୟାକପଟ ବିଜେତା!'
+  },
+  'gamification.hall.of.fame': {
+    en: 'Hall of Fame',
+    hi: 'हॉल ऑफ फेम',
+    or: 'ହଲ ଅଫ ଫେମ'
+  },
+  'gamification.legendary.status': {
+    en: 'Legendary Status',
+    hi: 'पौराणिक स्थिति',
+    or: 'କିମ୍ବଦନ୍ତୀ ସ୍ଥିତି'
+  },
+  'gamification.welcome.title': {
+    en: 'Welcome to MSMESquare!',
+    hi: 'MSMESquare में आपका स्वागत है!',
+    or: 'MSMESquare ରେ ଆପଣଙ୍କୁ ସ୍ୱାଗତ!'
+  },
+  'gamification.welcome.description': {
+    en: 'You\'ve earned your first achievement! Start your journey now.',
+    hi: 'आपने अपनी पहली उपलब्धि अर्जित की है! अब अपनी यात्रा शुरू करें।',
+    or: 'ଆପଣ ଆପଣଙ୍କର ପ୍ରଥମ ସାଧନା ଅର୍ଜନ କରିଛନ୍ତି! ଏବେ ଆପଣଙ୍କର ଯାତ୍ରା ଆରମ୍ଭ କରନ୍ତୁ।'
+  },
+  'gamification.badges.welcome': {
+    en: 'Welcome Badge',
+    hi: 'स्वागत बैज',
+    or: 'ସ୍ୱାଗତ ବ୍ୟାଜ'
+  },
+  'gamification.badges.profile': {
+    en: 'Profile Complete',
+    hi: 'प्रोफाइल पूर्ण',
+    or: 'ପ୍ରୋଫାଇଲ୍ ସମ୍ପୂର୍ଣ୍ଣ'
+  },
+  'gamification.badges.listing': {
+    en: 'First Listing',
+    hi: 'पहली लिस्टिंग',
+    or: 'ପ୍ରଥମ ଲିଷ୍ଟିଂ'
+  },
+  'gamification.badges.deal': {
+    en: 'Deal Maker',
+    hi: 'डील मेकर',
+    or: 'ଡିଲ୍ ମେକର'
+  },
+  'gamification.badges.mentor': {
+    en: 'Mentor',
+    hi: 'मेंटर',
+    or: 'ମେଣ୍ଟର'
+  },
+  'gamification.badges.verified': {
+    en: 'Verified Business',
+    hi: 'सत्यापित व्यापार',
+    or: 'ସତ୍ୟାପିତ ବ୍ୟବସାୟ'
+  },
+  'gamification.badges.streak': {
+    en: 'Streak Master',
+    hi: 'स्ट्रीक मास्टर',
+    or: 'ସ୍ଟ୍ରିକ୍ ମାଷ୍ଟର'
+  },
+  'gamification.badges.referral': {
+    en: 'Referral Champion',
+    hi: 'रेफरल चैंपियन',
+    or: 'ରେଫରଲ୍ ଚାମ୍ପିଅନ୍'
+  },
+  'gamification.badges.innovation': {
+    en: 'Innovation Award',
+    hi: 'इनोवेशन अवार्ड',
+    or: 'ଇନୋଭେଶନ ପୁରସ୍କାର'
+  },
+  'gamification.badges.collaboration': {
+    en: 'Team Player',
+    hi: 'टीम प्लेयर',
+    or: 'ଟିମ୍ ପ୍ଲେୟର'
+  },
+  'gamification.badges.feedback': {
+    en: 'Feedback Hero',
+    hi: 'फीडबैक हीरो',
+    or: 'ଫିଡବ୍ୟାକ୍ ହିରୋ'
+  },
+  'gamification.badges.network': {
+    en: 'Network Builder',
+    hi: 'नेटवर्क बिल्डर',
+    or: 'ନେଟୱର୍କ ବିଲ୍ଡର'
   }
 };
 

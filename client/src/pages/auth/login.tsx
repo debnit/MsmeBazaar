@@ -10,10 +10,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Building, Users, TrendingUp, Shield, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Building, Users, TrendingUp, Shield, ArrowRight, Eye, EyeOff, Gift, Trophy, Star, Sparkles, Crown, Zap, Target, CheckCircle } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useLocalization } from '@/hooks/useLocalization';
 import { LanguageSelector } from '@/components/LanguageSelector';
+import { RewardNotification } from '@/components/gamification/RewardNotification';
+import { motion } from 'framer-motion';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -44,6 +46,8 @@ export default function AuthPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { t } = useLocalization();
+  const [showWelcomeReward, setShowWelcomeReward] = useState(false);
+  const [registrationStep, setRegistrationStep] = useState(1);
 
   const loginForm = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -89,12 +93,19 @@ export default function AuthPage() {
       return response;
     },
     onSuccess: () => {
+      // Show welcome reward notification
+      setShowWelcomeReward(true);
+      
       toast({
         title: t('auth.register.success'),
         description: t('auth.register.welcome'),
         variant: 'default'
       });
-      setLocation('/dashboard');
+      
+      // Delay navigation to show reward
+      setTimeout(() => {
+        setLocation('/dashboard');
+      }, 3000);
     },
     onError: (error: Error) => {
       toast({
@@ -406,6 +417,25 @@ export default function AuthPage() {
           </div>
         </div>
       </div>
+      
+      {/* Welcome Reward Notification */}
+      {showWelcomeReward && (
+        <RewardNotification
+          isVisible={showWelcomeReward}
+          onClose={() => setShowWelcomeReward(false)}
+          reward={{
+            type: 'achievement',
+            title: t('gamification.welcome.title'),
+            description: t('gamification.welcome.description'),
+            value: 100,
+            special: true
+          }}
+          onClaim={() => {
+            setShowWelcomeReward(false);
+            setLocation('/dashboard');
+          }}
+        />
+      )}
     </div>
   );
 }

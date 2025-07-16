@@ -3,11 +3,31 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLocalization } from "@/hooks/useLocalization";
 import { AccessibilityToolbar } from "@/components/AccessibilityToolbar";
-import { Building, Users, MapPin, TrendingUp, FileText, AlertCircle } from "lucide-react";
+import { GamificationDashboard } from "@/components/gamification/GamificationDashboard";
+import { Building, Users, MapPin, TrendingUp, FileText, AlertCircle, Trophy, Star, Crown, Zap } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { motion } from "framer-motion";
+import { useState } from "react";
 
 export default function Dashboard() {
   const { t } = useLocalization();
+  
+  // Mock user progress for gamification
+  const [userProgress, setUserProgress] = useState({
+    level: 3,
+    currentXP: 750,
+    requiredXP: 1000,
+    totalPoints: 2400,
+    streak: 5,
+    rank: 127,
+    badges: ['welcome', 'profile', 'verified'],
+    completedTasks: 8,
+    totalTasks: 12
+  });
+
+  const handleProgressUpdate = (newProgress: any) => {
+    setUserProgress(prev => ({ ...prev, ...newProgress }));
+  };
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['/api/dashboard/stats'],
@@ -39,10 +59,41 @@ export default function Dashboard() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900">{t('dashboard.welcome')}</h2>
-          <p className="text-gray-600">{t('dashboard.subtitle')}</p>
-        </div>
+        <motion.div 
+          className="mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">{t('dashboard.welcome')}</h2>
+              <p className="text-gray-600">{t('dashboard.subtitle')}</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-full">
+                <Trophy className="w-4 h-4" />
+                <span className="text-sm font-semibold">Level {userProgress.level}</span>
+              </div>
+              <div className="flex items-center space-x-2 bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-4 py-2 rounded-full">
+                <Star className="w-4 h-4" />
+                <span className="text-sm font-semibold">{userProgress.totalPoints} pts</span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+        
+        {/* Gamification Dashboard */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <GamificationDashboard
+            userProgress={userProgress}
+            onUpdateProgress={handleProgressUpdate}
+          />
+        </motion.div>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
