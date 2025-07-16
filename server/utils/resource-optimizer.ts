@@ -57,8 +57,8 @@ class ResourceOptimizer {
   }
 
   private optimizeResources(): void {
-    // Memory optimization
-    if (this.performanceMetrics.memoryUsage > 150 * 1024 * 1024) { // 150MB threshold
+    // Memory optimization - increased threshold
+    if (this.performanceMetrics.memoryUsage > 400 * 1024 * 1024) { // 400MB threshold
       this.optimizeMemory();
     }
 

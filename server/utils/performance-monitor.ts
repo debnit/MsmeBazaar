@@ -21,10 +21,10 @@ class PerformanceMonitor extends EventEmitter {
   private responseTimes: number[] = [];
   private monitoringInterval: NodeJS.Timeout | null = null;
   private alertThresholds = {
-    memory: 150 * 1024 * 1024, // 150MB
-    cpu: 80, // 80%
-    errorRate: 0.05, // 5%
-    responseTime: 2000, // 2 seconds
+    memory: 500 * 1024 * 1024, // 500MB - more reasonable
+    cpu: 90, // 90%
+    errorRate: 0.1, // 10%
+    responseTime: 5000, // 5 seconds
   };
 
   private constructor() {
@@ -43,7 +43,7 @@ class PerformanceMonitor extends EventEmitter {
     this.monitoringInterval = setInterval(() => {
       this.collectMetrics();
       this.checkAlerts();
-    }, 5000); // Monitor every 5 seconds
+    }, 30000); // Monitor every 30 seconds - less aggressive
   }
 
   private collectMetrics(): void {

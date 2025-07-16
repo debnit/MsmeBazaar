@@ -5,7 +5,10 @@ import { clientCache } from '../../client/src/utils/cache';
 export class CacheManager {
   private cleanupInterval: NodeJS.Timeout | null = null;
   private maxCacheSize = 1000;
-  private maxMemoryUsage = 100 * 1024 * 1024; // 100MB
+  private maxMemoryUsage = 400 * 1024 * 1024; // 400MB - more reasonable for development
+  private memoryCache: Map<string, any> = new Map();
+  private cacheHits = 0;
+  private cacheMisses = 0;
 
   constructor() {
     this.startCleanupSchedule();
@@ -16,7 +19,7 @@ export class CacheManager {
     this.cleanupInterval = setInterval(() => {
       this.cleanupExpiredEntries();
       this.enforceMemoryLimits();
-    }, 5 * 60 * 1000); // Every 5 minutes
+    }, 10 * 60 * 1000); // Every 10 minutes - less aggressive
   }
 
   // Clean expired cache entries
