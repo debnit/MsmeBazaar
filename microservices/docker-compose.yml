@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+  # API Gateway
+  gateway:
+    build: ./api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - GATEWAY_PORT=3000
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - MSME_SERVICE_URL=http://msme-service:3002
+      - VALUATION_SERVICE_URL=http://valuation-service:3003
+      - MATCHMAKING_SERVICE_URL=http://matchmaking-service:3004
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3005
+    depends_on:
+      - auth-service
+      - msme-service
+      - valuation-service
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  # Authentication Service
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - AUTH_SERVICE_PORT=3001
+      - JWT_SECRET=${JWT_SECRET:-fallback-secret-key}
+      - SERVICE_NAME=auth
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  # MSME Service
+  msme-service:
+    build: ./msme-service
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      - MSME_SERVICE_PORT=3002
+      - SERVICE_NAME=msme
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  # Valuation Service
+  valuation-service:
+    build: ./valuation-service
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=production
+      - VALUATION_SERVICE_PORT=3003
+      - SERVICE_NAME=valuation
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  # Load Balancer (Nginx)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - gateway
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  # Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  # PostgreSQL for persistent data
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=msme_atlas
+      - POSTGRES_USER=msme_user
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-secure-password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  # Monitoring with Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3010:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+networks:
+  microservices-network:
+    driver: bridge
+
+volumes:
+  redis_data:
+  postgres_data:
+  grafana_data:
