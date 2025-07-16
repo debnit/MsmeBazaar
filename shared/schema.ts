@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, json, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, json, varchar, real } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -332,6 +332,50 @@ export const insertComplianceRecordSchema = createInsertSchema(complianceRecords
   updatedAt: true,
 });
 
+// AI and Analytics Tables
+export const vectorEmbeddings = pgTable("vector_embeddings", {
+  id: serial("id").primaryKey(),
+  entityId: integer("entity_id").notNull(),
+  entityType: varchar("entity_type", { length: 20 }).notNull(), // 'msme', 'buyer', 'agent'
+  embedding: real("embedding").array().notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const conversations = pgTable("conversations", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  sessionId: varchar("session_id", { length: 255 }).notNull(),
+  userMessage: text("user_message").notNull(),
+  assistantResponse: text("assistant_response").notNull(),
+  userRole: varchar("user_role", { length: 20 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const knowledgeBase = pgTable("knowledge_base", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  category: varchar("category", { length: 100 }).notNull(),
+  tags: json("tags"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  action: varchar("action", { length: 100 }).notNull(),
+  entityType: varchar("entity_type", { length: 50 }),
+  entityId: integer("entity_id"),
+  oldValues: json("old_values"),
+  newValues: json("new_values"),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  timestamp: timestamp("timestamp").defaultNow(),
+  details: text("details"),
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -349,6 +393,10 @@ export type LoanProduct = typeof loanProducts.$inferSelect;
 export type InsertLoanProduct = z.infer<typeof insertLoanProductSchema>;
 export type ComplianceRecord = typeof complianceRecords.$inferSelect;
 export type InsertComplianceRecord = z.infer<typeof insertComplianceRecordSchema>;
+export type VectorEmbedding = typeof vectorEmbeddings.$inferSelect;
+export type Conversation = typeof conversations.$inferSelect;
+export type KnowledgeBase = typeof knowledgeBase.$inferSelect;
+export type AuditLog = typeof auditLogs.$inferSelect;
 
 // Escrow accounts table
 export const escrowAccounts = pgTable("escrow_accounts", {

@@ -79,6 +79,11 @@ Preferred communication style: Simple, everyday language.
 - **ESG Compliance Automation**: Automated ESG reporting, sustainability metrics, and creditworthiness assessments for regulatory compliance
 - **Kubernetes Infrastructure**: Complete K8s deployment with Prometheus monitoring, Grafana dashboards, and automated deployment scripts
 - **Feature Flag System**: Implemented gradual rollout capabilities with A/B testing support for safe feature deployment
+- **Advanced AI Components**: Implemented Pinecone vector search for semantic matchmaking with 1536-dimensional embeddings and cosine similarity
+- **Smart Assistant Integration**: Built LangChain + LlamaIndex powered conversational AI with MSMESquare knowledge base for agents and buyers
+- **Metabase Analytics**: Embedded analytics dashboards for NBFCs, agents, and admins with role-based access and JWT token authentication
+- **Retool Admin Tools**: Internal operations tools for user management, listing moderation, loan processing, and compliance monitoring
+- **VC-Grade AI Infrastructure**: Production-ready AI stack with vector embeddings, semantic search, conversational AI, and embedded analytics
 
 ## System Architecture
 

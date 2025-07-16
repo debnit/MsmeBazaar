@@ -53,6 +53,7 @@ import { monitoringService } from "./services/monitoring";
 import { escrowService } from "./services/escrow";
 import { monetizationService } from "./services/monetization";
 import { memoryManager } from "./utils/memory-manager";
+import aiAnalyticsRouter from "./routes/ai-analytics";
 import { resourceOptimizer } from "./utils/resource-optimizer";
 import { errorHandler } from "./utils/error-handler";
 import jwt from "jsonwebtoken";
@@ -1645,6 +1646,9 @@ async function loadFullRoutes(app: Express) {
       res.status(400).json({ message: "Webhook error" });
     }
   });
+
+  // Mount AI and Analytics routes
+  app.use("/api/ai-analytics", aiAnalyticsRouter);
 
   // Admin routes
   app.get("/api/admin/users", authenticateToken, requireRole("admin"), async (req, res) => {
