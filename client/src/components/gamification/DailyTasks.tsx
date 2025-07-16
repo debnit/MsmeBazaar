@@ -1,392 +1,298 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useLocalization } from "@/hooks/useLocalization";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { 
   CheckCircle, 
+  Target, 
   Clock, 
   Star, 
-  Trophy, 
-  Gift, 
-  Target,
-  Calendar,
-  User,
-  MessageSquare,
-  Eye,
-  Heart,
-  Search,
-  Plus,
-  Share2
+  X, 
+  Gift,
+  Users,
+  FileText,
+  MessageCircle,
+  TrendingUp
 } from "lucide-react";
 
 interface DailyTasksProps {
   isVisible: boolean;
   onClose: () => void;
-  onTaskComplete: (taskId: string, reward: any) => void;
+  onTaskComplete: (taskId: string, reward: number) => void;
 }
 
 interface Task {
   id: string;
   title: string;
   description: string;
-  icon: React.ReactNode;
+  reward: number;
   progress: number;
   maxProgress: number;
   completed: boolean;
-  reward: {
-    type: 'points' | 'coins' | 'badge' | 'special';
-    value: number;
-    label: string;
-  };
-  color: string;
-  category: 'engagement' | 'social' | 'business' | 'learning';
+  category: 'social' | 'business' | 'engagement' | 'learning';
+  icon: React.ReactNode;
 }
 
-export function DailyTasks({ isVisible, onClose, onTaskComplete }: DailyTasksProps) {
-  const { t } = useLocalization();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [completedToday, setCompletedToday] = useState(0);
-  const [totalTasks] = useState(8);
+export function DailyTasks({ 
+  isVisible, 
+  onClose, 
+  onTaskComplete 
+}: DailyTasksProps) {
+  const [tasks, setTasks] = useState<Task[]>([
+    {
+      id: 'profile_update',
+      title: 'Update Your Profile',
+      description: 'Complete your business profile with all required information',
+      reward: 50,
+      progress: 80,
+      maxProgress: 100,
+      completed: false,
+      category: 'business',
+      icon: <Users className="w-5 h-5" />
+    },
+    {
+      id: 'create_listing',
+      title: 'Create New Listing',
+      description: 'Post a new MSME listing on the marketplace',
+      reward: 100,
+      progress: 0,
+      maxProgress: 1,
+      completed: false,
+      category: 'business',
+      icon: <FileText className="w-5 h-5" />
+    },
+    {
+      id: 'browse_listings',
+      title: 'Browse 5 Listings',
+      description: 'Explore and view at least 5 different MSME listings',
+      reward: 25,
+      progress: 2,
+      maxProgress: 5,
+      completed: false,
+      category: 'engagement',
+      icon: <Target className="w-5 h-5" />
+    },
+    {
+      id: 'send_message',
+      title: 'Send 3 Messages',
+      description: 'Connect with other users by sending messages',
+      reward: 30,
+      progress: 1,
+      maxProgress: 3,
+      completed: false,
+      category: 'social',
+      icon: <MessageCircle className="w-5 h-5" />
+    },
+    {
+      id: 'daily_login',
+      title: 'Daily Login Streak',
+      description: 'Maintain your daily login streak',
+      reward: 20,
+      progress: 1,
+      maxProgress: 1,
+      completed: true,
+      category: 'engagement',
+      icon: <CheckCircle className="w-5 h-5" />
+    },
+    {
+      id: 'share_listing',
+      title: 'Share a Listing',
+      description: 'Share an interesting MSME listing with your network',
+      reward: 40,
+      progress: 0,
+      maxProgress: 1,
+      completed: false,
+      category: 'social',
+      icon: <TrendingUp className="w-5 h-5" />
+    }
+  ]);
 
-  useEffect(() => {
-    // Initialize daily tasks
-    const dailyTasks: Task[] = [
-      {
-        id: 'profile_update',
-        title: 'Complete Profile',
-        description: 'Update your business profile information',
-        icon: <User className="w-4 h-4" />,
-        progress: 1,
-        maxProgress: 1,
-        completed: false,
-        reward: { type: 'points', value: 50, label: '50 Points' },
-        color: 'bg-blue-500',
-        category: 'engagement'
-      },
-      {
-        id: 'view_listings',
-        title: 'Browse Listings',
-        description: 'View 5 business listings',
-        icon: <Eye className="w-4 h-4" />,
-        progress: 2,
-        maxProgress: 5,
-        completed: false,
-        reward: { type: 'points', value: 25, label: '25 Points' },
-        color: 'bg-green-500',
-        category: 'engagement'
-      },
-      {
-        id: 'send_message',
-        title: 'Network & Connect',
-        description: 'Send 2 messages to potential partners',
-        icon: <MessageSquare className="w-4 h-4" />,
-        progress: 0,
-        maxProgress: 2,
-        completed: false,
-        reward: { type: 'points', value: 75, label: '75 Points' },
-        color: 'bg-purple-500',
-        category: 'social'
-      },
-      {
-        id: 'search_business',
-        title: 'Smart Search',
-        description: 'Use advanced search filters',
-        icon: <Search className="w-4 h-4" />,
-        progress: 0,
-        maxProgress: 1,
-        completed: false,
-        reward: { type: 'coins', value: 20, label: '20 Coins' },
-        color: 'bg-orange-500',
-        category: 'business'
-      },
-      {
-        id: 'express_interest',
-        title: 'Show Interest',
-        description: 'Express interest in a business',
-        icon: <Heart className="w-4 h-4" />,
-        progress: 0,
-        maxProgress: 1,
-        completed: false,
-        reward: { type: 'points', value: 100, label: '100 Points' },
-        color: 'bg-red-500',
-        category: 'business'
-      },
-      {
-        id: 'share_listing',
-        title: 'Share & Promote',
-        description: 'Share a listing with your network',
-        icon: <Share2 className="w-4 h-4" />,
-        progress: 0,
-        maxProgress: 1,
-        completed: false,
-        reward: { type: 'points', value: 30, label: '30 Points' },
-        color: 'bg-teal-500',
-        category: 'social'
-      },
-      {
-        id: 'create_listing',
-        title: 'List Your Business',
-        description: 'Create a new business listing',
-        icon: <Plus className="w-4 h-4" />,
-        progress: 0,
-        maxProgress: 1,
-        completed: false,
-        reward: { type: 'badge', value: 1, label: 'Entrepreneur Badge' },
-        color: 'bg-indigo-500',
-        category: 'business'
-      },
-      {
-        id: 'daily_checkin',
-        title: 'Daily Check-in',
-        description: 'Complete your daily check-in',
-        icon: <Calendar className="w-4 h-4" />,
-        progress: 0,
-        maxProgress: 1,
-        completed: false,
-        reward: { type: 'points', value: 20, label: '20 Points + Streak' },
-        color: 'bg-yellow-500',
-        category: 'engagement'
-      }
-    ];
+  const handleCompleteTask = (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task || task.completed) return;
 
-    // Simulate some progress
-    const tasksWithProgress = dailyTasks.map(task => {
-      const random = Math.random();
-      if (random < 0.3) {
-        // 30% chance task is completed
-        return { ...task, completed: true, progress: task.maxProgress };
-      } else if (random < 0.6) {
-        // 30% chance task has some progress
-        const progress = Math.floor(Math.random() * task.maxProgress);
-        return { ...task, progress: Math.min(progress, task.maxProgress - 1) };
-      }
-      return task;
-    });
-
-    setTasks(tasksWithProgress);
-    setCompletedToday(tasksWithProgress.filter(t => t.completed).length);
-  }, []);
-
-  const handleTaskClick = (task: Task) => {
-    if (task.completed) return;
-
-    const updatedTasks = tasks.map(t => {
-      if (t.id === task.id) {
-        const newProgress = Math.min(t.progress + 1, t.maxProgress);
-        const isCompleted = newProgress >= t.maxProgress;
-        
-        if (isCompleted && !t.completed) {
-          // Task just completed
-          onTaskComplete(t.id, t.reward);
-          setCompletedToday(prev => prev + 1);
-        }
-        
-        return {
-          ...t,
-          progress: newProgress,
-          completed: isCompleted
-        };
-      }
-      return t;
-    });
-
-    setTasks(updatedTasks);
+    setTasks(prev => prev.map(t => 
+      t.id === taskId ? { ...t, completed: true, progress: t.maxProgress } : t
+    ));
+    
+    onTaskComplete(taskId, task.reward);
   };
 
-  const getTasksByCategory = (category: string) => {
-    return tasks.filter(task => task.category === category);
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'business': return 'bg-blue-500';
+      case 'social': return 'bg-purple-500';
+      case 'engagement': return 'bg-green-500';
+      case 'learning': return 'bg-orange-500';
+      default: return 'bg-gray-500';
+    }
   };
 
-  const categories = [
-    { id: 'engagement', name: 'Daily Engagement', icon: <Target className="w-5 h-5" /> },
-    { id: 'social', name: 'Social & Networking', icon: <MessageSquare className="w-5 h-5" /> },
-    { id: 'business', name: 'Business Actions', icon: <Trophy className="w-5 h-5" /> },
-    { id: 'learning', name: 'Learning & Growth', icon: <Star className="w-5 h-5" /> }
-  ];
+  const getCategoryName = (category: string) => {
+    switch (category) {
+      case 'business': return 'Business';
+      case 'social': return 'Social';
+      case 'engagement': return 'Engagement';
+      case 'learning': return 'Learning';
+      default: return 'Other';
+    }
+  };
 
-  const progressPercentage = (completedToday / totalTasks) * 100;
-
-  if (!isVisible) return null;
+  const completedTasks = tasks.filter(t => t.completed).length;
+  const totalRewards = tasks.reduce((sum, task) => sum + (task.completed ? task.reward : 0), 0);
 
   return (
     <AnimatePresence>
-      <motion.div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-      >
+      {isVisible && (
         <motion.div
-          className="w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto"
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.8, opacity: 0 }}
-          transition={{ duration: 0.3 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
         >
-          <Card className="bg-gradient-to-br from-blue-50 to-indigo-50">
-            <CardHeader className="relative">
-              <div className="absolute top-4 right-4">
-                <Button variant="ghost" size="sm" onClick={onClose}>
-                  ×
-                </Button>
-              </div>
-              
-              <CardTitle className="flex items-center space-x-2 text-2xl">
-                <Calendar className="w-8 h-8 text-blue-600" />
-                <span>{t('gamification.daily.task')}</span>
-              </CardTitle>
-              
-              <div className="space-y-4">
+          <motion.div
+            className="relative max-w-2xl w-full max-h-[90vh] overflow-hidden"
+            initial={{ scale: 0.8, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.8, opacity: 0, y: 20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Card>
+              <CardHeader>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">
-                    Today's Progress: {completedToday}/{totalTasks} tasks completed
-                  </span>
-                  <Badge className="bg-blue-100 text-blue-800">
-                    {Math.round(progressPercentage)}% Complete
-                  </Badge>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Target className="w-5 h-5" />
+                    <span>Daily Tasks</span>
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onClose}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
                 </div>
                 
-                <div className="w-full">
-                  <Progress value={progressPercentage} className="h-3" />
-                </div>
-                
-                <div className="flex items-center space-x-4 text-sm">
-                  <div className="flex items-center space-x-1">
-                    <Clock className="w-4 h-4 text-gray-500" />
-                    <span>Resets in: 18h 42m</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Gift className="w-4 h-4 text-purple-500" />
-                    <span>Bonus reward at 100%</span>
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            
-            <CardContent className="space-y-6">
-              {categories.map((category) => {
-                const categoryTasks = getTasksByCategory(category.id);
-                if (categoryTasks.length === 0) return null;
-                
-                return (
-                  <div key={category.id} className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <div className="text-indigo-600">
-                        {category.icon}
-                      </div>
-                      <h3 className="font-semibold text-gray-800">{category.name}</h3>
+                {/* Progress Summary */}
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <div>
+                      <p className="text-sm text-gray-600">Completed</p>
+                      <p className="font-semibold">{completedTasks} / {tasks.length}</p>
                     </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {categoryTasks.map((task) => (
-                        <motion.div
-                          key={task.id}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <Card 
-                            className={`cursor-pointer transition-all duration-200 ${
-                              task.completed 
-                                ? 'bg-green-50 border-green-200' 
-                                : 'hover:shadow-md border-gray-200'
-                            }`}
-                            onClick={() => handleTaskClick(task)}
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex items-start space-x-3">
-                                <div className={`p-2 rounded-full ${task.color} text-white flex-shrink-0`}>
-                                  {task.completed ? (
-                                    <CheckCircle className="w-4 h-4" />
-                                  ) : (
-                                    task.icon
-                                  )}
-                                </div>
-                                
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center justify-between mb-1">
-                                    <h4 className="font-semibold text-sm text-gray-800">
-                                      {task.title}
-                                    </h4>
-                                    <Badge 
-                                      variant={task.completed ? "default" : "secondary"}
-                                      className="text-xs"
-                                    >
-                                      {task.reward.label}
-                                    </Badge>
-                                  </div>
-                                  
-                                  <p className="text-xs text-gray-600 mb-2">
-                                    {task.description}
-                                  </p>
-                                  
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-2">
-                                      <div className="flex-1 bg-gray-200 rounded-full h-2">
-                                        <div 
-                                          className={`h-2 rounded-full ${task.color} transition-all duration-300`}
-                                          style={{ 
-                                            width: `${(task.progress / task.maxProgress) * 100}%` 
-                                          }}
-                                        />
-                                      </div>
-                                      <span className="text-xs text-gray-500">
-                                        {task.progress}/{task.maxProgress}
-                                      </span>
-                                    </div>
-                                    
-                                    {task.completed && (
-                                      <motion.div
-                                        initial={{ scale: 0 }}
-                                        animate={{ scale: 1 }}
-                                        className="text-green-600"
-                                      >
-                                        <CheckCircle className="w-4 h-4" />
-                                      </motion.div>
-                                    )}
-                                  </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Star className="w-5 h-5 text-yellow-500" />
+                    <div>
+                      <p className="text-sm text-gray-600">Total Rewards</p>
+                      <p className="font-semibold">{totalRewards} points</p>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              
+              <CardContent className="max-h-[60vh] overflow-y-auto">
+                <div className="space-y-4">
+                  {tasks.map((task) => (
+                    <motion.div
+                      key={task.id}
+                      className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                        task.completed 
+                          ? 'bg-green-50 border-green-200' 
+                          : 'bg-gray-50 border-gray-200 hover:border-gray-300'
+                      }`}
+                      whileHover={{ scale: 1.02 }}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start space-x-3 flex-1">
+                          <div className={`p-2 rounded-full ${getCategoryColor(task.category)} text-white`}>
+                            {task.icon}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <h3 className="font-semibold text-gray-900">{task.title}</h3>
+                              <Badge variant="secondary" className="text-xs">
+                                {getCategoryName(task.category)}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-3">{task.description}</p>
+                            
+                            {/* Progress Bar */}
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-gray-500">
+                                  Progress: {task.progress} / {task.maxProgress}
+                                </span>
+                                <div className="flex items-center space-x-1">
+                                  <Gift className="w-4 h-4 text-yellow-500" />
+                                  <span className="font-semibold text-yellow-600">
+                                    +{task.reward} points
+                                  </span>
                                 </div>
                               </div>
-                            </CardContent>
-                          </Card>
-                        </motion.div>
-                      ))}
+                              <Progress 
+                                value={(task.progress / task.maxProgress) * 100} 
+                                className="h-2"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="ml-4">
+                          {task.completed ? (
+                            <div className="flex items-center space-x-2 text-green-600">
+                              <CheckCircle className="w-5 h-5" />
+                              <span className="text-sm font-semibold">Completed</span>
+                            </div>
+                          ) : task.progress >= task.maxProgress ? (
+                            <Button
+                              onClick={() => handleCompleteTask(task.id)}
+                              size="sm"
+                              className="bg-green-500 hover:bg-green-600"
+                            >
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Complete
+                            </Button>
+                          ) : (
+                            <div className="flex items-center space-x-2 text-gray-400">
+                              <Clock className="w-5 h-5" />
+                              <span className="text-sm">In Progress</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+                
+                {/* Daily Bonus */}
+                <div className="mt-6 p-4 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold mb-1">Daily Bonus</h3>
+                      <p className="text-sm opacity-90">
+                        Complete all tasks to earn a bonus reward!
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-center space-x-1">
+                        <Star className="w-5 h-5" />
+                        <span className="font-bold">+200 points</span>
+                      </div>
+                      <p className="text-xs opacity-75">
+                        {completedTasks === tasks.length ? 'Earned!' : `${tasks.length - completedTasks} tasks left`}
+                      </p>
                     </div>
                   </div>
-                );
-              })}
-              
-              {/* Bonus Reward Section */}
-              {completedToday === totalTasks && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg p-6 text-center"
-                >
-                  <Trophy className="w-12 h-12 mx-auto mb-3" />
-                  <h3 className="text-xl font-bold mb-2">Perfect Day!</h3>
-                  <p className="text-purple-100 mb-4">
-                    You've completed all daily tasks! Claim your bonus reward.
-                  </p>
-                  <Button 
-                    className="bg-white text-purple-600 hover:bg-purple-50"
-                    onClick={() => onTaskComplete('daily_bonus', { 
-                      type: 'special', 
-                      value: 200, 
-                      label: 'Daily Completion Bonus' 
-                    })}
-                  >
-                    <Gift className="w-4 h-4 mr-2" />
-                    Claim 200 Bonus Points
-                  </Button>
-                </motion.div>
-              )}
-            </CardContent>
-          </Card>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         </motion.div>
-      </motion.div>
+      )}
     </AnimatePresence>
   );
 }

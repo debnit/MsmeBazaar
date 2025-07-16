@@ -1,234 +1,189 @@
-import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useLocalization } from "@/hooks/useLocalization";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Gift, Trophy, Star, Coins, Zap, Crown, Heart, Award } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Trophy, Star, Gift, Zap, X } from "lucide-react";
 
 interface RewardNotificationProps {
   isVisible: boolean;
   onClose: () => void;
   reward: {
-    type: 'points' | 'badge' | 'level' | 'coins' | 'unlock' | 'bonus' | 'achievement' | 'milestone';
+    type: 'achievement' | 'points' | 'coins' | 'badge' | 'level';
     title: string;
     description: string;
     value?: number;
-    icon?: string;
     special?: boolean;
   };
   onClaim?: () => void;
-  autoClose?: boolean;
-  duration?: number;
 }
 
-export function RewardNotification({
-  isVisible,
-  onClose,
-  reward,
-  onClaim,
-  autoClose = true,
-  duration = 5000
+export function RewardNotification({ 
+  isVisible, 
+  onClose, 
+  reward, 
+  onClaim 
 }: RewardNotificationProps) {
-  const { t } = useLocalization();
-  const [progress, setProgress] = useState(100);
-
-  useEffect(() => {
-    if (isVisible && autoClose) {
-      const interval = setInterval(() => {
-        setProgress(prev => {
-          if (prev <= 0) {
-            clearInterval(interval);
-            onClose();
-            return 0;
-          }
-          return prev - (100 / (duration / 100));
-        });
-      }, 100);
-
-      return () => clearInterval(interval);
+  const getIcon = () => {
+    switch (reward.type) {
+      case 'achievement':
+        return <Trophy className="w-8 h-8 text-yellow-500" />;
+      case 'points':
+        return <Star className="w-8 h-8 text-blue-500" />;
+      case 'coins':
+        return <Gift className="w-8 h-8 text-green-500" />;
+      case 'badge':
+        return <Badge className="w-8 h-8 text-purple-500" />;
+      case 'level':
+        return <Zap className="w-8 h-8 text-orange-500" />;
+      default:
+        return <Gift className="w-8 h-8 text-gray-500" />;
     }
-  }, [isVisible, autoClose, duration, onClose]);
-
-  const getRewardIcon = (type: string) => {
-    const icons = {
-      points: <Star className="w-8 h-8 text-yellow-500" />,
-      badge: <Award className="w-8 h-8 text-purple-500" />,
-      level: <Trophy className="w-8 h-8 text-blue-500" />,
-      coins: <Coins className="w-8 h-8 text-yellow-600" />,
-      unlock: <Zap className="w-8 h-8 text-green-500" />,
-      bonus: <Gift className="w-8 h-8 text-red-500" />,
-      achievement: <Crown className="w-8 h-8 text-indigo-500" />,
-      milestone: <Heart className="w-8 h-8 text-pink-500" />
-    };
-    return icons[type] || icons.points;
   };
 
-  const getRewardColor = (type: string) => {
-    const colors = {
-      points: "from-yellow-400 to-yellow-600",
-      badge: "from-purple-400 to-purple-600", 
-      level: "from-blue-400 to-blue-600",
-      coins: "from-yellow-500 to-yellow-700",
-      unlock: "from-green-400 to-green-600",
-      bonus: "from-red-400 to-red-600",
-      achievement: "from-indigo-400 to-indigo-600",
-      milestone: "from-pink-400 to-pink-600"
-    };
-    return colors[type] || colors.points;
+  const getBackgroundColor = () => {
+    if (reward.special) return 'bg-gradient-to-r from-purple-600 to-pink-600';
+    
+    switch (reward.type) {
+      case 'achievement':
+        return 'bg-gradient-to-r from-yellow-500 to-orange-600';
+      case 'points':
+        return 'bg-gradient-to-r from-blue-500 to-blue-600';
+      case 'coins':
+        return 'bg-gradient-to-r from-green-500 to-green-600';
+      case 'badge':
+        return 'bg-gradient-to-r from-purple-500 to-purple-600';
+      case 'level':
+        return 'bg-gradient-to-r from-orange-500 to-red-600';
+      default:
+        return 'bg-gradient-to-r from-gray-500 to-gray-600';
+    }
   };
 
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          className="fixed top-4 right-4 z-50 max-w-sm w-full"
-          initial={{ opacity: 0, y: -50, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -50, scale: 0.95 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
         >
-          <div className={`
-            relative overflow-hidden rounded-lg shadow-2xl 
-            bg-gradient-to-br ${getRewardColor(reward.type)}
-            text-white p-6 border border-white/20
-            ${reward.special ? 'ring-2 ring-yellow-400 ring-opacity-75' : ''}
-          `}>
-            {/* Close Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="absolute top-2 right-2 text-white hover:bg-white/20"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-
-            {/* Progress Bar */}
-            {autoClose && (
-              <div className="absolute top-0 left-0 h-1 bg-white/30 w-full">
+          <motion.div
+            className="relative max-w-md w-full"
+            initial={{ scale: 0.8, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.8, opacity: 0, y: 20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Card className={`text-white ${getBackgroundColor()}`}>
+              <CardContent className="p-6 text-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute top-2 right-2 text-white hover:bg-white/20"
+                  onClick={onClose}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+                
                 <motion.div
-                  className="h-full bg-white"
-                  initial={{ width: "100%" }}
-                  animate={{ width: `${progress}%` }}
-                  transition={{ duration: 0.1 }}
-                />
-              </div>
-            )}
-
-            {/* Reward Content */}
-            <div className="flex items-start space-x-4">
-              {/* Icon */}
-              <motion.div
-                className="flex-shrink-0 p-3 bg-white/20 rounded-full"
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                {getRewardIcon(reward.type)}
-              </motion.div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
+                  className="mb-4"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                >
+                  {getIcon()}
+                </motion.div>
+                
                 <motion.h3
-                  className="font-bold text-lg mb-1"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: 0.3 }}
+                  className="text-xl font-bold mb-2"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.4 }}
                 >
                   {reward.title}
                 </motion.h3>
                 
                 <motion.p
-                  className="text-white/90 text-sm mb-3"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: 0.4 }}
+                  className="text-sm opacity-90 mb-4"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.6 }}
                 >
                   {reward.description}
                 </motion.p>
-
-                {/* Value Display */}
+                
                 {reward.value && (
                   <motion.div
-                    className="flex items-center space-x-2 mb-3"
+                    className="mb-4"
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.4, delay: 0.5 }}
+                    transition={{ duration: 0.3, delay: 0.8 }}
                   >
-                    <span className="text-2xl font-bold">+{reward.value}</span>
-                    <span className="text-sm opacity-90">
-                      {reward.type === 'points' && t('gamification.points.earned')}
-                      {reward.type === 'coins' && t('gamification.reward.coins')}
-                    </span>
+                    <Badge className="bg-white/20 text-white text-lg px-4 py-2">
+                      +{reward.value} {reward.type === 'points' ? 'Points' : 'Coins'}
+                    </Badge>
                   </motion.div>
                 )}
-
-                {/* Action Button */}
-                {onClaim && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.6 }}
-                  >
+                
+                <motion.div
+                  className="flex gap-2 justify-center"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 1 }}
+                >
+                  {onClaim && (
                     <Button
                       onClick={onClaim}
-                      variant="secondary"
-                      size="sm"
-                      className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                      className="bg-white/20 hover:bg-white/30 text-white border-white/20"
+                      variant="outline"
                     >
-                      {t('gamification.instant.reward')}
+                      Claim
                     </Button>
-                  </motion.div>
-                )}
-              </div>
-            </div>
-
-            {/* Special Effects */}
+                  )}
+                  <Button
+                    onClick={onClose}
+                    className="bg-white/20 hover:bg-white/30 text-white border-white/20"
+                    variant="outline"
+                  >
+                    Close
+                  </Button>
+                </motion.div>
+              </CardContent>
+            </Card>
+            
+            {/* Celebration particles */}
             {reward.special && (
-              <div className="absolute inset-0 pointer-events-none">
-                {/* Sparkles */}
-                <motion.div
-                  className="absolute top-2 right-8 text-yellow-300"
-                  animate={{ 
-                    rotate: [0, 360], 
-                    scale: [1, 1.2, 1] 
-                  }}
-                  transition={{ 
-                    duration: 2, 
-                    repeat: Infinity,
-                    ease: "linear"
-                  }}
-                >
-                  ✨
-                </motion.div>
-                <motion.div
-                  className="absolute bottom-4 left-4 text-yellow-300"
-                  animate={{ 
-                    rotate: [360, 0], 
-                    scale: [1, 1.3, 1] 
-                  }}
-                  transition={{ 
-                    duration: 2.5, 
-                    repeat: Infinity,
-                    ease: "linear"
-                  }}
-                >
-                  ⭐
-                </motion.div>
-              </div>
+              <motion.div
+                className="absolute inset-0 pointer-events-none"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+              >
+                {[...Array(20)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="absolute w-2 h-2 bg-yellow-400 rounded-full"
+                    initial={{
+                      x: '50%',
+                      y: '50%',
+                      scale: 0,
+                    }}
+                    animate={{
+                      x: `${50 + (Math.random() - 0.5) * 200}%`,
+                      y: `${50 + (Math.random() - 0.5) * 200}%`,
+                      scale: [0, 1, 0],
+                    }}
+                    transition={{
+                      duration: 2,
+                      delay: i * 0.1,
+                      ease: "easeOut",
+                    }}
+                  />
+                ))}
+              </motion.div>
             )}
-
-            {/* Shine Effect */}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-              initial={{ x: "-100%" }}
-              animate={{ x: "100%" }}
-              transition={{ 
-                duration: 1.5, 
-                delay: 0.5,
-                ease: "easeInOut"
-              }}
-            />
-          </div>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>

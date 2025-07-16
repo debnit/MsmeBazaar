@@ -1,175 +1,127 @@
-import { Badge } from "@/components/ui/badge";
-import { useLocalization } from "@/hooks/useLocalization";
 import { motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
 import { 
   Trophy, 
-  Star, 
+  User, 
+  FileText, 
+  Handshake, 
+  Users, 
   Shield, 
-  Crown, 
-  Award, 
-  Gem, 
-  Target, 
-  Zap,
+  Zap, 
+  Share2,
+  Lightbulb,
   Heart,
-  Medal,
-  Sparkles,
-  Gift
+  MessageCircle,
+  Network
 } from "lucide-react";
 
 interface AchievementBadgeProps {
   type: 'welcome' | 'profile' | 'listing' | 'deal' | 'mentor' | 'verified' | 'streak' | 'referral' | 'innovation' | 'collaboration' | 'feedback' | 'network';
   earned: boolean;
-  progress?: number;
+  progress: number;
   showAnimation?: boolean;
   onClick?: () => void;
 }
 
+const badgeConfig = {
+  welcome: { icon: Trophy, color: 'bg-yellow-500', name: 'Welcome' },
+  profile: { icon: User, color: 'bg-blue-500', name: 'Profile Master' },
+  listing: { icon: FileText, color: 'bg-green-500', name: 'First Listing' },
+  deal: { icon: Handshake, color: 'bg-purple-500', name: 'Deal Maker' },
+  mentor: { icon: Users, color: 'bg-indigo-500', name: 'Mentor' },
+  verified: { icon: Shield, color: 'bg-emerald-500', name: 'Verified' },
+  streak: { icon: Zap, color: 'bg-orange-500', name: 'Streak Master' },
+  referral: { icon: Share2, color: 'bg-pink-500', name: 'Referral Pro' },
+  innovation: { icon: Lightbulb, color: 'bg-cyan-500', name: 'Innovator' },
+  collaboration: { icon: Heart, color: 'bg-red-500', name: 'Collaborator' },
+  feedback: { icon: MessageCircle, color: 'bg-violet-500', name: 'Feedback Hero' },
+  network: { icon: Network, color: 'bg-teal-500', name: 'Networker' }
+};
+
 export function AchievementBadge({ 
   type, 
   earned, 
-  progress = 0, 
-  showAnimation = false,
+  progress, 
+  showAnimation = false, 
   onClick 
 }: AchievementBadgeProps) {
-  const { t } = useLocalization();
-
-  const getBadgeConfig = (type: string) => {
-    const configs = {
-      welcome: {
-        icon: <Gift className="w-4 h-4" />,
-        color: "bg-blue-500",
-        textKey: 'gamification.badges.firstLogin'
-      },
-      profile: {
-        icon: <Star className="w-4 h-4" />,
-        color: "bg-green-500",
-        textKey: 'gamification.badges.profileComplete'
-      },
-      listing: {
-        icon: <Target className="w-4 h-4" />,
-        color: "bg-purple-500",
-        textKey: 'gamification.badges.firstListing'
-      },
-      deal: {
-        icon: <Trophy className="w-4 h-4" />,
-        color: "bg-yellow-500",
-        textKey: 'gamification.badges.dealMaker'
-      },
-      mentor: {
-        icon: <Crown className="w-4 h-4" />,
-        color: "bg-orange-500",
-        textKey: 'gamification.mentor.badge'
-      },
-      verified: {
-        icon: <Shield className="w-4 h-4" />,
-        color: "bg-indigo-500",
-        textKey: 'gamification.verified.business'
-      },
-      streak: {
-        icon: <Zap className="w-4 h-4" />,
-        color: "bg-red-500",
-        textKey: 'gamification.streak.login'
-      },
-      referral: {
-        icon: <Heart className="w-4 h-4" />,
-        color: "bg-pink-500",
-        textKey: 'gamification.referral.bonus'
-      },
-      innovation: {
-        icon: <Sparkles className="w-4 h-4" />,
-        color: "bg-cyan-500",
-        textKey: 'gamification.innovation.award'
-      },
-      collaboration: {
-        icon: <Medal className="w-4 h-4" />,
-        color: "bg-teal-500",
-        textKey: 'gamification.collaboration.bonus'
-      },
-      feedback: {
-        icon: <Award className="w-4 h-4" />,
-        color: "bg-emerald-500",
-        textKey: 'gamification.feedback.champion'
-      },
-      network: {
-        icon: <Gem className="w-4 h-4" />,
-        color: "bg-violet-500",
-        textKey: 'gamification.network.builder'
-      }
-    };
-    
-    return configs[type] || configs.welcome;
-  };
-
-  const config = getBadgeConfig(type);
-
+  const config = badgeConfig[type];
+  const Icon = config.icon;
+  
   return (
     <motion.div
-      className={`relative cursor-pointer group ${onClick ? 'hover:scale-105' : ''}`}
-      initial={{ opacity: 0, scale: 0.5 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3 }}
+      className={`relative cursor-pointer transition-all duration-200 ${
+        earned ? 'hover:scale-110' : 'hover:scale-105'
+      }`}
       onClick={onClick}
-      whileHover={{ scale: 1.05 }}
+      whileHover={{ scale: earned ? 1.1 : 1.05 }}
       whileTap={{ scale: 0.95 }}
     >
-      {/* Badge Container */}
       <div className={`
-        relative p-3 rounded-full 
-        ${earned ? config.color : 'bg-gray-300'} 
+        w-16 h-16 rounded-full flex items-center justify-center relative
+        ${earned ? config.color : 'bg-gray-300'}
+        ${earned ? 'text-white' : 'text-gray-500'}
         ${earned ? 'shadow-lg' : 'shadow-sm'}
-        transition-all duration-300
       `}>
-        {/* Badge Icon */}
-        <div className={`
-          ${earned ? 'text-white' : 'text-gray-500'}
-          transition-colors duration-300
-        `}>
-          {config.icon}
-        </div>
+        <Icon className="w-8 h-8" />
         
-        {/* Progress Ring for Partially Earned Badges */}
+        {/* Progress ring for unearned badges */}
         {!earned && progress > 0 && (
-          <div className="absolute inset-0 rounded-full">
-            <svg className="w-full h-full -rotate-90" viewBox="0 0 32 32">
-              <circle
-                cx="16"
-                cy="16"
-                r="14"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeDasharray={`${progress * 0.88} 88`}
-                className="text-blue-500"
-              />
-            </svg>
-          </div>
+          <svg className="absolute inset-0 w-16 h-16 transform -rotate-90">
+            <circle
+              cx="32"
+              cy="32"
+              r="30"
+              stroke="currentColor"
+              strokeWidth="2"
+              fill="none"
+              className="opacity-20"
+            />
+            <circle
+              cx="32"
+              cy="32"
+              r="30"
+              stroke={config.color.replace('bg-', 'stroke-')}
+              strokeWidth="2"
+              fill="none"
+              strokeDasharray={`${(progress / 100) * 188.5} 188.5`}
+              className="opacity-80"
+            />
+          </svg>
         )}
         
-        {/* Earned Badge Shine Effect */}
+        {/* Earned badge glow effect */}
         {earned && showAnimation && (
           <motion.div
-            className="absolute inset-0 rounded-full bg-white opacity-30"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1.2, opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="absolute inset-0 rounded-full bg-white/30"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1.5, opacity: 0 }}
+            transition={{ duration: 1, repeat: Infinity }}
           />
         )}
       </div>
       
-      {/* Badge Name Tooltip */}
-      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10">
-        {t(config.textKey)}
+      {/* Badge name */}
+      <div className="text-center mt-2">
+        <p className="text-xs font-medium text-gray-700 truncate">
+          {config.name}
+        </p>
+        {!earned && (
+          <p className="text-xs text-gray-500">
+            {Math.round(progress)}%
+          </p>
+        )}
       </div>
       
-      {/* Earned Badge Celebration */}
+      {/* New badge indicator */}
       {earned && showAnimation && (
         <motion.div
-          className="absolute -top-2 -right-2 text-yellow-500"
-          initial={{ scale: 0, rotate: 0 }}
-          animate={{ scale: 1, rotate: 360 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.3 }}
         >
-          ✨
+          <div className="w-2 h-2 bg-white rounded-full" />
         </motion.div>
       )}
     </motion.div>
