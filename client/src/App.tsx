@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth, AuthProvider } from "@/components/auth/auth-provider";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
+import InstantHomepage from "@/pages/instant-homepage";
 import Dashboard from "@/pages/dashboard";
 import AuthPage from "@/pages/auth/login";
 import SellerDashboard from "@/pages/seller/dashboard";
@@ -36,7 +37,8 @@ function Router() {
     <Switch>
       {!user ? (
         <>
-          <Route path="/" component={Landing} />
+          <Route path="/" component={InstantHomepage} />
+          <Route path="/landing" component={Landing} />
           <Route path="/auth" component={AuthPage} />
           <Route path="/login" component={AuthPage} />
           <Route path="/register" component={AuthPage} />

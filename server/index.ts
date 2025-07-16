@@ -26,15 +26,36 @@ import { stagedLoader, onDemandLoader } from "./architecture/staged-loading";
 import { bootManager, resourceManager } from "./architecture/boot-optimization";
 import { cacheManager, cacheInvalidator, cacheWarmup } from "./architecture/advanced-caching";
 import { memoryOptimizations } from "./architecture/memory-efficient-systems";
+import { instantResponseSystem } from "./performance/instant-response-system";
+import { UltraFastMiddleware, StaticAssetOptimizer } from "./performance/ultra-fast-middleware";
+import { extremeOptimization, CPUOptimizer, DatabaseOptimizer } from "./performance/extreme-optimization";
 
-// Initialize mission-critical mode with advanced optimizations
+// Initialize mission-critical mode with extreme optimizations
 console.log('⚡ Starting in mission-critical performance mode...');
 
 const app = express();
 
+// Apply ultra-fast middleware BEFORE any other middleware
+app.use(UltraFastMiddleware.createInstantMiddleware());
+app.use(UltraFastMiddleware.createResponseTimeLogger());
+app.use(UltraFastMiddleware.createCacheHeaders());
+
 // Initialize advanced architecture patterns
 (async () => {
   try {
+    // 0. Initialize extreme performance optimizations
+    await extremeOptimization.initializeExtremeMode();
+    
+    // 0.1. Initialize instant response system FIRST
+    await instantResponseSystem.initialize();
+    
+    // 0.2. Initialize CPU and Database optimizations
+    await CPUOptimizer.initializeWorkerPool();
+    DatabaseOptimizer.initializeConnectionPool();
+    
+    // 0.3. Preload critical assets
+    StaticAssetOptimizer.preloadCriticalAssets();
+    
     // 1. Initialize boot optimization (warm vs cold boot)
     await bootManager.boot();
     
