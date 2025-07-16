@@ -17,6 +17,9 @@ import AgentDashboard from "@/pages/agent/dashboard";
 import NbfcDashboard from "@/pages/nbfc/dashboard";
 import NbfcLoanApplications from "@/pages/nbfc/loan-applications";
 import AdminDashboard from "@/pages/admin/dashboard";
+import AdminHub from "@/pages/admin/index";
+import RevenueDashboard from "@/pages/admin/revenue-dashboard";
+import WhatsAppDashboard from "@/pages/admin/whatsapp-dashboard";
 import { VaaSDemoPage } from "@/pages/vaas-demo";
 
 function Router() {
@@ -60,7 +63,10 @@ function Router() {
           <Route path="/nbfc/loan-applications" component={NbfcLoanApplications} />
           
           {/* Admin routes */}
+          <Route path="/admin" component={AdminHub} />
           <Route path="/admin/dashboard" component={AdminDashboard} />
+          <Route path="/admin/revenue-dashboard" component={RevenueDashboard} />
+          <Route path="/admin/whatsapp-dashboard" component={WhatsAppDashboard} />
           
           {/* VaaS Demo routes */}
           <Route path="/vaas-demo" component={VaaSDemoPage} />

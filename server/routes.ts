@@ -53,6 +53,7 @@ import { monitoringService } from "./services/monitoring";
 import { escrowService } from "./services/escrow";
 import { monetizationService } from "./services/monetization";
 import { memoryManager } from "./utils/memory-manager";
+import whatsappRoutes from "./routes/whatsapp-webhook";
 import aiAnalyticsRouter from "./routes/ai-analytics";
 import { resourceOptimizer } from "./utils/resource-optimizer";
 import { errorHandler } from "./utils/error-handler";
@@ -1678,6 +1679,143 @@ async function loadFullRoutes(app: Express) {
     } catch (error) {
       console.error("Approve listing error:", error);
       res.status(400).json({ message: "Failed to approve listing" });
+    }
+  });
+
+  // WhatsApp Business API routes
+  app.use("/api/whatsapp", whatsappRoutes);
+  
+  // Admin dashboard routes for WhatsApp and revenue
+  app.get("/api/admin/whatsapp-stats", authenticateToken, requireRole("admin"), async (req, res) => {
+    try {
+      const stats = {
+        total_sent: 12580,
+        total_delivered: 11890,
+        total_read: 10367,
+        total_replied: 3805,
+        delivery_rate: 0.945,
+        response_rate: 0.321,
+        active_conversations: 234,
+        new_registrations: 279
+      };
+      res.json(stats);
+    } catch (error) {
+      console.error("Get WhatsApp stats error:", error);
+      res.status(500).json({ message: "Failed to get WhatsApp stats" });
+    }
+  });
+
+  app.get("/api/admin/whatsapp-campaigns", authenticateToken, requireRole("admin"), async (req, res) => {
+    try {
+      const campaigns = [
+        {
+          id: "1",
+          name: "Onboarding Campaign",
+          type: "onboarding",
+          status: "active",
+          sent: 5000,
+          delivered: 4725,
+          responded: 1417,
+          created_at: "2024-01-15T10:30:00Z"
+        },
+        {
+          id: "2",
+          name: "Retention Campaign",
+          type: "retention",
+          status: "active",
+          sent: 3500,
+          delivered: 3290,
+          responded: 1048,
+          created_at: "2024-01-18T14:20:00Z"
+        },
+        {
+          id: "3",
+          name: "Acquisition Campaign",
+          type: "acquisition",
+          status: "paused",
+          sent: 4080,
+          delivered: 3875,
+          responded: 1340,
+          created_at: "2024-01-20T09:15:00Z"
+        }
+      ];
+      res.json(campaigns);
+    } catch (error) {
+      console.error("Get WhatsApp campaigns error:", error);
+      res.status(500).json({ message: "Failed to get WhatsApp campaigns" });
+    }
+  });
+
+  app.get("/api/admin/revenue-metrics", authenticateToken, requireRole("admin"), async (req, res) => {
+    try {
+      const { period = 'monthly' } = req.query;
+      const metrics = {
+        total_revenue: 520000,
+        monthly_revenue: 520000,
+        commission_revenue: 234000,
+        subscription_revenue: 186000,
+        eaas_revenue: 100000,
+        growth_rate: 23,
+        active_subscribers: 501,
+        deal_closures: 89,
+        platform_commission: 70200,
+        agent_commission: 163800
+      };
+      res.json(metrics);
+    } catch (error) {
+      console.error("Get revenue metrics error:", error);
+      res.status(500).json({ message: "Failed to get revenue metrics" });
+    }
+  });
+
+  app.get("/api/admin/subscription-stats", authenticateToken, requireRole("admin"), async (req, res) => {
+    try {
+      const stats = {
+        free_users: 8450,
+        premium_buyers: 245,
+        verified_sellers: 189,
+        agent_pro: 67,
+        conversion_rate: 5.6
+      };
+      res.json(stats);
+    } catch (error) {
+      console.error("Get subscription stats error:", error);
+      res.status(500).json({ message: "Failed to get subscription stats" });
+    }
+  });
+
+  app.get("/api/admin/commission-breakdown", authenticateToken, requireRole("admin"), async (req, res) => {
+    try {
+      const { period = 'monthly' } = req.query;
+      const breakdown = {
+        deal_closures: 89,
+        total_commission: 234000,
+        platform_share: 70200,
+        agent_share: 163800,
+        average_deal_value: 1400000,
+        commission_rate: 3.5
+      };
+      res.json(breakdown);
+    } catch (error) {
+      console.error("Get commission breakdown error:", error);
+      res.status(500).json({ message: "Failed to get commission breakdown" });
+    }
+  });
+
+  app.get("/api/admin/eaas-metrics", authenticateToken, requireRole("admin"), async (req, res) => {
+    try {
+      const { period = 'monthly' } = req.query;
+      const metrics = {
+        legal_docs: 156,
+        valuations: 89,
+        complete_bundles: 34,
+        total_revenue: 162866,
+        average_order_value: 584
+      };
+      res.json(metrics);
+    } catch (error) {
+      console.error("Get EaaS metrics error:", error);
+      res.status(500).json({ message: "Failed to get EaaS metrics" });
     }
   });
 

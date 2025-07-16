@@ -56,6 +56,8 @@ export default function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
     ],
     admin: [
       { href: "/admin/dashboard", icon: Home, label: "Dashboard" },
+      { href: "/admin/revenue-dashboard", icon: TrendingUp, label: "Revenue" },
+      { href: "/admin/whatsapp-dashboard", icon: Building, label: "WhatsApp" },
       { href: "/admin/users", icon: Users, label: "Users" },
       { href: "/admin/listings", icon: Building, label: "Listings" },
       { href: "/admin/approvals", icon: FileText, label: "Approvals" },
@@ -85,7 +87,7 @@ export default function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
           {!collapsed && (
             <div className="flex items-center space-x-2">
               <Building className="h-6 w-6 text-primary" />
-              <span className="font-semibold text-primary">MSMEAtlas</span>
+              <span className="font-semibold text-primary">MSMESquare</span>
             </div>
           )}
           <Button
