@@ -1,5 +1,6 @@
 // State management utilities with null safety and proper initialization
 
+import React from 'react';
 import { safeGet, safeCall, safeArray, safeLocalStorage, safeLocalStorageSet } from './null-safe';
 
 export interface AppState {
@@ -179,18 +180,38 @@ export const stateManager = StateManager.getInstance();
 
 // React hook for using state manager
 export function useAppState(): [AppState, (updates: Partial<AppState>) => void] {
-  const [state, setState] = React.useState<AppState>(() => stateManager.getState());
+  const [state, setState] = React.useState<AppState>(() => {
+    try {
+      return stateManager.getState();
+    } catch (error) {
+      console.warn('Failed to get initial state:', error);
+      return defaultState;
+    }
+  });
 
   React.useEffect(() => {
-    const unsubscribe = stateManager.subscribe((newState) => {
-      setState(newState);
-    });
+    try {
+      const unsubscribe = stateManager.subscribe((newState) => {
+        if (newState && typeof newState === 'object') {
+          setState(newState);
+        }
+      });
 
-    return unsubscribe;
+      return unsubscribe;
+    } catch (error) {
+      console.warn('Failed to subscribe to state manager:', error);
+      return () => {};
+    }
   }, []);
 
   const updateState = React.useCallback((updates: Partial<AppState>) => {
-    stateManager.setState(updates);
+    try {
+      if (updates && typeof updates === 'object') {
+        stateManager.setState(updates);
+      }
+    } catch (error) {
+      console.warn('Failed to update state:', error);
+    }
   }, []);
 
   return [state, updateState];

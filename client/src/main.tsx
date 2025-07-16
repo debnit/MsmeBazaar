@@ -8,12 +8,14 @@ import { initializeLazyLoading } from './utils/lazy-loading';
 import { memoryOptimizer, registerServiceWorker } from './utils/memory-optimizer';
 import { initializeCaching } from './utils/enhanced-caching';
 import { initializeDemandPaging } from './utils/demand-paging';
+import { initializeApp } from './utils/init-handlers';
 
 // Performance optimization: Initialize core systems immediately
 initializeLazyLoading();
 memoryOptimizer.initialize();
 initializeCaching();
 initializeDemandPaging();
+initializeApp();
 
 // Performance optimization: Defer non-critical operations
 const deferredInit = () => {

@@ -1,4 +1,4 @@
-import React from "react"
+import * as React from "react"
 
 import type {
   ToastActionElement,
@@ -178,8 +178,13 @@ function validateState(state: State): State {
   return { toasts: validToasts };
 }
 
-// Ensure memory state is properly initialized
-memoryState = validateState(memoryState);
+// Ensure memory state is properly initialized and reset if corrupted
+try {
+  memoryState = validateState(memoryState);
+} catch (error) {
+  console.warn('Memory state initialization failed, resetting:', error);
+  memoryState = initializeState();
+}
 
 function dispatch(action: Action) {
   try {
@@ -240,43 +245,81 @@ function toast({ ...props }: Toast) {
 }
 
 function useToast() {
+  // Safe initialization with proper React state
   const [state, setState] = React.useState<State>(() => {
-    // Always initialize with a clean state
-    const initialState = validateState(memoryState);
-    return initialState;
-  })
+    try {
+      // Always initialize with a clean state to prevent holding other values
+      const safeMemoryState = memoryState || { toasts: [] };
+      const initialState = validateState(safeMemoryState);
+      return initialState;
+    } catch (error) {
+      console.warn('Toast state initialization failed:', error);
+      return { toasts: [] };
+    }
+  });
 
   React.useEffect(() => {
+    // Create a safe listener function
     const listener = (newState: State) => {
-      if (newState && setState) {
-        // Validate incoming state before setting
-        const validatedState = validateState(newState);
-        safeCall(setState, undefined, validatedState);
-      }
-    }
-    
-    if (listeners && Array.isArray(listeners)) {
-      listeners.push(listener);
-    }
-    
-    return () => {
-      if (listeners && Array.isArray(listeners)) {
-        const index = listeners.indexOf(listener);
-        if (index > -1) {
-          listeners.splice(index, 1);
+      try {
+        if (newState && typeof newState === 'object' && setState) {
+          // Validate incoming state before setting to prevent corruption
+          const validatedState = validateState(newState);
+          setState(validatedState);
         }
+      } catch (error) {
+        console.warn('Toast listener failed:', error);
+        // Reset to safe state on error
+        setState({ toasts: [] });
       }
+    };
+    
+    // Safely add listener
+    try {
+      if (listeners && Array.isArray(listeners)) {
+        listeners.push(listener);
+      }
+    } catch (error) {
+      console.warn('Failed to add toast listener:', error);
     }
-  }, [])
+    
+    // Cleanup function
+    return () => {
+      try {
+        if (listeners && Array.isArray(listeners)) {
+          const index = listeners.indexOf(listener);
+          if (index > -1) {
+            listeners.splice(index, 1);
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to remove toast listener:', error);
+      }
+    };
+  }, []);
 
-  // Ensure current state is always valid
-  const currentState = validateState(state);
+  // Ensure current state is always valid and clean
+  const currentState = React.useMemo(() => {
+    try {
+      return validateState(state);
+    } catch (error) {
+      console.warn('Toast state validation failed:', error);
+      return { toasts: [] };
+    }
+  }, [state]);
 
-  return {
+  // Return safe toast interface
+  return React.useMemo(() => ({
     ...currentState,
     toast,
-    dismiss: (toastId?: string) => safeCall(dispatch, undefined, { type: "DISMISS_TOAST", toastId }),
-  }
+    dismiss: (toastId?: string) => {
+      try {
+        dispatch({ type: "DISMISS_TOAST", toastId });
+      } catch (error) {
+        console.warn('Toast dismiss failed:', error);
+      }
+    },
+  }), [currentState]);
 }
 
 export { useToast, toast }
