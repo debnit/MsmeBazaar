@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/node';
-import { ProfilingIntegration } from '@sentry/profiling-node';
+import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import { register, collectDefaultMetrics, Counter, Histogram, Gauge } from 'prom-client';
 import { Express } from 'express';
 
@@ -10,7 +10,7 @@ export function initializeSentry() {
       dsn: process.env.SENTRY_DSN,
       environment: process.env.NODE_ENV || 'development',
       integrations: [
-        new ProfilingIntegration(),
+        nodeProfilingIntegration(),
         new Sentry.Integrations.Http({ tracing: true }),
         new Sentry.Integrations.Express({ app: true }),
       ],

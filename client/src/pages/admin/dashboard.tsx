@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { valuationEngine } from "@/lib/valuation-engine";
+import { calculateValuation, type ValuationResult } from "@/lib/valuation-engine";
 import type { MsmeListing } from "@shared/schema";
-import type { ValuationResult } from "@/lib/valuation-engine"; // Adjust if exported separately
 
 interface MSME extends MsmeListing {
   id: string;
@@ -27,12 +26,16 @@ export default function AdminDashboard() {
         const listings = res.data as MSME[];
         setMsmes(listings);
 
-        const results = await Promise.all(
-          listings.map(async (msme) => {
-            const result = await valuationEngine.calculateValuation(msme);
-            return { id: msme.id, valuation: result };
-          }),
-        );
+        const results = listings.map((msme) => {
+          const result = calculateValuation({
+            revenue: msme.revenue || 0,
+            assets: msme.assets || 0,
+            industry: msme.industry || 'default',
+            location: msme.location || 'default',
+            age: msme.establishedYear ? new Date().getFullYear() - msme.establishedYear : 1
+          });
+          return { id: msme.id, valuation: result };
+        });
 
         const map = results.reduce(
           (acc, curr) => {

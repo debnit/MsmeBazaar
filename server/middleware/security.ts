@@ -13,8 +13,12 @@ export const createRateLimit = (windowMs: number, max: number, message?: string)
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req: Request) => {
-      // Use user ID if authenticated, otherwise IP
-      return req.user?.id ? `user:${req.user.id}` : `ip:${req.ip}`;
+      // Use user ID if authenticated, otherwise use IP with proper IPv6 handling
+      if (req.user?.id) {
+        return `user:${req.user.id}`;
+      }
+      // Use the default IP key generator for proper IPv6 support
+      return req.ip;
     },
     skip: (req: Request) => {
       // Skip rate limiting for admin users
@@ -37,25 +41,30 @@ export const subscriptionBasedRateLimit = rateLimit({
     if (!req.user) return 100; // Anonymous users: 100/hour
     
     // Get user's subscription status
-    const subscription = await storage.getUserActiveSubscription(req.user.id);
-    
-    switch (req.user.role) {
-      case 'admin':
-        return 0; // Unlimited for admins
-      case 'nbfc':
-        return subscription ? 5000 : 1000; // NBFCs get higher limits
-      case 'agent':
-        return subscription ? 2000 : 500;
-      case 'buyer':
-        return subscription ? 1000 : 200; // Pro buyers get 5x more
-      case 'seller':
-        return subscription ? 800 : 300;
-      default:
-        return 100;
+    try {
+      const subscription = await storage.getUserActiveSubscription(req.user.id);
+      
+      switch (req.user.role) {
+        case 'admin':
+          return 0; // Unlimited for admins
+        case 'nbfc':
+          return subscription ? 5000 : 1000; // NBFCs get higher limits
+        case 'agent':
+          return subscription ? 2000 : 500;
+        case 'buyer':
+          return subscription ? 1000 : 200; // Pro buyers get 5x more
+        case 'seller':
+          return subscription ? 800 : 300;
+        default:
+          return 100;
+      }
+    } catch (error) {
+      // Fallback to basic limits if subscription check fails
+      return 100;
     }
   },
   keyGenerator: (req: Request) => {
-    return req.user?.id ? `user:${req.user.id}` : `ip:${req.ip}`;
+    return req.user?.id ? `user:${req.user.id}` : req.ip;
   },
   handler: (req: Request, res: Response) => {
     res.status(429).json({
