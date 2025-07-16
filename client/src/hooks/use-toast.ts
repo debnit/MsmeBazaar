@@ -6,6 +6,7 @@ import type {
 } from "@/components/ui/toast"
 
 import { safeCall, safeExecute, safeArray } from "@/utils/null-safe"
+import { StaticUtils } from "@/utils/static-variables"
 
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
@@ -216,110 +217,126 @@ function dispatch(action: Action) {
 type Toast = Omit<ToasterToast, "id">
 
 function toast({ ...props }: Toast) {
-  const id = genId()
-
-  const update = (props: ToasterToast) =>
-    dispatch({
-      type: "UPDATE_TOAST",
-      toast: { ...props, id },
-    })
-  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
-
-  dispatch({
-    type: "ADD_TOAST",
-    toast: {
-      ...props,
+  try {
+    const id = Math.random().toString(36).slice(2, 9);
+    
+    // Use static variables instead of dispatch
+    StaticUtils.addToast({
       id,
-      open: true,
-      onOpenChange: (open) => {
-        if (!open) dismiss()
-      },
-    },
-  })
-
-  return {
-    id: id,
-    dismiss,
-    update,
+      title: props.title,
+      description: props.description,
+      action: props.action,
+      variant: props.variant || 'default'
+    });
+    
+    // Auto-dismiss after delay
+    setTimeout(() => {
+      StaticUtils.removeToast(id);
+    }, TOAST_REMOVE_DELAY);
+    
+    const update = (updatedProps: ToasterToast) => {
+      try {
+        // Remove old toast and add updated one
+        StaticUtils.removeToast(id);
+        StaticUtils.addToast({
+          ...updatedProps,
+          id
+        });
+      } catch (error) {
+        console.warn('Toast update failed:', error);
+      }
+    };
+    
+    const dismiss = () => {
+      try {
+        StaticUtils.removeToast(id);
+      } catch (error) {
+        console.warn('Toast dismiss failed:', error);
+      }
+    };
+    
+    return {
+      id,
+      dismiss,
+      update,
+    };
+  } catch (error) {
+    console.warn('Toast creation failed:', error);
+    return {
+      id: '',
+      dismiss: () => {},
+      update: () => {},
+    };
   }
 }
 
 function useToast() {
-  // Safe initialization with proper React state
-  const [state, setState] = React.useState<State>(() => {
-    try {
-      // Always initialize with a clean state to prevent holding other values
-      const safeMemoryState = memoryState || { toasts: [] };
-      const initialState = validateState(safeMemoryState);
-      return initialState;
-    } catch (error) {
-      console.warn('Toast state initialization failed:', error);
-      return { toasts: [] };
-    }
-  });
+  // Use static variables directly to prevent null exceptions
+  const [toasts, setToasts] = React.useState(() => StaticUtils.safeGetToasts());
 
   React.useEffect(() => {
-    // Create a safe listener function
-    const listener = (newState: State) => {
+    // Subscribe to static variable changes
+    const unsubscribe = StaticUtils.addToastListener((newToasts) => {
       try {
-        if (newState && typeof newState === 'object' && setState) {
-          // Validate incoming state before setting to prevent corruption
-          const validatedState = validateState(newState);
-          setState(validatedState);
+        if (Array.isArray(newToasts)) {
+          setToasts([...newToasts]);
         }
       } catch (error) {
-        console.warn('Toast listener failed:', error);
-        // Reset to safe state on error
-        setState({ toasts: [] });
+        console.warn('Static toast listener failed:', error);
+        setToasts([]);
       }
-    };
+    });
     
-    // Safely add listener
-    try {
-      if (listeners && Array.isArray(listeners)) {
-        listeners.push(listener);
-      }
-    } catch (error) {
-      console.warn('Failed to add toast listener:', error);
-    }
-    
-    // Cleanup function
-    return () => {
-      try {
-        if (listeners && Array.isArray(listeners)) {
-          const index = listeners.indexOf(listener);
-          if (index > -1) {
-            listeners.splice(index, 1);
-          }
-        }
-      } catch (error) {
-        console.warn('Failed to remove toast listener:', error);
-      }
-    };
+    return unsubscribe;
   }, []);
 
-  // Ensure current state is always valid and clean
-  const currentState = React.useMemo(() => {
+  // Static toast functions using static variables
+  const staticToast = React.useCallback((props: {
+    title?: React.ReactNode;
+    description?: React.ReactNode;
+    action?: ToastActionElement;
+    variant?: 'default' | 'destructive';
+  }) => {
     try {
-      return validateState(state);
+      const id = Math.random().toString(36).slice(2, 9);
+      StaticUtils.addToast({
+        id,
+        title: props.title,
+        description: props.description,
+        action: props.action,
+        variant: props.variant || 'default'
+      });
+      
+      // Auto-dismiss after delay
+      setTimeout(() => {
+        StaticUtils.removeToast(id);
+      }, TOAST_REMOVE_DELAY);
+      
+      return { id, dismiss: () => StaticUtils.removeToast(id) };
     } catch (error) {
-      console.warn('Toast state validation failed:', error);
-      return { toasts: [] };
+      console.warn('Static toast failed:', error);
+      return { id: '', dismiss: () => {} };
     }
-  }, [state]);
+  }, []);
 
-  // Return safe toast interface
-  return React.useMemo(() => ({
-    ...currentState,
-    toast,
-    dismiss: (toastId?: string) => {
-      try {
-        dispatch({ type: "DISMISS_TOAST", toastId });
-      } catch (error) {
-        console.warn('Toast dismiss failed:', error);
+  const staticDismiss = React.useCallback((toastId?: string) => {
+    try {
+      if (toastId) {
+        StaticUtils.removeToast(toastId);
+      } else {
+        StaticUtils.clearToasts();
       }
-    },
-  }), [currentState]);
+    } catch (error) {
+      console.warn('Static dismiss failed:', error);
+    }
+  }, []);
+
+  // Return safe interface using static variables
+  return React.useMemo(() => ({
+    toasts,
+    toast: staticToast,
+    dismiss: staticDismiss,
+  }), [toasts, staticToast, staticDismiss]);
 }
 
 export { useToast, toast }
