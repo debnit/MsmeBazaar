@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
+import AuthPage from "@/pages/auth/login";
 import SellerDashboard from "@/pages/seller/dashboard";
 import SellerListingForm from "@/pages/seller/listing-form";
 import BuyerDashboard from "@/pages/buyer/dashboard";
@@ -32,8 +33,9 @@ function Router() {
       {!user ? (
         <>
           <Route path="/" component={Landing} />
-          <Route path="/login" component={Landing} />
-          <Route path="/register" component={Landing} />
+          <Route path="/auth" component={AuthPage} />
+          <Route path="/login" component={AuthPage} />
+          <Route path="/register" component={AuthPage} />
         </>
       ) : (
         <>

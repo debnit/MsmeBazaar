@@ -419,6 +419,248 @@ export const translations: LocalizedContent = {
     en: 'Same district',
     hi: 'समान जिला',
     or: 'ସମାନ ଜିଲ୍ଲା'
+  },
+
+  // Authentication
+  'auth.tagline': {
+    en: 'Connect, Trade, Grow - Your MSME Success Partner',
+    hi: 'जुड़ें, व्यापार करें, बढ़ें - आपका एमएसएमई सफलता साझीदार',
+    or: 'ସଂଯୋଗ, ବ୍ୟବସାୟ, ବୃଦ୍ଧି - ଆପଣଙ୍କ MSME ସଫଳତା ସାଥୀ'
+  },
+  'auth.login.title': {
+    en: 'Welcome Back!',
+    hi: 'वापस आपका स्वागत है!',
+    or: 'ପୁନର୍ବାର ସ୍ୱାଗତ!'
+  },
+  'auth.login.subtitle': {
+    en: 'Enter your details to continue your MSME journey',
+    hi: 'अपना एमएसएमई यात्रा जारी रखने के लिए विवरण दर्ज करें',
+    or: 'ଆପଣଙ୍କ MSME ଯାତ୍ରା ଜାରି ରଖିବା ପାଇଁ ବିବରଣୀ ଦିଅନ୍ତୁ'
+  },
+  'auth.register.title': {
+    en: 'Join MSMESquare',
+    hi: 'एमएसएमई स्क्वायर में शामिल हों',
+    or: 'MSME Square ରେ ଯୋଗ ଦିଅନ୍ତୁ'
+  },
+  'auth.register.subtitle': {
+    en: 'Start your business transformation today',
+    hi: 'आज ही अपना व्यावसायिक परिवर्तन शुरू करें',
+    or: 'ଆଜି ଆପଣଙ୍କ ବ୍ୟବସାୟିକ ପରିବର୍ତ୍ତନ ଆରମ୍ଭ କରନ୍ତୁ'
+  },
+  'auth.benefits.title': {
+    en: 'Why Choose MSMESquare?',
+    hi: 'एमएसएमई स्क्वायर क्यों चुनें?',
+    or: 'କାହିଁକି MSME Square ବାଛନ୍ତୁ?'
+  },
+  'auth.benefits.sellers': {
+    en: 'Sellers',
+    hi: 'विक्रेता',
+    or: 'ବିକ୍ରେତା'
+  },
+  'auth.benefits.sellersDesc': {
+    en: 'Get best value for your business',
+    hi: 'अपने व्यवसाय का सर्वोत्तम मूल्य प्राप्त करें',
+    or: 'ଆପଣଙ୍କ ବ୍ୟବସାୟ ପାଇଁ ସର୍ବୋତ୍ତମ ମୂଲ୍ୟ ପାଆନ୍ତୁ'
+  },
+  'auth.benefits.buyers': {
+    en: 'Buyers',
+    hi: 'खरीदार',
+    or: 'କ୍ରେତା'
+  },
+  'auth.benefits.buyersDesc': {
+    en: 'Find profitable opportunities',
+    hi: 'लाभदायक अवसर खोजें',
+    or: 'ଲାଭଜନକ ସୁଯୋଗ ଖୋଜନ୍ତୁ'
+  },
+  'auth.benefits.agents': {
+    en: 'Agents',
+    hi: 'एजेंट',
+    or: 'ଏଜେଣ୍ଟ'
+  },
+  'auth.benefits.agentsDesc': {
+    en: 'Earn commissions on deals',
+    hi: 'सौदों पर कमीशन कमाएं',
+    or: 'ଡିଲ୍ ଉପରେ କମିସନ୍ ରୋଜଗାର କରନ୍ତୁ'
+  },
+  'auth.benefits.nbfcs': {
+    en: 'NBFCs',
+    hi: 'एनबीएफसी',
+    or: 'NBFC'
+  },
+  'auth.benefits.nbfcsDesc': {
+    en: 'Expand your lending portfolio',
+    hi: 'अपने ऋण पोर्टफोलियो का विस्तार करें',
+    or: 'ଆପଣଙ୍କ ଋଣ ପୋର୍ଟଫୋଲିଓ ବିସ୍ତାର କରନ୍ତୁ'
+  },
+  'auth.stats.title': {
+    en: 'Trusted by Thousands',
+    hi: 'हजारों द्वारा विश्वसनीय',
+    or: 'ହଜାରେ ଦ୍ୱାରା ବିଶ୍ୱସ୍ତ'
+  },
+  'auth.stats.msmes': {
+    en: 'MSMEs',
+    hi: 'एमएसएमई',
+    or: 'MSME'
+  },
+  'auth.stats.transactions': {
+    en: 'Transactions',
+    hi: 'लेनदेन',
+    or: 'ବ୍ୟବସାୟ'
+  },
+  'auth.stats.success': {
+    en: 'Success Rate',
+    hi: 'सफलता दर',
+    or: 'ସଫଳତା ହାର'
+  },
+  'auth.form.email': {
+    en: 'Email Address',
+    hi: 'ईमेल पता',
+    or: 'ଇମେଲ ଠିକଣା'
+  },
+  'auth.form.emailPlaceholder': {
+    en: 'Enter your email address',
+    hi: 'अपना ईमेल पता दर्ज करें',
+    or: 'ଆପଣଙ୍କ ଇମେଲ ଠିକଣା ଦିଅନ୍ତୁ'
+  },
+  'auth.form.password': {
+    en: 'Password',
+    hi: 'पासवर्ड',
+    or: 'ପାସୱାର୍ଡ'
+  },
+  'auth.form.passwordPlaceholder': {
+    en: 'Enter your password',
+    hi: 'अपना पासवर्ड दर्ज करें',
+    or: 'ଆପଣଙ୍କ ପାସୱାର୍ଡ ଦିଅନ୍ତୁ'
+  },
+  'auth.form.firstName': {
+    en: 'First Name',
+    hi: 'पहला नाम',
+    or: 'ପ୍ରଥମ ନାମ'
+  },
+  'auth.form.firstNamePlaceholder': {
+    en: 'Enter your first name',
+    hi: 'अपना पहला नाम दर्ज करें',
+    or: 'ଆପଣଙ୍କ ପ୍ରଥମ ନାମ ଦିଅନ୍ତୁ'
+  },
+  'auth.form.lastName': {
+    en: 'Last Name',
+    hi: 'अंतिम नाम',
+    or: 'ଶେଷ ନାମ'
+  },
+  'auth.form.lastNamePlaceholder': {
+    en: 'Enter your last name',
+    hi: 'अपना अंतिम नाम दर्ज करें',
+    or: 'ଆପଣଙ୍କ ଶେଷ ନାମ ଦିଅନ୍ତୁ'
+  },
+  'auth.form.role': {
+    en: 'Your Role',
+    hi: 'आपकी भूमिका',
+    or: 'ଆପଣଙ୍କ ଭୂମିକା'
+  },
+  'auth.form.selectRole': {
+    en: 'Select your role',
+    hi: 'अपनी भूमिका चुनें',
+    or: 'ଆପଣଙ୍କ ଭୂମିକା ବାଛନ୍ତୁ'
+  },
+  'auth.form.login': {
+    en: 'Login',
+    hi: 'लॉगिन',
+    or: 'ଲଗଇନ'
+  },
+  'auth.form.loggingIn': {
+    en: 'Logging in...',
+    hi: 'लॉगिन हो रहा है...',
+    or: 'ଲଗଇନ ହେଉଛି...'
+  },
+  'auth.form.register': {
+    en: 'Register',
+    hi: 'पंजीकरण',
+    or: 'ପଞ୍ଜୀକରଣ'
+  },
+  'auth.form.registering': {
+    en: 'Registering...',
+    hi: 'पंजीकरण हो रहा है...',
+    or: 'ପଞ୍ଜୀକରଣ ହେଉଛି...'
+  },
+  'auth.form.needAccount': {
+    en: "Don't have an account? Register here",
+    hi: 'कोई खाता नहीं है? यहाँ पंजीकरण करें',
+    or: 'ଖାତା ନାହିଁ? ଏଠାରେ ପଞ୍ଜୀକରଣ କରନ୍ତୁ'
+  },
+  'auth.form.haveAccount': {
+    en: 'Already have an account? Login here',
+    hi: 'पहले से खाता है? यहाँ लॉगिन करें',
+    or: 'ଆଗରୁ ଖାତା ଅଛି? ଏଠାରେ ଲଗଇନ କରନ୍ତୁ'
+  },
+  'auth.roles.seller.title': {
+    en: 'MSME Seller',
+    hi: 'एमएसएमई विक्रेता',
+    or: 'MSME ବିକ୍ରେତା'
+  },
+  'auth.roles.seller.description': {
+    en: 'Sell your business',
+    hi: 'अपना व्यवसाय बेचें',
+    or: 'ଆପଣଙ୍କ ବ୍ୟବସାୟ ବିକ୍ରି କରନ୍ତୁ'
+  },
+  'auth.roles.buyer.title': {
+    en: 'Business Buyer',
+    hi: 'व्यवसाय खरीदार',
+    or: 'ବ୍ୟବସାୟ କ୍ରେତା'
+  },
+  'auth.roles.buyer.description': {
+    en: 'Buy existing businesses',
+    hi: 'मौजूदा व्यवसाय खरीदें',
+    or: 'ବିଦ୍ୟମାନ ବ୍ୟବସାୟ କିଣନ୍ତୁ'
+  },
+  'auth.roles.agent.title': {
+    en: 'Business Agent',
+    hi: 'व्यवसाय एजेंट',
+    or: 'ବ୍ୟବସାୟ ଏଜେଣ୍ଟ'
+  },
+  'auth.roles.agent.description': {
+    en: 'Facilitate transactions',
+    hi: 'लेनदेन सुविधा प्रदान करें',
+    or: 'ବ୍ୟବସାୟ ସହଜ କରନ୍ତୁ'
+  },
+  'auth.roles.nbfc.title': {
+    en: 'NBFC Partner',
+    hi: 'एनबीएफसी साझेदार',
+    or: 'NBFC ସାଥୀ'
+  },
+  'auth.roles.nbfc.description': {
+    en: 'Provide financing',
+    hi: 'वित्तपोषण प्रदान करें',
+    or: 'ବିତ୍ତପୋଷଣ ପ୍ରଦାନ କରନ୍ତୁ'
+  },
+  'auth.login.success': {
+    en: 'Login Successful',
+    hi: 'लॉगिन सफल',
+    or: 'ଲଗଇନ ସଫଳ'
+  },
+  'auth.login.welcome': {
+    en: 'Welcome back to MSMESquare!',
+    hi: 'MSMESquare में वापस आपका स्वागत है!',
+    or: 'MSMESquare ରେ ପୁନର୍ବାର ସ୍ୱାଗତ!'
+  },
+  'auth.login.error': {
+    en: 'Login Failed',
+    hi: 'लॉगिन असफल',
+    or: 'ଲଗଇନ ବିଫଳ'
+  },
+  'auth.register.success': {
+    en: 'Registration Successful',
+    hi: 'पंजीकरण सफल',
+    or: 'ପଞ୍ଜୀକରଣ ସଫଳ'
+  },
+  'auth.register.welcome': {
+    en: 'Welcome to MSMESquare!',
+    hi: 'MSMESquare में आपका स्वागत है!',
+    or: 'MSMESquare ରେ ସ୍ୱାଗତ!'
+  },
+  'auth.register.error': {
+    en: 'Registration Failed',
+    hi: 'पंजीकरण असफल',
+    or: 'ପଞ୍ଜୀକରଣ ବିଫଳ'
   }
 };
 

@@ -20,7 +20,7 @@ export default function Landing() {
             </div>
             <div className="flex items-center space-x-4">
               <LanguageSelector />
-              <Button variant="outline" onClick={() => window.location.href = '/api/auth/login'}>
+              <Button variant="outline" onClick={() => window.location.href = '/auth'}>
                 {t('nav.login')}
               </Button>
             </div>
@@ -128,7 +128,7 @@ export default function Landing() {
           <p className="text-xl text-blue-100 mb-8">
             {t('cta.description')}
           </p>
-          <Button size="lg" variant="secondary" onClick={() => window.location.href = '/api/auth/login'}>
+          <Button size="lg" variant="secondary" onClick={() => window.location.href = '/auth'}>
             {t('cta.button')}
           </Button>
         </div>
