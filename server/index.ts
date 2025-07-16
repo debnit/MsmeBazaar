@@ -2,18 +2,15 @@ import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { monitoringService } from "./services/monitoring";
+import { monitoringService, monitoringMiddleware } from "./services/monitoring";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-// Initialize crash detection
-monitoringService.crashDetector();
-
 // Performance monitoring middleware
-app.use(monitoringService.performanceTracker());
+app.use(monitoringMiddleware());
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -53,7 +50,18 @@ app.use((req, res, next) => {
     const message = err.message || "Internal Server Error";
 
     // Record error for monitoring
-    monitoringService.recordError(err, req, status >= 500 ? 'high' : 'medium');
+    monitoringService.recordError({
+      route: req.path,
+      method: req.method,
+      statusCode: status,
+      error: message,
+      stack: err.stack,
+      requestData: req.body,
+      userAgent: req.get('User-Agent'),
+      ip: req.ip,
+      severity: status >= 500 ? 'high' : 'medium',
+      responseTime: 0
+    });
 
     res.status(status).json({ message });
     throw err;

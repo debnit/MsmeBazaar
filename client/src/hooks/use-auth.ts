@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext } from "react";
+import React, { createContext, ReactNode, useContext } from "react";
 import { useQuery, useMutation, UseMutationResult } from "@tanstack/react-query";
 import { User } from "@shared/schema";
 import { authService, type AuthUser } from "@/lib/auth";
@@ -67,6 +67,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const sendOTPMutation = useMutation({
     mutationFn: authService.sendOTP,
+    onSuccess: (data) => {
+      if (data.success) {
+        toast({
+          title: "OTP sent successfully",
+          description: "Please check your phone for the verification code",
+        });
+      }
+    },
     onError: (error: Error) => {
       toast({
         title: "Failed to send OTP",
@@ -96,21 +104,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user: user || null,
-        isLoading,
-        error,
-        isAuthenticated: !!user,
-        loginMutation,
-        logoutMutation,
-        sendOTPMutation,
-        verifyOTPMutation,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const contextValue = {
+    user: user || null,
+    isLoading,
+    error,
+    isAuthenticated: !!user,
+    loginMutation,
+    logoutMutation,
+    sendOTPMutation,
+    verifyOTPMutation,
+  };
+
+  return React.createElement(
+    AuthContext.Provider,
+    { value: contextValue },
+    children
   );
 }
 

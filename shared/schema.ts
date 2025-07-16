@@ -7,6 +7,8 @@ import { z } from "zod";
 export const userRoles = ['seller', 'buyer', 'agent', 'admin', 'nbfc'] as const;
 export type UserRole = typeof userRoles[number];
 
+
+
 // Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -347,3 +349,136 @@ export type LoanProduct = typeof loanProducts.$inferSelect;
 export type InsertLoanProduct = z.infer<typeof insertLoanProductSchema>;
 export type ComplianceRecord = typeof complianceRecords.$inferSelect;
 export type InsertComplianceRecord = z.infer<typeof insertComplianceRecordSchema>;
+
+// Escrow accounts table
+export const escrowAccounts = pgTable("escrow_accounts", {
+  id: serial("id").primaryKey(),
+  buyerId: integer("buyer_id").references(() => users.id).notNull(),
+  sellerId: integer("seller_id").references(() => users.id).notNull(),
+  msmeId: integer("msme_id").references(() => msmeListings.id).notNull(),
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("INR"),
+  status: varchar("status", { length: 20 }).default("pending"),
+  releaseConditions: json("release_conditions").default([]),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Escrow milestones table
+export const escrowMilestones = pgTable("escrow_milestones", {
+  id: serial("id").primaryKey(),
+  escrowId: integer("escrow_id").references(() => escrowAccounts.id).notNull(),
+  description: text("description").notNull(),
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  status: varchar("status", { length: 20 }).default("pending"),
+  dueDate: timestamp("due_date").notNull(),
+  completedAt: timestamp("completed_at"),
+  completedBy: integer("completed_by").references(() => users.id),
+  evidence: text("evidence"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Escrow transactions table
+export const escrowTransactions = pgTable("escrow_transactions", {
+  id: serial("id").primaryKey(),
+  escrowId: integer("escrow_id").references(() => escrowAccounts.id).notNull(),
+  type: varchar("type", { length: 20 }).notNull(),
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  status: varchar("status", { length: 20 }).default("pending"),
+  transactionId: varchar("transaction_id", { length: 100 }).notNull(),
+  paymentMethod: varchar("payment_method", { length: 50 }).notNull(),
+  metadata: json("metadata"),
+  timestamp: timestamp("timestamp").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Notification tables
+export const notificationTemplates = pgTable("notification_templates", {
+  id: serial("id").primaryKey(),
+  templateId: varchar("template_id", { length: 100 }).unique().notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  type: varchar("type", { length: 20 }).notNull(),
+  template: text("template").notNull(),
+  variables: json("variables").default([]),
+  priority: varchar("priority", { length: 20 }).default("medium"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const notificationHistory = pgTable("notification_history", {
+  id: serial("id").primaryKey(),
+  templateId: varchar("template_id", { length: 100 }).notNull(),
+  userId: integer("user_id").references(() => users.id),
+  recipient: varchar("recipient", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  type: varchar("type", { length: 20 }).notNull(),
+  status: varchar("status", { length: 20 }).default("queued"),
+  priority: varchar("priority", { length: 20 }).default("medium"),
+  messageId: varchar("message_id", { length: 100 }),
+  error: text("error"),
+  metadata: json("metadata"),
+  sentAt: timestamp("sent_at"),
+  deliveredAt: timestamp("delivered_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const notificationPreferences = pgTable("notification_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  templateId: varchar("template_id", { length: 100 }).notNull(),
+  enabled: boolean("enabled").default(true),
+  channels: json("channels").default(["sms"]),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Escrow and notification types
+export const insertEscrowAccountSchema = createInsertSchema(escrowAccounts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertEscrowMilestoneSchema = createInsertSchema(escrowMilestones).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertEscrowTransactionSchema = createInsertSchema(escrowTransactions).omit({
+  id: true,
+  createdAt: true,
+  timestamp: true,
+});
+
+export const insertNotificationTemplateSchema = createInsertSchema(notificationTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertNotificationHistorySchema = createInsertSchema(notificationHistory).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertNotificationPreferenceSchema = createInsertSchema(notificationPreferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type EscrowAccount = typeof escrowAccounts.$inferSelect;
+export type InsertEscrowAccount = z.infer<typeof insertEscrowAccountSchema>;
+export type EscrowMilestone = typeof escrowMilestones.$inferSelect;
+export type InsertEscrowMilestone = z.infer<typeof insertEscrowMilestoneSchema>;
+export type EscrowTransaction = typeof escrowTransactions.$inferSelect;
+export type InsertEscrowTransaction = z.infer<typeof insertEscrowTransactionSchema>;
+export type NotificationTemplate = typeof notificationTemplates.$inferSelect;
+export type InsertNotificationTemplate = z.infer<typeof insertNotificationTemplateSchema>;
+export type NotificationHistoryRecord = typeof notificationHistory.$inferSelect;
+export type InsertNotificationHistory = z.infer<typeof insertNotificationHistorySchema>;
+export type NotificationPreference = typeof notificationPreferences.$inferSelect;
+export type InsertNotificationPreference = z.infer<typeof insertNotificationPreferenceSchema>;

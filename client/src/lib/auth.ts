@@ -194,10 +194,10 @@ export function withAuth<T extends object>(
     }, []);
 
     if (isLoading) {
-      return (
-        <div className="flex items-center justify-center h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
+      return React.createElement(
+        'div',
+        { className: 'flex items-center justify-center h-screen' },
+        React.createElement('div', { className: 'animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600' })
       );
     }
 
@@ -205,12 +205,12 @@ export function withAuth<T extends object>(
       return null;
     }
 
-    return <Component {...props} />;
+    return React.createElement(Component, props);
   };
 }
 
 // React hooks
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export function useAuth() {
   const [user, setUser] = useState<AuthUser | null>(null);
