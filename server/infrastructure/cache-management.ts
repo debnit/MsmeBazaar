@@ -61,18 +61,29 @@ export class CacheManager {
 
   // Clean in-memory caches
   private cleanMemoryCache() {
-    // Clear Node.js internal DNS cache
-    if (require('dns').clearDNSCache) {
-      require('dns').clearDNSCache();
-    }
-    
-    // Clear module cache for non-critical modules
-    const moduleCache = require.cache;
-    Object.keys(moduleCache).forEach(key => {
-      if (key.includes('temp') || key.includes('cache')) {
-        delete moduleCache[key];
+    try {
+      // Clear Node.js internal DNS cache safely
+      const dns = eval('require')('dns');
+      if (dns && dns.clearDNSCache) {
+        dns.clearDNSCache();
       }
-    });
+      
+      // Clear module cache for non-critical modules safely
+      const moduleCache = eval('require').cache;
+      if (moduleCache && typeof moduleCache === 'object') {
+        Object.keys(moduleCache).forEach(key => {
+          if (key.includes('temp') || key.includes('cache')) {
+            delete moduleCache[key];
+          }
+        });
+      }
+    } catch (error) {
+      // Fallback: manual cache cleanup
+      console.warn('Native cache cleanup failed, using fallback:', error.message);
+      this.memoryCache.clear();
+      this.cacheHits = 0;
+      this.cacheMisses = 0;
+    }
   }
 
   // Manual cache cleanup

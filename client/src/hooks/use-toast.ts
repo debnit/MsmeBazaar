@@ -1,9 +1,11 @@
-import * as React from "react"
+import React from "react"
 
 import type {
   ToastActionElement,
   ToastProps,
 } from "@/components/ui/toast"
+
+import { safeCall, safeExecute, safeArray } from "@/utils/null-safe"
 
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
@@ -72,57 +74,77 @@ const addToRemoveQueue = (toastId: string) => {
 }
 
 export const reducer = (state: State, action: Action): State => {
-  switch (action.type) {
-    case "ADD_TOAST":
-      return {
-        ...state,
-        toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
-      }
-
-    case "UPDATE_TOAST":
-      return {
-        ...state,
-        toasts: state.toasts.map((t) =>
-          t.id === action.toast.id ? { ...t, ...action.toast } : t
-        ),
-      }
-
-    case "DISMISS_TOAST": {
-      const { toastId } = action
-
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
-      if (toastId) {
-        addToRemoveQueue(toastId)
-      } else {
-        state.toasts.forEach((toast) => {
-          addToRemoveQueue(toast.id)
-        })
-      }
-
-      return {
-        ...state,
-        toasts: state.toasts.map((t) =>
-          t.id === toastId || toastId === undefined
-            ? {
-                ...t,
-                open: false,
-              }
-            : t
-        ),
-      }
+  try {
+    if (!state || !action) {
+      return { toasts: [] };
     }
-    case "REMOVE_TOAST":
-      if (action.toastId === undefined) {
+
+    const currentToasts = safeArray(state.toasts);
+
+    switch (action.type) {
+      case "ADD_TOAST":
+        if (!action.toast) {
+          return state;
+        }
         return {
           ...state,
-          toasts: [],
+          toasts: [action.toast, ...currentToasts].slice(0, TOAST_LIMIT),
+        }
+
+      case "UPDATE_TOAST":
+        if (!action.toast || !action.toast.id) {
+          return state;
+        }
+        return {
+          ...state,
+          toasts: currentToasts.map((t) =>
+            t && t.id === action.toast.id ? { ...t, ...action.toast } : t
+          ).filter(Boolean),
+        }
+
+      case "DISMISS_TOAST": {
+        const { toastId } = action
+
+        // Handle side effects safely
+        if (toastId) {
+          safeCall(addToRemoveQueue, undefined, toastId);
+        } else {
+          currentToasts.forEach((toast) => {
+            if (toast && toast.id) {
+              safeCall(addToRemoveQueue, undefined, toast.id);
+            }
+          });
+        }
+
+        return {
+          ...state,
+          toasts: currentToasts.map((t) =>
+            t && (t.id === toastId || toastId === undefined)
+              ? {
+                  ...t,
+                  open: false,
+                }
+              : t
+          ).filter(Boolean),
         }
       }
-      return {
-        ...state,
-        toasts: state.toasts.filter((t) => t.id !== action.toastId),
-      }
+      case "REMOVE_TOAST":
+        if (action.toastId === undefined) {
+          return {
+            ...state,
+            toasts: [],
+          }
+        }
+        return {
+          ...state,
+          toasts: currentToasts.filter((t) => t && t.id !== action.toastId),
+        }
+      default:
+        return state;
+    }
+  } catch (error) {
+    console.warn('Toast reducer error:', error);
+    return state || { toasts: [] };
   }
 }
 
@@ -130,11 +152,60 @@ const listeners: Array<(state: State) => void> = []
 
 let memoryState: State = { toasts: [] }
 
+// Initialize state properly to prevent holding other values
+function initializeState(): State {
+  return { toasts: [] };
+}
+
+// Reset state if it contains invalid data
+function validateState(state: State): State {
+  if (!state || typeof state !== 'object') {
+    return initializeState();
+  }
+  
+  if (!Array.isArray(state.toasts)) {
+    return initializeState();
+  }
+  
+  // Filter out invalid toast entries
+  const validToasts = state.toasts.filter(toast => 
+    toast && 
+    typeof toast === 'object' && 
+    typeof toast.id === 'string' &&
+    toast.id.length > 0
+  );
+  
+  return { toasts: validToasts };
+}
+
+// Ensure memory state is properly initialized
+memoryState = validateState(memoryState);
+
 function dispatch(action: Action) {
-  memoryState = reducer(memoryState, action)
-  listeners.forEach((listener) => {
-    listener(memoryState)
-  })
+  try {
+    if (!action) {
+      return;
+    }
+    
+    // Validate current state before processing
+    memoryState = validateState(memoryState);
+    
+    // Process the action
+    const newState = reducer(memoryState, action);
+    
+    // Validate the new state
+    memoryState = validateState(newState);
+    
+    const currentListeners = safeArray(listeners);
+    
+    currentListeners.forEach((listener) => {
+      safeCall(listener, undefined, memoryState);
+    });
+  } catch (error) {
+    console.warn('Toast dispatch error:', error);
+    // Reset to clean state on error
+    memoryState = initializeState();
+  }
 }
 
 type Toast = Omit<ToasterToast, "id">
@@ -169,22 +240,42 @@ function toast({ ...props }: Toast) {
 }
 
 function useToast() {
-  const [state, setState] = React.useState<State>(memoryState)
+  const [state, setState] = React.useState<State>(() => {
+    // Always initialize with a clean state
+    const initialState = validateState(memoryState);
+    return initialState;
+  })
 
   React.useEffect(() => {
-    listeners.push(setState)
+    const listener = (newState: State) => {
+      if (newState && setState) {
+        // Validate incoming state before setting
+        const validatedState = validateState(newState);
+        safeCall(setState, undefined, validatedState);
+      }
+    }
+    
+    if (listeners && Array.isArray(listeners)) {
+      listeners.push(listener);
+    }
+    
     return () => {
-      const index = listeners.indexOf(setState)
-      if (index > -1) {
-        listeners.splice(index, 1)
+      if (listeners && Array.isArray(listeners)) {
+        const index = listeners.indexOf(listener);
+        if (index > -1) {
+          listeners.splice(index, 1);
+        }
       }
     }
   }, [])
 
+  // Ensure current state is always valid
+  const currentState = validateState(state);
+
   return {
-    ...state,
+    ...currentState,
     toast,
-    dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
+    dismiss: (toastId?: string) => safeCall(dispatch, undefined, { type: "DISMISS_TOAST", toastId }),
   }
 }
 
