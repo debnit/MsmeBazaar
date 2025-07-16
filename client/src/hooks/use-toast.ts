@@ -6,7 +6,7 @@ import type {
 } from "@/components/ui/toast"
 
 import { safeCall, safeExecute, safeArray } from "@/utils/null-safe"
-import { StaticUtils } from "@/utils/static-variables"
+import { safeToastManager } from "@/utils/safe-runtime"
 
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
@@ -220,8 +220,8 @@ function toast({ ...props }: Toast) {
   try {
     const id = Math.random().toString(36).slice(2, 9);
     
-    // Use static variables instead of dispatch
-    StaticUtils.addToast({
+    // Use safe runtime instead of static variables
+    safeToastManager.addToast({
       id,
       title: props.title,
       description: props.description,
@@ -231,14 +231,14 @@ function toast({ ...props }: Toast) {
     
     // Auto-dismiss after delay
     setTimeout(() => {
-      StaticUtils.removeToast(id);
+      safeToastManager.removeToast(id);
     }, TOAST_REMOVE_DELAY);
     
     const update = (updatedProps: ToasterToast) => {
       try {
         // Remove old toast and add updated one
-        StaticUtils.removeToast(id);
-        StaticUtils.addToast({
+        safeToastManager.removeToast(id);
+        safeToastManager.addToast({
           ...updatedProps,
           id
         });
@@ -249,7 +249,7 @@ function toast({ ...props }: Toast) {
     
     const dismiss = () => {
       try {
-        StaticUtils.removeToast(id);
+        safeToastManager.removeToast(id);
       } catch (error) {
         console.warn('Toast dismiss failed:', error);
       }
@@ -271,18 +271,18 @@ function toast({ ...props }: Toast) {
 }
 
 function useToast() {
-  // Use static variables directly to prevent null exceptions
-  const [toasts, setToasts] = React.useState(() => StaticUtils.safeGetToasts());
+  // Use safe runtime system instead of static variables
+  const [toasts, setToasts] = React.useState(() => safeToastManager.getToasts());
 
   React.useEffect(() => {
-    // Subscribe to static variable changes
-    const unsubscribe = StaticUtils.addToastListener((newToasts) => {
+    // Subscribe to safe toast manager changes
+    const unsubscribe = safeToastManager.subscribe((newToasts) => {
       try {
         if (Array.isArray(newToasts)) {
           setToasts([...newToasts]);
         }
       } catch (error) {
-        console.warn('Static toast listener failed:', error);
+        console.warn('Safe toast listener failed:', error);
         setToasts([]);
       }
     });
@@ -290,8 +290,8 @@ function useToast() {
     return unsubscribe;
   }, []);
 
-  // Static toast functions using static variables
-  const staticToast = React.useCallback((props: {
+  // Safe toast functions using safe runtime
+  const safeToast = React.useCallback((props: {
     title?: React.ReactNode;
     description?: React.ReactNode;
     action?: ToastActionElement;
@@ -299,7 +299,7 @@ function useToast() {
   }) => {
     try {
       const id = Math.random().toString(36).slice(2, 9);
-      StaticUtils.addToast({
+      safeToastManager.addToast({
         id,
         title: props.title,
         description: props.description,
@@ -309,34 +309,34 @@ function useToast() {
       
       // Auto-dismiss after delay
       setTimeout(() => {
-        StaticUtils.removeToast(id);
+        safeToastManager.removeToast(id);
       }, TOAST_REMOVE_DELAY);
       
-      return { id, dismiss: () => StaticUtils.removeToast(id) };
+      return { id, dismiss: () => safeToastManager.removeToast(id) };
     } catch (error) {
-      console.warn('Static toast failed:', error);
+      console.warn('Safe toast failed:', error);
       return { id: '', dismiss: () => {} };
     }
   }, []);
 
-  const staticDismiss = React.useCallback((toastId?: string) => {
+  const safeDismiss = React.useCallback((toastId?: string) => {
     try {
       if (toastId) {
-        StaticUtils.removeToast(toastId);
+        safeToastManager.removeToast(toastId);
       } else {
-        StaticUtils.clearToasts();
+        safeToastManager.clearToasts();
       }
     } catch (error) {
-      console.warn('Static dismiss failed:', error);
+      console.warn('Safe dismiss failed:', error);
     }
   }, []);
 
-  // Return safe interface using static variables
+  // Return safe interface using safe runtime
   return React.useMemo(() => ({
     toasts,
-    toast: staticToast,
-    dismiss: staticDismiss,
-  }), [toasts, staticToast, staticDismiss]);
+    toast: safeToast,
+    dismiss: safeDismiss,
+  }), [toasts, safeToast, safeDismiss]);
 }
 
 export { useToast, toast }
