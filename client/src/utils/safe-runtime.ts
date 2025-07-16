@@ -280,22 +280,23 @@ export class SafeToastManager {
     }
   }
 
-  // Add toast with tracing
-  public addToast(toast: {
+  // Add toast with tracing (async)
+  public async addToast(toast: {
     id: string;
     title?: string;
     description?: string;
     variant?: 'default' | 'destructive' | 'success' | 'warning';
     action?: any;
-  }): void {
+  }): Promise<void> {
     const startTime = performance.now();
     
     try {
       if (!toast || !toast.id) return;
 
-      const currentToasts = this.stateManager.getState('toasts', []);
+      // Use async state management
+      const currentToasts = await this.getToastsAsync();
       const newToasts = [...currentToasts, toast];
-      this.stateManager.setState('toasts', newToasts);
+      await this.setToastsAsync(newToasts);
       
       const duration = performance.now() - startTime;
       if (duration > 10) {
@@ -306,16 +307,17 @@ export class SafeToastManager {
     }
   }
 
-  // Remove toast with tracing
-  public removeToast(id: string): void {
+  // Remove toast with tracing (async)
+  public async removeToast(id: string): Promise<void> {
     const startTime = performance.now();
     
     try {
       if (!id) return;
 
-      const currentToasts = this.stateManager.getState('toasts', []);
+      // Use async state management
+      const currentToasts = await this.getToastsAsync();
       const newToasts = currentToasts.filter((toast: any) => toast.id !== id);
-      this.stateManager.setState('toasts', newToasts);
+      await this.setToastsAsync(newToasts);
       
       const duration = performance.now() - startTime;
       if (duration > 10) {
@@ -326,12 +328,12 @@ export class SafeToastManager {
     }
   }
 
-  // Clear all toasts with tracing
-  public clearToasts(): void {
+  // Clear all toasts with tracing (async)
+  public async clearToasts(): Promise<void> {
     const startTime = performance.now();
     
     try {
-      this.stateManager.setState('toasts', []);
+      await this.setToastsAsync([]);
       
       const duration = performance.now() - startTime;
       if (duration > 10) {
@@ -361,8 +363,8 @@ export class SafeToastManager {
     }
   }
 
-  // Subscribe to toast changes with tracing
-  public subscribe(listener: (toasts: any[]) => void): () => void {
+  // Subscribe to toast changes with tracing (async)
+  public async subscribe(listener: (toasts: any[]) => void): Promise<() => void> {
     const startTime = performance.now();
     
     try {
@@ -378,6 +380,37 @@ export class SafeToastManager {
       console.error('SafeToastManager.subscribe failed:', error);
       return () => {};
     }
+  }
+
+  // Async helper methods
+  private async getToastsAsync(): Promise<any[]> {
+    return new Promise((resolve) => {
+      // Use requestAnimationFrame for non-blocking execution
+      requestAnimationFrame(() => {
+        try {
+          const toasts = this.stateManager.getState('toasts', []);
+          resolve(toasts);
+        } catch (error) {
+          console.error('Failed to get toasts:', error);
+          resolve([]);
+        }
+      });
+    });
+  }
+
+  private async setToastsAsync(toasts: any[]): Promise<void> {
+    return new Promise((resolve) => {
+      // Use requestAnimationFrame for non-blocking execution
+      requestAnimationFrame(() => {
+        try {
+          this.stateManager.setState('toasts', toasts);
+          resolve();
+        } catch (error) {
+          console.error('Failed to set toasts:', error);
+          resolve();
+        }
+      });
+    });
   }
 }
 

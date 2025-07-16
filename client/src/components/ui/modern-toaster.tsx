@@ -9,6 +9,11 @@ export function ModernToaster() {
     return null
   }
 
+  // Handle async dismiss
+  const handleDismiss = async (toastId: string) => {
+    await dismiss(toastId)
+  }
+
   return (
     <ToastContainer position="top-right">
       {toasts.map((toast) => (
@@ -18,7 +23,7 @@ export function ModernToaster() {
           description={toast.description}
           variant={toast.variant}
           action={toast.action}
-          onClose={() => dismiss(toast.id)}
+          onClose={() => handleDismiss(toast.id)}
         />
       ))}
     </ToastContainer>

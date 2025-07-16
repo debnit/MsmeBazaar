@@ -43,7 +43,7 @@ class FunctionTracer {
     this.globalEnabled = enabled;
   }
 
-  // Start tracing a function call
+  // Start tracing a function call (async-aware)
   public startTrace(functionName: string, args?: any[]): string {
     if (!this.globalEnabled || (!this.enabledFunctions.has(functionName) && this.enabledFunctions.size > 0)) {
       return '';
@@ -63,7 +63,18 @@ class FunctionTracer {
     return traceId;
   }
 
-  // End tracing a function call
+  // Async trace starter
+  public async startTraceAsync(functionName: string, args?: any[]): Promise<string> {
+    return new Promise((resolve) => {
+      // Use requestAnimationFrame for non-blocking execution
+      requestAnimationFrame(() => {
+        const traceId = this.startTrace(functionName, args);
+        resolve(traceId);
+      });
+    });
+  }
+
+  // End tracing a function call (async-aware)
   public endTrace(traceId: string, result?: any, error?: Error): void {
     if (!traceId || !this.activeTraces.has(traceId)) {
       return;
@@ -98,6 +109,17 @@ class FunctionTracer {
     if (trace.duration! > 100) { // More than 100ms
       console.warn(`Slow function detected: ${functionName} took ${trace.duration!.toFixed(2)}ms`);
     }
+  }
+
+  // Async trace ender
+  public async endTraceAsync(traceId: string, result?: any, error?: Error): Promise<void> {
+    return new Promise((resolve) => {
+      // Use requestAnimationFrame for non-blocking execution
+      requestAnimationFrame(() => {
+        this.endTrace(traceId, result, error);
+        resolve();
+      });
+    });
   }
 
   // Get traces for a specific function

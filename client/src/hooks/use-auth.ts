@@ -44,10 +44,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [authResourceAcquired]);
 
-  // Safe toast function that respects resource acquisition
-  const safeToast = React.useCallback((props: any) => {
+  // Safe toast function that respects resource acquisition (async)
+  const safeToast = React.useCallback(async (props: any) => {
     if (authResourceAcquired) {
-      toast(props);
+      await toast(props);
     } else {
       // Fallback behavior when resource not acquired
       console.warn('Auth resource not acquired, skipping toast:', props.title);
@@ -100,17 +100,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const sendOTPMutation = useMutation({
     mutationFn: authService.sendOTP,
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       if (data.success) {
-        safeToast({
+        await safeToast({
           title: "OTP sent successfully",
           description: "Please check your phone for the verification code",
           variant: "success",
         });
       }
     },
-    onError: (error: Error) => {
-      safeToast({
+    onError: async (error: Error) => {
+      await safeToast({
         title: "Failed to send OTP",
         description: error.message,
         variant: "destructive",
@@ -129,8 +129,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     },
-    onError: (error: Error) => {
-      safeToast({
+    onError: async (error: Error) => {
+      await safeToast({
         title: "OTP verification failed",
         description: error.message,
         variant: "destructive",
