@@ -6,6 +6,9 @@ import { setupVite, serveStatic, log } from "./vite";
 import { setupModernDocs } from "./docs/openapi";
 import { startupManager } from "./infrastructure/startup-manager";
 
+// Initialize mission-critical mode
+console.log('⚡ Starting in mission-critical performance mode...');
+
 const app = express();
 
 // Enable compression for better performance
