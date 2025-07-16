@@ -9,6 +9,8 @@ import { memoryOptimizer, registerServiceWorker } from './utils/memory-optimizer
 import { initializeCaching } from './utils/enhanced-caching';
 import { initializeDemandPaging } from './utils/demand-paging';
 import { initializeApp } from './utils/init-handlers';
+import { markSweepManager } from './utils/mark-sweep-memory';
+import MemoryManager from './utils/memory-manager';
 
 // Performance optimization: Initialize core systems immediately
 initializeLazyLoading();
@@ -16,6 +18,10 @@ memoryOptimizer.initialize();
 initializeCaching();
 initializeDemandPaging();
 initializeApp();
+
+// Initialize memory management systems
+MemoryManager.initialize();
+markSweepManager.performMarkAndSweep();
 
 // Performance optimization: Defer non-critical operations
 const deferredInit = () => {
