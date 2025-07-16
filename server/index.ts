@@ -5,11 +5,20 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupModernDocs } from "./docs/openapi";
 import { startupManager } from "./infrastructure/startup-manager";
+import { 
+  instantResponseMiddleware, 
+  initializeInstantResponses,
+  refreshPrecomputedResponses,
+  criticalPathOptimization
+} from "./infrastructure/instant-response";
 
 // Initialize mission-critical mode
 console.log('⚡ Starting in mission-critical performance mode...');
 
 const app = express();
+
+// Initialize instant response system
+initializeInstantResponses();
 
 // Enable compression for better performance
 app.use(compression({
@@ -30,6 +39,10 @@ app.use(cookieParser());
 
 // Trust proxy for proper IP handling
 app.set('trust proxy', 1);
+
+// Add instant response middleware for critical paths
+app.use(instantResponseMiddleware);
+app.use(criticalPathOptimization);
 
 // Performance monitoring middleware (loaded after service initialization)
 try {
@@ -103,6 +116,9 @@ app.use((req, res, next) => {
       reusePort: true,
     }, async () => {
       log(`Server running on port ${port} with core services`);
+      
+      // Initialize response refresh system
+      refreshPrecomputedResponses();
       
       // Step 7: Initialize secondary services after server is running
       setTimeout(async () => {
