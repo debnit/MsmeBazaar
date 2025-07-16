@@ -52,6 +52,9 @@ import { mobileAuth } from "./auth/mobile-auth";
 import { monitoringService } from "./services/monitoring";
 import { escrowService } from "./services/escrow";
 import { monetizationService } from "./services/monetization";
+import { memoryManager } from "./utils/memory-manager";
+import { resourceOptimizer } from "./utils/resource-optimizer";
+import { errorHandler } from "./utils/error-handler";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import Stripe from "stripe";
@@ -91,6 +94,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 }
 
 async function loadFullRoutes(app: Express) {
+  // Add optimization middleware
+  const { stabilityMiddleware, memoryMiddleware, cacheMiddleware, healthCheckMiddleware } = await import("./middleware/stability");
+  app.use(stabilityMiddleware);
+  app.use(memoryMiddleware);
+  app.use(healthCheckMiddleware);
+  app.use(errorHandler.middleware());
+  
   // Only load heavy imports when needed
   const { monitoringService } = await import("./services/monitoring");
   const { complianceService } = await import("./services/compliance");
@@ -1578,19 +1588,23 @@ async function loadFullRoutes(app: Express) {
   });
 
   // Agent commission routes
-  app.get("/api/agent/commissions", authenticateToken, requireRole("agent"), async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;
-      const commissions = await storage.getAgentCommissions(authReq.user.userId);
-      res.json(commissions);
-    } catch (error) {
-      console.error("Get agent commissions error:", error);
-      res.status(500).json({ message: "Failed to get commissions" });
-    }
-  });
+  app.get("/api/agent/commissions", authenticateToken, requireRole("agent"), errorHandler.createAsyncHandler(async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    const commissions = await storage.getAgentCommissions(authReq.user.userId);
+    res.json(commissions);
+  }));
 
   // Webhook for processing completed payments
-  app.post("/api/webhook/stripe", express.raw({ type: "application/json" }), async (req, res) => {
+  app.post("/api/webhook/stripe", (req, res, next) => {
+    // Handle raw body for Stripe webhooks
+    req.setEncoding('utf8');
+    let data = '';
+    req.on('data', chunk => data += chunk);
+    req.on('end', () => {
+      req.body = data;
+      next();
+    });
+  }, async (req, res) => {
     try {
       if (!stripe) {
         return res.status(500).json({ message: "Stripe not configured" });

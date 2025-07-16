@@ -1,222 +1,304 @@
-// Advanced demand paging system for optimal memory management
-interface PageData {
-  id: string;
+// Client-side demand paging system for optimized resource loading
+import React from 'react';
+
+interface CacheEntry {
   data: any;
-  lastAccessed: number;
-  accessCount: number;
+  timestamp: number;
+  expiry: number;
+  priority: number;
+}
+
+interface PageConfig {
   size: number;
-  priority: 'critical' | 'high' | 'medium' | 'low';
+  ttl: number;
+  priority: number;
 }
 
-interface CacheMetrics {
-  totalSize: number;
-  pageCount: number;
-  hitRate: number;
-  missRate: number;
-  evictionCount: number;
-}
+class DemandPagingManager {
+  private static instance: DemandPagingManager;
+  private cache = new Map<string, CacheEntry>();
+  private loadingPromises = new Map<string, Promise<any>>();
+  private maxCacheSize = 50 * 1024 * 1024; // 50MB
+  private currentCacheSize = 0;
+  private pageConfigs = new Map<string, PageConfig>();
 
-class DemandPagingSystem {
-  private pages = new Map<string, PageData>();
-  private readonly MAX_MEMORY_MB = 64; // 64MB memory limit
-  private readonly PAGE_SIZE_KB = 256; // 256KB page size
-  private readonly MAX_PAGES = Math.floor((this.MAX_MEMORY_MB * 1024) / this.PAGE_SIZE_KB);
-  
-  private metrics: CacheMetrics = {
-    totalSize: 0,
-    pageCount: 0,
-    hitRate: 0,
-    missRate: 0,
-    evictionCount: 0
-  };
-
-  private hits = 0;
-  private misses = 0;
-
-  // Load page on demand with intelligent caching
-  async loadPage(pageId: string, loader: () => Promise<any>, priority: 'critical' | 'high' | 'medium' | 'low' = 'medium'): Promise<any> {
-    const existingPage = this.pages.get(pageId);
-    
-    if (existingPage) {
-      // Page hit - update access metrics
-      existingPage.lastAccessed = Date.now();
-      existingPage.accessCount++;
-      this.hits++;
-      this.updateMetrics();
-      return existingPage.data;
-    }
-
-    // Page miss - load data
-    this.misses++;
-    const data = await loader();
-    const size = this.estimateSize(data);
-    
-    // Check if we need to evict pages
-    if (this.pages.size >= this.MAX_PAGES || this.metrics.totalSize + size > this.MAX_MEMORY_MB * 1024 * 1024) {
-      this.evictPages(size);
-    }
-    
-    // Create new page
-    const page: PageData = {
-      id: pageId,
-      data,
-      lastAccessed: Date.now(),
-      accessCount: 1,
-      size,
-      priority
-    };
-    
-    this.pages.set(pageId, page);
-    this.metrics.totalSize += size;
-    this.metrics.pageCount++;
-    this.updateMetrics();
-    
-    return data;
+  private constructor() {
+    this.setupDefaultConfigs();
+    this.startCleanupProcess();
   }
 
-  // Intelligent page eviction based on LRU + priority
-  private evictPages(requiredSize: number) {
-    const sortedPages = Array.from(this.pages.entries())
-      .sort(([, a], [, b]) => {
-        // Priority weight (critical = 1000, high = 100, medium = 10, low = 1)
-        const priorityWeight = {
-          critical: 1000,
-          high: 100,
-          medium: 10,
-          low: 1
-        };
-        
-        // Calculate eviction score (lower = more likely to evict)
-        const scoreA = (a.accessCount * priorityWeight[a.priority]) / (Date.now() - a.lastAccessed);
-        const scoreB = (b.accessCount * priorityWeight[b.priority]) / (Date.now() - b.lastAccessed);
-        
-        return scoreA - scoreB;
+  static getInstance(): DemandPagingManager {
+    if (!DemandPagingManager.instance) {
+      DemandPagingManager.instance = new DemandPagingManager();
+    }
+    return DemandPagingManager.instance;
+  }
+
+  private setupDefaultConfigs(): void {
+    // High priority pages
+    this.pageConfigs.set('dashboard', { size: 10, ttl: 300000, priority: 10 });
+    this.pageConfigs.set('listings', { size: 20, ttl: 180000, priority: 9 });
+    this.pageConfigs.set('user-profile', { size: 5, ttl: 600000, priority: 8 });
+    
+    // Medium priority pages
+    this.pageConfigs.set('notifications', { size: 15, ttl: 120000, priority: 5 });
+    this.pageConfigs.set('analytics', { size: 8, ttl: 240000, priority: 4 });
+    
+    // Low priority pages
+    this.pageConfigs.set('documentation', { size: 50, ttl: 3600000, priority: 1 });
+    this.pageConfigs.set('settings', { size: 3, ttl: 900000, priority: 2 });
+  }
+
+  private startCleanupProcess(): void {
+    setInterval(() => {
+      this.cleanupExpiredEntries();
+      this.enforceMemoryLimit();
+    }, 30000); // Cleanup every 30 seconds
+  }
+
+  private cleanupExpiredEntries(): void {
+    const now = Date.now();
+    
+    for (const [key, entry] of this.cache) {
+      if (now > entry.expiry) {
+        this.removeFromCache(key);
+      }
+    }
+  }
+
+  private enforceMemoryLimit(): void {
+    if (this.currentCacheSize <= this.maxCacheSize) {
+      return;
+    }
+
+    // Sort by priority and age
+    const entries = Array.from(this.cache.entries())
+      .sort((a, b) => {
+        const priorityDiff = a[1].priority - b[1].priority;
+        if (priorityDiff !== 0) return priorityDiff;
+        return a[1].timestamp - b[1].timestamp;
       });
 
-    let freedSize = 0;
-    let targetSize = requiredSize + (this.MAX_MEMORY_MB * 1024 * 1024 * 0.1); // Free 10% extra
+    // Remove lower priority entries
+    const targetSize = this.maxCacheSize * 0.8;
+    while (this.currentCacheSize > targetSize && entries.length > 0) {
+      const [key] = entries.shift()!;
+      this.removeFromCache(key);
+    }
+  }
 
-    for (const [pageId, page] of sortedPages) {
-      if (freedSize >= targetSize) break;
-      if (page.priority === 'critical') continue; // Never evict critical pages
+  private removeFromCache(key: string): void {
+    const entry = this.cache.get(key);
+    if (entry) {
+      const size = this.calculateSize(entry.data);
+      this.currentCacheSize -= size;
+      this.cache.delete(key);
+    }
+  }
+
+  private calculateSize(data: any): number {
+    return JSON.stringify(data).length * 2; // Approximate size in bytes
+  }
+
+  public async loadPage(
+    key: string,
+    loader: () => Promise<any>,
+    config?: Partial<PageConfig>
+  ): Promise<any> {
+    // Check cache first
+    const cached = this.cache.get(key);
+    if (cached && Date.now() < cached.expiry) {
+      return cached.data;
+    }
+
+    // Check if already loading
+    if (this.loadingPromises.has(key)) {
+      return this.loadingPromises.get(key);
+    }
+
+    // Start loading
+    const loadingPromise = this.executeLoad(key, loader, config);
+    this.loadingPromises.set(key, loadingPromise);
+
+    try {
+      return await loadingPromise;
+    } finally {
+      this.loadingPromises.delete(key);
+    }
+  }
+
+  private async executeLoad(
+    key: string,
+    loader: () => Promise<any>,
+    config?: Partial<PageConfig>
+  ): Promise<any> {
+    try {
+      const data = await loader();
       
-      this.pages.delete(pageId);
-      this.metrics.totalSize -= page.size;
-      this.metrics.pageCount--;
-      this.metrics.evictionCount++;
-      freedSize += page.size;
+      // Get configuration
+      const pageConfig = this.pageConfigs.get(key.split(':')[0]) || 
+        { size: 10, ttl: 300000, priority: 5 };
+      const finalConfig = { ...pageConfig, ...config };
+
+      // Store in cache
+      const entry: CacheEntry = {
+        data,
+        timestamp: Date.now(),
+        expiry: Date.now() + finalConfig.ttl,
+        priority: finalConfig.priority,
+      };
+
+      const size = this.calculateSize(data);
+      this.currentCacheSize += size;
+      this.cache.set(key, entry);
+
+      // Ensure memory limit
+      this.enforceMemoryLimit();
+
+      return data;
+    } catch (error) {
+      console.error(`Failed to load page ${key}:`, error);
+      throw error;
     }
   }
 
-  // Estimate object size in bytes
-  private estimateSize(obj: any): number {
-    const jsonString = JSON.stringify(obj);
-    return new Blob([jsonString]).size;
-  }
-
-  // Update cache metrics
-  private updateMetrics() {
-    const total = this.hits + this.misses;
-    this.metrics.hitRate = total > 0 ? (this.hits / total) * 100 : 0;
-    this.metrics.missRate = total > 0 ? (this.misses / total) * 100 : 0;
-  }
-
-  // Preload critical pages
-  async preloadCriticalPages() {
-    const criticalPages = [
-      {
-        id: 'user-profile',
-        loader: () => fetch('/api/auth/me').then(r => r.json()).catch(() => null),
-        priority: 'critical' as const
-      },
-      {
-        id: 'dashboard-stats',
-        loader: () => fetch('/api/dashboard-stats').then(r => r.json()).catch(() => ({})),
-        priority: 'high' as const
-      },
-      {
-        id: 'navigation-menu',
-        loader: () => Promise.resolve({ menu: 'cached' }),
-        priority: 'high' as const
+  public preloadPages(keys: string[]): void {
+    keys.forEach(key => {
+      if (!this.cache.has(key) && !this.loadingPromises.has(key)) {
+        // Preload with lower priority
+        this.loadPage(key, () => this.fetchFromAPI(key), { priority: 1 });
       }
-    ];
-
-    await Promise.all(
-      criticalPages.map(page => 
-        this.loadPage(page.id, page.loader, page.priority)
-      )
-    );
+    });
   }
 
-  // Get cache metrics
-  getMetrics(): CacheMetrics {
-    return { ...this.metrics };
+  private async fetchFromAPI(key: string): Promise<any> {
+    const response = await fetch(`/api/page-data/${key}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${key}: ${response.statusText}`);
+    }
+    return response.json();
   }
 
-  // Clear low-priority pages
-  clearLowPriorityPages() {
-    for (const [pageId, page] of this.pages.entries()) {
-      if (page.priority === 'low') {
-        this.pages.delete(pageId);
-        this.metrics.totalSize -= page.size;
-        this.metrics.pageCount--;
+  public invalidateCache(pattern?: string): void {
+    if (!pattern) {
+      this.cache.clear();
+      this.currentCacheSize = 0;
+      return;
+    }
+
+    const regex = new RegExp(pattern);
+    for (const [key, entry] of this.cache) {
+      if (regex.test(key)) {
+        this.removeFromCache(key);
       }
     }
   }
 
-  // Force garbage collection
-  forceGarbageCollection() {
-    // Clear expired pages (older than 5 minutes)
-    const now = Date.now();
-    const expiredPages = Array.from(this.pages.entries())
-      .filter(([, page]) => now - page.lastAccessed > 5 * 60 * 1000);
+  public getCacheStats(): any {
+    return {
+      entries: this.cache.size,
+      size: this.currentCacheSize,
+      maxSize: this.maxCacheSize,
+      utilization: (this.currentCacheSize / this.maxCacheSize) * 100,
+      loading: this.loadingPromises.size,
+    };
+  }
+
+  public optimizeForMemory(): void {
+    // Reduce cache size temporarily
+    const originalMaxSize = this.maxCacheSize;
+    this.maxCacheSize = originalMaxSize * 0.5;
     
-    for (const [pageId, page] of expiredPages) {
-      if (page.priority !== 'critical') {
-        this.pages.delete(pageId);
-        this.metrics.totalSize -= page.size;
-        this.metrics.pageCount--;
-      }
-    }
+    this.enforceMemoryLimit();
+    
+    // Restore original size after 5 minutes
+    setTimeout(() => {
+      this.maxCacheSize = originalMaxSize;
+    }, 300000);
+  }
 
-    // Force browser garbage collection if available
-    if ('gc' in window) {
-      (window as any).gc();
-    }
+  public prefetchUserFlow(userType: string): void {
+    const flows = {
+      buyer: ['dashboard', 'listings', 'favorites', 'notifications'],
+      seller: ['dashboard', 'my-listings', 'analytics', 'messages'],
+      agent: ['dashboard', 'clients', 'commissions', 'leaderboard'],
+      nbfc: ['dashboard', 'applications', 'portfolio', 'compliance'],
+    };
+
+    const flow = flows[userType as keyof typeof flows] || [];
+    this.preloadPages(flow);
   }
 }
 
-export const demandPagingSystem = new DemandPagingSystem();
+export const demandPagingManager = DemandPagingManager.getInstance();
 
-// Enhanced component loader with demand paging
-export const loadComponentWithPaging = async (componentPath: string, priority: 'critical' | 'high' | 'medium' | 'low' = 'medium') => {
-  return demandPagingSystem.loadPage(
-    `component-${componentPath}`,
-    () => import(/* @vite-ignore */ componentPath),
-    priority
-  );
-};
+// React hook for demand paging
+export function useDemandPaging<T>(
+  key: string,
+  loader: () => Promise<T>,
+  config?: Partial<PageConfig>
+) {
+  const [data, setData] = React.useState<T | null>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<Error | null>(null);
 
-// Initialize demand paging system
-export const initializeDemandPaging = async () => {
-  await demandPagingSystem.preloadCriticalPages();
-  
-  // Set up periodic garbage collection
-  setInterval(() => {
-    demandPagingSystem.forceGarbageCollection();
-  }, 60000); // Every minute
-  
-  // Monitor memory usage
-  setInterval(() => {
-    if ('memory' in performance) {
-      const memInfo = (performance as any).memory;
-      const usedMB = memInfo.usedJSHeapSize / 1024 / 1024;
+  React.useEffect(() => {
+    let mounted = true;
+
+    const loadData = async () => {
+      if (loading) return;
       
-      if (usedMB > 50) { // If using more than 50MB
-        demandPagingSystem.clearLowPriorityPages();
+      setLoading(true);
+      setError(null);
+
+      try {
+        const result = await demandPagingManager.loadPage(key, loader, config);
+        if (mounted) {
+          setData(result);
+        }
+      } catch (err) {
+        if (mounted) {
+          setError(err as Error);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
-    }
-  }, 30000); // Every 30 seconds
+    };
+
+    loadData();
+
+    return () => {
+      mounted = false;
+    };
+  }, [key]);
+
+  return { data, loading, error };
+}
+
+// Export for global use
+(window as any).demandPagingManager = demandPagingManager;
+
+// Export the missing loadComponentWithPaging function
+export async function loadComponentWithPaging<T>(
+  componentName: string,
+  loader: () => Promise<T>,
+  config?: Partial<PageConfig>
+): Promise<T> {
+  return demandPagingManager.loadPage(componentName, loader, config);
+}
+
+// Export the missing initializeDemandPaging function
+export function initializeDemandPaging(): void {
+  // Initialize demand paging system
+  console.log('📄 Demand paging system initialized');
   
-  console.log('Demand paging system initialized with 64MB memory limit');
-};
+  // Pre-configure for common user flows
+  demandPagingManager.prefetchUserFlow('buyer');
+  
+  // Set up global error handling
+  window.addEventListener('error', (event) => {
+    console.warn('Demand paging error:', event.error);
+  });
+}

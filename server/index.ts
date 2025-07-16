@@ -12,6 +12,10 @@ import {
   criticalPathOptimization
 } from "./infrastructure/instant-response";
 import { initializeServerMemoryManagement } from "./infrastructure/memory-management";
+import { startupOptimizer } from "./utils/startup-optimizer";
+import { performanceMonitor } from "./utils/performance-monitor";
+import { memoryManager } from "./utils/memory-manager";
+import { resourceMonitor } from "./utils/resource-monitoring";
 
 // Initialize mission-critical mode
 console.log('⚡ Starting in mission-critical performance mode...');
@@ -23,6 +27,26 @@ initializeInstantResponses();
 
 // Initialize server memory management
 initializeServerMemoryManagement();
+
+// Initialize performance monitoring
+performanceMonitor.on('alert', (alert) => {
+  console.warn(`🚨 Performance Alert: ${alert.message}`);
+});
+
+// Initialize resource monitoring
+resourceMonitor.on('warning', (warning) => {
+  console.warn(`⚠️ Resource Warning: ${warning.message}`);
+});
+
+resourceMonitor.on('critical', (critical) => {
+  console.error(`🚨 Resource Critical: ${critical.message}`);
+});
+
+// Start resource monitoring
+resourceMonitor.start();
+
+// Apply startup optimizations
+startupOptimizer.applyRecommendations();
 
 // Enable compression for better performance
 app.use(compression({
@@ -48,13 +72,10 @@ app.set('trust proxy', 1);
 app.use(instantResponseMiddleware);
 app.use(criticalPathOptimization);
 
-// Performance monitoring middleware (loaded after service initialization)
-try {
-  // Skip monitoring middleware during startup - will be added later
-  app.use((req, res, next) => next());
-} catch (error) {
-  console.warn('Monitoring middleware not available during startup');
-}
+// Performance monitoring middleware
+app.use((req, res, next) => {
+  performanceMonitor.trackRequest(req, res, next);
+});
 
 // Cache static assets
 app.use('/static', express.static('dist/static', {
