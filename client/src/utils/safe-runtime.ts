@@ -70,14 +70,32 @@ export class SafeRuntime {
     return compatible;
   }
 
-  // Acquire resource lock
-  public acquireResource(resourceId: string): boolean {
-    if (this.resourceLocks.has(resourceId)) {
-      return false; // Resource already in use
-    }
-    
-    this.resourceLocks.add(resourceId);
-    return true;
+  // Acquire resource lock with timeout
+  public acquireResource(resourceId: string, timeout: number = 5000): Promise<boolean> {
+    return new Promise((resolve) => {
+      const tryAcquire = () => {
+        if (!this.resourceLocks.has(resourceId)) {
+          this.resourceLocks.add(resourceId);
+          resolve(true);
+          return;
+        }
+        
+        // Wait and retry
+        setTimeout(tryAcquire, 100);
+      };
+      
+      tryAcquire();
+      
+      // Timeout fallback
+      setTimeout(() => {
+        if (!this.resourceLocks.has(resourceId)) {
+          this.resourceLocks.add(resourceId);
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      }, timeout);
+    });
   }
 
   // Release resource lock
@@ -248,9 +266,18 @@ export class SimpleStateManager {
 export class SafeToastManager {
   private stateManager = new SimpleStateManager();
   private runtime = SafeRuntime.getInstance();
+  private resourceId = 'toast-manager';
 
   constructor() {
     this.stateManager.setState('toasts', []);
+    this.initializeWithResourceLock();
+  }
+
+  private async initializeWithResourceLock() {
+    const acquired = await this.runtime.acquireResource(this.resourceId);
+    if (!acquired) {
+      console.warn('Failed to acquire toast manager resource lock');
+    }
   }
 
   // Add toast

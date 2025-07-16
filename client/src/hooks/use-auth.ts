@@ -3,6 +3,7 @@ import { useQuery, useMutation, UseMutationResult } from "@tanstack/react-query"
 import { User } from "@shared/schema";
 import { authService, type AuthUser } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { resourceManager } from "@/utils/resource-manager";
 import { queryClient } from "@/lib/queryClient";
 
 type AuthContextType = {
@@ -19,7 +20,39 @@ type AuthContextType = {
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  // Use toast hook at the top level (following React rules)
   const { toast } = useToast();
+  const [authResourceAcquired, setAuthResourceAcquired] = React.useState(false);
+
+  // Acquire resource for auth provider
+  React.useEffect(() => {
+    const acquireResources = async () => {
+      try {
+        const acquired = await resourceManager.acquireResource('auth-provider', 'AuthProvider', 5000);
+        setAuthResourceAcquired(acquired);
+      } catch (error) {
+        console.warn('Failed to acquire auth resource:', error);
+      }
+    };
+
+    acquireResources();
+
+    return () => {
+      if (authResourceAcquired) {
+        resourceManager.releaseResource('auth-provider', 'AuthProvider');
+      }
+    };
+  }, [authResourceAcquired]);
+
+  // Safe toast function that respects resource acquisition
+  const safeToast = React.useCallback((props: any) => {
+    if (authResourceAcquired) {
+      toast(props);
+    } else {
+      // Fallback behavior when resource not acquired
+      console.warn('Auth resource not acquired, skipping toast:', props.title);
+    }
+  }, [toast, authResourceAcquired]);
 
   const {
     data: user,
@@ -42,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onError: (error: Error) => {
-      toast({
+      safeToast({
         title: "Login failed",
         description: error.message,
         variant: "destructive",
@@ -57,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       authService.removeToken();
     },
     onError: (error: Error) => {
-      toast({
+      safeToast({
         title: "Logout failed",
         description: error.message,
         variant: "destructive",
@@ -69,14 +102,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     mutationFn: authService.sendOTP,
     onSuccess: (data) => {
       if (data.success) {
-        toast({
+        safeToast({
           title: "OTP sent successfully",
           description: "Please check your phone for the verification code",
         });
       }
     },
     onError: (error: Error) => {
-      toast({
+      safeToast({
         title: "Failed to send OTP",
         description: error.message,
         variant: "destructive",
@@ -96,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onError: (error: Error) => {
-      toast({
+      safeToast({
         title: "OTP verification failed",
         description: error.message,
         variant: "destructive",

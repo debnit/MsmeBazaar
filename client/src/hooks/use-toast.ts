@@ -7,6 +7,7 @@ import type {
 
 import { safeCall, safeExecute, safeArray } from "@/utils/null-safe"
 import { safeToastManager } from "@/utils/safe-runtime"
+import { resourceManager } from "@/utils/resource-manager"
 
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
@@ -271,7 +272,7 @@ function toast({ ...props }: Toast) {
 }
 
 function useToast() {
-  // Use safe runtime system instead of static variables
+  // Use safe runtime system - simplified to avoid hook rule violations
   const [toasts, setToasts] = React.useState(() => safeToastManager.getToasts());
 
   React.useEffect(() => {
