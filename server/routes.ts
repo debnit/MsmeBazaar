@@ -7,6 +7,7 @@ import { validateValuation } from "./services/valuation";
 import { findMatches } from "./services/matchmaking";
 import { generateDocument } from "./services/document-generation";
 import { checkCompliance } from "./services/compliance";
+import { mobileAuth } from "./auth/mobile-auth";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 
@@ -151,6 +152,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
         </body>
       </html>
     `);
+  });
+
+  // Mobile authentication routes
+  app.post("/api/auth/send-otp", async (req, res) => {
+    try {
+      const { phoneNumber } = req.body;
+      
+      if (!phoneNumber) {
+        return res.status(400).json({ success: false, message: "Phone number is required" });
+      }
+      
+      const result = await mobileAuth.sendOTP(phoneNumber);
+      res.json(result);
+    } catch (error) {
+      console.error("Send OTP error:", error);
+      res.status(500).json({ success: false, message: "Failed to send OTP" });
+    }
+  });
+
+  app.post("/api/auth/verify-otp", async (req, res) => {
+    try {
+      const { phoneNumber, otp } = req.body;
+      
+      if (!phoneNumber || !otp) {
+        return res.status(400).json({ success: false, message: "Phone number and OTP are required" });
+      }
+      
+      const result = await mobileAuth.verifyOTP(phoneNumber, otp);
+      
+      if (result.success && result.user && result.token) {
+        // Set cookie for browser compatibility
+        res.cookie('auth_token', result.token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Verify OTP error:", error);
+      res.status(500).json({ success: false, message: "Failed to verify OTP" });
+    }
+  });
+
+  app.post("/api/auth/resend-otp", async (req, res) => {
+    try {
+      const { phoneNumber } = req.body;
+      
+      if (!phoneNumber) {
+        return res.status(400).json({ success: false, message: "Phone number is required" });
+      }
+      
+      const result = await mobileAuth.resendOTP(phoneNumber);
+      res.json(result);
+    } catch (error) {
+      console.error("Resend OTP error:", error);
+      res.status(500).json({ success: false, message: "Failed to resend OTP" });
+    }
   });
 
   // NBFC routes

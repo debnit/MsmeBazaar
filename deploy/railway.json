@@ -1,0 +1,55 @@
+{
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "npm install && npm run build"
+  },
+  "deploy": {
+    "startCommand": "npm start",
+    "healthcheckPath": "/health",
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3
+  },
+  "environments": {
+    "production": {
+      "variables": {
+        "NODE_ENV": "production",
+        "PORT": "5000"
+      }
+    }
+  },
+  "services": [
+    {
+      "name": "msme-square-app",
+      "source": {
+        "type": "image",
+        "image": "msme-square:latest"
+      },
+      "variables": {
+        "DATABASE_URL": "${{Postgres.DATABASE_URL}}",
+        "JWT_SECRET": "${{shared.JWT_SECRET}}",
+        "TWILIO_ACCOUNT_SID": "${{shared.TWILIO_ACCOUNT_SID}}",
+        "TWILIO_AUTH_TOKEN": "${{shared.TWILIO_AUTH_TOKEN}}",
+        "TWILIO_PHONE_NUMBER": "${{shared.TWILIO_PHONE_NUMBER}}"
+      }
+    },
+    {
+      "name": "postgres",
+      "source": {
+        "type": "image",
+        "image": "postgres:15"
+      },
+      "variables": {
+        "POSTGRES_DB": "msme_square",
+        "POSTGRES_USER": "msme_user",
+        "POSTGRES_PASSWORD": "${{shared.POSTGRES_PASSWORD}}"
+      }
+    },
+    {
+      "name": "redis",
+      "source": {
+        "type": "image", 
+        "image": "redis:7"
+      }
+    }
+  ]
+}
