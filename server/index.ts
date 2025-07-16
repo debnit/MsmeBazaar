@@ -11,6 +11,7 @@ import {
   refreshPrecomputedResponses,
   criticalPathOptimization
 } from "./infrastructure/instant-response";
+import { initializeServerMemoryManagement } from "./infrastructure/memory-management";
 
 // Initialize mission-critical mode
 console.log('⚡ Starting in mission-critical performance mode...');
@@ -19,6 +20,9 @@ const app = express();
 
 // Initialize instant response system
 initializeInstantResponses();
+
+// Initialize server memory management
+initializeServerMemoryManagement();
 
 // Enable compression for better performance
 app.use(compression({

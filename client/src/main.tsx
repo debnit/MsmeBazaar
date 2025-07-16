@@ -7,11 +7,13 @@ import './index.css';
 import { initializeLazyLoading } from './utils/lazy-loading';
 import { memoryOptimizer, registerServiceWorker } from './utils/memory-optimizer';
 import { initializeCaching } from './utils/enhanced-caching';
+import { initializeDemandPaging } from './utils/demand-paging';
 
 // Performance optimization: Initialize core systems immediately
 initializeLazyLoading();
 memoryOptimizer.initialize();
 initializeCaching();
+initializeDemandPaging();
 
 // Performance optimization: Defer non-critical operations
 const deferredInit = () => {
