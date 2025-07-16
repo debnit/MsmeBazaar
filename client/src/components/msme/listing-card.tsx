@@ -15,7 +15,7 @@ import {
   AlertTriangle,
   Star
 } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/components/auth/auth-provider";
 import { buyerApi } from "@/lib/api";
 import { MsmeListing } from "@shared/schema";
 

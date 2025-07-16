@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RoleSwitcher } from './role-switcher';
 import { TestResults } from './test-results';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/components/auth/auth-provider';
 import { apiRequest } from '@/lib/api-client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

@@ -17,7 +17,7 @@ import {
   Crown,
   Sparkles
 } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/components/auth/auth-provider';
 import { apiRequest } from '@/lib/api-client';
 
 interface PricingTier {

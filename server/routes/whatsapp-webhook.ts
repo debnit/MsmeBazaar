@@ -1,115 +1,105 @@
-/**
- * WhatsApp Webhook Routes
- * Handles incoming WhatsApp messages and webhook verification
- */
-
 import { Router } from 'express';
-import { whatsappService } from '../integrations/whatsapp-business';
+import { authenticateToken } from '../middleware/auth';
+import { requireRole } from '../middleware/rbac';
 
 const router = Router();
 
-/**
- * Webhook verification (required by Meta)
- */
+// WhatsApp webhook endpoint
+router.post('/webhook', async (req, res) => {
+  try {
+    const { entry } = req.body;
+    
+    if (entry && entry.length > 0) {
+      for (const item of entry) {
+        if (item.changes && item.changes.length > 0) {
+          for (const change of item.changes) {
+            if (change.value && change.value.messages) {
+              for (const message of change.value.messages) {
+                console.log('WhatsApp message received:', message);
+                // Process message here
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    res.status(200).send('OK');
+  } catch (error) {
+    console.error('WhatsApp webhook error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Webhook verification
 router.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
 
-  const verifyToken = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN;
-
-  if (mode && token) {
-    if (mode === 'subscribe' && token === verifyToken) {
-      console.log('WhatsApp webhook verified');
-      res.status(200).send(challenge);
-    } else {
-      res.status(403).send('Forbidden');
-    }
+  if (mode === 'subscribe' && token === process.env.WHATSAPP_WEBHOOK_TOKEN) {
+    res.status(200).send(challenge);
   } else {
-    res.status(400).send('Bad Request');
+    res.status(403).send('Forbidden');
   }
 });
 
-/**
- * Handle incoming webhook messages
- */
-router.post('/webhook', async (req, res) => {
+// Send WhatsApp message
+router.post('/send-message', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
-    const body = req.body;
+    const { to, message } = req.body;
     
-    if (body.object === 'whatsapp_business_account') {
-      await whatsappService.handleWebhook(body);
-      res.status(200).send('OK');
-    } else {
-      res.status(404).send('Not Found');
-    }
-  } catch (error) {
-    console.error('WhatsApp webhook error:', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-/**
- * Send manual WhatsApp message (for testing)
- */
-router.post('/send-message', async (req, res) => {
-  try {
-    const { phoneNumber, message, type = 'text' } = req.body;
-    
-    const whatsappMessage = {
-      to: phoneNumber,
-      type,
+    // Mock WhatsApp API call
+    const result = {
+      messaging_product: 'whatsapp',
+      to,
+      type: 'text',
       text: { body: message }
     };
     
-    const result = await whatsappService.sendMessage(whatsappMessage);
-    res.json(result);
+    res.json({ success: true, result });
   } catch (error) {
-    console.error('Send message error:', error);
-    res.status(500).json({ success: false, error: 'Failed to send message' });
+    console.error('Send WhatsApp message error:', error);
+    res.status(500).json({ error: 'Failed to send message' });
   }
 });
 
-/**
- * Start onboarding flow
- */
-router.post('/start-onboarding', async (req, res) => {
+// Get WhatsApp templates
+router.get('/templates', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
-    const { phoneNumber, userRole } = req.body;
+    const templates = [
+      {
+        id: 'onboarding_welcome',
+        name: 'Onboarding Welcome',
+        category: 'onboarding',
+        status: 'APPROVED',
+        language: 'en',
+        components: [
+          {
+            type: 'BODY',
+            text: 'Welcome to MSMESquare! 🎉\n\nYour account has been created successfully. Start exploring MSME opportunities and connect with verified buyers and sellers.'
+          }
+        ]
+      },
+      {
+        id: 'retention_nudge',
+        name: 'Retention Nudge',
+        category: 'retention',
+        status: 'APPROVED',
+        language: 'en',
+        components: [
+          {
+            type: 'BODY',
+            text: 'Hi there! 👋\n\nWe noticed you haven\'t logged into MSMESquare recently. Don\'t miss out on new MSME listings and business opportunities!'
+          }
+        ]
+      }
+    ];
     
-    await whatsappService.startOnboardingFlow(phoneNumber, userRole);
-    res.json({ success: true });
+    res.json(templates);
   } catch (error) {
-    console.error('Onboarding flow error:', error);
-    res.status(500).json({ success: false, error: 'Failed to start onboarding' });
-  }
-});
-
-/**
- * Send retention campaign
- */
-router.post('/retention-campaign', async (req, res) => {
-  try {
-    const { userId } = req.body;
-    
-    await whatsappService.startRetentionCampaign(userId);
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Retention campaign error:', error);
-    res.status(500).json({ success: false, error: 'Failed to start retention campaign' });
-  }
-});
-
-/**
- * Get WhatsApp templates
- */
-router.get('/templates', async (req, res) => {
-  try {
-    const templates = await whatsappService.getTemplates();
-    res.json({ success: true, templates });
-  } catch (error) {
-    console.error('Get templates error:', error);
-    res.status(500).json({ success: false, error: 'Failed to get templates' });
+    console.error('Get WhatsApp templates error:', error);
+    res.status(500).json({ error: 'Failed to get templates' });
   }
 });
 

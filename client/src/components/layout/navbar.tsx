@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Building, Bell, User, LogOut, Settings, Shield } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/components/auth/auth-provider";
 import { logout } from "@/lib/auth";
 
 export default function Navbar() {

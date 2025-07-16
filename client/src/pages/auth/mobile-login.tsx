@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Smartphone, Mail, Lock, User, Building2, UserCheck, Timer } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/components/auth/auth-provider';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { authService } from '@/lib/auth';

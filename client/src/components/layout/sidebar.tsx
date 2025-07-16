@@ -16,7 +16,7 @@ import {
   Calculator
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/components/auth/auth-provider";
 import { cn } from "@/lib/utils";
 
 interface SidebarProps {
