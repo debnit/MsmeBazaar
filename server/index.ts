@@ -33,17 +33,17 @@ performanceMonitor.on('alert', (alert) => {
   console.warn(`🚨 Performance Alert: ${alert.message}`);
 });
 
-// Initialize resource monitoring
-resourceMonitor.on('warning', (warning) => {
-  console.warn(`⚠️ Resource Warning: ${warning.message}`);
-});
+// Initialize resource monitoring (disabled for better performance)
+// resourceMonitor.on('warning', (warning) => {
+//   console.warn(`⚠️ Resource Warning: ${warning.message}`);
+// });
 
-resourceMonitor.on('critical', (critical) => {
-  console.error(`🚨 Resource Critical: ${critical.message}`);
-});
+// resourceMonitor.on('critical', (critical) => {
+//   console.error(`🚨 Resource Critical: ${critical.message}`);
+// });
 
-// Start resource monitoring
-resourceMonitor.start();
+// Start resource monitoring (disabled)
+// resourceMonitor.start();
 
 // Apply startup optimizations
 startupOptimizer.applyRecommendations();

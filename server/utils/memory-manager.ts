@@ -1,11 +1,11 @@
 // Advanced memory management and garbage collection
 class MemoryManager {
   private static instance: MemoryManager;
-  private memoryThreshold = 300 * 1024 * 1024; // 300MB threshold - more reasonable
+  private memoryThreshold = 150 * 1024 * 1024; // 150MB threshold - reduced for better performance
   private gcInterval: NodeJS.Timeout | null = null;
   private memoryCache = new Map<string, any>();
   private cacheSize = 0;
-  private maxCacheSize = 100 * 1024 * 1024; // 100MB cache limit
+  private maxCacheSize = 50 * 1024 * 1024; // 50MB cache limit - reduced
 
   private constructor() {
     this.startMemoryMonitoring();
@@ -21,7 +21,7 @@ class MemoryManager {
   private startMemoryMonitoring(): void {
     this.gcInterval = setInterval(() => {
       this.checkMemoryUsage();
-    }, 60000); // Check every minute instead of 10 seconds
+    }, 120000); // Check every 2 minutes to reduce overhead
   }
 
   private checkMemoryUsage(): void {

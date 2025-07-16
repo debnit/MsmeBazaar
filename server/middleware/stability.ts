@@ -12,7 +12,7 @@ export const memoryMiddleware = (req: Request, res: Response, next: NextFunction
   // Check memory usage before processing
   const memStats = memoryManager.getMemoryStats();
   
-  if (memStats.heapUsed > 120 * 1024 * 1024) { // 120MB threshold
+  if (memStats.heapUsed > 200 * 1024 * 1024) { // 200MB threshold - increased to reduce constant cleanup
     // Force cleanup
     memoryManager.clearCache();
     

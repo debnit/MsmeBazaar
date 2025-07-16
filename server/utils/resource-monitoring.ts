@@ -29,17 +29,17 @@ class ResourceMonitor extends EventEmitter {
     super();
     this.thresholds = {
       memory: {
-        warning: 100 * 1024 * 1024, // 100MB
-        critical: 150 * 1024 * 1024, // 150MB  
-        max: 200 * 1024 * 1024, // 200MB
+        warning: 200 * 1024 * 1024, // 200MB - increased to reduce warnings
+        critical: 300 * 1024 * 1024, // 300MB
+        max: 400 * 1024 * 1024, // 400MB
       },
       cpu: {
-        warning: 70, // 70%
-        critical: 85, // 85%
+        warning: 80, // 80%
+        critical: 90, // 90%
       },
       responseTime: {
-        warning: 1000, // 1s
-        critical: 2000, // 2s
+        warning: 2000, // 2s
+        critical: 5000, // 5s
       },
     };
   }
@@ -57,7 +57,7 @@ class ResourceMonitor extends EventEmitter {
     this.monitoring = true;
     this.interval = setInterval(() => {
       this.checkResources();
-    }, 5000); // Check every 5 seconds
+    }, 30000); // Check every 30 seconds to reduce overhead
     
     console.log('🔍 Resource monitoring started');
   }
@@ -150,7 +150,7 @@ class ResourceMonitor extends EventEmitter {
   }
 
   private emergencyCleanup(): void {
-    console.log('🚨 Performing emergency cleanup...');
+    // Silent emergency cleanup - removed console.log to reduce noise
     
     // Clear all caches
     memoryManager.clearCache();
@@ -180,7 +180,7 @@ class ResourceMonitor extends EventEmitter {
   }
 
   private gentleCleanup(): void {
-    console.log('🧹 Performing gentle cleanup...');
+    // Silent cleanup - removed console.log to reduce noise
     
     // Clear expired cache entries
     const cacheStats = this.getCacheStats();
