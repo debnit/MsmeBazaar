@@ -1,3 +1,34 @@
+/**
+ * @swagger
+ * tags:
+ *   - name: Authentication
+ *     description: User authentication and authorization
+ *   - name: Users
+ *     description: User management operations
+ *   - name: MSME Listings
+ *     description: MSME business listing operations
+ *   - name: Loan Applications
+ *     description: Loan application management
+ *   - name: Buyer Interests
+ *     description: Buyer interest management
+ *   - name: NBFC
+ *     description: NBFC related operations
+ *   - name: Matchmaking
+ *     description: AI-powered matchmaking services
+ *   - name: Valuation
+ *     description: Business valuation services
+ *   - name: Agent Scoring
+ *     description: Agent performance scoring
+ *   - name: Compliance
+ *     description: Regulatory compliance management
+ *   - name: Notifications
+ *     description: Notification management
+ *   - name: Monitoring
+ *     description: System monitoring and analytics
+ *   - name: Escrow
+ *     description: Escrow account management
+ */
+
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -16,7 +47,132 @@ import { z } from "zod";
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Authentication routes
+  /**
+   * @swagger
+   * /health:
+   *   get:
+   *     tags: [Monitoring]
+   *     summary: Health check endpoint
+   *     description: Returns the health status of the API
+   *     responses:
+   *       200:
+   *         description: API is healthy
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: ok
+   *                 timestamp:
+   *                   type: string
+   *                   format: date-time
+   *                 uptime:
+   *                   type: number
+   *                   example: 12345
+   *                 version:
+   *                   type: string
+   *                   example: 1.0.0
+   */
+  app.get("/health", (req, res) => {
+    res.json({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      version: "1.0.0"
+    });
+  });
+
+  /**
+   * @swagger
+   * /api/auth/me:
+   *   get:
+   *     tags: [Authentication]
+   *     summary: Get current user
+   *     description: Returns the current authenticated user's information
+   *     security:
+   *       - bearerAuth: []
+   *       - cookieAuth: []
+   *     responses:
+   *       200:
+   *         description: User information retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/User'
+   *       401:
+   *         description: Unauthorized
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       404:
+   *         description: User not found
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   */
+  /**
+   * @swagger
+   * /api/auth/register:
+   *   post:
+   *     tags: [Authentication]
+   *     summary: Register a new user
+   *     description: Creates a new user account with email, password, and role
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - email
+   *               - password
+   *               - role
+   *             properties:
+   *               email:
+   *                 type: string
+   *                 format: email
+   *                 example: user@example.com
+   *               password:
+   *                 type: string
+   *                 minLength: 6
+   *                 example: password123
+   *               firstName:
+   *                 type: string
+   *                 example: John
+   *               lastName:
+   *                 type: string
+   *                 example: Doe
+   *               role:
+   *                 type: string
+   *                 enum: [seller, buyer, agent, admin, nbfc]
+   *                 example: seller
+   *               phone:
+   *                 type: string
+   *                 example: "+91-9876543210"
+   *     responses:
+   *       200:
+   *         description: User registered successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 user:
+   *                   $ref: '#/components/schemas/User'
+   *                 token:
+   *                   type: string
+   *                   description: JWT authentication token
+   *       400:
+   *         description: Registration failed
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   */
   app.post("/api/auth/register", async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
@@ -43,6 +199,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  /**
+   * @swagger
+   * /api/auth/login:
+   *   post:
+   *     tags: [Authentication]
+   *     summary: User login
+   *     description: Authenticates a user with email and password
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - email
+   *               - password
+   *             properties:
+   *               email:
+   *                 type: string
+   *                 format: email
+   *                 example: user@example.com
+   *               password:
+   *                 type: string
+   *                 example: password123
+   *     responses:
+   *       200:
+   *         description: Login successful
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 user:
+   *                   $ref: '#/components/schemas/User'
+   *                 token:
+   *                   type: string
+   *                   description: JWT authentication token
+   *       401:
+   *         description: Invalid credentials
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   */
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { email, password } = req.body;

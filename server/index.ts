@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { setupSwagger } from "./swagger";
 import { monitoringService, monitoringMiddleware } from "./services/monitoring";
 
 const app = express();
@@ -43,6 +44,9 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Setup Swagger documentation
+  setupSwagger(app);
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {

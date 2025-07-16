@@ -28,6 +28,7 @@ Preferred communication style: Simple, everyday language.
 - **DevOps Infrastructure**: Created complete CI/CD pipeline with GitHub Actions for automated testing and deployment to Render/Railway
 - **Docker Containerization**: Added docker-compose.yml for local development with PostgreSQL, Redis, Nginx load balancer, and all services
 - **ML Scheduler Service**: Implemented automated ML model retraining system with weekly model updates, 6-hourly valuation refresh, and daily cleanup
+- **API Documentation**: Comprehensive Swagger/OpenAPI 3.0 documentation with interactive UI at /api-docs covering all endpoints, authentication, and schemas
 
 ## System Architecture
 
@@ -112,6 +113,8 @@ Preferred communication style: Simple, everyday language.
 - **@radix-ui components**: Accessible UI component primitives
 - **jsonwebtoken**: JWT token generation and validation
 - **bcrypt**: Password hashing and validation
+- **swagger-ui-express**: Interactive API documentation interface
+- **swagger-jsdoc**: OpenAPI specification generation from JSDoc comments
 
 ### Development Tools
 - **Vite**: Build tool with hot module replacement
@@ -146,3 +149,33 @@ Preferred communication style: Simple, everyday language.
 - **PORT**: Server port configuration
 
 The application is designed to be fully portable between Replit and other environments while maintaining optimal performance and developer experience in both contexts.
+
+## API Documentation
+
+### Swagger UI Access
+- **Development**: http://localhost:5000/api-docs
+- **Production**: Available when ENABLE_SWAGGER=true environment variable is set
+- **JSON Spec**: Available at /api-docs.json for API integration tools
+
+### API Endpoints Overview
+- **Authentication**: /api/auth/* - User registration, login, mobile OTP authentication
+- **MSME Listings**: /api/msme-listings/* - Business listing CRUD operations
+- **Loan Applications**: /api/loan-applications/* - Loan processing and management
+- **Buyer Interests**: /api/buyer-interests/* - Interest expression and management
+- **Valuation**: /api/valuation/* - AI-powered business valuation
+- **Matchmaking**: /api/matchmaking/* - ML-based buyer-seller matching
+- **Compliance**: /api/compliance/* - NBFC regulatory compliance checking
+- **Escrow**: /api/escrow/* - Transaction escrow management
+- **Notifications**: /api/notifications/* - User notification system
+- **Monitoring**: /api/monitoring/* - System health and performance metrics
+
+### Authentication Methods
+- **JWT Bearer Token**: Primary authentication method for API access
+- **Cookie Authentication**: Browser-based authentication for web interface
+- **Mobile OTP**: SMS-based authentication for mobile users
+
+### API Response Patterns
+- **Success Responses**: Consistent JSON structure with data and metadata
+- **Error Responses**: Standardized error objects with codes and messages
+- **Pagination**: Cursor-based pagination for large datasets
+- **Rate Limiting**: Configurable rate limits per endpoint and user role
