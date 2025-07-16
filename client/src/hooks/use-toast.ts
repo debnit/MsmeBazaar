@@ -1,8 +1,4 @@
 import * as React from "react"
-import React from 'react';
-
-import { useState, useEffect } from 'react';
-const [toasts, setToasts] = React.useState(...);
 
 // Modern toast types without deprecated components
 export type ToastActionElement = React.ReactElement
