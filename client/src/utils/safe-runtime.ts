@@ -280,7 +280,7 @@ export class SafeToastManager {
     }
   }
 
-  // Add toast
+  // Add toast with tracing
   public addToast(toast: {
     id: string;
     title?: string;
@@ -288,35 +288,96 @@ export class SafeToastManager {
     variant?: 'default' | 'destructive';
     action?: any;
   }): void {
-    if (!toast || !toast.id) return;
+    const startTime = performance.now();
+    
+    try {
+      if (!toast || !toast.id) return;
 
-    const currentToasts = this.stateManager.getState('toasts', []);
-    const newToasts = [...currentToasts, toast];
-    this.stateManager.setState('toasts', newToasts);
+      const currentToasts = this.stateManager.getState('toasts', []);
+      const newToasts = [...currentToasts, toast];
+      this.stateManager.setState('toasts', newToasts);
+      
+      const duration = performance.now() - startTime;
+      if (duration > 10) {
+        console.warn(`SafeToastManager.addToast took ${duration.toFixed(2)}ms`);
+      }
+    } catch (error) {
+      console.error('SafeToastManager.addToast failed:', error);
+    }
   }
 
-  // Remove toast
+  // Remove toast with tracing
   public removeToast(id: string): void {
-    if (!id) return;
+    const startTime = performance.now();
+    
+    try {
+      if (!id) return;
 
-    const currentToasts = this.stateManager.getState('toasts', []);
-    const newToasts = currentToasts.filter((toast: any) => toast.id !== id);
-    this.stateManager.setState('toasts', newToasts);
+      const currentToasts = this.stateManager.getState('toasts', []);
+      const newToasts = currentToasts.filter((toast: any) => toast.id !== id);
+      this.stateManager.setState('toasts', newToasts);
+      
+      const duration = performance.now() - startTime;
+      if (duration > 10) {
+        console.warn(`SafeToastManager.removeToast took ${duration.toFixed(2)}ms`);
+      }
+    } catch (error) {
+      console.error('SafeToastManager.removeToast failed:', error);
+    }
   }
 
-  // Clear all toasts
+  // Clear all toasts with tracing
   public clearToasts(): void {
-    this.stateManager.setState('toasts', []);
+    const startTime = performance.now();
+    
+    try {
+      this.stateManager.setState('toasts', []);
+      
+      const duration = performance.now() - startTime;
+      if (duration > 10) {
+        console.warn(`SafeToastManager.clearToasts took ${duration.toFixed(2)}ms`);
+      }
+    } catch (error) {
+      console.error('SafeToastManager.clearToasts failed:', error);
+    }
   }
 
-  // Get toasts
+  // Get toasts with tracing
   public getToasts(): any[] {
-    return this.stateManager.getState('toasts', []);
+    const startTime = performance.now();
+    
+    try {
+      const toasts = this.stateManager.getState('toasts', []);
+      
+      const duration = performance.now() - startTime;
+      if (duration > 5) {
+        console.warn(`SafeToastManager.getToasts took ${duration.toFixed(2)}ms`);
+      }
+      
+      return toasts;
+    } catch (error) {
+      console.error('SafeToastManager.getToasts failed:', error);
+      return [];
+    }
   }
 
-  // Subscribe to toast changes
+  // Subscribe to toast changes with tracing
   public subscribe(listener: (toasts: any[]) => void): () => void {
-    return this.stateManager.subscribe('toasts', listener);
+    const startTime = performance.now();
+    
+    try {
+      const unsubscribe = this.stateManager.subscribe('toasts', listener);
+      
+      const duration = performance.now() - startTime;
+      if (duration > 10) {
+        console.warn(`SafeToastManager.subscribe took ${duration.toFixed(2)}ms`);
+      }
+      
+      return unsubscribe;
+    } catch (error) {
+      console.error('SafeToastManager.subscribe failed:', error);
+      return () => {};
+    }
   }
 }
 

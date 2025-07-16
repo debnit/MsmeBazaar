@@ -24,8 +24,10 @@ export class ResourceManager {
     return ResourceManager.instance;
   }
 
-  // Acquire resource with automatic cleanup
+  // Acquire resource with automatic cleanup and tracing
   public async acquireResource(resourceId: string, owner: string, timeout: number = 5000): Promise<boolean> {
+    const startTime = performance.now();
+    
     return new Promise((resolve, reject) => {
       const currentTime = Date.now();
       const existingLock = this.locks.get(resourceId);
@@ -39,6 +41,12 @@ export class ResourceManager {
           timestamp: currentTime,
           timeout
         });
+        
+        const duration = performance.now() - startTime;
+        if (duration > 50) {
+          console.warn(`ResourceManager.acquireResource(${resourceId}) took ${duration.toFixed(2)}ms`);
+        }
+        
         resolve(true);
         return;
       }
@@ -57,6 +65,10 @@ export class ResourceManager {
           const index = queue.findIndex(item => item.resolve === resolve);
           if (index > -1) {
             queue.splice(index, 1);
+            
+            const duration = performance.now() - startTime;
+            console.warn(`ResourceManager.acquireResource(${resourceId}) timed out after ${duration.toFixed(2)}ms`);
+            
             resolve(false); // Timeout
           }
         }
@@ -64,35 +76,47 @@ export class ResourceManager {
     });
   }
 
-  // Release resource
+  // Release resource with tracing
   public releaseResource(resourceId: string, owner: string): boolean {
-    const lock = this.locks.get(resourceId);
+    const startTime = performance.now();
     
-    if (!lock || lock.owner !== owner) {
-      return false; // Not owner or doesn't exist
-    }
-
-    // Remove lock
-    this.locks.delete(resourceId);
-
-    // Process waiting queue
-    const queue = this.waitingQueue.get(resourceId);
-    if (queue && queue.length > 0) {
-      const next = queue.shift()!;
-      const currentTime = Date.now();
+    try {
+      const lock = this.locks.get(resourceId);
       
-      // Give resource to next in queue
-      this.locks.set(resourceId, {
-        id: resourceId,
-        owner: `queue-${currentTime}`,
-        timestamp: currentTime,
-        timeout: 5000
-      });
-      
-      next.resolve(true);
-    }
+      if (!lock || lock.owner !== owner) {
+        return false; // Not owner or doesn't exist
+      }
 
-    return true;
+      // Remove lock
+      this.locks.delete(resourceId);
+
+      // Process waiting queue
+      const queue = this.waitingQueue.get(resourceId);
+      if (queue && queue.length > 0) {
+        const next = queue.shift()!;
+        const currentTime = Date.now();
+        
+        // Give resource to next in queue
+        this.locks.set(resourceId, {
+          id: resourceId,
+          owner: `queue-${currentTime}`,
+          timestamp: currentTime,
+          timeout: 5000
+        });
+        
+        next.resolve(true);
+      }
+
+      const duration = performance.now() - startTime;
+      if (duration > 10) {
+        console.warn(`ResourceManager.releaseResource(${resourceId}) took ${duration.toFixed(2)}ms`);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('ResourceManager.releaseResource failed:', error);
+      return false;
+    }
   }
 
   // Check if resource is locked

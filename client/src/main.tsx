@@ -10,6 +10,7 @@ import { initializeCaching } from './utils/enhanced-caching';
 import { initializeDemandPaging } from './utils/demand-paging';
 import { initializeApp } from './utils/init-handlers';
 import { safeRuntime, safeMemoryManager } from './utils/safe-runtime';
+import { functionTracer } from './utils/function-tracer';
 
 // Performance optimization: Initialize core systems immediately
 initializeLazyLoading();
@@ -29,6 +30,25 @@ safeRuntime.initializeFeature(
     console.log('Safe runtime initialized with limited features');
   }
 );
+
+// Initialize function tracing
+console.log('Function tracing initialized');
+
+// Add trace monitoring in development
+if (process.env.NODE_ENV === 'development') {
+  // Log performance stats every 30 seconds
+  setInterval(() => {
+    const stats = functionTracer.getPerformanceStats('toast');
+    if (stats.totalCalls > 0) {
+      console.log('Toast Performance Stats:', stats);
+    }
+    
+    const useToastStats = functionTracer.getPerformanceStats('useToast');
+    if (useToastStats.totalCalls > 0) {
+      console.log('useToast Performance Stats:', useToastStats);
+    }
+  }, 30000);
+}
 
 // Performance optimization: Defer non-critical operations
 const deferredInit = () => {
