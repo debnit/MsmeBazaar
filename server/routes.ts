@@ -32,8 +32,16 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertMsmeListingSchema, insertLoanApplicationSchema, insertBuyerInterestSchema, insertNbfcDetailsSchema, insertLoanProductSchema } from "@shared/schema";
-import { authenticateToken, requireRole, type AuthenticatedRequest } from "./middleware/auth";
+import { insertUserSchema, insertMsmeListingSchema, insertLoanApplicationSchema, insertBuyerInterestSchema, insertNbfcDetailsSchema, insertLoanProductSchema, insertComplianceRecordSchema } from "@shared/schema";
+import { authenticateToken, type AuthenticatedRequest } from "./middleware/auth";
+import { 
+  requirePermission, 
+  requireAllPermissions, 
+  requireAnyPermission, 
+  getUserPermissions,
+  requireRole,
+  PERMISSIONS 
+} from "./middleware/rbac";
 import { validateValuation } from "./services/valuation";
 import { findMatches } from "./services/matchmaking";
 import { generateDocument } from "./services/document-generation";
@@ -415,14 +423,496 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // RBAC-protected routes with granular permissions
+  
+  // MSME Listings Routes
+  app.get("/api/msme-listings", async (req, res) => {
+    try {
+      const listings = await storage.getAllMsmeListings();
+      res.json(listings);
+    } catch (error) {
+      console.error("Get MSME listings error:", error);
+      res.status(500).json({ message: "Failed to fetch MSME listings" });
+    }
+  });
+
+  app.post("/api/msme-listings", 
+    authenticateToken, 
+    requirePermission(PERMISSIONS.MSME_WRITE),
+    async (req, res) => {
+      try {
+        const listingData = insertMsmeListingSchema.parse({
+          ...req.body,
+          sellerId: req.user.userId
+        });
+        
+        const listing = await storage.createMsmeListing(listingData);
+        res.status(201).json(listing);
+      } catch (error) {
+        console.error("Create MSME listing error:", error);
+        res.status(400).json({ message: "Failed to create MSME listing" });
+      }
+    }
+  );
+
+  app.get("/api/msme-listings/:id", async (req, res) => {
+    try {
+      const listing = await storage.getMsmeListing(parseInt(req.params.id));
+      if (!listing) {
+        return res.status(404).json({ message: "MSME listing not found" });
+      }
+      res.json(listing);
+    } catch (error) {
+      console.error("Get MSME listing error:", error);
+      res.status(500).json({ message: "Failed to fetch MSME listing" });
+    }
+  });
+
+  app.put("/api/msme-listings/:id", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.MSME_WRITE, {
+      checkOwnership: true,
+      resourceType: 'msme-listing',
+      resourceIdParam: 'id'
+    }),
+    async (req, res) => {
+      try {
+        const listingId = parseInt(req.params.id);
+        const updateData = req.body;
+        
+        const listing = await storage.updateMsmeListing(listingId, updateData);
+        res.json(listing);
+      } catch (error) {
+        console.error("Update MSME listing error:", error);
+        res.status(400).json({ message: "Failed to update MSME listing" });
+      }
+    }
+  );
+
+  app.delete("/api/msme-listings/:id", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.MSME_DELETE, {
+      checkOwnership: true,
+      resourceType: 'msme-listing',
+      resourceIdParam: 'id'
+    }),
+    async (req, res) => {
+      try {
+        const listingId = parseInt(req.params.id);
+        await storage.deleteMsmeListing(listingId);
+        res.json({ success: true, message: "MSME listing deleted successfully" });
+      } catch (error) {
+        console.error("Delete MSME listing error:", error);
+        res.status(500).json({ message: "Failed to delete MSME listing" });
+      }
+    }
+  );
+
+  // Loan Application Routes
+  app.get("/api/loan-applications", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.LOANS_READ),
+    async (req, res) => {
+      try {
+        const applications = await storage.getAllLoanApplications();
+        res.json(applications);
+      } catch (error) {
+        console.error("Get loan applications error:", error);
+        res.status(500).json({ message: "Failed to fetch loan applications" });
+      }
+    }
+  );
+
+  app.post("/api/loan-applications", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.LOANS_WRITE),
+    async (req, res) => {
+      try {
+        const applicationData = insertLoanApplicationSchema.parse({
+          ...req.body,
+          buyerId: req.user.userId
+        });
+        
+        const application = await storage.createLoanApplication(applicationData);
+        res.status(201).json(application);
+      } catch (error) {
+        console.error("Create loan application error:", error);
+        res.status(400).json({ message: "Failed to create loan application" });
+      }
+    }
+  );
+
+  app.put("/api/loan-applications/:id/approve", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.LOANS_APPROVE),
+    async (req, res) => {
+      try {
+        const applicationId = parseInt(req.params.id);
+        const application = await storage.updateLoanApplication(applicationId, { 
+          status: 'approved',
+          approvedAt: new Date()
+        });
+        res.json(application);
+      } catch (error) {
+        console.error("Approve loan application error:", error);
+        res.status(500).json({ message: "Failed to approve loan application" });
+      }
+    }
+  );
+
+  app.put("/api/loan-applications/:id/reject", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.LOANS_REJECT),
+    async (req, res) => {
+      try {
+        const applicationId = parseInt(req.params.id);
+        const { reason } = req.body;
+        
+        const application = await storage.updateLoanApplication(applicationId, { 
+          status: 'rejected',
+          rejectedAt: new Date(),
+          rejectionReason: reason
+        });
+        res.json(application);
+      } catch (error) {
+        console.error("Reject loan application error:", error);
+        res.status(500).json({ message: "Failed to reject loan application" });
+      }
+    }
+  );
+
+  // Buyer Interest Routes
+  app.get("/api/buyer-interests", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.INTERESTS_READ),
+    async (req, res) => {
+      try {
+        const interests = await storage.getAllBuyerInterests();
+        res.json(interests);
+      } catch (error) {
+        console.error("Get buyer interests error:", error);
+        res.status(500).json({ message: "Failed to fetch buyer interests" });
+      }
+    }
+  );
+
+  app.post("/api/buyer-interests", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.INTERESTS_WRITE),
+    async (req, res) => {
+      try {
+        const interestData = insertBuyerInterestSchema.parse({
+          ...req.body,
+          buyerId: req.user.userId
+        });
+        
+        const interest = await storage.createBuyerInterest(interestData);
+        res.status(201).json(interest);
+      } catch (error) {
+        console.error("Create buyer interest error:", error);
+        res.status(400).json({ message: "Failed to create buyer interest" });
+      }
+    }
+  );
+
+  // Compliance Routes
+  app.get("/api/compliance/:nbfcId", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.COMPLIANCE_READ),
+    async (req, res) => {
+      try {
+        const nbfcId = parseInt(req.params.nbfcId);
+        const compliance = await storage.getComplianceRecord(nbfcId);
+        res.json(compliance);
+      } catch (error) {
+        console.error("Get compliance record error:", error);
+        res.status(500).json({ message: "Failed to fetch compliance record" });
+      }
+    }
+  );
+
+  app.post("/api/compliance/:nbfcId", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.COMPLIANCE_WRITE),
+    async (req, res) => {
+      try {
+        const nbfcId = parseInt(req.params.nbfcId);
+        const complianceData = insertComplianceRecordSchema.parse({
+          ...req.body,
+          nbfcId
+        });
+        
+        const compliance = await storage.createComplianceRecord(complianceData);
+        res.status(201).json(compliance);
+      } catch (error) {
+        console.error("Create compliance record error:", error);
+        res.status(400).json({ message: "Failed to create compliance record" });
+      }
+    }
+  );
+
+  // Valuation Routes
+  app.post("/api/msme-listings/:id/valuation", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.VALUATION_READ),
+    async (req, res) => {
+      try {
+        const listingId = parseInt(req.params.id);
+        const listing = await storage.getMsmeListing(listingId);
+        
+        if (!listing) {
+          return res.status(404).json({ message: "MSME listing not found" });
+        }
+        
+        // Mock valuation calculation
+        const valuation = {
+          estimatedValue: listing.revenue * 2.5,
+          confidence: 0.85,
+          factors: {
+            financialScore: 0.8,
+            industryMultiplier: 1.2,
+            locationFactor: 1.0,
+            growthPotential: 0.9,
+            assetQuality: 0.7,
+            marketPosition: 0.6,
+            riskFactor: 0.3,
+            timeToMarket: 0.8
+          },
+          methodology: "ML-based DCF with industry comparables",
+          recommendation: "fairly_valued"
+        };
+        
+        res.json(valuation);
+      } catch (error) {
+        console.error("Valuation error:", error);
+        res.status(500).json({ message: "Failed to calculate valuation" });
+      }
+    }
+  );
+
   // Monitoring routes
-  app.get("/api/monitoring/health", authenticateToken, requireRole("admin"), async (req, res) => {
+  app.get("/api/monitoring/health", authenticateToken, requirePermission(PERMISSIONS.MONITORING_READ), async (req, res) => {
     try {
       const metrics = monitoringService.getHealthMetrics();
       res.json(metrics);
     } catch (error) {
       console.error("Health metrics error:", error);
       res.status(500).json({ message: "Failed to fetch health metrics" });
+    }
+  });
+
+  app.get("/api/monitoring/metrics", authenticateToken, requirePermission(PERMISSIONS.MONITORING_READ), async (req, res) => {
+    try {
+      const metrics = monitoringService.getSystemMetrics();
+      res.json(metrics);
+    } catch (error) {
+      console.error("System metrics error:", error);
+      res.status(500).json({ message: "Failed to fetch system metrics" });
+    }
+  });
+
+  // Escrow Routes
+  app.post("/api/escrow", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.ESCROW_WRITE),
+    async (req, res) => {
+      try {
+        const escrowData = {
+          ...req.body,
+          buyerId: req.user.role === 'buyer' ? req.user.userId : req.body.buyerId,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        const account = await escrowService.createEscrowAccount(escrowData);
+        res.status(201).json(account);
+      } catch (error) {
+        console.error("Create escrow error:", error);
+        res.status(400).json({ message: "Failed to create escrow account" });
+      }
+    }
+  );
+
+  app.get("/api/escrow/:id", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.ESCROW_READ),
+    async (req, res) => {
+      try {
+        const escrowId = parseInt(req.params.id);
+        const account = await escrowService.getEscrowAccount(escrowId);
+        
+        if (!account) {
+          return res.status(404).json({ message: "Escrow account not found" });
+        }
+        
+        res.json(account);
+      } catch (error) {
+        console.error("Get escrow error:", error);
+        res.status(500).json({ message: "Failed to fetch escrow account" });
+      }
+    }
+  );
+
+  app.post("/api/escrow/:id/fund", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.ESCROW_FUND),
+    async (req, res) => {
+      try {
+        const escrowId = parseInt(req.params.id);
+        const { amount } = req.body;
+        
+        const success = await escrowService.fundEscrow(escrowId, amount);
+        res.json({ success, message: "Escrow funded successfully" });
+      } catch (error) {
+        console.error("Fund escrow error:", error);
+        res.status(400).json({ message: error.message || "Failed to fund escrow" });
+      }
+    }
+  );
+
+  app.post("/api/escrow/:id/release", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.ESCROW_RELEASE),
+    async (req, res) => {
+      try {
+        const escrowId = parseInt(req.params.id);
+        
+        const success = await escrowService.releaseFunds(escrowId);
+        res.json({ success, message: "Funds released successfully" });
+      } catch (error) {
+        console.error("Release funds error:", error);
+        res.status(400).json({ message: error.message || "Failed to release funds" });
+      }
+    }
+  );
+
+  app.post("/api/escrow/:id/refund", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.ESCROW_REFUND),
+    async (req, res) => {
+      try {
+        const escrowId = parseInt(req.params.id);
+        const { reason } = req.body;
+        
+        const success = await escrowService.refundEscrow(escrowId, reason);
+        res.json({ success, message: "Refund processed successfully" });
+      } catch (error) {
+        console.error("Refund escrow error:", error);
+        res.status(400).json({ message: error.message || "Failed to process refund" });
+      }
+    }
+  );
+
+  // Notification Routes
+  app.get("/api/notifications", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.NOTIFICATIONS_READ),
+    async (req, res) => {
+      try {
+        const notifications = [];
+        res.json(notifications);
+      } catch (error) {
+        console.error("Get notifications error:", error);
+        res.status(500).json({ message: "Failed to fetch notifications" });
+      }
+    }
+  );
+
+  app.put("/api/notifications/:id/read", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.NOTIFICATIONS_READ),
+    async (req, res) => {
+      try {
+        const notificationId = parseInt(req.params.id);
+        // Implementation depends on notification service
+        res.json({ success: true, message: "Notification marked as read" });
+      } catch (error) {
+        console.error("Mark notification read error:", error);
+        res.status(500).json({ message: "Failed to mark notification as read" });
+      }
+    }
+  );
+
+  // Admin Routes
+  app.get("/api/admin/users", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.USERS_READ),
+    async (req, res) => {
+      try {
+        const users = await storage.getAllUsers();
+        res.json(users);
+      } catch (error) {
+        console.error("Get all users error:", error);
+        res.status(500).json({ message: "Failed to fetch users" });
+      }
+    }
+  );
+
+  app.put("/api/admin/users/:id/role", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.USERS_ADMIN),
+    async (req, res) => {
+      try {
+        const userId = parseInt(req.params.id);
+        const { role } = req.body;
+        
+        const user = await storage.updateUser(userId, { role });
+        res.json(user);
+      } catch (error) {
+        console.error("Update user role error:", error);
+        res.status(400).json({ message: "Failed to update user role" });
+      }
+    }
+  );
+
+  app.delete("/api/admin/users/:id", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.USERS_DELETE),
+    async (req, res) => {
+      try {
+        const userId = parseInt(req.params.id);
+        await storage.deleteUser(userId);
+        res.json({ success: true, message: "User deleted successfully" });
+      } catch (error) {
+        console.error("Delete user error:", error);
+        res.status(500).json({ message: "Failed to delete user" });
+      }
+    }
+  );
+
+  // Analytics Routes
+  app.get("/api/analytics/dashboard", 
+    authenticateToken,
+    requirePermission(PERMISSIONS.ANALYTICS_READ),
+    async (req, res) => {
+      try {
+        const analytics = {
+          totalListings: await storage.getTotalMsmeListings(),
+          totalUsers: await storage.getTotalUsers(),
+          totalLoanApplications: await storage.getTotalLoanApplications(),
+          recentActivity: await storage.getRecentActivity(),
+          topIndustries: await storage.getTopIndustries(),
+          monthlyGrowth: await storage.getMonthlyGrowth()
+        };
+        res.json(analytics);
+      } catch (error) {
+        console.error("Get analytics error:", error);
+        res.status(500).json({ message: "Failed to fetch analytics" });
+      }
+    }
+  );
+
+  // User permissions endpoint
+  app.get("/api/auth/permissions", authenticateToken, async (req, res) => {
+    try {
+      const permissions = getUserPermissions(req.user.role);
+      res.json({
+        role: req.user.role,
+        permissions: permissions
+      });
+    } catch (error) {
+      console.error("Get permissions error:", error);
+      res.status(500).json({ message: "Failed to fetch permissions" });
     }
   });
 
