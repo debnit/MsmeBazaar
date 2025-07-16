@@ -153,6 +153,10 @@ class AuthService {
 
 export const authService = new AuthService();
 
+// Export individual functions for backward compatibility
+export const logout = () => authService.logout();
+export const getAuthToken = () => authService.getToken();
+
 // Authentication helper for API requests
 export function getAuthHeaders(): HeadersInit {
   const token = authService.getToken();

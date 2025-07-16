@@ -25,6 +25,9 @@ Preferred communication style: Simple, everyday language.
 - **Database Migration**: Successfully converted storage layer from Map() objects to PostgreSQL/Drizzle ORM with dedicated storage directory structure
 - **Advanced Services**: Implemented comprehensive monitoring service with crash detection, performance tracking, and error logging
 - **Escrow & Notifications**: Added database-backed escrow management system and notification service infrastructure for MSG91 integration
+- **DevOps Infrastructure**: Created complete CI/CD pipeline with GitHub Actions for automated testing and deployment to Render/Railway
+- **Docker Containerization**: Added docker-compose.yml for local development with PostgreSQL, Redis, Nginx load balancer, and all services
+- **ML Scheduler Service**: Implemented automated ML model retraining system with weekly model updates, 6-hourly valuation refresh, and daily cleanup
 
 ## System Architecture
 

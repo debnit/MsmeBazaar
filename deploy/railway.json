@@ -1,55 +1,60 @@
 {
   "build": {
-    "builder": "NIXPACKS",
-    "buildCommand": "npm install && npm run build"
+    "command": "npm ci && npm run build"
   },
   "deploy": {
-    "startCommand": "npm start",
-    "healthcheckPath": "/health",
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 3
-  },
-  "environments": {
-    "production": {
-      "variables": {
-        "NODE_ENV": "production",
-        "PORT": "5000"
-      }
-    }
+    "startCommand": "npm start"
   },
   "services": [
     {
-      "name": "msme-square-app",
+      "name": "msme-square-api",
       "source": {
-        "type": "image",
-        "image": "msme-square:latest"
+        "type": "git",
+        "repo": "github.com/your-username/msme-square",
+        "branch": "main"
       },
       "variables": {
-        "DATABASE_URL": "${{Postgres.DATABASE_URL}}",
-        "JWT_SECRET": "${{shared.JWT_SECRET}}",
-        "TWILIO_ACCOUNT_SID": "${{shared.TWILIO_ACCOUNT_SID}}",
-        "TWILIO_AUTH_TOKEN": "${{shared.TWILIO_AUTH_TOKEN}}",
-        "TWILIO_PHONE_NUMBER": "${{shared.TWILIO_PHONE_NUMBER}}"
-      }
+        "NODE_ENV": "production",
+        "PORT": "5000",
+        "JWT_SECRET": {
+          "generate": true
+        },
+        "SESSION_SECRET": {
+          "generate": true
+        }
+      },
+      "domains": [
+        "msme-square-api.railway.app"
+      ]
     },
     {
-      "name": "postgres",
+      "name": "msme-square-scheduler",
       "source": {
-        "type": "image",
-        "image": "postgres:15"
+        "type": "git",
+        "repo": "github.com/your-username/msme-square",
+        "branch": "main"
+      },
+      "build": {
+        "command": "npm ci"
+      },
+      "deploy": {
+        "startCommand": "npm run scheduler"
       },
       "variables": {
-        "POSTGRES_DB": "msme_square",
-        "POSTGRES_USER": "msme_user",
-        "POSTGRES_PASSWORD": "${{shared.POSTGRES_PASSWORD}}"
+        "NODE_ENV": "production"
       }
+    }
+  ],
+  "databases": [
+    {
+      "name": "postgresql",
+      "plugin": "postgresql",
+      "version": "15"
     },
     {
       "name": "redis",
-      "source": {
-        "type": "image", 
-        "image": "redis:7"
-      }
+      "plugin": "redis",
+      "version": "7"
     }
   ]
 }

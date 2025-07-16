@@ -1,0 +1,17 @@
+{
+  "name": "msme-scheduler",
+  "version": "1.0.0",
+  "description": "ML model retraining and data refresh scheduler for MSMESquare",
+  "main": "index.ts",
+  "scripts": {
+    "start": "tsx index.ts",
+    "dev": "tsx --watch index.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "@types/node-cron": "^3.0.11"
+  }
+}
