@@ -137,6 +137,34 @@ services:
       timeout: 10s
       retries: 3
 
+  # WhatsApp Bot
+  whatsapp-bot:
+    build:
+      context: ../apps/whatsapp-bot
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_WHATSAPP_NUMBER=${TWILIO_WHATSAPP_NUMBER}
+      - AUTH_API_URL=http://auth-api:8001
+      - WEB_APP_URL=${WEB_APP_URL}
+      - REDIS_URL=redis://redis:6379
+      - FLASK_ENV=production
+      - LOG_LEVEL=INFO
+    depends_on:
+      - redis
+      - auth-api
+    volumes:
+      - ../apps/whatsapp-bot:/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # MSME API
   msme-api:
     build:
