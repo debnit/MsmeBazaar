@@ -1,0 +1,454 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Management
+model User {
+  id          String   @id @default(cuid())
+  phone       String   @unique
+  email       String?  @unique
+  name        String?
+  role        Role     @default(MSME)
+  isVerified  Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  msmeProfile   MSMEProfile?
+  buyerProfile  BuyerProfile?
+  adminProfile  AdminProfile?
+  otpCodes      OTPCode[]
+  sessions      Session[]
+  transactions  Transaction[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+enum Role {
+  MSME
+  BUYER
+  ADMIN
+  SUPER_ADMIN
+}
+
+// OTP Management
+model OTPCode {
+  id        String   @id @default(cuid())
+  userId    String
+  code      String
+  purpose   OTPPurpose
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("otp_codes")
+}
+
+enum OTPPurpose {
+  REGISTRATION
+  LOGIN
+  PASSWORD_RESET
+  PHONE_VERIFICATION
+}
+
+// Session Management
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// MSME Profile
+model MSMEProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  companyName     String
+  businessType    BusinessType
+  industry        Industry
+  subIndustry     String?
+  description     String?
+  foundedYear     Int?
+  employeeCount   Int?
+  annualRevenue   Float?
+  monthlyRevenue  Float?
+  profitMargin    Float?
+  assets          Float?
+  liabilities     Float?
+  
+  // Location
+  address         String?
+  city            String?
+  state           String?
+  pincode         String?
+  country         String   @default("India")
+  
+  // Legal
+  gstNumber       String?
+  panNumber       String?
+  cinNumber       String?
+  licenseNumber   String?
+  
+  // Status
+  status          MSMEStatus @default(DRAFT)
+  verificationLevel VerificationLevel @default(BASIC)
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents       Document[]
+  valuations      Valuation[]
+  matches         Match[]
+  enquiries       Enquiry[]
+
+  @@map("msme_profiles")
+}
+
+enum BusinessType {
+  MANUFACTURING
+  TRADING
+  SERVICE
+  RETAIL
+  AGRICULTURE
+  TECHNOLOGY
+  HEALTHCARE
+  EDUCATION
+  FOOD_BEVERAGE
+  TEXTILE
+  CONSTRUCTION
+  LOGISTICS
+  OTHER
+}
+
+enum Industry {
+  TECHNOLOGY
+  MANUFACTURING
+  HEALTHCARE
+  EDUCATION
+  FINANCE
+  RETAIL
+  AGRICULTURE
+  FOOD_BEVERAGE
+  TEXTILE
+  AUTOMOTIVE
+  CHEMICALS
+  CONSTRUCTION
+  LOGISTICS
+  ENERGY
+  ENTERTAINMENT
+  REAL_ESTATE
+  CONSULTING
+  OTHER
+}
+
+enum MSMEStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum VerificationLevel {
+  BASIC
+  DOCUMENT_VERIFIED
+  FINANCIAL_VERIFIED
+  FULL_VERIFIED
+}
+
+// Buyer Profile
+model BuyerProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  companyName     String?
+  buyerType       BuyerType
+  industry        Industry
+  investmentRange String?
+  preferences     Json?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enquiries       Enquiry[]
+
+  @@map("buyer_profiles")
+}
+
+enum BuyerType {
+  INDIVIDUAL_INVESTOR
+  INSTITUTIONAL_INVESTOR
+  PRIVATE_EQUITY
+  VENTURE_CAPITAL
+  CORPORATE_BUYER
+  STRATEGIC_BUYER
+  FINANCIAL_BUYER
+}
+
+// Admin Profile
+model AdminProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  department  String?
+  permissions Json?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("admin_profiles")
+}
+
+// Document Management
+model Document {
+  id          String       @id @default(cuid())
+  msmeId      String
+  type        DocumentType
+  fileName    String
+  fileUrl     String
+  fileSize    Int
+  mimeType    String
+  status      DocumentStatus @default(PENDING)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  msme        MSMEProfile @relation(fields: [msmeId], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+enum DocumentType {
+  GST_CERTIFICATE
+  PAN_CARD
+  INCORPORATION_CERTIFICATE
+  BALANCE_SHEET
+  PROFIT_LOSS_STATEMENT
+  BANK_STATEMENT
+  AUDIT_REPORT
+  BUSINESS_PLAN
+  PRODUCT_CATALOG
+  COMPLIANCE_CERTIFICATE
+  OTHER
+}
+
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+// Valuation Engine
+model Valuation {
+  id                String   @id @default(cuid())
+  msmeId            String
+  method            ValuationMethod
+  estimatedValue    Float
+  confidence        Float
+  factors           Json?
+  modelVersion      String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  msme              MSMEProfile @relation(fields: [msmeId], references: [id], onDelete: Cascade)
+  reports           ValuationReport[]
+
+  @@map("valuations")
+}
+
+enum ValuationMethod {
+  ML_MODEL
+  RULE_BASED
+  HYBRID
+  MANUAL
+}
+
+// Valuation Reports
+model ValuationReport {
+  id            String   @id @default(cuid())
+  valuationId   String
+  reportUrl     String
+  reportType    ReportType
+  generatedAt   DateTime @default(now())
+
+  valuation     Valuation @relation(fields: [valuationId], references: [id], onDelete: Cascade)
+
+  @@map("valuation_reports")
+}
+
+enum ReportType {
+  BASIC
+  DETAILED
+  PREMIUM
+}
+
+// Matching Engine
+model Match {
+  id          String     @id @default(cuid())
+  msmeId      String
+  buyerType   BuyerType
+  matchScore  Float
+  factors     Json?
+  status      MatchStatus @default(PENDING)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  msme        MSMEProfile @relation(fields: [msmeId], references: [id], onDelete: Cascade)
+  enquiries   Enquiry[]
+
+  @@map("matches")
+}
+
+enum MatchStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  ARCHIVED
+}
+
+// Enquiry Management
+model Enquiry {
+  id          String       @id @default(cuid())
+  msmeId      String
+  buyerId     String
+  matchId     String?
+  message     String?
+  status      EnquiryStatus @default(PENDING)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  msme        MSMEProfile @relation(fields: [msmeId], references: [id], onDelete: Cascade)
+  buyer       BuyerProfile @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  match       Match? @relation(fields: [matchId], references: [id], onDelete: SetNull)
+
+  @@map("enquiries")
+}
+
+enum EnquiryStatus {
+  PENDING
+  RESPONDED
+  CLOSED
+  CANCELLED
+}
+
+// Payment Management
+model Transaction {
+  id              String            @id @default(cuid())
+  userId          String
+  razorpayOrderId String?
+  razorpayPaymentId String?
+  amount          Float
+  currency        String            @default("INR")
+  status          TransactionStatus @default(PENDING)
+  purpose         PaymentPurpose
+  metadata        Json?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentPurpose {
+  VALUATION_REPORT
+  PREMIUM_LISTING
+  ENHANCED_MATCHING
+  DOCUMENT_VERIFICATION
+  CONSULTATION
+}
+
+// Notification System
+model Notification {
+  id        String             @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  isRead    Boolean            @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  SYSTEM
+  PROFILE_UPDATE
+  DOCUMENT_STATUS
+  VALUATION_READY
+  MATCH_FOUND
+  ENQUIRY_RECEIVED
+  PAYMENT_STATUS
+  VERIFICATION_UPDATE
+}
+
+// Analytics & Metrics
+model Analytics {
+  id        String   @id @default(cuid())
+  event     String
+  userId    String?
+  data      Json?
+  timestamp DateTime @default(now())
+
+  @@map("analytics")
+}
+
+// System Configuration
+model SystemConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  type      ConfigType @default(STRING)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("system_config")
+}
+
+enum ConfigType {
+  STRING
+  NUMBER
+  BOOLEAN
+  JSON
+}
