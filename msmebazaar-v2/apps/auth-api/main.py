@@ -1,7 +1,12 @@
-from fastapi import FastAPI, HTTPException, Depends, status
+"""
+MSMEBazaar V2.0 Authentication API
+Handles user registration, login, OTP verification, and token management.
+"""
+
+from fastapi import FastAPI, HTTPException, Depends, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from contextlib import asynccontextmanager
 import asyncpg
 import redis.asyncio as redis
@@ -10,14 +15,33 @@ import structlog
 import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from prometheus_client import Counter, Histogram, generate_latest
-from fastapi.responses import PlainTextResponse
+import uuid
+from typing import Optional
 
+# Import shared utilities
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../libs'))
+
+from shared.config import get_settings
+from shared.models import (
+    TokenResponse, OTPResponse, ErrorResponse, UserProfile,
+    BaseResponse, HealthCheckResponse, ServiceHealth
+)
+from shared.exceptions import (
+    setup_exception_handlers, MSMEBazaarException,
+    AuthenticationException, ValidationException, BusinessLogicException,
+    RateLimitException, ExternalServiceException, ErrorCode,
+    raise_user_not_found, raise_invalid_otp, raise_unauthorized,
+    raise_rate_limit_exceeded, raise_external_service_error
+)
+
+# Local imports
 from config import settings
 from database import db, get_db_connection, get_redis_client
 from models import (
     RegisterRequest, VerifyOTPRequest, LoginRequest, ResendOTPRequest,
-    RefreshTokenRequest, TokenResponse, OTPResponse, ErrorResponse,
-    HealthResponse, UserCreate, OTPPurpose
+    RefreshTokenRequest, UserCreate, OTPPurpose
 )
 from services.auth_service import AuthService
 
@@ -42,114 +66,302 @@ structlog.configure(
 
 logger = structlog.get_logger()
 
+# Get shared settings
+shared_settings = get_settings()
+
 # Initialize Sentry for error tracking
-if settings.sentry_dsn:
+if shared_settings.monitoring.sentry_dsn:
     sentry_sdk.init(
-        dsn=settings.sentry_dsn,
+        dsn=shared_settings.monitoring.sentry_dsn,
         integrations=[FastApiIntegration()],
         traces_sample_rate=0.1,
-        environment=settings.app_name
+        environment=shared_settings.monitoring.sentry_environment
     )
 
-# Prometheus metrics
-REQUEST_COUNT = Counter('auth_api_requests_total', 'Total requests', ['method', 'endpoint'])
-REQUEST_DURATION = Histogram('auth_api_request_duration_seconds', 'Request duration')
-OTP_SENT = Counter('otp_sent_total', 'Total OTPs sent', ['purpose'])
-OTP_VERIFIED = Counter('otp_verified_total', 'Total OTPs verified', ['purpose', 'status'])
+# Prometheus metrics for monitoring
+REQUEST_COUNT = Counter(
+    'auth_api_requests_total', 
+    'Total requests to auth API', 
+    ['method', 'endpoint', 'status_code']
+)
+REQUEST_DURATION = Histogram(
+    'auth_api_request_duration_seconds', 
+    'Request duration in seconds',
+    ['method', 'endpoint']
+)
+OTP_SENT = Counter(
+    'auth_api_otp_sent_total', 
+    'Total OTPs sent', 
+    ['purpose', 'status']
+)
+OTP_VERIFIED = Counter(
+    'auth_api_otp_verified_total', 
+    'Total OTPs verified', 
+    ['purpose', 'status']
+)
+ACTIVE_SESSIONS = Counter(
+    'auth_api_active_sessions_total',
+    'Total active user sessions'
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """
+    Application lifespan handler for startup and shutdown events.
+    Manages database connections and other resources.
+    """
     # Startup
-    logger.info("Starting Auth API service")
-    await db.connect()
+    logger.info("🚀 Starting MSMEBazaar Auth API service")
+    try:
+        await db.connect()
+        logger.info("✅ Database connection established")
+    except Exception as e:
+        logger.error(f"❌ Failed to connect to database: {e}")
+        raise
+    
     yield
+    
     # Shutdown
-    logger.info("Shutting down Auth API service")
-    await db.disconnect()
+    logger.info("🔄 Shutting down MSMEBazaar Auth API service")
+    try:
+        await db.disconnect()
+        logger.info("✅ Database connection closed")
+    except Exception as e:
+        logger.error(f"❌ Error during shutdown: {e}")
 
+# Initialize FastAPI application with comprehensive configuration
 app = FastAPI(
     title="MSMEBazaar Auth API",
-    description="Authentication service for MSMEBazaar V2.0",
-    version=settings.app_version,
+    description="""
+    ## Authentication Service for MSMEBazaar V2.0
+    
+    This service handles:
+    - User registration with OTP verification
+    - Login with phone number and OTP
+    - JWT token management (access and refresh tokens)
+    - Session management with Redis
+    - Rate limiting and security measures
+    
+    ### Authentication Flow:
+    1. **Registration**: POST `/api/register` → OTP sent to phone
+    2. **Verification**: POST `/api/verify-otp` → JWT tokens returned
+    3. **Login**: POST `/api/login` → OTP sent to registered phone
+    4. **Token Refresh**: POST `/api/refresh-token` → New access token
+    
+    ### Security Features:
+    - Rate limiting on OTP requests
+    - JWT token expiration and refresh
+    - Redis-based session management
+    - Input validation and sanitization
+    """,
+    version="2.0.0",
     lifespan=lifespan,
-    docs_url="/docs",
-    redoc_url="/redoc"
+    docs_url="/docs" if shared_settings.application.enable_swagger else None,
+    redoc_url="/redoc" if shared_settings.application.enable_redoc else None,
+    openapi_tags=[
+        {
+            "name": "Authentication",
+            "description": "User registration, login, and token management"
+        },
+        {
+            "name": "Health",
+            "description": "Service health and monitoring endpoints"
+        }
+    ]
 )
 
-# Add CORS middleware
+# Setup exception handlers for standardized error responses
+setup_exception_handlers(app)
+
+# Add CORS middleware with proper configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=settings.cors_credentials,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=shared_settings.application.cors_origins,
+    allow_credentials=True,
+    allow_methods=shared_settings.application.cors_methods,
+    allow_headers=shared_settings.application.cors_headers,
 )
 
-# Add trusted host middleware
-app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=["*"]  # Configure this properly in production
-)
+# Add trusted host middleware for production security
+if shared_settings.is_production():
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=["msmebazaar.com", "*.msmebazaar.com"]
+    )
 
-# Middleware for request logging and metrics
+# Middleware for request logging, metrics, and request ID tracking
 @app.middleware("http")
-async def log_requests(request, call_next):
+async def request_middleware(request: Request, call_next):
+    """
+    Middleware to handle request logging, metrics collection, and request ID tracking.
+    Adds request ID to all requests for distributed tracing.
+    """
     start_time = datetime.utcnow()
     
-    # Process request
-    response = await call_next(request)
+    # Generate unique request ID for tracing
+    request_id = str(uuid.uuid4())
+    request.state.request_id = request_id
     
-    # Log request
-    duration = (datetime.utcnow() - start_time).total_seconds()
+    # Extract client IP and user agent for logging
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+    
+    # Log incoming request
     logger.info(
-        "Request processed",
+        "Incoming request",
+        request_id=request_id,
         method=request.method,
         url=str(request.url),
-        status_code=response.status_code,
-        duration=duration
+        client_ip=client_ip,
+        user_agent=user_agent
     )
     
-    # Update metrics
-    REQUEST_COUNT.labels(method=request.method, endpoint=request.url.path).inc()
-    REQUEST_DURATION.observe(duration)
-    
-    return response
-
-# Health check endpoint
-@app.get("/health", response_model=HealthResponse)
-async def health_check():
-    """Health check endpoint"""
     try:
-        # Check database connection
+        # Process request
+        response = await call_next(request)
+        
+        # Calculate request duration
+        duration = (datetime.utcnow() - start_time).total_seconds()
+        
+        # Log successful request completion
+        logger.info(
+            "Request completed",
+            request_id=request_id,
+            method=request.method,
+            url=str(request.url),
+            status_code=response.status_code,
+            duration=duration
+        )
+        
+        # Update Prometheus metrics
+        REQUEST_COUNT.labels(
+            method=request.method, 
+            endpoint=request.url.path,
+            status_code=response.status_code
+        ).inc()
+        
+        REQUEST_DURATION.labels(
+            method=request.method,
+            endpoint=request.url.path
+        ).observe(duration)
+        
+        # Add request ID to response headers for client-side tracking
+        response.headers["X-Request-ID"] = request_id
+        
+        return response
+        
+    except Exception as e:
+        # Log request failure
+        duration = (datetime.utcnow() - start_time).total_seconds()
+        logger.error(
+            "Request failed",
+            request_id=request_id,
+            method=request.method,
+            url=str(request.url),
+            error=str(e),
+            duration=duration
+        )
+        
+        # Update error metrics
+        REQUEST_COUNT.labels(
+            method=request.method,
+            endpoint=request.url.path,
+            status_code=500
+        ).inc()
+        
+        # Re-raise the exception to be handled by exception handlers
+        raise
+
+# Health check endpoint with comprehensive service monitoring
+@app.get("/health", response_model=HealthCheckResponse, tags=["Health"])
+async def health_check():
+    """
+    Comprehensive health check endpoint that monitors all service dependencies.
+    
+    Returns:
+        HealthCheckResponse: Detailed health status of the service and its dependencies
+    """
+    start_time = datetime.utcnow()
+    services = []
+    overall_status = "healthy"
+    
+    # Check database connection
+    try:
+        db_start = datetime.utcnow()
         async with db.get_connection() as conn:
             await conn.fetchval("SELECT 1")
-        db_status = "healthy"
-    except Exception:
-        db_status = "unhealthy"
+        db_duration = (datetime.utcnow() - db_start).total_seconds()
+        
+        services.append(ServiceHealth(
+            service="postgresql",
+            status="healthy",
+            response_time=db_duration,
+            details={"connection_pool": "active"}
+        ))
+        
+        logger.info("Database health check passed", response_time=db_duration)
+        
+    except Exception as e:
+        services.append(ServiceHealth(
+            service="postgresql",
+            status="unhealthy",
+            response_time=0.0,
+            details={"error": str(e)}
+        ))
+        overall_status = "unhealthy"
+        logger.error("Database health check failed", error=str(e))
     
+    # Check Redis connection
     try:
-        # Check Redis connection
+        redis_start = datetime.utcnow()
         redis_client = await db.get_redis()
         await redis_client.ping()
-        redis_status = "healthy"
-    except Exception:
-        redis_status = "unhealthy"
+        redis_duration = (datetime.utcnow() - redis_start).total_seconds()
+        
+        services.append(ServiceHealth(
+            service="redis",
+            status="healthy",
+            response_time=redis_duration,
+            details={"connection": "active"}
+        ))
+        
+        logger.info("Redis health check passed", response_time=redis_duration)
+        
+    except Exception as e:
+        services.append(ServiceHealth(
+            service="redis",
+            status="unhealthy",
+            response_time=0.0,
+            details={"error": str(e)}
+        ))
+        overall_status = "unhealthy"
+        logger.error("Redis health check failed", error=str(e))
     
-    overall_status = "healthy" if db_status == "healthy" and redis_status == "healthy" else "unhealthy"
+    # Calculate total uptime (placeholder - should be tracked from service start)
+    total_uptime = (datetime.utcnow() - start_time).total_seconds()
     
-    return HealthResponse(
+    return HealthCheckResponse(
+        success=overall_status == "healthy",
+        message=f"Auth API is {overall_status}",
         status=overall_status,
-        version=settings.app_version,
-        timestamp=datetime.utcnow(),
-        database=db_status,
-        redis=redis_status
+        services=services,
+        uptime=total_uptime,
+        version="2.0.0"
     )
 
-# Metrics endpoint
-@app.get("/metrics")
+# Metrics endpoint for Prometheus monitoring
+@app.get("/metrics", tags=["Health"])
 async def metrics():
-    """Prometheus metrics endpoint"""
-    return PlainTextResponse(generate_latest())
+    """
+    Prometheus metrics endpoint for monitoring and alerting.
+    
+    Returns:
+        PlainTextResponse: Prometheus-formatted metrics data
+    """
+    return PlainTextResponse(
+        generate_latest(),
+        media_type="text/plain; version=0.0.4; charset=utf-8"
+    )
 
 # Authentication endpoints
 @app.post("/api/register", response_model=OTPResponse)
