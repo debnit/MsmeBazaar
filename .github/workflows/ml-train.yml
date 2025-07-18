@@ -14,3 +14,10 @@ jobs:
         run: pip install -r requirements.txt
       - name: Retrain
         run: python apps/ml-api/train_model.py
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'apps/ml-api/train/**'
+      - 'apps/ml-api/models/**'
+      - 'apps/ml-api/feedback/**'   # ← Add this if not already present

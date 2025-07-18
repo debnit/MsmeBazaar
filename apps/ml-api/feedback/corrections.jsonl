@@ -1,0 +1,2 @@
+{"msme_id": "MSME001", "input": {"turnover": 1200000, "profit": 80000, "assets": 550000}, "predicted": 14.2, "actual": 15.5, "correction_reason": "Undervalued due to unrecorded assets"}
+{"msme_id": "MSME002", "input": {"turnover": 1800000, "profit": 300000, "assets": 700000}, "predicted": 16.0, "actual": 17.8, "correction_reason": "High export volume"}
