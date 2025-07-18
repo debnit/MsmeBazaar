@@ -1,124 +1,47 @@
 {
-  "name": "MSMEBazaar V2.0 Development Environment",
-  "dockerComposeFile": "../docker-compose.yml",
-  "service": "web",
+  "name": "msmebazaar-v2-dev",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
   "workspaceFolder": "/workspace",
   
-  // Alternative: Use Dockerfile instead of docker-compose
-  // "build": {
-  //   "dockerfile": "Dockerfile",
-  //   "context": ".",
-  //   "args": {
-  //     "VARIANT": "3.11"
-  //   }
-  // },
-
-  // Features to add to the dev container
-  "features": {
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "18"
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash",
+    "python.defaultInterpreterPath": "/usr/local/bin/python",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.linting.flake8Enabled": true,
+    "python.formatting.provider": "black",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
     },
-    "ghcr.io/devcontainers/features/python:1": {
-      "version": "3.11"
-    },
-    "ghcr.io/devcontainers/features/git:1": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-    "ghcr.io/devcontainers/features/common-utils:2": {
-      "installZsh": true,
-      "installOhMyZsh": true,
-      "upgradePackages": true
+    "files.associations": {
+      "*.env": "dotenv",
+      "*.env.*": "dotenv"
     }
   },
-
-  // Configure tool-specific properties
-  "customizations": {
-    "vscode": {
-      "settings": {
-        "python.defaultInterpreterPath": "/usr/local/bin/python",
-        "python.linting.enabled": true,
-        "python.linting.pylintEnabled": true,
-        "python.linting.flake8Enabled": true,
-        "python.linting.mypyEnabled": true,
-        "python.formatting.provider": "black",
-        "python.formatting.blackArgs": ["--line-length", "88"],
-        "python.sortImports.args": ["--profile", "black"],
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-          "source.organizeImports": true
-        },
-        "files.associations": {
-          "*.env": "dotenv",
-          "*.env.*": "dotenv"
-        },
-        "typescript.preferences.importModuleSpecifier": "relative",
-        "eslint.workingDirectories": ["apps/web"],
-        "prettier.configPath": "apps/web/.prettierrc"
-      },
-      
-      "extensions": [
-        // Python extensions
-        "ms-python.python",
-        "ms-python.flake8",
-        "ms-python.mypy-type-checker",
-        "ms-python.black-formatter",
-        "ms-python.isort",
-        "ms-toolsai.jupyter",
-        
-        // FastAPI/API development
-        "ms-python.pylint",
-        "charliermarsh.ruff",
-        "ms-vscode.vscode-json",
-        "redhat.vscode-yaml",
-        
-        // JavaScript/TypeScript/React
-        "ms-vscode.vscode-typescript-next",
-        "bradlc.vscode-tailwindcss",
-        "esbenp.prettier-vscode",
-        "dbaeumer.vscode-eslint",
-        
-        // Database
-        "ms-mssql.mssql",
-        "cweijan.vscode-postgresql-client2",
-        "cweijan.vscode-redis-client",
-        
-        // DevOps and containers
-        "ms-azuretools.vscode-docker",
-        "ms-vscode-remote.remote-containers",
-        "ms-kubernetes-tools.vscode-kubernetes-tools",
-        
-        // Git and collaboration
-        "github.vscode-pull-request-github",
-        "github.copilot",
-        "github.copilot-chat",
-        "eamodio.gitlens",
-        
-        // General development
-        "ms-vscode.vscode-thunder-client",
-        "humao.rest-client",
-        "ms-vscode.hexeditor",
-        "streetsidesoftware.code-spell-checker",
-        "gruntfuggly.todo-tree",
-        "aaron-bond.better-comments",
-        "oderwat.indent-rainbow",
-        "formulahendry.auto-rename-tag",
-        
-        // Environment and configuration
-        "mikestead.dotenv",
-        "redhat.vscode-commons",
-        
-        // Testing
-        "ms-python.pytest",
-        "hbenl.vscode-test-explorer",
-        
-        // Documentation
-        "yzhang.markdown-all-in-one",
-        "davidanson.vscode-markdownlint"
-      ]
-    }
-  },
-
-  // Use 'forwardPorts' to make a list of ports inside the container available locally
+  
+  "extensions": [
+    "ms-python.python",
+    "ms-azuretools.vscode-docker",
+    "github.copilot",
+    "esbenp.prettier-vscode",
+    "ms-python.black-formatter",
+    "ms-python.flake8",
+    "ms-python.isort",
+    "ms-vscode.vscode-typescript-next",
+    "bradlc.vscode-tailwindcss",
+    "dbaeumer.vscode-eslint",
+    "cweijan.vscode-postgresql-client2",
+    "cweijan.vscode-redis-client",
+    "humao.rest-client",
+    "mikestead.dotenv"
+  ],
+  
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  
   "forwardPorts": [
     3000,  // Next.js frontend
     8001,  // Auth API
@@ -130,11 +53,9 @@
     5432,  // PostgreSQL
     6379,  // Redis
     9090,  // Prometheus
-    3001,  // Grafana
-    8080   // Weaviate
+    3001   // Grafana
   ],
-
-  // Port labels for better identification
+  
   "portsAttributes": {
     "3000": {
       "label": "Next.js Frontend",
@@ -145,7 +66,7 @@
       "onAutoForward": "silent"
     },
     "8002": {
-      "label": "MSME API",
+      "label": "MSME API", 
       "onAutoForward": "silent"
     },
     "8003": {
@@ -163,67 +84,18 @@
     "5000": {
       "label": "WhatsApp Bot",
       "onAutoForward": "silent"
-    },
-    "5432": {
-      "label": "PostgreSQL",
-      "onAutoForward": "ignore"
-    },
-    "6379": {
-      "label": "Redis",
-      "onAutoForward": "ignore"
-    },
-    "9090": {
-      "label": "Prometheus",
-      "onAutoForward": "ignore"
-    },
-    "3001": {
-      "label": "Grafana",
-      "onAutoForward": "notify"
     }
   },
-
-  // Commands to run after the container is created
-  "postCreateCommand": "bash .devcontainer/post-create.sh",
-
-  // Commands to run when attaching to the container
-  "postAttachCommand": {
-    "server": "echo 'MSMEBazaar V2.0 Development Environment Ready! 🚀'"
-  },
-
-  // Set environment variables
+  
   "containerEnv": {
     "ENVIRONMENT": "development",
     "DEBUG": "true",
-    "PYTHONPATH": "/workspace",
-    "NODE_ENV": "development"
+    "PYTHONPATH": "/workspace"
   },
-
-  // Mount the local file system
+  
   "mounts": [
-    // Mount local .env file if it exists
-    "source=${localWorkspaceFolder}/.env,target=/workspace/.env,type=bind,consistency=cached",
-    // Mount node_modules as volume for better performance
-    "source=msmebazaar-node-modules,target=/workspace/apps/web/node_modules,type=volume",
-    // Mount Python cache
-    "source=msmebazaar-python-cache,target=/root/.cache/pip,type=volume"
+    "source=${localWorkspaceFolder}/.env,target=/workspace/.env,type=bind,consistency=cached"
   ],
-
-  // Configure the shell
-  "postStartCommand": "git config --global --add safe.directory /workspace",
-
-  // Use 'remoteUser' to specify the user the container should run as
-  "remoteUser": "root",
-
-  // Uncomment to connect as a non-root user instead
-  // "remoteUser": "vscode",
-
-  // Lifecycle scripts
-  "initializeCommand": "echo 'Initializing MSMEBazaar V2.0 Dev Container...'",
-  "onCreateCommand": "echo 'Setting up development environment...'",
-
-  // Development server configuration
-  "forwardPorts": [3000, 8001, 8002, 8003, 8004, 8005, 5000, 5432, 6379, 9090, 3001],
-  "otherPortsAttributes": {
-    "onAutoForward": "silent"
-  }
+  
+  "remoteUser": "vscode"
 }
