@@ -1,32 +1,18 @@
-from fastapi import APIRouter
-from pydantic import BaseModel
-import pickle
-import numpy as np
+
+from fastapi import APIRouter, Request
+from utils.model import load_model, predict
+from utils.explain import explain_model
 
 router = APIRouter()
 
-model = pickle.load(open("apps/ml-api/models/valuation_xgb.pkl", "rb"))
-
-class MSMEInput(BaseModel):
-    sector: str
-    city: str
-    years_operated: int
-    revenue: float
-    assets: float
-    net_worth: float
-    compliance_score: float
-    buyer_interest: int
-    demand_last_6mo: int
+model = load_model()
 
 @router.post("/predict")
-def predict_valuation(input: MSMEInput):
-    data = np.array([[
-        input.years_operated, input.revenue, input.assets, input.net_worth,
-        input.compliance_score, input.buyer_interest, input.demand_last_6mo
-    ]])
-    prediction = model.predict(data)[0]
-    return {
-        "predicted_valuation": prediction,
-        "model_confidence_score": 0.91,
-        "top_features": ["revenue", "buyer_interest", "net_worth"]
-    }
+def valuation_predict(request: Request):
+    data = request.json()
+    result = predict(model, data)
+    return result
+
+@router.get("/explain")
+def valuation_explain():
+    return explain_model(model)
