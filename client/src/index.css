@@ -196,11 +196,11 @@ body {
   }
 
   .btn-primary {
-    @apply btn-base bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2;
+    @apply btn-base bg-primary text-primary-foreground hover:bg-primary hover:opacity-90 h-10 px-4 py-2;
   }
 
   .btn-secondary {
-    @apply btn-base bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2;
+    @apply btn-base bg-secondary text-secondary-foreground hover:bg-secondary hover:opacity-80 h-10 px-4 py-2;
   }
 
   .btn-outline {
@@ -212,7 +212,7 @@ body {
   }
 
   .btn-destructive {
-    @apply btn-base bg-destructive text-destructive-foreground hover:bg-destructive/90 h-10 px-4 py-2;
+    @apply btn-base bg-destructive text-destructive-foreground hover:bg-destructive hover:opacity-90 h-10 px-4 py-2;
   }
 
   .btn-sm {
@@ -296,11 +296,33 @@ body {
   }
 
   .animate-slide-up {
-    @apply animate-slide-up;
+    animation: slideUp 0.3s ease-out;
   }
 
   .animate-slide-down {
-    @apply animate-slide-down;
+    animation: slideDown 0.3s ease-out;
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(10px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      transform: translateY(-10px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
   }
 
   /* Accessibility Classes */

@@ -3,12 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Shield, CheckCircle, AlertCircle, Clock, Download, ExternalLink } from "lucide-react";
-import { nbfcApi } from "@/lib/api";
+// import { nbfcApi } from "@/lib/api"; // TODO: Implement API
 
 export default function ComplianceStatusWidget() {
-  const { data: complianceRecords, isLoading } = useQuery({
+  const { isLoading } = useQuery({
     queryKey: ["/api/nbfc/compliance"],
-    queryFn: nbfcApi.getCompliance,
+    queryFn: async () => {
+      // TODO: Implement actual API call
+      return mockCompliance;
+    },
   });
 
   // Mock compliance data for demonstration

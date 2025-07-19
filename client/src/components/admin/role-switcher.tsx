@@ -46,7 +46,14 @@ const roleConfig = {
 };
 
 export function RoleSwitcher({ onRoleChange }: RoleSwitcherProps) {
-  const { user, switchRole, isAdmin } = useAuth();
+  const { user } = useAuth();
+  
+  // Helper functions for role checking
+  const isAdmin = user?.role === 'admin';
+  const switchRole = (newRole: string) => {
+    // TODO: Implement role switching logic
+    console.log('Switching to role:', newRole);
+  };
   const [selectedRole, setSelectedRole] = useState<string>(user?.role || 'buyer');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();

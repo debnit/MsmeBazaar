@@ -16,8 +16,7 @@ import {
   Upload, 
   CheckCircle2, 
   AlertTriangle,
-  Eye,
-  EyeOff,
+
   ChevronLeft,
   ChevronRight,
   X
@@ -75,7 +74,7 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid, isDirty },
+    formState: { errors, isValid },
     trigger,
     watch,
     setValue,
@@ -147,7 +146,7 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
   }, [setValue]);
 
   const onSubmit = useCallback(async (data: MSMERegistration) => {
-    const loadingId = loading('Registering MSME...', 'Please wait while we process your registration');
+    loading('Registering MSME...', 'Please wait while we process your registration');
     
     try {
       // Upload files first
@@ -196,7 +195,7 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                   <FormField
                     label="Company Name"
                     required
-                    error={errors.companyName?.message}
+                    error={errors.companyName?.message || ""}
                     {...field}
                   />
                 )}
@@ -280,7 +279,7 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                   maxLength={1000}
                   showCharCount
                   minRows={4}
-                  error={errors.businessDescription?.message}
+                  error={errors.businessDescription?.message || ""}
                   {...field}
                 />
               )}
@@ -296,7 +295,7 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                   required
                   mask="year"
                   onChange={(value) => onChange(parseInt(value) || 0)}
-                  error={errors.yearOfEstablishment?.message}
+                  error={errors.yearOfEstablishment?.message || ""}
                   {...field}
                   value={field.value?.toString() || ''}
                 />
@@ -317,7 +316,7 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                     label="GSTIN"
                     required
                     mask="gstin"
-                    error={errors.gstin?.message}
+                    error={errors.gstin?.message || ""}
                     {...field}
                   />
                 )}
@@ -331,7 +330,7 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                     label="PAN"
                     required
                     mask="pan"
-                    error={errors.pan?.message}
+                    error={errors.pan?.message || ""}
                     {...field}
                   />
                 )}
@@ -347,8 +346,9 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                     label="Udhyam Registration Number"
                     description="Leave blank if not registered"
                     mask="udhyam"
-                    error={errors.udhyamNumber?.message}
+                    error={errors.udhyamNumber?.message || ""}
                     {...field}
+                    value={field.value || ""}
                   />
                 )}
               />
@@ -361,8 +361,9 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                     label="CIN Number"
                     description="For companies only"
                     mask="cin"
-                    error={errors.cinNumber?.message}
+                    error={errors.cinNumber?.message || ""}
                     {...field}
+                    value={field.value || ""}
                   />
                 )}
               />
@@ -376,7 +377,7 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                   label="Incorporation Date"
                   type="date"
                   required
-                  error={errors.incorporationDate?.message}
+                  error={errors.incorporationDate?.message || ""}
                   {...field}
                 />
               )}
@@ -396,7 +397,7 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                     label="Business Email"
                     type="email"
                     required
-                    error={errors.email?.message}
+                    error={errors.email?.message || ""}
                     {...field}
                   />
                 )}
@@ -410,7 +411,7 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                     label="Phone Number"
                     required
                     mask="phone"
-                    error={errors.phone?.message}
+                    error={errors.phone?.message || ""}
                     {...field}
                   />
                 )}
@@ -425,8 +426,9 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                   <FormField
                     label="Alternate Phone"
                     mask="phone"
-                    error={errors.alternatePhone?.message}
+                    error={errors.alternatePhone?.message || ""}
                     {...field}
+                    value={field.value || ""}
                   />
                 )}
               />
@@ -438,8 +440,9 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                   <FormField
                     label="Website"
                     placeholder="https://www.example.com"
-                    error={errors.website?.message}
+                    error={errors.website?.message || ""}
                     {...field}
+                    value={field.value || ""}
                   />
                 )}
               />
@@ -453,7 +456,7 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                   label="Business Address"
                   required
                   minRows={3}
-                  error={errors.address?.message}
+                  error={errors.address?.message || ""}
                   {...field}
                 />
               )}
@@ -467,7 +470,7 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                   <FormField
                     label="City"
                     required
-                    error={errors.city?.message}
+                    error={errors.city?.message || ""}
                     {...field}
                   />
                 )}
@@ -480,7 +483,7 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                   <FormField
                     label="State"
                     required
-                    error={errors.state?.message}
+                    error={errors.state?.message || ""}
                     {...field}
                   />
                 )}
@@ -494,7 +497,7 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                     label="PIN Code"
                     required
                     mask="pincode"
-                    error={errors.pincode?.message}
+                    error={errors.pincode?.message || ""}
                     {...field}
                   />
                 )}
@@ -515,8 +518,8 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                     label="Annual Turnover (₹)"
                     required
                     mask="currency"
-                    onChange={(value, rawValue) => onChange(parseFloat(rawValue || '0'))}
-                    error={errors.annualTurnover?.message}
+                    onChange={(_, rawValue) => onChange(parseFloat(rawValue || '0'))}
+                    error={errors.annualTurnover?.message || ""}
                     {...field}
                     value={field.value?.toString() || ''}
                   />
@@ -532,7 +535,7 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                     type="number"
                     required
                     onChange={(value) => onChange(parseInt(value) || 0)}
-                    error={errors.employeeCount?.message}
+                    error={errors.employeeCount?.message || ""}
                     {...field}
                     value={field.value?.toString() || ''}
                   />
@@ -548,8 +551,8 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                   label="Export Turnover (₹)"
                   description="Leave blank if not applicable"
                   mask="currency"
-                  onChange={(value, rawValue) => onChange(parseFloat(rawValue || '0') || undefined)}
-                  error={errors.exportTurnover?.message}
+                  onChange={(_, rawValue) => onChange(parseFloat(rawValue || '0') || undefined)}
+                  error={errors.exportTurnover?.message || ""}
                   {...field}
                   value={field.value?.toString() || ''}
                 />
@@ -568,7 +571,7 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                     <FormField
                       label="Bank Name"
                       required
-                      error={errors.bankName?.message}
+                      error={errors.bankName?.message || ""}
                       {...field}
                     />
                   )}
@@ -582,7 +585,7 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                       label="IFSC Code"
                       required
                       mask="ifsc"
-                      error={errors.ifscCode?.message}
+                      error={errors.ifscCode?.message || ""}
                       {...field}
                     />
                   )}
@@ -598,7 +601,7 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                       label="Account Number"
                       required
                       mask="accountNumber"
-                      error={errors.accountNumber?.message}
+                      error={errors.accountNumber?.message || ""}
                       {...field}
                     />
                   )}
@@ -611,7 +614,7 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                     <FormField
                       label="Account Holder Name"
                       required
-                      error={errors.accountHolderName?.message}
+                      error={errors.accountHolderName?.message || ""}
                       {...field}
                     />
                   )}
@@ -625,7 +628,7 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
                 Key Products/Services <span className="text-destructive">*</span>
               </label>
               
-              {watch('keyProducts')?.map((product, index) => (
+              {watch('keyProducts')?.map((_, index) => (
                 <div key={index} className="flex gap-2 mb-2">
                   <Controller
                     name={`keyProducts.${index}`}
@@ -756,8 +759,8 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
 
         {/* Current Step Info */}
         <div className="text-center">
-          <h3 className="text-xl font-semibold">{steps[currentStep].title}</h3>
-          <p className="text-muted-foreground">{steps[currentStep].description}</p>
+          <h3 className="text-xl font-semibold">{steps[currentStep]?.title}</h3>
+          <p className="text-muted-foreground">{steps[currentStep]?.description}</p>
         </div>
 
         {/* Form Content */}

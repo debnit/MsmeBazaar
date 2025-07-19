@@ -1,10 +1,47 @@
+import React, { useState, useEffect } from 'react';
 import { FastHomeScreen } from '@/components/FastHomeScreen';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { AccessibilityToolbar } from '@/components/AccessibilityToolbar';
 import { initializeCaching } from '@/utils/enhanced-caching';
-import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { MapPin, Coins, ShieldCheck, Building } from 'lucide-react';
 
-export default function Landing() {
+// Add mock translation function if not available
+const t = (key: string) => {
+  const translations: Record<string, string> = {
+    'features.title': 'Key Features',
+    'features.proximity.title': 'Local Proximity',
+    'features.proximity.description': 'Connect with MSMEs in your area',
+    'features.loan.title': 'Easy Loans',
+    'features.loan.description': 'Quick access to business financing',
+    'features.compliance.title': 'Compliance Support',
+    'features.compliance.description': 'Stay compliant with regulations',
+    'stats.title': 'Platform Statistics',
+    'stats.lakh': 'Lakhs',
+    'stats.crore': 'Crores',
+    'stats.odisha.msmes': 'MSMEs in Odisha',
+    'stats.national.msmes': 'MSMEs Nationally',
+    'stats.districts': 'Districts Covered',
+    'cta.title': 'Ready to Get Started?',
+    'cta.description': 'Join thousands of MSMEs already on our platform',
+    'cta.button': 'Sign Up Now',
+    'footer.description': 'Empowering MSMEs across India',
+    'footer.services': 'Services',
+    'footer.support': 'Support',
+    'footer.languages': 'Languages',
+    'footer.help': 'Help Center',
+    'footer.contact': 'Contact Us',
+    'footer.faq': 'FAQ',
+    'footer.rights': 'All rights reserved.',
+    'nav.sell': 'Sell Business',
+    'nav.buy': 'Buy Business',
+    'nav.loan': 'Loans'
+  };
+  return translations[key] || key;
+};
+
+export default function Landing(): JSX.Element {
   const [currentLanguage, setCurrentLanguage] = useState<'en' | 'hi' | 'or'>('en');
   
   useEffect(() => {
@@ -28,9 +65,6 @@ export default function Landing() {
         </div>
         <FastHomeScreen />
       </div>
-    </>
-  );
-}
 
       {/* Features Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
@@ -157,7 +191,8 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+
       <AccessibilityToolbar />
-    </div>
+    </>
   );
 }
