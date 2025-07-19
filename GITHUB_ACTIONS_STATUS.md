@@ -9,11 +9,16 @@
    - All dependency mismatches resolved
    - Local test: `npm ci` passes successfully
 
-2. **Missing Scripts** ✅ **FIXED**
+2. **setup-node Cache Dependency Path** ✅ **FIXED**
+   - Changed from `cache-dependency-path: package-lock.json` to glob pattern `**/package-lock.json`
+   - Resolves "Some specified paths were not resolved, unable to cache dependencies" error
+   - Applied across all workflow files (ci-cd.yml, ci.yml, deploy.yml, etc.)
+
+3. **Missing Scripts** ✅ **FIXED**
    - Added `lint`, `test`, `ci-build` scripts to package.json
    - All scripts tested locally and working
 
-3. **DevSecOps Security Scanning** ✅ **INTEGRATED**
+4. **DevSecOps Security Scanning** ✅ **INTEGRATED**
    - Trivy security scanner fully configured
    - Filesystem, dependency, and container scanning
    - SARIF upload to GitHub Security tab
@@ -28,6 +33,32 @@
 ✅ npm run check            # TypeScript check available
 ✅ npm run db:push          # Database push available
 ```
+
+## 🔍 **Setup-Node Caching Fix Applied**
+
+**Problem:** GitHub Actions was failing with:
+```
+"Some specified paths were not resolved, unable to cache dependencies."
+```
+
+**Root Cause:** The `cache-dependency-path: package-lock.json` was not being resolved correctly by GitHub Actions.
+
+**Solution Applied:**
+```yaml
+# Before (BROKEN):
+cache-dependency-path: package-lock.json
+
+# After (FIXED):
+cache-dependency-path: |
+  **/package-lock.json
+```
+
+**Files Updated:**
+- ✅ `.github/workflows/ci-cd.yml` (3 instances fixed)
+- ✅ `.github/workflows/ci.yml` (2 instances fixed)  
+- ✅ `.github/workflows/deploy.yml` (1 instance fixed)
+- ✅ `.github/workflows/email-report.yml` (1 instance fixed)
+- ✅ `.github/workflows/deploy-recommendation-system.yml` (1 instance fixed)
 
 ## 🔍 **Troubleshooting Guide**
 
@@ -64,6 +95,13 @@ npm run test    # ✅ Available
 npm run ci-build # ✅ Available
 ```
 
+**Issue: "Unable to cache dependencies"**
+```bash
+# Solution: Already fixed - glob pattern implemented
+# Verify package-lock.json exists at root:
+ls -la package-lock.json
+```
+
 **Issue: "Security scan failed"**
 ```bash
 # Solution: Check trivy.yaml and .trivyignore files
@@ -88,7 +126,7 @@ If the workflow doesn't trigger automatically:
 - **Status: Should PASS** ✅
 
 ### **Job 2: Test** 🧪  
-- Sets up Node.js 18 with npm caching
+- Sets up Node.js 18 with npm caching (FIXED)
 - Installs dependencies with `npm ci`
 - Runs lint check (non-blocking)
 - Runs TypeScript check (non-blocking)
@@ -98,6 +136,7 @@ If the workflow doesn't trigger automatically:
 
 ### **Job 3: Build** 🏗️
 - Depends on test and security-scan jobs
+- Sets up Node.js 18 with npm caching (FIXED)
 - Installs dependencies with `npm ci`
 - Builds application with `npm run ci-build`
 - Builds Docker image
@@ -128,8 +167,8 @@ If the workflow doesn't trigger automatically:
 With all fixes applied, the workflow should:
 
 1. **✅ Security Scan Job**: PASS (all critical vulnerabilities addressed)
-2. **✅ Test Job**: PASS (npm ci works, all scripts available)
-3. **✅ Build Job**: PASS (ci-build script works correctly)
+2. **✅ Test Job**: PASS (npm ci works, caching fixed, all scripts available)
+3. **✅ Build Job**: PASS (ci-build script works, caching fixed)
 4. **⚠️ Deploy Job**: May need secrets configuration
 
 ## 📞 **Support Commands**
@@ -144,6 +183,7 @@ With all fixes applied, the workflow should:
    npm run test          # Verify testing  
    npm run ci-build      # Verify build process
    trivy fs .            # Verify security scan
+   ls -la package-lock.json  # Verify lock file exists
    ```
 
 3. **Force workflow re-run:**
@@ -154,12 +194,13 @@ With all fixes applied, the workflow should:
 
 When the workflow passes, you'll see:
 - ✅ All jobs completed successfully
+- ✅ No "unable to cache dependencies" errors
 - ✅ Security scan results in GitHub Security tab
 - ✅ Build artifacts created
 - ✅ Deployment initiated (if secrets configured)
 
 ---
 
-**Last Updated:** $(date)  
-**Status:** All critical issues resolved - workflow ready to pass  
+**Last Updated:** July 19, 2025  
+**Status:** All critical issues resolved - setup-node caching fixed  
 **Next Action:** Monitor GitHub Actions run for success confirmation
