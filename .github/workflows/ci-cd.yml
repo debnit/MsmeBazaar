@@ -24,15 +24,16 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: Setup Node.js
+    # Cursor: Debug npm ci lock file mismatch
+    - name: Use Node.js ${{ env.NODE_VERSION }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
         cache-dependency-path: package-lock.json
     
-    - name: Install dependencies
-      run: npm ci --no-audit --no-fund
+    - name: Clean install dependencies
+      run: npm ci
     
     # Step 1: Install Trivy
     - name: Install Trivy
@@ -49,6 +50,7 @@ jobs:
       run: |
         echo "🔍 Scanning filesystem for vulnerabilities..."
         trivy fs . \
+          --config trivy.yaml \
           --format sarif \
           --output trivy-fs-results.sarif \
           --severity HIGH,CRITICAL \
@@ -60,6 +62,7 @@ jobs:
       run: |
         echo "🔍 Scanning Node.js dependencies..."
         trivy fs . \
+          --config trivy.yaml \
           --scanners vuln \
           --format table \
           --severity HIGH,CRITICAL \
@@ -77,6 +80,7 @@ jobs:
       run: |
         echo "🔍 Scanning Docker image for vulnerabilities..."
         trivy image \
+          --config trivy.yaml \
           --format sarif \
           --output trivy-image-results.sarif \
           --severity HIGH,CRITICAL \
@@ -90,17 +94,28 @@ jobs:
         echo "📋 Generating detailed vulnerability report..."
         echo "## Security Scan Results" > security-report.md
         echo "" >> security-report.md
+        echo "**Scan Date:** $(date)" >> security-report.md
+        echo "**Repository:** ${{ github.repository }}" >> security-report.md
+        echo "**Commit:** ${{ github.sha }}" >> security-report.md
+        echo "" >> security-report.md
         
         echo "### Filesystem Vulnerabilities" >> security-report.md
-        trivy fs . --format table --severity HIGH,CRITICAL >> security-report.md || true
+        trivy fs . --config trivy.yaml --format table --severity HIGH,CRITICAL >> security-report.md || true
         echo "" >> security-report.md
         
         echo "### Docker Image Vulnerabilities" >> security-report.md
-        trivy image --format table --severity HIGH,CRITICAL security-scan-image:latest >> security-report.md || true
+        trivy image --config trivy.yaml --format table --severity HIGH,CRITICAL security-scan-image:latest >> security-report.md || true
         echo "" >> security-report.md
         
         echo "### Dependency Tree" >> security-report.md
         npm ls --depth=0 >> security-report.md || true
+        echo "" >> security-report.md
+        
+        echo "### Security Summary" >> security-report.md
+        echo "- Node.js Version: $(node --version)" >> security-report.md
+        echo "- NPM Version: $(npm --version)" >> security-report.md
+        echo "- Base Image: node:18-alpine" >> security-report.md
+        echo "- Scan Tool: Trivy $(trivy --version | head -1)" >> security-report.md
       continue-on-error: true
     
     # Step 3: Upload SARIF results to GitHub Security tab
@@ -150,7 +165,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Setup Node.js
+    # Cursor: Debug npm ci lock file mismatch
+    - name: Use Node.js ${{ env.NODE_VERSION }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
@@ -158,8 +174,8 @@ jobs:
         cache-dependency-path: package-lock.json
         registry-url: 'https://registry.npmjs.org'
     
-    - name: Install dependencies
-      run: npm ci --no-audit --no-fund
+    - name: Clean install dependencies
+      run: npm ci
       env:
         NODE_ENV: production
         CI: true
@@ -194,7 +210,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Setup Node.js
+    # Cursor: Debug npm ci lock file mismatch
+    - name: Use Node.js ${{ env.NODE_VERSION }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
@@ -202,8 +219,8 @@ jobs:
         cache-dependency-path: package-lock.json
         registry-url: 'https://registry.npmjs.org'
     
-    - name: Install dependencies
-      run: npm ci --no-audit --no-fund
+    - name: Clean install dependencies
+      run: npm ci
       env:
         NODE_ENV: production
         CI: true
