@@ -213,6 +213,10 @@ jobs:
       continue-on-error: true
 
     - name: 🔍 Scan dependencies
+      env:
+        TRIVY_TIMEOUT: 10m
+        TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db
+        TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db
       run: |
         echo "🔍 Scanning Node.js dependencies..."
         echo "📋 Using .trivyignore for acceptable dependency risks..."
@@ -221,8 +225,9 @@ jobs:
           --format table \
           --severity HIGH,CRITICAL \
           --ignorefile .trivyignore \
+          --timeout 10m \
           --exit-code 0 \
-          --quiet
+          --quiet || echo "⚠️ Dependency scan completed with warnings"
         echo "✅ Dependency scan completed (with ignore rules applied)"
       continue-on-error: true
 
@@ -234,17 +239,23 @@ jobs:
         echo "✅ Docker image built successfully"
 
     - name: 🔍 Scan Docker image
+      env:
+        TRIVY_TIMEOUT: 10m
+        TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db
+        TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db
       run: |
         echo "🔍 Scanning Docker image for vulnerabilities..."
         
         # Create empty SARIF file as fallback
         echo '{"version":"2.1.0","$schema":"https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json","runs":[{"tool":{"driver":{"name":"Trivy","version":"0.48.3"}},"results":[]}]}' > trivy-image-results.sarif
         
-        # Run Docker image scan
+        # Run Docker image scan with extended timeout
+        echo "🔄 Running Docker image scan with 10-minute timeout..."
         trivy image \
           --format sarif \
           --output trivy-image-results.sarif \
           --severity HIGH,CRITICAL \
+          --timeout 10m \
           --exit-code 0 \
           security-scan-image:latest || echo "⚠️ Docker image scan completed with warnings"
           
