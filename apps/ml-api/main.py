@@ -10,3 +10,7 @@ app.include_router(match_router, prefix="/api/match")
 @app.get("/metrics")
 def metrics():
     return {"requests": 100, "errors": 2}
+
+from app.api.valuation.feedback.route import router as feedback_router
+app.include_router(feedback_router)
+
