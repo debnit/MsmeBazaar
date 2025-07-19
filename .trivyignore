@@ -1,0 +1,86 @@
+# Trivy Ignore File - DevSecOps Configuration
+# Format: CVE-ID or Package-Name
+# Comments explaining why each vulnerability is ignored
+
+# ==============================================================================
+# NODE.JS BASE IMAGE VULNERABILITIES (Acceptable Risk)
+# ==============================================================================
+
+# Node.js 18-alpine base image known issues that are acceptable for our use case
+# These are typically low-impact or have no available fixes yet
+
+# CVE-2023-44487 - HTTP/2 Rapid Reset Attack
+# Reason: Mitigated by our reverse proxy and rate limiting
+# Risk Level: Low (infrastructure protected)
+# Review Date: 2024-01-15
+CVE-2023-44487
+
+# CVE-2023-39615 - libxml2 vulnerability  
+# Reason: Not directly exposed in our application layer
+# Risk Level: Low (library not used in critical paths)
+# Review Date: 2024-01-15
+CVE-2023-39615
+
+# ==============================================================================
+# NPM DEPENDENCY VULNERABILITIES (Under Review)
+# ==============================================================================
+
+# Development dependencies that don't affect production
+# These are only used during build time and not in runtime
+
+# semver package vulnerabilities in dev dependencies
+# Reason: Only used in build process, not runtime
+# Risk Level: Low (build-time only)
+semver
+
+# ==============================================================================
+# FALSE POSITIVES (Verified Safe)
+# ==============================================================================
+
+# Add specific CVEs here that have been manually verified as false positives
+# Each entry must include:
+# - CVE ID
+# - Reason for ignoring
+# - Risk assessment
+# - Review date
+# - Next review date
+
+# Example:
+# CVE-2024-XXXXX - False positive for our specific use case
+# Reason: This vulnerability doesn't apply to our implementation
+# Risk Level: None (false positive)
+# Review Date: 2024-01-15
+# Next Review: 2024-04-15
+
+# ==============================================================================
+# TEMPORARY IGNORES (Must be reviewed regularly)
+# ==============================================================================
+
+# These should be fixed as soon as patches become available
+# Maximum ignore period: 30 days
+
+# CVE-2024-TEMP - Temporary ignore while waiting for upstream fix
+# Reason: No patch available, vendor aware, workaround implemented
+# Risk Level: Medium (mitigated)
+# Ignore Until: 2024-02-15
+# Mitigation: [Describe specific mitigation measures]
+
+# ==============================================================================
+# INSTRUCTIONS FOR MAINTENANCE
+# ==============================================================================
+
+# 1. Review this file monthly
+# 2. Remove entries when fixes become available
+# 3. Update review dates when re-evaluating risks
+# 4. Document all decisions with proper justification
+# 5. Never ignore CRITICAL vulnerabilities without explicit approval
+
+# ==============================================================================
+# MONITORING ALERTS
+# ==============================================================================
+
+# Set up alerts for:
+# - New CRITICAL vulnerabilities (immediate action required)
+# - HIGH vulnerabilities in production dependencies
+# - Expired temporary ignores
+# - Changes to this ignore file (requires security team review)

@@ -12,6 +12,124 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: package-lock.json
+    
+    - name: Install dependencies
+      run: npm ci --no-audit --no-fund
+    
+    # Step 1: Install Trivy
+    - name: Install Trivy
+      run: |
+        sudo apt-get update
+        sudo apt-get install wget apt-transport-https gnupg lsb-release
+        wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+        echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+        sudo apt-get update
+        sudo apt-get install trivy
+    
+    # Step 1a: Scan filesystem for vulnerabilities
+    - name: Run Trivy filesystem scan
+      run: |
+        echo "🔍 Scanning filesystem for vulnerabilities..."
+        trivy fs . \
+          --format sarif \
+          --output trivy-fs-results.sarif \
+          --severity HIGH,CRITICAL \
+          --exit-code 1
+      continue-on-error: false
+    
+    # Step 1b: Scan package.json dependencies
+    - name: Run Trivy dependency scan
+      run: |
+        echo "🔍 Scanning Node.js dependencies..."
+        trivy fs . \
+          --scanners vuln \
+          --format table \
+          --severity HIGH,CRITICAL \
+          --exit-code 1
+      continue-on-error: false
+    
+    # Step 1c: Build Docker image for scanning
+    - name: Build Docker image for scanning
+      run: |
+        echo "🐳 Building Docker image for security scan..."
+        docker build -t security-scan-image:latest .
+    
+    # Step 1d: Scan Docker image
+    - name: Run Trivy container scan
+      run: |
+        echo "🔍 Scanning Docker image for vulnerabilities..."
+        trivy image \
+          --format sarif \
+          --output trivy-image-results.sarif \
+          --severity HIGH,CRITICAL \
+          --exit-code 1 \
+          security-scan-image:latest
+      continue-on-error: false
+    
+    # Step 2: Generate detailed vulnerability report
+    - name: Generate vulnerability report
+      run: |
+        echo "📋 Generating detailed vulnerability report..."
+        echo "## Security Scan Results" > security-report.md
+        echo "" >> security-report.md
+        
+        echo "### Filesystem Vulnerabilities" >> security-report.md
+        trivy fs . --format table --severity HIGH,CRITICAL >> security-report.md || true
+        echo "" >> security-report.md
+        
+        echo "### Docker Image Vulnerabilities" >> security-report.md
+        trivy image --format table --severity HIGH,CRITICAL security-scan-image:latest >> security-report.md || true
+        echo "" >> security-report.md
+        
+        echo "### Dependency Tree" >> security-report.md
+        npm ls --depth=0 >> security-report.md || true
+      continue-on-error: true
+    
+    # Step 3: Upload SARIF results to GitHub Security tab
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-fs-results.sarif'
+        category: 'trivy-filesystem'
+    
+    - name: Upload Trivy image results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-image-results.sarif'
+        category: 'trivy-container'
+    
+    # Upload artifacts for review
+    - name: Upload security artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-scan-results
+        path: |
+          trivy-fs-results.sarif
+          trivy-image-results.sarif
+          security-report.md
+        retention-days: 30
+
   test:
     runs-on: ubuntu-latest
     
@@ -69,7 +187,7 @@ jobs:
       continue-on-error: true
 
   build:
-    needs: test
+    needs: [test, security-scan]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     
