@@ -107,6 +107,8 @@ jobs:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/msme_test
       run: |
         echo "🗄️ Setting up test database..."
+        echo "📦 Ensuring drizzle-kit is available (moved to dependencies)..."
+        echo "🔄 Running database push with drizzle-kit..."
         npm run db:push
         echo "✅ Database setup completed successfully"
 
