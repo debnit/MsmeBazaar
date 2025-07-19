@@ -25,3 +25,23 @@ model.fit(X, y)
 # Save model
 joblib.dump(model, 'apps/ml-api/models/valuation_xgb.pkl')
 print("✅ Model retrained and saved.")
+
+
+
+
+/*alternate
+# train/train_model.py (snippet)
+import pandas as pd
+import json
+
+original = pd.read_csv("train/dataset.csv")
+
+try:
+    corrections = pd.read_json("feedback/corrections.jsonl", lines=True)
+    correction_df = pd.DataFrame(corrections["features"].tolist())
+    correction_df["valuation"] = corrections["actual_value"]
+    data = pd.concat([original, correction_df], ignore_index=True)
+except:
+    data = original
+
+# Train XGBoost on merged data*/

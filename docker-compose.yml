@@ -315,3 +315,13 @@ volumes:
 networks:
   default:
     driver: bridge
+
+
+ml-api:
+    build:
+      context: ./apps/ml-api
+    container_name: ml-api
+    ports:
+      - "8004:8004"
+    networks:
+      - msmebazaar-network
