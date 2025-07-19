@@ -1,3 +1,4 @@
+# 🚀 Production-Ready CI/CD Pipeline for Node.js App
 name: CI/CD Pipeline
 
 on:
@@ -5,6 +6,7 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch: # Allow manual triggering
 
 env:
   NODE_VERSION: '18'
@@ -12,7 +14,11 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  # ============================================================================
+  # 🧪 TEST JOB - Run tests with PostgreSQL service
+  # ============================================================================
   test:
+    name: 🧪 Test & Quality Checks
     runs-on: ubuntu-latest
     
     services:
@@ -21,117 +27,369 @@ jobs:
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: msme_test
+          POSTGRES_USER: postgres
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
+          --health-start-period 30s
         ports:
           - 5432:5432
     
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🟢 Setup Node.js ${{ env.NODE_VERSION }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        cache-dependency-path: package-lock.json
+        cache-dependency-path: |
+          **/package-lock.json
         registry-url: 'https://registry.npmjs.org'
-    
-    - name: Configure npm for CI
+
+    # ✅ FIXED: Replace ci-install.js with standard npm ci
+    - name: 📦 Install dependencies
       run: |
-        npm config set audit-level none
-        npm config set fund false
-        npm config set strict-peer-deps false
-        npm config set legacy-peer-deps false
-        npm --version
-        node --version
-    
-    - name: Install dependencies
-      run: node ci-install.js
+        echo "🔄 Installing dependencies with npm ci..."
+        npm ci --no-audit --no-fund --prefer-offline
+        echo "✅ Dependencies installed successfully"
       env:
         NODE_ENV: production
         CI: true
-    
-    - name: Run lint check
-      run: npm run lint || true
-    
-    - name: Run TypeScript check
-      run: node build-ci.js
-      continue-on-error: true
-    
-    - name: Setup test database
-      env:
-        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/msme_test
-      run: npm run db:push || echo "Database setup completed with warnings"
-      continue-on-error: true
-    
-    - name: Run tests
-      env:
-        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/msme_test
-        JWT_SECRET: test-secret
-        NODE_ENV: test
-      run: npm test || true
 
-  build:
-    needs: test
+    # ✅ FIXED: Wait for PostgreSQL to be ready before database operations
+    - name: ⏳ Wait for PostgreSQL
+      run: |
+        echo "🔍 Waiting for PostgreSQL to be ready..."
+        for i in {1..30}; do
+          if pg_isready -h localhost -p 5432 -U postgres; then
+            echo "✅ PostgreSQL is ready!"
+            break
+          fi
+          echo "⏳ PostgreSQL not ready yet, waiting... ($i/30)"
+          sleep 2
+        done
+        
+        # Verify connection with test query
+        PGPASSWORD=postgres psql -h localhost -U postgres -d msme_test -c "SELECT version();"
+        echo "✅ PostgreSQL connection verified"
+
+    - name: 🔍 Run linting
+      run: |
+        echo "🔍 Running linting checks..."
+        npm run lint
+        echo "✅ Linting completed"
+      # Only continue on error for linting - it's not critical for deployment
+
+    - name: 🔧 TypeScript check
+      run: |
+        echo "🔧 Running TypeScript checks..."
+        npm run check
+        echo "✅ TypeScript check completed"
+
+    # ✅ FIXED: Proper database setup with error handling
+    - name: 🗄️ Setup test database
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/msme_test
+      run: |
+        echo "🗄️ Setting up test database..."
+        npm run db:push
+        echo "✅ Database setup completed successfully"
+
+    - name: 🧪 Run tests
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/msme_test
+        JWT_SECRET: test-secret-key-for-ci
+        NODE_ENV: test
+      run: |
+        echo "🧪 Running test suite..."
+        npm test
+        echo "✅ All tests passed successfully"
+
+  # ============================================================================
+  # 🛡️ SECURITY SCAN JOB - Comprehensive security scanning
+  # ============================================================================
+  security-scan:
+    name: 🛡️ Security Scan
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
     
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🟢 Setup Node.js ${{ env.NODE_VERSION }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        cache-dependency-path: package-lock.json
+        cache-dependency-path: |
+          **/package-lock.json
+
+    - name: 📦 Install dependencies
+      run: |
+        echo "📦 Installing dependencies for security scan..."
+        npm ci --no-audit --no-fund --prefer-offline
+        echo "✅ Dependencies installed"
+
+    # ✅ IMPROVED: Modern Trivy installation
+    - name: 🔧 Install Trivy
+      run: |
+        echo "🔧 Installing Trivy security scanner..."
+        curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.48.3
+        trivy --version
+        echo "✅ Trivy installed successfully"
+
+    - name: 🔍 Scan filesystem vulnerabilities
+      run: |
+        echo "🔍 Scanning filesystem for vulnerabilities..."
+        trivy fs . \
+          --format sarif \
+          --output trivy-fs-results.sarif \
+          --severity HIGH,CRITICAL \
+          --exit-code 0
+        echo "✅ Filesystem scan completed"
+
+    - name: 🔍 Scan dependencies
+      run: |
+        echo "🔍 Scanning Node.js dependencies..."
+        trivy fs . \
+          --scanners vuln \
+          --format table \
+          --severity HIGH,CRITICAL \
+          --exit-code 0
+        echo "✅ Dependency scan completed"
+
+    # ✅ FIXED: Build Docker image for security scanning
+    - name: 🐳 Build Docker image for scanning
+      run: |
+        echo "🐳 Building Docker image for security scan..."
+        docker build -t security-scan-image:latest .
+        echo "✅ Docker image built successfully"
+
+    - name: 🔍 Scan Docker image
+      run: |
+        echo "🔍 Scanning Docker image for vulnerabilities..."
+        trivy image \
+          --format sarif \
+          --output trivy-image-results.sarif \
+          --severity HIGH,CRITICAL \
+          --exit-code 0 \
+          security-scan-image:latest
+        echo "✅ Docker image scan completed"
+
+    - name: 📊 Upload security results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-fs-results.sarif'
+        category: 'trivy-filesystem'
+
+    - name: 📊 Upload Docker scan results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-image-results.sarif'
+        category: 'trivy-docker'
+
+  # ============================================================================
+  # 🏗️ BUILD & DEPLOY JOB - Build and push to registries
+  # ============================================================================
+  build-and-deploy:
+    name: 🏗️ Build & Deploy
+    needs: [test, security-scan]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     
-    - name: Install dependencies
-      run: npm ci
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+      image-url: ${{ steps.build.outputs.image-url }}
     
-    - name: Build application
-      run: node build-ci.js
-      continue-on-error: true
-    
-    - name: Build Docker image
-      run: docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
-    
-    - name: Log in to Container Registry
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🟢 Setup Node.js ${{ env.NODE_VERSION }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: |
+          **/package-lock.json
+
+    - name: 📦 Install dependencies
+      run: |
+        echo "📦 Installing dependencies..."
+        npm ci --no-audit --no-fund --prefer-offline
+        echo "✅ Dependencies installed"
+      env:
+        NODE_ENV: production
+        CI: true
+
+    # ✅ FIXED: Proper build step without continue-on-error
+    - name: 🔨 Build application
+      run: |
+        echo "🔨 Building application..."
+        npm run build
+        echo "✅ Application built successfully"
+      env:
+        NODE_ENV: production
+
+    # ✅ FIXED: Proper Docker setup with BuildKit
+    - name: 🐳 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    # ✅ FIXED: Proper GHCR authentication with correct permissions
+    - name: 🔐 Login to GitHub Container Registry
       uses: docker/login-action@v3
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    
-    - name: Push Docker image
-      run: docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
+    # ✅ FIXED: Robust Docker build and push
+    - name: 🏗️ Build and push Docker image
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: |
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        labels: |
+          org.opencontainers.image.title=${{ github.repository }}
+          org.opencontainers.image.description=MSME Bazaar Node.js Application
+          org.opencontainers.image.url=https://github.com/${{ github.repository }}
+          org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          org.opencontainers.image.version=${{ github.sha }}
+          org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
+          org.opencontainers.image.revision=${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: ✅ Verify Docker image
+      run: |
+        echo "✅ Verifying Docker image..."
+        docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        docker inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        echo "✅ Docker image verified successfully"
+
+  # ============================================================================
+  # 🚀 RENDER DEPLOYMENT JOB
+  # ============================================================================
   deploy-render:
-    needs: build
+    name: 🚀 Deploy to Render
+    needs: build-and-deploy
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
     
     steps:
-    - name: Deploy to Render
-      uses: johnbeynon/render-deploy-action@v0.0.8
-      with:
-        service-id: ${{ secrets.RENDER_SERVICE_ID }}
-        api-key: ${{ secrets.RENDER_API_KEY }}
+    - name: 🚀 Deploy to Render
+      id: render-deploy
+      run: |
+        echo "🚀 Deploying to Render..."
+        
+        # Check if secrets are available
+        if [ -z "${{ secrets.RENDER_SERVICE_ID }}" ] || [ -z "${{ secrets.RENDER_API_KEY }}" ]; then
+          echo "❌ Render secrets not configured. Skipping deployment."
+          echo "Please set RENDER_SERVICE_ID and RENDER_API_KEY in repository secrets."
+          exit 1
+        fi
+        
+        # Trigger Render deployment
+        curl -X POST \
+          -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+          -H "Content-Type: application/json" \
+          "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
+          -d '{
+            "clearCache": "clear"
+          }'
+        
+        echo "✅ Render deployment triggered successfully"
 
+    - name: 📊 Deployment status
+      run: |
+        echo "📊 Deployment Summary:"
+        echo "🏷️  Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+        echo "🌐 Platform: Render"
+        echo "📅 Deployed at: $(date)"
+        echo "🔗 Commit: ${{ github.sha }}"
+
+  # ============================================================================
+  # 🚄 RAILWAY DEPLOYMENT JOB
+  # ============================================================================
   deploy-railway:
-    needs: build
+    name: 🚄 Deploy to Railway
+    needs: build-and-deploy
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[railway]'))
+    environment: production
     
     steps:
-    - uses: actions/checkout@v4
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🚄 Deploy to Railway
+      run: |
+        echo "🚄 Deploying to Railway..."
+        
+        # Check if Railway token is available
+        if [ -z "${{ secrets.RAILWAY_TOKEN }}" ]; then
+          echo "❌ Railway token not configured. Skipping deployment."
+          echo "Please set RAILWAY_TOKEN in repository secrets."
+          exit 1
+        fi
+        
+        # Install Railway CLI
+        curl -fsSL https://railway.app/install.sh | sh
+        
+        # Deploy to Railway
+        railway login --token ${{ secrets.RAILWAY_TOKEN }}
+        railway up --service msme-square
+        
+        echo "✅ Railway deployment completed successfully"
+
+    - name: 📊 Railway deployment status
+      run: |
+        echo "📊 Railway Deployment Summary:"
+        echo "🏷️  Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+        echo "🌐 Platform: Railway"
+        echo "📅 Deployed at: $(date)"
+        echo "🔗 Commit: ${{ github.sha }}"
+
+  # ============================================================================
+  # 📋 DEPLOYMENT SUMMARY JOB
+  # ============================================================================
+  deployment-summary:
+    name: 📋 Deployment Summary
+    needs: [build-and-deploy, deploy-render, deploy-railway]
+    runs-on: ubuntu-latest
+    if: always() && (needs.build-and-deploy.result == 'success')
     
-    - name: Deploy to Railway
-      uses: bervProject/railway-deploy@v1.0.0
-      with:
-        railway_token: ${{ secrets.RAILWAY_TOKEN }}
-        service: msme-square
+    steps:
+    - name: 📋 Generate deployment summary
+      run: |
+        echo "# 🎉 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## 🏗️ Build Results" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ **Build Status**: Success" >> $GITHUB_STEP_SUMMARY
+        echo "- 🏷️ **Image**: \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- 📅 **Built At**: $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## 🚀 Deployment Status" >> $GITHUB_STEP_SUMMARY
+        echo "- **Render**: ${{ needs.deploy-render.result || 'Skipped' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Railway**: ${{ needs.deploy-railway.result || 'Skipped' }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## 🔗 Links" >> $GITHUB_STEP_SUMMARY
+        echo "- [Docker Image](${{ env.REGISTRY }}/${{ env.IMAGE_NAME }})" >> $GITHUB_STEP_SUMMARY
+        echo "- [Commit](${{ github.event.head_commit.url }})" >> $GITHUB_STEP_SUMMARY
+        
+        echo "✅ Deployment pipeline completed successfully!"
