@@ -25,13 +25,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    # Cursor: Debug npm ci lock file mismatch
+    # Cursor: Debug npm ci lock file mismatch - Fixed cache path resolution
     - name: Use Node.js ${{ env.NODE_VERSION }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        cache-dependency-path: package-lock.json
+        cache-dependency-path: |
+          **/package-lock.json
     
     - name: Clean install dependencies
       run: npm ci
@@ -172,7 +173,8 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        cache-dependency-path: package-lock.json
+        cache-dependency-path: |
+          **/package-lock.json
         registry-url: 'https://registry.npmjs.org'
     
     - name: Clean install dependencies
@@ -217,7 +219,8 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        cache-dependency-path: package-lock.json
+        cache-dependency-path: |
+          **/package-lock.json
         registry-url: 'https://registry.npmjs.org'
     
     - name: Clean install dependencies
