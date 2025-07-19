@@ -40,15 +40,7 @@ jobs:
         cache-dependency-path: package-lock.json
         registry-url: 'https://registry.npmjs.org'
     
-    - name: Configure npm for CI
-      run: |
-        npm config set audit-level none
-        npm config set fund false
-        npm config set strict-peer-deps false
-        npm --version
-        node --version
-    
-    - name: Clean install dependencies
+    - name: Install dependencies
       run: npm ci --no-audit --no-fund
       env:
         NODE_ENV: production
