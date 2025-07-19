@@ -170,6 +170,15 @@ jobs:
         sudo apt-get update
         sudo apt-get install trivy
         trivy --version
+        
+        # Verify configuration file
+        if [ -f "trivy.yaml" ]; then
+          echo "📋 Found trivy.yaml configuration file:"
+          cat trivy.yaml
+        else
+          echo "⚠️ No trivy.yaml found, using default settings"
+        fi
+        
         echo "✅ Trivy installation completed"
 
     - name: 🔍 Run Trivy Filesystem Scan with Retry
@@ -200,17 +209,14 @@ jobs:
     - name: 🔍 Run Trivy Dependencies Scan with Retry
       run: |
         echo "🔍 Running Trivy dependencies scan with retry logic..."
+        echo "📋 Using trivy.yaml configuration with 5m timeout"
         RETRIES=3
         for i in $(seq 1 $RETRIES); do
           echo "🔄 Dependencies scan attempt $i of $RETRIES..."
           if trivy fs . \
-            --timeout 5m \
+            --config trivy.yaml \
             --scanners vuln \
-            --format table \
-            --severity HIGH,CRITICAL \
-            --ignorefile .trivyignore \
-            --exit-code 0 \
-            --quiet; then
+            --format table; then
             echo "✅ Dependencies scan completed successfully on attempt $i"
             break
           else
@@ -244,16 +250,16 @@ jobs:
         exit-code: '0'
       continue-on-error: true
 
-    - name: 📊 Upload security results
+    - name: 📊 Upload Filesystem SARIF Results
+      if: always() && hashFiles('trivy-fs-results.sarif') != ''
       uses: github/codeql-action/upload-sarif@v3
-      if: always()
       with:
         sarif_file: 'trivy-fs-results.sarif'
         category: 'trivy-filesystem'
 
-    - name: 📊 Upload Docker scan results
+    - name: 📊 Upload Docker SARIF Results
+      if: always() && hashFiles('trivy-image-results.sarif') != ''
       uses: github/codeql-action/upload-sarif@v3
-      if: always()
       with:
         sarif_file: 'trivy-image-results.sarif'
         category: 'trivy-docker'
