@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": ["ES2020", "DOM", "DOM.Iterable", "WebWorker"],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -22,18 +22,28 @@
     "exactOptionalPropertyTypes": false,
     "noUncheckedIndexedAccess": false,
     "forceConsistentCasingInFileNames": false,
-    "jsx": "preserve"
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["client/src/*"],
+      "@/components/*": ["client/src/components/*"],
+      "@/pages/*": ["client/src/pages/*"],
+      "@/lib/*": ["client/src/lib/*"],
+      "@/hooks/*": ["client/src/hooks/*"],
+      "@/utils/*": ["client/src/utils/*"],
+      "@/shared/*": ["shared/*"]
+    },
+    "types": ["node", "react", "react-dom", "webworker"]
   },
   "include": [
     "client/src/**/*",
-    "shared/**/*"
+    "shared/**/*",
+    "client/src/sw.ts"
   ],
   "exclude": [
     "node_modules",
     "dist",
     "build",
-    "server/**/*",
-    "**/*.test.*",
-    "**/*.spec.*"
+    "server/**/*"
   ]
 }
