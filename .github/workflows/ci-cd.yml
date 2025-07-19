@@ -41,13 +41,13 @@ jobs:
     - name: 📥 Checkout code
       uses: actions/checkout@v4
 
+    # ✅ FIXED: Correct cache-dependency-path format for npm
     - name: 🟢 Setup Node.js ${{ env.NODE_VERSION }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        cache-dependency-path: |
-          **/package-lock.json
+        cache-dependency-path: 'package-lock.json'
         registry-url: 'https://registry.npmjs.org'
 
     # ✅ FIXED: Replace ci-install.js with standard npm ci
@@ -124,13 +124,13 @@ jobs:
     - name: 📥 Checkout code
       uses: actions/checkout@v4
 
+    # ✅ FIXED: Correct cache-dependency-path format for npm
     - name: 🟢 Setup Node.js ${{ env.NODE_VERSION }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        cache-dependency-path: |
-          **/package-lock.json
+        cache-dependency-path: 'package-lock.json'
 
     - name: 📦 Install dependencies
       run: |
@@ -215,13 +215,13 @@ jobs:
     - name: 📥 Checkout code
       uses: actions/checkout@v4
 
+    # ✅ FIXED: Correct cache-dependency-path format for npm
     - name: 🟢 Setup Node.js ${{ env.NODE_VERSION }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        cache-dependency-path: |
-          **/package-lock.json
+        cache-dependency-path: 'package-lock.json'
 
     - name: 📦 Install dependencies
       run: |
