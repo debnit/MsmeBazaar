@@ -1,8 +1,8 @@
-import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Trophy, Star, Gift, Zap, X } from "lucide-react";
+import { motion, AnimatePresence } from 'framer-motion';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Trophy, Star, Gift, Zap, X } from 'lucide-react';
 
 interface RewardNotificationProps {
   isVisible: boolean;
@@ -17,45 +17,45 @@ interface RewardNotificationProps {
   onClaim?: () => void;
 }
 
-export function RewardNotification({ 
-  isVisible, 
-  onClose, 
-  reward, 
-  onClaim 
+export function RewardNotification({
+  isVisible,
+  onClose,
+  reward,
+  onClaim,
 }: RewardNotificationProps) {
   const getIcon = () => {
     switch (reward.type) {
-      case 'achievement':
-        return <Trophy className="w-8 h-8 text-yellow-500" />;
-      case 'points':
-        return <Star className="w-8 h-8 text-blue-500" />;
-      case 'coins':
-        return <Gift className="w-8 h-8 text-green-500" />;
-      case 'badge':
-        return <Badge className="w-8 h-8 text-purple-500" />;
-      case 'level':
-        return <Zap className="w-8 h-8 text-orange-500" />;
-      default:
-        return <Gift className="w-8 h-8 text-gray-500" />;
+    case 'achievement':
+      return <Trophy className="w-8 h-8 text-yellow-500" />;
+    case 'points':
+      return <Star className="w-8 h-8 text-blue-500" />;
+    case 'coins':
+      return <Gift className="w-8 h-8 text-green-500" />;
+    case 'badge':
+      return <Badge className="w-8 h-8 text-purple-500" />;
+    case 'level':
+      return <Zap className="w-8 h-8 text-orange-500" />;
+    default:
+      return <Gift className="w-8 h-8 text-gray-500" />;
     }
   };
 
   const getBackgroundColor = () => {
-    if (reward.special) return 'bg-gradient-to-r from-purple-600 to-pink-600';
-    
+    if (reward.special) {return 'bg-gradient-to-r from-purple-600 to-pink-600';}
+
     switch (reward.type) {
-      case 'achievement':
-        return 'bg-gradient-to-r from-yellow-500 to-orange-600';
-      case 'points':
-        return 'bg-gradient-to-r from-blue-500 to-blue-600';
-      case 'coins':
-        return 'bg-gradient-to-r from-green-500 to-green-600';
-      case 'badge':
-        return 'bg-gradient-to-r from-purple-500 to-purple-600';
-      case 'level':
-        return 'bg-gradient-to-r from-orange-500 to-red-600';
-      default:
-        return 'bg-gradient-to-r from-gray-500 to-gray-600';
+    case 'achievement':
+      return 'bg-gradient-to-r from-yellow-500 to-orange-600';
+    case 'points':
+      return 'bg-gradient-to-r from-blue-500 to-blue-600';
+    case 'coins':
+      return 'bg-gradient-to-r from-green-500 to-green-600';
+    case 'badge':
+      return 'bg-gradient-to-r from-purple-500 to-purple-600';
+    case 'level':
+      return 'bg-gradient-to-r from-orange-500 to-red-600';
+    default:
+      return 'bg-gradient-to-r from-gray-500 to-gray-600';
     }
   };
 
@@ -85,7 +85,7 @@ export function RewardNotification({
                 >
                   <X className="w-4 h-4" />
                 </Button>
-                
+
                 <motion.div
                   className="mb-4"
                   initial={{ scale: 0 }}
@@ -94,7 +94,7 @@ export function RewardNotification({
                 >
                   {getIcon()}
                 </motion.div>
-                
+
                 <motion.h3
                   className="text-xl font-bold mb-2"
                   initial={{ opacity: 0, y: 10 }}
@@ -103,7 +103,7 @@ export function RewardNotification({
                 >
                   {reward.title}
                 </motion.h3>
-                
+
                 <motion.p
                   className="text-sm opacity-90 mb-4"
                   initial={{ opacity: 0, y: 10 }}
@@ -112,7 +112,7 @@ export function RewardNotification({
                 >
                   {reward.description}
                 </motion.p>
-                
+
                 {reward.value && (
                   <motion.div
                     className="mb-4"
@@ -125,7 +125,7 @@ export function RewardNotification({
                     </Badge>
                   </motion.div>
                 )}
-                
+
                 <motion.div
                   className="flex gap-2 justify-center"
                   initial={{ opacity: 0, y: 10 }}
@@ -151,7 +151,7 @@ export function RewardNotification({
                 </motion.div>
               </CardContent>
             </Card>
-            
+
             {/* Celebration particles */}
             {reward.special && (
               <motion.div
@@ -177,7 +177,7 @@ export function RewardNotification({
                     transition={{
                       duration: 2,
                       delay: i * 0.1,
-                      ease: "easeOut",
+                      ease: 'easeOut',
                     }}
                   />
                 ))}

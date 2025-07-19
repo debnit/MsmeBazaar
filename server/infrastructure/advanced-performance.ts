@@ -18,21 +18,21 @@ export class AdvancedPerformanceOptimizer {
   // 1. Offload client parts for later loading
   async offloadClientComponents() {
     console.log('🔄 Offloading non-critical client components...');
-    
+
     // Defer heavy client-side imports
     const deferredComponents = [
       'admin-dashboard',
       'analytics-charts',
       'document-viewer',
       'ml-visualizations',
-      'advanced-forms'
+      'advanced-forms',
     ];
-    
+
     // Create lazy loading wrapper for each component
     deferredComponents.forEach(component => {
       this.createLazyComponent(component);
     });
-    
+
     console.log('✅ Client components deferred for later loading');
   }
 
@@ -61,7 +61,7 @@ export class AdvancedPerformanceOptimizer {
   // 3. Kill non-critical processes for cold booting
   async killNonCriticalProcesses() {
     console.log('🧹 Terminating non-critical processes...');
-    
+
     const nonCriticalProcesses = [
       'chrome-sandbox',
       'firefox',
@@ -70,11 +70,11 @@ export class AdvancedPerformanceOptimizer {
       'jupyter',
       'docker',
       'snap-store',
-      'software-center'
+      'software-center',
     ];
-    
+
     let killedCount = 0;
-    
+
     for (const processName of nonCriticalProcesses) {
       try {
         await execAsync(`pkill -f ${processName}`);
@@ -84,7 +84,7 @@ export class AdvancedPerformanceOptimizer {
         // Process not found or already killed
       }
     }
-    
+
     // Free up memory by dropping caches
     try {
       await execAsync('sync && echo 3 > /proc/sys/vm/drop_caches');
@@ -92,45 +92,45 @@ export class AdvancedPerformanceOptimizer {
     } catch (error) {
       console.log('⚠️ Could not drop caches (requires root)');
     }
-    
+
     console.log(`✅ Terminated ${killedCount} non-critical processes`);
   }
 
   // 4. Create threads for critical services
   async createCriticalServiceThreads() {
     console.log('🧵 Creating critical service threads...');
-    
+
     const criticalServices = [
       'database-connection',
       'authentication-service',
       'home-screen-renderer',
       'api-router',
-      'health-monitor'
+      'health-monitor',
     ];
-    
+
     for (const service of criticalServices) {
       const worker = new Worker(__filename, {
-        workerData: { service, mode: 'critical-service' }
+        workerData: { service, mode: 'critical-service' },
       });
-      
+
       worker.on('message', (message) => {
         console.log(`🧵 ${service}: ${message}`);
       });
-      
+
       worker.on('error', (error) => {
         console.error(`❌ ${service} thread error:`, error);
       });
-      
+
       this.criticalThreads.push(worker);
     }
-    
+
     console.log(`✅ Created ${this.criticalThreads.length} critical service threads`);
   }
 
   // 5. Battery power booster for mission-critical mode
   async enableMissionCriticalMode() {
     console.log('⚡ Enabling mission-critical power mode...');
-    
+
     try {
       // Set CPU governor to performance mode
       await execAsync('echo performance > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor');
@@ -138,7 +138,7 @@ export class AdvancedPerformanceOptimizer {
     } catch (error) {
       console.log('⚠️ Could not set CPU governor (requires root)');
     }
-    
+
     try {
       // Disable CPU idle states for maximum performance
       await execAsync('echo 1 > /sys/devices/system/cpu/cpu0/cpufreq/boost');
@@ -146,7 +146,7 @@ export class AdvancedPerformanceOptimizer {
     } catch (error) {
       console.log('⚠️ Could not enable CPU boost (requires root)');
     }
-    
+
     // Set process scheduling policy to real-time
     try {
       await execAsync(`chrt -f -p 99 ${this.processId}`);
@@ -154,7 +154,7 @@ export class AdvancedPerformanceOptimizer {
     } catch (error) {
       console.log('⚠️ Could not set real-time scheduling (requires root)');
     }
-    
+
     // Optimize network settings for low latency
     try {
       await execAsync('echo 1 > /proc/sys/net/ipv4/tcp_low_latency');
@@ -162,14 +162,14 @@ export class AdvancedPerformanceOptimizer {
     } catch (error) {
       console.log('⚠️ Could not optimize network settings (requires root)');
     }
-    
+
     console.log('✅ Mission-critical mode enabled');
   }
 
   // Memory optimization
   async optimizeMemoryUsage() {
     console.log('🧠 Optimizing memory usage...');
-    
+
     // Set memory overcommit for better allocation
     try {
       await execAsync('echo 1 > /proc/sys/vm/overcommit_memory');
@@ -177,7 +177,7 @@ export class AdvancedPerformanceOptimizer {
     } catch (error) {
       console.log('⚠️ Could not optimize memory overcommit (requires root)');
     }
-    
+
     // Increase memory mapped files limit
     try {
       await execAsync('echo 262144 > /proc/sys/vm/max_map_count');
@@ -185,7 +185,7 @@ export class AdvancedPerformanceOptimizer {
     } catch (error) {
       console.log('⚠️ Could not increase memory map count (requires root)');
     }
-    
+
     // Force garbage collection
     if (global.gc) {
       global.gc();
@@ -196,18 +196,18 @@ export class AdvancedPerformanceOptimizer {
   // Initialize all optimizations
   private async initializeAdvancedOptimizations() {
     console.log('🚀 Initializing advanced performance optimizations...');
-    
+
     // Run optimizations in parallel for maximum effect
     await Promise.allSettled([
       this.setHighProcessPriority(),
       this.killNonCriticalProcesses(),
       this.optimizeMemoryUsage(),
-      this.enableMissionCriticalMode()
+      this.enableMissionCriticalMode(),
     ]);
-    
+
     // Create threads after system optimization
     await this.createCriticalServiceThreads();
-    
+
     console.log('✅ Advanced performance optimizations complete');
   }
 
@@ -215,46 +215,46 @@ export class AdvancedPerformanceOptimizer {
   getPerformanceStats() {
     const memUsage = process.memoryUsage();
     const cpuUsage = process.cpuUsage();
-    
+
     return {
       process: {
         pid: this.processId,
         priority: process.getpriority(this.processId),
-        uptime: process.uptime()
+        uptime: process.uptime(),
       },
       memory: {
         heapUsed: (memUsage.heapUsed / 1024 / 1024).toFixed(2) + 'MB',
         heapTotal: (memUsage.heapTotal / 1024 / 1024).toFixed(2) + 'MB',
         rss: (memUsage.rss / 1024 / 1024).toFixed(2) + 'MB',
-        external: (memUsage.external / 1024 / 1024).toFixed(2) + 'MB'
+        external: (memUsage.external / 1024 / 1024).toFixed(2) + 'MB',
       },
       cpu: {
         user: (cpuUsage.user / 1000).toFixed(2) + 'ms',
-        system: (cpuUsage.system / 1000).toFixed(2) + 'ms'
+        system: (cpuUsage.system / 1000).toFixed(2) + 'ms',
       },
       threads: {
         critical: this.criticalThreads.length,
-        active: this.criticalThreads.filter(t => !t.threadId).length
-      }
+        active: this.criticalThreads.filter(t => !t.threadId).length,
+      },
     };
   }
 
   // Cleanup
   async cleanup() {
     console.log('🧹 Cleaning up advanced performance optimizations...');
-    
+
     // Terminate all critical threads
     this.criticalThreads.forEach(worker => {
       worker.terminate();
     });
-    
+
     // Reset process priority
     try {
       process.setpriority(this.processId, this.originalPriority);
     } catch (error) {
       // Ignore cleanup errors
     }
-    
+
     console.log('✅ Advanced performance cleanup complete');
   }
 }
@@ -262,24 +262,24 @@ export class AdvancedPerformanceOptimizer {
 // Worker thread handler
 if (!isMainThread && parentPort) {
   const { service, mode } = require('worker_threads').workerData;
-  
+
   if (mode === 'critical-service') {
     switch (service) {
-      case 'database-connection':
-        parentPort.postMessage('Database connection thread ready');
-        break;
-      case 'authentication-service':
-        parentPort.postMessage('Authentication service thread ready');
-        break;
-      case 'home-screen-renderer':
-        parentPort.postMessage('Home screen renderer thread ready');
-        break;
-      case 'api-router':
-        parentPort.postMessage('API router thread ready');
-        break;
-      case 'health-monitor':
-        parentPort.postMessage('Health monitor thread ready');
-        break;
+    case 'database-connection':
+      parentPort.postMessage('Database connection thread ready');
+      break;
+    case 'authentication-service':
+      parentPort.postMessage('Authentication service thread ready');
+      break;
+    case 'home-screen-renderer':
+      parentPort.postMessage('Home screen renderer thread ready');
+      break;
+    case 'api-router':
+      parentPort.postMessage('API router thread ready');
+      break;
+    case 'health-monitor':
+      parentPort.postMessage('Health monitor thread ready');
+      break;
     }
   }
 }

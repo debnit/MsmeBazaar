@@ -13,11 +13,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { 
-  MessageCircle, 
-  Send, 
-  Users, 
-  TrendingUp, 
+import {
+  MessageCircle,
+  Send,
+  Users,
+  TrendingUp,
   Target,
   Bell,
   Settings,
@@ -28,7 +28,7 @@ import {
   Clock,
   UserPlus,
   Zap,
-  BarChart3
+  BarChart3,
 } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/api-client';
@@ -74,31 +74,31 @@ export default function WhatsAppDashboard() {
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['/api/admin/whatsapp-stats'],
-    queryFn: () => apiRequest('/api/admin/whatsapp-stats')
+    queryFn: () => apiRequest('/api/admin/whatsapp-stats'),
   });
 
   const { data: campaigns } = useQuery({
     queryKey: ['/api/admin/whatsapp-campaigns'],
-    queryFn: () => apiRequest('/api/admin/whatsapp-campaigns')
+    queryFn: () => apiRequest('/api/admin/whatsapp-campaigns'),
   });
 
   const { data: templates } = useQuery({
     queryKey: ['/api/whatsapp/templates'],
-    queryFn: () => apiRequest('/api/whatsapp/templates')
+    queryFn: () => apiRequest('/api/whatsapp/templates'),
   });
 
   const sendMessageMutation = useMutation({
     mutationFn: async (data: { phoneNumber: string; message: string; type?: string }) => {
       return apiRequest('/api/whatsapp/send-message', {
         method: 'POST',
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
     },
     onSuccess: () => {
       toast({
         title: 'Message sent successfully',
         description: 'WhatsApp message has been sent',
-        variant: 'default'
+        variant: 'default',
       });
       setMessageText('');
       setPhoneNumber('');
@@ -107,25 +107,25 @@ export default function WhatsAppDashboard() {
       toast({
         title: 'Failed to send message',
         description: error.message,
-        variant: 'destructive'
+        variant: 'destructive',
       });
-    }
+    },
   });
 
   const startCampaignMutation = useMutation({
     mutationFn: async (data: { userId: number; campaignType: string }) => {
       return apiRequest(`/api/whatsapp/${data.campaignType}-campaign`, {
         method: 'POST',
-        body: JSON.stringify({ userId: data.userId })
+        body: JSON.stringify({ userId: data.userId }),
       });
     },
     onSuccess: () => {
       toast({
         title: 'Campaign started',
         description: 'WhatsApp campaign has been initiated',
-        variant: 'default'
+        variant: 'default',
       });
-    }
+    },
   });
 
   const handleSendMessage = () => {
@@ -133,7 +133,7 @@ export default function WhatsAppDashboard() {
       toast({
         title: 'Missing fields',
         description: 'Please enter both phone number and message',
-        variant: 'destructive'
+        variant: 'destructive',
       });
       return;
     }
@@ -141,7 +141,7 @@ export default function WhatsAppDashboard() {
     sendMessageMutation.mutate({
       phoneNumber,
       message: messageText,
-      type: 'text'
+      type: 'text',
     });
   };
 
@@ -273,8 +273,8 @@ export default function WhatsAppDashboard() {
                     <span className="text-sm">Completion Rate</span>
                     <span className="text-sm font-medium text-green-600">78%</span>
                   </div>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     className="w-full"
                     onClick={() => startCampaignMutation.mutate({ userId: 1, campaignType: 'onboarding' })}
                   >
@@ -304,8 +304,8 @@ export default function WhatsAppDashboard() {
                     <span className="text-sm">Reactivation Rate</span>
                     <span className="text-sm font-medium text-green-600">42%</span>
                   </div>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     className="w-full"
                     onClick={() => startCampaignMutation.mutate({ userId: 1, campaignType: 'retention' })}
                   >
@@ -414,7 +414,7 @@ export default function WhatsAppDashboard() {
                     rows={4}
                   />
                 </div>
-                <Button 
+                <Button
                   onClick={handleSendMessage}
                   disabled={sendMessageMutation.isPending}
                   className="w-full"

@@ -1,23 +1,23 @@
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 export function formatPhoneNumber(phone: string): string {
   // Remove all non-digit characters
   const cleaned = phone.replace(/\D/g, '');
-  
+
   // Add country code if not present
   if (cleaned.length === 10) {
     return `+91${cleaned}`;
   }
-  
+
   if (cleaned.length === 12 && cleaned.startsWith('91')) {
     return `+${cleaned}`;
   }
-  
+
   return phone;
 }
 
@@ -49,7 +49,7 @@ export function formatDateTime(date: string | Date): string {
 }
 
 export function truncateText(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text;
+  if (text.length <= maxLength) {return text;}
   return text.substring(0, maxLength) + '...';
 }
 
@@ -64,7 +64,7 @@ export function generateInitials(name: string): string {
 
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
-  delay: number
+  delay: number,
 ): (...args: Parameters<T>) => void {
   let timeoutId: NodeJS.Timeout;
   return (...args: Parameters<T>) => {

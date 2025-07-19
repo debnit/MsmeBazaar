@@ -5,12 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import {
   Table,
@@ -30,19 +30,19 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Search, 
-  Filter, 
-  Eye, 
-  CheckCircle, 
-  XCircle, 
+import {
+  Search,
+  Filter,
+  Eye,
+  CheckCircle,
+  XCircle,
   Clock,
   Building,
   User,
   Phone,
   Mail,
   Calendar,
-  MoreHorizontal
+  MoreHorizontal,
 } from 'lucide-react';
 import { MSMEOnboardingItem, adminApi } from '@/lib/api/admin';
 import { formatDate } from '@/lib/utils';
@@ -54,10 +54,10 @@ interface MSMEOnboardingQueueProps {
   onRefresh?: () => void;
 }
 
-export function MSMEOnboardingQueue({ 
-  items, 
-  isLoading, 
-  onRefresh 
+export function MSMEOnboardingQueue({
+  items,
+  isLoading,
+  onRefresh,
 }: MSMEOnboardingQueueProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -72,13 +72,13 @@ export function MSMEOnboardingQueue({
 
   // Filter items based on search and status
   const filteredItems = items.filter(item => {
-    const matchesSearch = 
+    const matchesSearch =
       item.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.user.phone.includes(searchTerm);
-    
+
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -90,7 +90,7 @@ export function MSMEOnboardingQueue({
       APPROVED: { variant: 'success' as const, label: 'Approved' },
       REJECTED: { variant: 'error' as const, label: 'Rejected' },
     };
-    
+
     const config = statusConfig[status as keyof typeof statusConfig];
     return (
       <Badge variant={config.variant}>
@@ -106,7 +106,7 @@ export function MSMEOnboardingQueue({
       FINANCIAL_VERIFIED: { variant: 'default' as const, label: 'Financial' },
       FULL_VERIFIED: { variant: 'success' as const, label: 'Full Verified' },
     };
-    
+
     const config = levelConfig[level as keyof typeof levelConfig];
     return (
       <Badge variant={config.variant}>
@@ -116,9 +116,9 @@ export function MSMEOnboardingQueue({
   };
 
   const handleStatusUpdate = async (
-    msmeId: string, 
-    newStatus: string, 
-    notes: string
+    msmeId: string,
+    newStatus: string,
+    notes: string,
   ) => {
     setIsUpdating(true);
     try {
@@ -135,8 +135,8 @@ export function MSMEOnboardingQueue({
   };
 
   const openActionDialog = (
-    type: 'approve' | 'reject' | 'view', 
-    msme: MSMEOnboardingItem
+    type: 'approve' | 'reject' | 'view',
+    msme: MSMEOnboardingItem,
   ) => {
     setActionDialog({ open: true, type, msme });
     setNotes('');
@@ -177,7 +177,7 @@ export function MSMEOnboardingQueue({
             Refresh
           </Button>
         </div>
-        
+
         {/* Filters */}
         <div className="flex items-center gap-4 mt-4">
           <div className="relative flex-1">
@@ -189,7 +189,7 @@ export function MSMEOnboardingQueue({
               className="pl-10"
             />
           </div>
-          
+
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-48">
               <Filter className="h-4 w-4 mr-2" />
@@ -205,7 +205,7 @@ export function MSMEOnboardingQueue({
           </Select>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         <div className="rounded-md border">
           <Table>
@@ -241,7 +241,7 @@ export function MSMEOnboardingQueue({
                         </div>
                       </div>
                     </TableCell>
-                    
+
                     <TableCell>
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
@@ -260,28 +260,28 @@ export function MSMEOnboardingQueue({
                         )}
                       </div>
                     </TableCell>
-                    
+
                     <TableCell>
                       <Badge variant="outline">
                         {item.business_type.replace('_', ' ')}
                       </Badge>
                     </TableCell>
-                    
+
                     <TableCell>
                       {getStatusBadge(item.status)}
                     </TableCell>
-                    
+
                     <TableCell>
                       {getVerificationBadge(item.verification_level)}
                     </TableCell>
-                    
+
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Calendar className="h-3 w-3 text-gray-400" />
                         <span className="text-sm">{formatDate(item.created_at)}</span>
                       </div>
                     </TableCell>
-                    
+
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Button
@@ -291,7 +291,7 @@ export function MSMEOnboardingQueue({
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        
+
                         {item.status === 'SUBMITTED' && (
                           <>
                             <Button
@@ -323,8 +323,8 @@ export function MSMEOnboardingQueue({
       </CardContent>
 
       {/* Action Dialog */}
-      <Dialog 
-        open={actionDialog.open} 
+      <Dialog
+        open={actionDialog.open}
         onOpenChange={(open) => setActionDialog({ ...actionDialog, open })}
       >
         <DialogContent className="max-w-2xl">
@@ -403,19 +403,19 @@ export function MSMEOnboardingQueue({
           )}
 
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setActionDialog({ ...actionDialog, open: false })}
             >
               Cancel
             </Button>
-            
+
             {actionDialog.type === 'approve' && (
               <Button
                 onClick={() => handleStatusUpdate(
-                  actionDialog.msme!.id, 
-                  'APPROVED', 
-                  notes
+                  actionDialog.msme!.id,
+                  'APPROVED',
+                  notes,
                 )}
                 disabled={isUpdating}
                 className="bg-green-600 hover:bg-green-700"
@@ -423,14 +423,14 @@ export function MSMEOnboardingQueue({
                 {isUpdating ? 'Approving...' : 'Approve'}
               </Button>
             )}
-            
+
             {actionDialog.type === 'reject' && (
               <Button
                 variant="destructive"
                 onClick={() => handleStatusUpdate(
-                  actionDialog.msme!.id, 
-                  'REJECTED', 
-                  notes
+                  actionDialog.msme!.id,
+                  'REJECTED',
+                  notes,
                 )}
                 disabled={isUpdating}
               >

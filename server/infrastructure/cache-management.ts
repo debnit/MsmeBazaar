@@ -26,17 +26,17 @@ export class CacheManager {
   private cleanupExpiredEntries() {
     const now = Date.now();
     let cleanedCount = 0;
-    
+
     // Clean performance cache
     if (performanceCache.size() > this.maxCacheSize) {
       console.log(`🧹 Cleaning cache: ${performanceCache.size()} entries`);
       performanceCache.clear();
       cleanedCount++;
     }
-    
+
     // Clean memory-based caches
     this.cleanMemoryCache();
-    
+
     if (cleanedCount > 0) {
       console.log(`✅ Cache cleanup completed: ${cleanedCount} caches cleaned`);
     }
@@ -46,16 +46,16 @@ export class CacheManager {
   private enforceMemoryLimits() {
     const memUsage = process.memoryUsage();
     const totalMemory = memUsage.heapUsed + memUsage.external;
-    
+
     if (totalMemory > this.maxMemoryUsage) {
       console.log(`⚠️ Memory usage high: ${(totalMemory / 1024 / 1024).toFixed(2)}MB`);
-      
+
       // Force garbage collection if available
       if (global.gc) {
         global.gc();
         console.log('🗑️ Forced garbage collection');
       }
-      
+
       // Clear caches to free memory
       performanceCache.clear();
       this.cleanMemoryCache();
@@ -70,7 +70,7 @@ export class CacheManager {
       if (dns && dns.clearDNSCache) {
         dns.clearDNSCache();
       }
-      
+
       // Clear module cache for non-critical modules safely
       const moduleCache = eval('require').cache;
       if (moduleCache && typeof moduleCache === 'object') {
@@ -93,27 +93,27 @@ export class CacheManager {
   clearAllCaches() {
     performanceCache.clear();
     this.cleanMemoryCache();
-    
+
     // Force garbage collection
     if (global.gc) {
       global.gc();
     }
-    
+
     console.log('🧹 All caches cleared manually');
   }
 
   // Get cache statistics
   getCacheStats() {
     const memUsage = process.memoryUsage();
-    
+
     return {
       performanceCache: performanceCache.size(),
       memoryUsage: {
         heapUsed: (memUsage.heapUsed / 1024 / 1024).toFixed(2) + 'MB',
         heapTotal: (memUsage.heapTotal / 1024 / 1024).toFixed(2) + 'MB',
-        external: (memUsage.external / 1024 / 1024).toFixed(2) + 'MB'
+        external: (memUsage.external / 1024 / 1024).toFixed(2) + 'MB',
       },
-      uptime: process.uptime()
+      uptime: process.uptime(),
     };
   }
 

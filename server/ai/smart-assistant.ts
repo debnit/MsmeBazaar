@@ -74,7 +74,7 @@ export class MSMESmartAssistant {
     try {
       // Create knowledge base documents
       const documents = await this.createKnowledgeDocuments();
-      
+
       // Simplified knowledge base without Pinecone for now
       console.log('Knowledge base documents prepared:', documents.length);
 
@@ -102,7 +102,7 @@ export class MSMESmartAssistant {
           - Escrow services for secure transactions
           - NBFC partnerships for acquisition financing
           - Agent network for personalized support
-        `
+        `,
       },
       {
         id: 'valuation-process',
@@ -121,7 +121,7 @@ export class MSMESmartAssistant {
           - Detailed breakdown by methodology
           - Comparable business analysis
           - Recommendations for value improvement
-        `
+        `,
       },
       {
         id: 'buyer-guidance',
@@ -141,7 +141,7 @@ export class MSMESmartAssistant {
           - Market position and competitive advantages
           - Integration challenges and opportunities
           - Post-acquisition value creation plans
-        `
+        `,
       },
       {
         id: 'seller-guidance',
@@ -162,7 +162,7 @@ export class MSMESmartAssistant {
           - Prepare for due diligence questions
           - Consider timing and market conditions
           - Plan for smooth transition post-sale
-        `
+        `,
       },
       {
         id: 'agent-tools',
@@ -189,7 +189,7 @@ export class MSMESmartAssistant {
           - Bonus incentives for high-value transactions
           - Monthly performance bonuses
           - Referral commissions for agent recruitment
-        `
+        `,
       },
       {
         id: 'nbfc-integration',
@@ -216,8 +216,8 @@ export class MSMESmartAssistant {
           - Credit score requirements
           - Collateral or guarantee
           - Financial statements and tax returns
-        `
-      }
+        `,
+      },
     ];
 
     // Convert to LlamaIndex documents
@@ -228,8 +228,8 @@ export class MSMESmartAssistant {
         metadata: {
           title: kb.title,
           type: 'knowledge_base',
-          category: 'msme_guidance'
-        }
+          category: 'msme_guidance',
+        },
       }));
     }
 
@@ -257,8 +257,8 @@ export class MSMESmartAssistant {
           title: listing.companyName,
           type: 'business_listing',
           category: listing.industry,
-          msme_id: listing.id
-        }
+          msme_id: listing.id,
+        },
       });
 
       documents.push(listingDoc);
@@ -270,7 +270,7 @@ export class MSMESmartAssistant {
   // Process user query and generate intelligent response
   async processQuery(
     query: string,
-    context: ConversationContext
+    context: ConversationContext,
   ): Promise<AssistantResponse> {
     try {
       // Get or create conversation memory
@@ -280,7 +280,7 @@ export class MSMESmartAssistant {
           returnMessages: true,
           memoryKey: 'chat_history',
           inputKey: 'question',
-          outputKey: 'text'
+          outputKey: 'text',
         });
         this.memories.set(context.sessionId, memory);
       }
@@ -290,7 +290,7 @@ export class MSMESmartAssistant {
       if (!chain) {
         const vectorStore = await PineconeStore.fromExistingIndex(
           this.embeddings,
-          { pineconeIndex: vectorSearch.pinecone.index('msme-knowledge') }
+          { pineconeIndex: vectorSearch.pinecone.index('msme-knowledge') },
         );
 
         chain = ConversationalRetrievalQAChain.fromLLM(
@@ -306,9 +306,9 @@ Chat History:
 {chat_history}
 
 Follow Up Input: {question}
-Standalone question:`
-            }
-          }
+Standalone question:`,
+            },
+          },
         );
         this.conversationChains.set(context.sessionId, chain);
       }
@@ -319,7 +319,7 @@ Standalone question:`
       // Get response from chain
       const response = await chain.call({
         question: enhancedQuery,
-        chat_history: context.conversationHistory
+        chat_history: context.conversationHistory,
       });
 
       // Generate suggestions based on user role and query
@@ -339,7 +339,7 @@ Standalone question:`
         suggestions,
         actions,
         confidence: this.calculateConfidence(response),
-        sources
+        sources,
       };
     } catch (error) {
       console.error('Failed to process query:', error);
@@ -348,7 +348,7 @@ Standalone question:`
         suggestions: ['Try rephrasing your question', 'Contact support'],
         actions: [],
         confidence: 0,
-        sources: []
+        sources: [],
       };
     }
   }
@@ -356,10 +356,10 @@ Standalone question:`
   // Enhance query with user context
   private async enhanceQueryWithContext(
     query: string,
-    context: ConversationContext
+    context: ConversationContext,
   ): Promise<string> {
     const user = await db.select().from(users).where(eq(users.id, context.userId)).limit(1);
-    
+
     if (!user.length) {
       return query;
     }
@@ -386,62 +386,62 @@ Standalone question:`
   // Get role-specific context
   private getRoleContext(role: string): string {
     switch (role) {
-      case 'buyer':
-        return 'User is looking to acquire businesses. Focus on due diligence, valuation, financing options, and deal structuring.';
-      case 'seller':
-        return 'User is looking to sell their business. Focus on business preparation, valuation optimization, and transaction process.';
-      case 'agent':
-        return 'User is an agent helping facilitate transactions. Focus on tools, commission structure, and client management.';
-      case 'nbfc':
-        return 'User is from an NBFC providing financing. Focus on loan products, risk assessment, and partnership opportunities.';
-      case 'admin':
-        return 'User is an admin managing the platform. Focus on system operations, user management, and platform analytics.';
-      default:
-        return 'General platform user seeking information about MSME marketplace.';
+    case 'buyer':
+      return 'User is looking to acquire businesses. Focus on due diligence, valuation, financing options, and deal structuring.';
+    case 'seller':
+      return 'User is looking to sell their business. Focus on business preparation, valuation optimization, and transaction process.';
+    case 'agent':
+      return 'User is an agent helping facilitate transactions. Focus on tools, commission structure, and client management.';
+    case 'nbfc':
+      return 'User is from an NBFC providing financing. Focus on loan products, risk assessment, and partnership opportunities.';
+    case 'admin':
+      return 'User is an admin managing the platform. Focus on system operations, user management, and platform analytics.';
+    default:
+      return 'General platform user seeking information about MSME marketplace.';
     }
   }
 
   // Generate contextual suggestions
   private async generateSuggestions(
     query: string,
-    context: ConversationContext
+    context: ConversationContext,
   ): Promise<string[]> {
     const suggestions: string[] = [];
 
     // Role-based suggestions
     switch (context.userRole) {
-      case 'buyer':
-        suggestions.push(
-          'Find businesses in your preferred industry',
-          'Get help with due diligence checklist',
-          'Explore financing options',
-          'Schedule a site visit'
-        );
-        break;
-      case 'seller':
-        suggestions.push(
-          'Get a free business valuation',
-          'Tips for preparing your business for sale',
-          'Understanding the transaction process',
-          'Optimizing your business listing'
-        );
-        break;
-      case 'agent':
-        suggestions.push(
-          'View your commission dashboard',
-          'Access deal management tools',
-          'Client communication templates',
-          'Performance analytics'
-        );
-        break;
-      case 'nbfc':
-        suggestions.push(
-          'Review loan applications',
-          'Update loan products',
-          'Risk assessment tools',
-          'Partnership opportunities'
-        );
-        break;
+    case 'buyer':
+      suggestions.push(
+        'Find businesses in your preferred industry',
+        'Get help with due diligence checklist',
+        'Explore financing options',
+        'Schedule a site visit',
+      );
+      break;
+    case 'seller':
+      suggestions.push(
+        'Get a free business valuation',
+        'Tips for preparing your business for sale',
+        'Understanding the transaction process',
+        'Optimizing your business listing',
+      );
+      break;
+    case 'agent':
+      suggestions.push(
+        'View your commission dashboard',
+        'Access deal management tools',
+        'Client communication templates',
+        'Performance analytics',
+      );
+      break;
+    case 'nbfc':
+      suggestions.push(
+        'Review loan applications',
+        'Update loan products',
+        'Risk assessment tools',
+        'Partnership opportunities',
+      );
+      break;
     }
 
     // Query-based suggestions
@@ -463,7 +463,7 @@ Standalone question:`
   private async generateActions(
     query: string,
     context: ConversationContext,
-    response: any
+    response: any,
   ): Promise<Array<{
     type: 'navigation' | 'search' | 'contact' | 'document';
     label: string;
@@ -484,7 +484,7 @@ Standalone question:`
       actions.push({
         type: 'navigation',
         label: 'Go to Dashboard',
-        action: '/dashboard'
+        action: '/dashboard',
       });
     }
 
@@ -492,7 +492,7 @@ Standalone question:`
       actions.push({
         type: 'navigation',
         label: 'Edit Profile',
-        action: '/profile'
+        action: '/profile',
       });
     }
 
@@ -502,7 +502,7 @@ Standalone question:`
         type: 'search',
         label: 'Search Businesses',
         action: '/search',
-        data: { query: query }
+        data: { query: query },
       });
     }
 
@@ -511,7 +511,7 @@ Standalone question:`
       actions.push({
         type: 'contact',
         label: 'Connect with Agent',
-        action: 'contact_agent'
+        action: 'contact_agent',
       });
     }
 
@@ -520,7 +520,7 @@ Standalone question:`
       actions.push({
         type: 'document',
         label: 'Download Checklist',
-        action: 'download_checklist'
+        action: 'download_checklist',
       });
     }
 
@@ -538,7 +538,7 @@ Standalone question:`
       type: doc.metadata.type || 'knowledge_base',
       title: doc.metadata.title || 'MSMESquare Knowledge',
       snippet: doc.pageContent.substring(0, 150) + '...',
-      url: doc.metadata.type === 'business_listing' ? `/listing/${doc.metadata.msme_id}` : undefined
+      url: doc.metadata.type === 'business_listing' ? `/listing/${doc.metadata.msme_id}` : undefined,
     }));
   }
 
@@ -547,17 +547,17 @@ Standalone question:`
     // Simple confidence calculation based on response quality
     const hasSourceDocuments = response.sourceDocuments && response.sourceDocuments.length > 0;
     const responseLength = response.text.length;
-    
+
     let confidence = 0.5; // Base confidence
-    
+
     if (hasSourceDocuments) {
       confidence += 0.3;
     }
-    
+
     if (responseLength > 100) {
       confidence += 0.2;
     }
-    
+
     return Math.min(confidence, 1.0);
   }
 
@@ -565,7 +565,7 @@ Standalone question:`
   private async storeConversation(
     context: ConversationContext,
     query: string,
-    response: string
+    response: string,
   ): Promise<void> {
     try {
       await db.insert(conversations).values({
@@ -574,7 +574,7 @@ Standalone question:`
         userMessage: query,
         assistantResponse: response,
         userRole: context.userRole,
-        createdAt: new Date()
+        createdAt: new Date(),
       });
     } catch (error) {
       console.error('Failed to store conversation:', error);
@@ -585,7 +585,7 @@ Standalone question:`
   async getConversationHistory(
     userId: number,
     sessionId: string,
-    limit: number = 10
+    limit: number = 10,
   ): Promise<Array<{
     role: 'user' | 'assistant';
     content: string;
@@ -597,7 +597,7 @@ Standalone question:`
         .from(conversations)
         .where(and(
           eq(conversations.userId, userId),
-          eq(conversations.sessionId, sessionId)
+          eq(conversations.sessionId, sessionId),
         ))
         .orderBy(desc(conversations.createdAt))
         .limit(limit);
@@ -612,12 +612,12 @@ Standalone question:`
         history.push({
           role: 'user',
           content: conv.userMessage,
-          timestamp: conv.createdAt
+          timestamp: conv.createdAt,
         });
         history.push({
           role: 'assistant',
           content: conv.assistantResponse,
-          timestamp: conv.createdAt
+          timestamp: conv.createdAt,
         });
       }
 
@@ -638,7 +638,7 @@ Standalone question:`
   async updateKnowledgeBase(
     title: string,
     content: string,
-    category: string
+    category: string,
   ): Promise<void> {
     try {
       // Store in database
@@ -647,7 +647,7 @@ Standalone question:`
         content,
         category,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       });
 
       // Add to vector index
@@ -657,8 +657,8 @@ Standalone question:`
         metadata: {
           title,
           type: 'knowledge_base',
-          category
-        }
+          category,
+        },
       });
 
       // Note: In a production system, you would update the vector index here
@@ -684,9 +684,9 @@ Standalone question:`
           { query: 'business valuation', count: 450 },
           { query: 'financing options', count: 380 },
           { query: 'due diligence', count: 320 },
-          { query: 'legal documents', count: 290 }
+          { query: 'legal documents', count: 290 },
         ],
-        userSatisfaction: 4.2
+        userSatisfaction: 4.2,
       };
     } catch (error) {
       console.error('Failed to get analytics:', error);
@@ -694,7 +694,7 @@ Standalone question:`
         totalConversations: 0,
         averageResponseTime: 0,
         topQueries: [],
-        userSatisfaction: 0
+        userSatisfaction: 0,
       };
     }
   }

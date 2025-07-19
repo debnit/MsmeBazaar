@@ -38,7 +38,7 @@ interface ErrorAnalytics {
 }
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) {return '0 Bytes';}
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -49,9 +49,9 @@ function formatUptime(seconds: number): string {
   const days = Math.floor(seconds / (24 * 60 * 60));
   const hours = Math.floor((seconds % (24 * 60 * 60)) / (60 * 60));
   const minutes = Math.floor((seconds % (60 * 60)) / 60);
-  
-  if (days > 0) return `${days}d ${hours}h ${minutes}m`;
-  if (hours > 0) return `${hours}h ${minutes}m`;
+
+  if (days > 0) {return `${days}d ${hours}h ${minutes}m`;}
+  if (hours > 0) {return `${hours}h ${minutes}m`;}
   return `${minutes}m`;
 }
 
@@ -76,14 +76,14 @@ export default function MonitoringDashboard() {
   });
 
   const getSeverityColor = (rate: number) => {
-    if (rate > 5) return 'text-red-500';
-    if (rate > 2) return 'text-yellow-500';
+    if (rate > 5) {return 'text-red-500';}
+    if (rate > 2) {return 'text-yellow-500';}
     return 'text-green-500';
   };
 
   const getSeverityBadge = (rate: number) => {
-    if (rate > 5) return <Badge variant="destructive">Critical</Badge>;
-    if (rate > 2) return <Badge variant="default" className="bg-yellow-500">Warning</Badge>;
+    if (rate > 5) {return <Badge variant="destructive">Critical</Badge>;}
+    if (rate > 2) {return <Badge variant="default" className="bg-yellow-500">Warning</Badge>;}
     return <Badge variant="default" className="bg-green-500">Healthy</Badge>;
   };
 
@@ -118,8 +118,8 @@ export default function MonitoringDashboard() {
           <p className="text-gray-600">Real-time application health and performance metrics</p>
         </div>
         <div className="flex items-center space-x-4">
-          <select 
-            value={selectedPeriod} 
+          <select
+            value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(Number(e.target.value))}
             className="px-3 py-2 border rounded-md"
           >
@@ -128,8 +128,8 @@ export default function MonitoringDashboard() {
             <option value={24}>Last 24 hours</option>
             <option value={168}>Last 7 days</option>
           </select>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => window.location.reload()}
             className="flex items-center space-x-2"
           >
@@ -171,8 +171,8 @@ export default function MonitoringDashboard() {
             <p className="text-xs text-gray-500">
               Average response time
             </p>
-            <Progress 
-              value={Math.min((healthMetrics?.averageResponseTime || 0) / 50, 100)} 
+            <Progress
+              value={Math.min((healthMetrics?.averageResponseTime || 0) / 50, 100)}
               className="mt-2"
             />
           </CardContent>
@@ -297,7 +297,7 @@ export default function MonitoringDashboard() {
                     <TableRow key={route.route}>
                       <TableCell className="font-mono">{route.route}</TableCell>
                       <TableCell>
-                        <Badge variant={route.averageTime > 2000 ? "destructive" : route.averageTime > 1000 ? "default" : "outline"}>
+                        <Badge variant={route.averageTime > 2000 ? 'destructive' : route.averageTime > 1000 ? 'default' : 'outline'}>
                           {route.averageTime}ms
                         </Badge>
                       </TableCell>

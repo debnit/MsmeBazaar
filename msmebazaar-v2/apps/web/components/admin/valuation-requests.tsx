@@ -5,12 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import {
   Table,
@@ -29,11 +29,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Search, 
-  Filter, 
-  Eye, 
-  DollarSign, 
+import {
+  Search,
+  Filter,
+  Eye,
+  DollarSign,
   Download,
   Building,
   Calendar,
@@ -41,7 +41,7 @@ import {
   Play,
   Settings,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react';
 import { ValuationRequest, adminApi } from '@/lib/api/admin';
 import { formatDate, formatCurrency } from '@/lib/utils';
@@ -53,10 +53,10 @@ interface ValuationRequestsProps {
   onRefresh?: () => void;
 }
 
-export function ValuationRequests({ 
-  items, 
-  isLoading, 
-  onRefresh 
+export function ValuationRequests({
+  items,
+  isLoading,
+  onRefresh,
 }: ValuationRequestsProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -72,12 +72,12 @@ export function ValuationRequests({
 
   // Filter items based on search and status
   const filteredItems = items.filter(item => {
-    const matchesSearch = 
+    const matchesSearch =
       item.msme.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.msme.user.name.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -88,7 +88,7 @@ export function ValuationRequests({
       COMPLETED: { variant: 'success' as const, label: 'Completed' },
       FAILED: { variant: 'error' as const, label: 'Failed' },
     };
-    
+
     const config = statusConfig[status as keyof typeof statusConfig];
     return (
       <Badge variant={config.variant}>
@@ -104,7 +104,7 @@ export function ValuationRequests({
       HYBRID: { label: 'Hybrid', color: 'bg-purple-100 text-purple-800' },
       MANUAL: { label: 'Manual', color: 'bg-orange-100 text-orange-800' },
     };
-    
+
     const config = methodConfig[method as keyof typeof methodConfig];
     return (
       <Badge className={config.color}>
@@ -114,8 +114,8 @@ export function ValuationRequests({
   };
 
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 0.8) return 'text-green-600';
-    if (confidence >= 0.6) return 'text-yellow-600';
+    if (confidence >= 0.8) {return 'text-green-600';}
+    if (confidence >= 0.6) {return 'text-yellow-600';}
     return 'text-red-600';
   };
 
@@ -150,8 +150,8 @@ export function ValuationRequests({
   };
 
   const openActionDialog = (
-    type: 'view' | 'trigger' | 'override', 
-    valuation: ValuationRequest
+    type: 'view' | 'trigger' | 'override',
+    valuation: ValuationRequest,
   ) => {
     setActionDialog({ open: true, type, valuation });
     setNotes('');
@@ -197,7 +197,7 @@ export function ValuationRequests({
             Refresh
           </Button>
         </div>
-        
+
         {/* Filters */}
         <div className="flex items-center gap-4 mt-4">
           <div className="relative flex-1">
@@ -209,7 +209,7 @@ export function ValuationRequests({
               className="pl-10"
             />
           </div>
-          
+
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-48">
               <Filter className="h-4 w-4 mr-2" />
@@ -225,7 +225,7 @@ export function ValuationRequests({
           </Select>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         <div className="rounded-md border">
           <Table>
@@ -261,11 +261,11 @@ export function ValuationRequests({
                         </div>
                       </div>
                     </TableCell>
-                    
+
                     <TableCell>
                       {getMethodBadge(item.method)}
                     </TableCell>
-                    
+
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <DollarSign className="h-4 w-4 text-gray-400" />
@@ -274,28 +274,28 @@ export function ValuationRequests({
                         </span>
                       </div>
                     </TableCell>
-                    
+
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div className={`text-sm font-medium ${getConfidenceColor(item.confidence)}`}>
                           {(item.confidence * 100).toFixed(1)}%
                         </div>
                         <div className="w-16 bg-gray-200 rounded-full h-2">
-                          <div 
+                          <div
                             className={`h-2 rounded-full ${
                               item.confidence >= 0.8 ? 'bg-green-500' :
-                              item.confidence >= 0.6 ? 'bg-yellow-500' : 'bg-red-500'
+                                item.confidence >= 0.6 ? 'bg-yellow-500' : 'bg-red-500'
                             }`}
                             style={{ width: `${item.confidence * 100}%` }}
                           />
                         </div>
                       </div>
                     </TableCell>
-                    
+
                     <TableCell>
                       {getStatusBadge(item.status)}
                     </TableCell>
-                    
+
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {item.reports.length > 0 ? (
@@ -313,7 +313,7 @@ export function ValuationRequests({
                         )}
                       </div>
                     </TableCell>
-                    
+
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Button
@@ -323,7 +323,7 @@ export function ValuationRequests({
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        
+
                         {item.status === 'PENDING' && (
                           <Button
                             variant="ghost"
@@ -334,7 +334,7 @@ export function ValuationRequests({
                             <Play className="h-4 w-4" />
                           </Button>
                         )}
-                        
+
                         {item.status === 'COMPLETED' && (
                           <Button
                             variant="ghost"
@@ -356,8 +356,8 @@ export function ValuationRequests({
       </CardContent>
 
       {/* Action Dialog */}
-      <Dialog 
-        open={actionDialog.open} 
+      <Dialog
+        open={actionDialog.open}
         onOpenChange={(open) => setActionDialog({ ...actionDialog, open })}
       >
         <DialogContent className="max-w-2xl">
@@ -508,18 +508,18 @@ export function ValuationRequests({
           )}
 
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setActionDialog({ ...actionDialog, open: false })}
             >
               Cancel
             </Button>
-            
+
             {actionDialog.type === 'trigger' && (
               <Button
                 onClick={() => handleTriggerValuation(
-                  actionDialog.valuation!.msme_id, 
-                  triggerMethod
+                  actionDialog.valuation!.msme_id,
+                  triggerMethod,
                 )}
                 disabled={isUpdating}
                 className="bg-blue-600 hover:bg-blue-700"
@@ -527,13 +527,13 @@ export function ValuationRequests({
                 {isUpdating ? 'Triggering...' : 'Trigger Valuation'}
               </Button>
             )}
-            
+
             {actionDialog.type === 'override' && (
               <Button
                 onClick={() => handleOverrideValuation(
-                  actionDialog.valuation!.id, 
+                  actionDialog.valuation!.id,
                   parseFloat(overrideValue),
-                  notes
+                  notes,
                 )}
                 disabled={isUpdating || !overrideValue || !notes}
                 className="bg-orange-600 hover:bg-orange-700"

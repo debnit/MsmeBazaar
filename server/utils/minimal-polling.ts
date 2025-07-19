@@ -23,57 +23,57 @@ export class MinimalPollingSystem {
       maxInterval: number;
       backoffMultiplier: number;
       condition?: (data: any) => boolean;
-    }
+    },
   ) {
     let currentInterval = options.initialInterval;
     let consecutiveFailures = 0;
 
     const poll = async () => {
       const startTime = Date.now();
-      
+
       try {
         const result = await pollFunction();
-        
+
         // Reset interval on success
         if (consecutiveFailures > 0) {
           currentInterval = options.initialInterval;
           consecutiveFailures = 0;
         }
-        
+
         this.pollingData.set(key, result);
         this.lastPollingTime.set(key, Date.now());
-        
+
         // Check if we should continue polling
         if (options.condition && !options.condition(result)) {
           this.stopPolling(key);
           return;
         }
-        
+
         // Schedule next poll
         const interval = this.pollingIntervals.get(key);
         if (interval) {
           clearTimeout(interval);
         }
-        
+
         this.pollingIntervals.set(key, setTimeout(poll, currentInterval));
-        
+
       } catch (error) {
         consecutiveFailures++;
-        
+
         // Exponential backoff
         currentInterval = Math.min(
           currentInterval * options.backoffMultiplier,
-          options.maxInterval
+          options.maxInterval,
         );
-        
+
         console.warn(`Polling failed for ${key}, retrying in ${currentInterval}ms`);
-        
+
         // Schedule retry
         const interval = this.pollingIntervals.get(key);
         if (interval) {
           clearTimeout(interval);
         }
-        
+
         this.pollingIntervals.set(key, setTimeout(poll, currentInterval));
       }
     };
@@ -87,10 +87,10 @@ export class MinimalPollingSystem {
     key: string,
     pollFunction: () => Promise<any>,
     triggerEvents: string[],
-    interval: number = 60000 // Default 1 minute
+    interval: number = 60000, // Default 1 minute
   ) {
     let shouldPoll = false;
-    
+
     // Listen for trigger events
     triggerEvents.forEach(event => {
       process.on(event, () => {
@@ -126,7 +126,7 @@ export class MinimalPollingSystem {
     key: string,
     pollFunction: () => Promise<any>,
     condition: () => boolean,
-    interval: number = 30000 // Default 30 seconds
+    interval: number = 30000, // Default 30 seconds
   ) {
     const poll = async () => {
       if (!condition()) {
@@ -175,7 +175,7 @@ export class MinimalPollingSystem {
     return {
       activePolls: this.pollingIntervals.size,
       cachedData: this.pollingData.size,
-      lastPollingTimes: Object.fromEntries(this.lastPollingTime)
+      lastPollingTimes: Object.fromEntries(this.lastPollingTime),
     };
   }
 

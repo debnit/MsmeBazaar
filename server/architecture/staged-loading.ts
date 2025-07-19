@@ -21,15 +21,15 @@ export class LoadingStage implements ILoadingStage {
     public priority: number,
     public dependencies: string[],
     private loadFunction: () => Promise<void>,
-    private unloadFunction?: () => Promise<void>
+    private unloadFunction?: () => Promise<void>,
   ) {}
-  
+
   async load(): Promise<void> {
     console.log(`🔄 Loading stage: ${this.name}`);
     await this.loadFunction();
     console.log(`✅ Stage loaded: ${this.name}`);
   }
-  
+
   async unload(): Promise<void> {
     if (this.unloadFunction) {
       console.log(`🔄 Unloading stage: ${this.name}`);
@@ -43,23 +43,23 @@ export class StagedResourceLoader implements IResourceLoader {
   private stages = new Map<string, ILoadingStage>();
   private loadedStages = new Set<string>();
   private loadingPromises = new Map<string, Promise<void>>();
-  
+
   addStage(stage: ILoadingStage): void {
     this.stages.set(stage.name, stage);
   }
-  
+
   async loadStage(stage: ILoadingStage): Promise<void> {
     if (this.loadedStages.has(stage.name)) {
       return;
     }
-    
+
     if (this.loadingPromises.has(stage.name)) {
       return this.loadingPromises.get(stage.name)!;
     }
-    
+
     const loadPromise = this.loadStageInternal(stage);
     this.loadingPromises.set(stage.name, loadPromise);
-    
+
     try {
       await loadPromise;
       this.loadedStages.add(stage.name);
@@ -67,7 +67,7 @@ export class StagedResourceLoader implements IResourceLoader {
       this.loadingPromises.delete(stage.name);
     }
   }
-  
+
   private async loadStageInternal(stage: ILoadingStage): Promise<void> {
     // Load dependencies first
     for (const depName of stage.dependencies) {
@@ -76,40 +76,40 @@ export class StagedResourceLoader implements IResourceLoader {
         await this.loadStage(dependency);
       }
     }
-    
+
     // Load the stage itself
     await stage.load();
   }
-  
+
   async loadAllStages(): Promise<void> {
     const stages = Array.from(this.stages.values());
-    
+
     // Sort by priority (higher priority first)
     stages.sort((a, b) => b.priority - a.priority);
-    
+
     // Load critical stages first (priority >= 100)
     const criticalStages = stages.filter(s => s.priority >= 100);
     await Promise.all(criticalStages.map(s => this.loadStage(s)));
-    
+
     // Load important stages (priority >= 50)
     const importantStages = stages.filter(s => s.priority >= 50 && s.priority < 100);
     await Promise.all(importantStages.map(s => this.loadStage(s)));
-    
+
     // Load remaining stages
     const remainingStages = stages.filter(s => s.priority < 50);
     for (const stage of remainingStages) {
       await this.loadStage(stage);
     }
   }
-  
+
   getLoadedStages(): string[] {
     return Array.from(this.loadedStages);
   }
-  
+
   isStageLoaded(stageName: string): boolean {
     return this.loadedStages.has(stageName);
   }
-  
+
   async unloadStage(stageName: string): Promise<void> {
     const stage = this.stages.get(stageName);
     if (stage && this.loadedStages.has(stageName)) {
@@ -122,14 +122,14 @@ export class StagedResourceLoader implements IResourceLoader {
 // Predefined stages for MSMESquare
 export class MSMESquareStages {
   private static loader = new StagedResourceLoader();
-  
+
   static getLoader(): StagedResourceLoader {
     if (MSMESquareStages.loader.getLoadedStages().length === 0) {
       MSMESquareStages.initializeStages();
     }
     return MSMESquareStages.loader;
   }
-  
+
   private static initializeStages(): void {
     // Stage 1: Critical Infrastructure (Priority 100)
     MSMESquareStages.loader.addStage(new LoadingStage(
@@ -139,9 +139,9 @@ export class MSMESquareStages {
       async () => {
         // Database connection
         await new Promise(resolve => setTimeout(resolve, 500));
-      }
+      },
     ));
-    
+
     MSMESquareStages.loader.addStage(new LoadingStage(
       'authentication',
       100,
@@ -149,9 +149,9 @@ export class MSMESquareStages {
       async () => {
         // Auth system
         await new Promise(resolve => setTimeout(resolve, 300));
-      }
+      },
     ));
-    
+
     MSMESquareStages.loader.addStage(new LoadingStage(
       'cache',
       100,
@@ -159,9 +159,9 @@ export class MSMESquareStages {
       async () => {
         // Cache system
         await new Promise(resolve => setTimeout(resolve, 200));
-      }
+      },
     ));
-    
+
     // Stage 2: Core Business Logic (Priority 75)
     MSMESquareStages.loader.addStage(new LoadingStage(
       'user-service',
@@ -170,9 +170,9 @@ export class MSMESquareStages {
       async () => {
         // User management
         await new Promise(resolve => setTimeout(resolve, 400));
-      }
+      },
     ));
-    
+
     MSMESquareStages.loader.addStage(new LoadingStage(
       'msme-service',
       75,
@@ -180,9 +180,9 @@ export class MSMESquareStages {
       async () => {
         // MSME listing service
         await new Promise(resolve => setTimeout(resolve, 600));
-      }
+      },
     ));
-    
+
     MSMESquareStages.loader.addStage(new LoadingStage(
       'valuation-service',
       75,
@@ -190,9 +190,9 @@ export class MSMESquareStages {
       async () => {
         // Valuation engine
         await new Promise(resolve => setTimeout(resolve, 800));
-      }
+      },
     ));
-    
+
     // Stage 3: Extended Features (Priority 50)
     MSMESquareStages.loader.addStage(new LoadingStage(
       'notification-service',
@@ -201,9 +201,9 @@ export class MSMESquareStages {
       async () => {
         // Notification system
         await new Promise(resolve => setTimeout(resolve, 300));
-      }
+      },
     ));
-    
+
     MSMESquareStages.loader.addStage(new LoadingStage(
       'search-service',
       50,
@@ -211,9 +211,9 @@ export class MSMESquareStages {
       async () => {
         // Search and filtering
         await new Promise(resolve => setTimeout(resolve, 500));
-      }
+      },
     ));
-    
+
     MSMESquareStages.loader.addStage(new LoadingStage(
       'analytics-service',
       50,
@@ -221,9 +221,9 @@ export class MSMESquareStages {
       async () => {
         // Analytics and reporting
         await new Promise(resolve => setTimeout(resolve, 400));
-      }
+      },
     ));
-    
+
     // Stage 4: Advanced Features (Priority 25)
     MSMESquareStages.loader.addStage(new LoadingStage(
       'ml-engines',
@@ -232,9 +232,9 @@ export class MSMESquareStages {
       async () => {
         // Machine learning models
         await new Promise(resolve => setTimeout(resolve, 1000));
-      }
+      },
     ));
-    
+
     MSMESquareStages.loader.addStage(new LoadingStage(
       'ai-assistant',
       25,
@@ -242,9 +242,9 @@ export class MSMESquareStages {
       async () => {
         // AI assistant
         await new Promise(resolve => setTimeout(resolve, 700));
-      }
+      },
     ));
-    
+
     MSMESquareStages.loader.addStage(new LoadingStage(
       'whatsapp-service',
       25,
@@ -252,9 +252,9 @@ export class MSMESquareStages {
       async () => {
         // WhatsApp integration
         await new Promise(resolve => setTimeout(resolve, 300));
-      }
+      },
     ));
-    
+
     // Stage 5: Optimization Features (Priority 10)
     MSMESquareStages.loader.addStage(new LoadingStage(
       'monitoring',
@@ -263,9 +263,9 @@ export class MSMESquareStages {
       async () => {
         // Performance monitoring
         await new Promise(resolve => setTimeout(resolve, 200));
-      }
+      },
     ));
-    
+
     MSMESquareStages.loader.addStage(new LoadingStage(
       'compliance',
       10,
@@ -273,9 +273,9 @@ export class MSMESquareStages {
       async () => {
         // Compliance checking
         await new Promise(resolve => setTimeout(resolve, 400));
-      }
+      },
     ));
-    
+
     MSMESquareStages.loader.addStage(new LoadingStage(
       'document-generation',
       10,
@@ -283,7 +283,7 @@ export class MSMESquareStages {
       async () => {
         // Document generation
         await new Promise(resolve => setTimeout(resolve, 500));
-      }
+      },
     ));
   }
 }
@@ -293,38 +293,38 @@ export class OnDemandLoader {
   private static instance: OnDemandLoader;
   private loadedFeatures = new Set<string>();
   private featureLoaders = new Map<string, () => Promise<void>>();
-  
+
   static getInstance(): OnDemandLoader {
     if (!OnDemandLoader.instance) {
       OnDemandLoader.instance = new OnDemandLoader();
     }
     return OnDemandLoader.instance;
   }
-  
+
   registerFeature(name: string, loader: () => Promise<void>): void {
     this.featureLoaders.set(name, loader);
   }
-  
+
   async loadFeature(name: string): Promise<void> {
     if (this.loadedFeatures.has(name)) {
       return;
     }
-    
+
     const loader = this.featureLoaders.get(name);
     if (!loader) {
       throw new Error(`Feature not registered: ${name}`);
     }
-    
+
     console.log(`🔄 Loading feature on demand: ${name}`);
     await loader();
     this.loadedFeatures.add(name);
     console.log(`✅ Feature loaded: ${name}`);
   }
-  
+
   isFeatureLoaded(name: string): boolean {
     return this.loadedFeatures.has(name);
   }
-  
+
   getLoadedFeatures(): string[] {
     return Array.from(this.loadedFeatures);
   }

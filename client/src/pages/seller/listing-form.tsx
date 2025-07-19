@@ -1,61 +1,61 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams, useLocation } from "wouter";
-import { z } from "zod";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
-import { Building, ArrowLeft, Save, TrendingUp } from "lucide-react";
-import { Link } from "wouter";
-import Navbar from "@/components/layout/navbar";
-import { msmeApi } from "@/lib/api";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useParams, useLocation } from 'wouter';
+import { z } from 'zod';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useToast } from '@/hooks/use-toast';
+import { Building, ArrowLeft, Save, TrendingUp } from 'lucide-react';
+import { Link } from 'wouter';
+import Navbar from '@/components/layout/navbar';
+import { msmeApi } from '@/lib/api';
 
 const listingSchema = z.object({
-  companyName: z.string().min(1, "Company name is required"),
-  businessType: z.string().min(1, "Business type is required"),
-  industry: z.string().min(1, "Industry is required"),
+  companyName: z.string().min(1, 'Company name is required'),
+  businessType: z.string().min(1, 'Business type is required'),
+  industry: z.string().min(1, 'Industry is required'),
   subIndustry: z.string().optional(),
   establishedYear: z.number().min(1900).max(new Date().getFullYear()),
-  legalStructure: z.string().min(1, "Legal structure is required"),
-  registrationNumber: z.string().min(1, "Registration number is required"),
+  legalStructure: z.string().min(1, 'Legal structure is required'),
+  registrationNumber: z.string().min(1, 'Registration number is required'),
   gstNumber: z.string().optional(),
   panNumber: z.string().optional(),
-  
+
   // Financial details
-  annualTurnover: z.number().min(0, "Annual turnover must be positive"),
+  annualTurnover: z.number().min(0, 'Annual turnover must be positive'),
   netProfit: z.number(),
-  totalAssets: z.number().min(0, "Total assets must be positive"),
-  totalLiabilities: z.number().min(0, "Total liabilities must be positive"),
-  currentAssets: z.number().min(0, "Current assets must be positive"),
-  currentLiabilities: z.number().min(0, "Current liabilities must be positive"),
-  
+  totalAssets: z.number().min(0, 'Total assets must be positive'),
+  totalLiabilities: z.number().min(0, 'Total liabilities must be positive'),
+  currentAssets: z.number().min(0, 'Current assets must be positive'),
+  currentLiabilities: z.number().min(0, 'Current liabilities must be positive'),
+
   // Operational details
-  employeeCount: z.number().min(1, "Employee count is required"),
+  employeeCount: z.number().min(1, 'Employee count is required'),
   productionCapacity: z.string().optional(),
   majorClients: z.string().optional(),
   majorSuppliers: z.string().optional(),
-  
+
   // Location
-  address: z.string().min(1, "Address is required"),
-  city: z.string().min(1, "City is required"),
-  state: z.string().min(1, "State is required"),
-  pincode: z.string().min(6, "Valid pincode is required"),
-  
+  address: z.string().min(1, 'Address is required'),
+  city: z.string().min(1, 'City is required'),
+  state: z.string().min(1, 'State is required'),
+  pincode: z.string().min(6, 'Valid pincode is required'),
+
   // Valuation
-  askingPrice: z.number().min(0, "Asking price must be positive"),
+  askingPrice: z.number().min(0, 'Asking price must be positive'),
   isDistressed: z.boolean(),
   distressReason: z.string().optional(),
-  
+
   // Description
-  description: z.string().min(50, "Description must be at least 50 characters"),
+  description: z.string().min(50, 'Description must be at least 50 characters'),
 });
 
 type ListingFormData = z.infer<typeof listingSchema>;
@@ -68,7 +68,7 @@ export default function ListingForm() {
   const isEditing = !!id;
 
   const { data: listing, isLoading } = useQuery({
-    queryKey: ["/api/msme/listings", id],
+    queryKey: ['/api/msme/listings', id],
     queryFn: () => msmeApi.getListing(Number(id)),
     enabled: isEditing,
   });
@@ -76,15 +76,15 @@ export default function ListingForm() {
   const form = useForm<ListingFormData>({
     resolver: zodResolver(listingSchema),
     defaultValues: {
-      companyName: "",
-      businessType: "",
-      industry: "",
-      subIndustry: "",
+      companyName: '',
+      businessType: '',
+      industry: '',
+      subIndustry: '',
       establishedYear: new Date().getFullYear(),
-      legalStructure: "",
-      registrationNumber: "",
-      gstNumber: "",
-      panNumber: "",
+      legalStructure: '',
+      registrationNumber: '',
+      gstNumber: '',
+      panNumber: '',
       annualTurnover: 0,
       netProfit: 0,
       totalAssets: 0,
@@ -92,17 +92,17 @@ export default function ListingForm() {
       currentAssets: 0,
       currentLiabilities: 0,
       employeeCount: 1,
-      productionCapacity: "",
-      majorClients: "",
-      majorSuppliers: "",
-      address: "",
-      city: "",
-      state: "",
-      pincode: "",
+      productionCapacity: '',
+      majorClients: '',
+      majorSuppliers: '',
+      address: '',
+      city: '',
+      state: '',
+      pincode: '',
       askingPrice: 0,
       isDistressed: false,
-      distressReason: "",
-      description: "",
+      distressReason: '',
+      description: '',
     },
   });
 
@@ -110,15 +110,15 @@ export default function ListingForm() {
   React.useEffect(() => {
     if (listing && isEditing) {
       form.reset({
-        companyName: listing.companyName || "",
-        businessType: listing.businessType || "",
-        industry: listing.industry || "",
-        subIndustry: listing.subIndustry || "",
+        companyName: listing.companyName || '',
+        businessType: listing.businessType || '',
+        industry: listing.industry || '',
+        subIndustry: listing.subIndustry || '',
         establishedYear: listing.establishedYear || new Date().getFullYear(),
-        legalStructure: listing.legalStructure || "",
-        registrationNumber: listing.registrationNumber || "",
-        gstNumber: listing.gstNumber || "",
-        panNumber: listing.panNumber || "",
+        legalStructure: listing.legalStructure || '',
+        registrationNumber: listing.registrationNumber || '',
+        gstNumber: listing.gstNumber || '',
+        panNumber: listing.panNumber || '',
         annualTurnover: Number(listing.annualTurnover) || 0,
         netProfit: Number(listing.netProfit) || 0,
         totalAssets: Number(listing.totalAssets) || 0,
@@ -126,17 +126,17 @@ export default function ListingForm() {
         currentAssets: Number(listing.currentAssets) || 0,
         currentLiabilities: Number(listing.currentLiabilities) || 0,
         employeeCount: listing.employeeCount || 1,
-        productionCapacity: listing.productionCapacity || "",
-        majorClients: listing.majorClients || "",
-        majorSuppliers: listing.majorSuppliers || "",
-        address: listing.address || "",
-        city: listing.city || "",
-        state: listing.state || "",
-        pincode: listing.pincode || "",
+        productionCapacity: listing.productionCapacity || '',
+        majorClients: listing.majorClients || '',
+        majorSuppliers: listing.majorSuppliers || '',
+        address: listing.address || '',
+        city: listing.city || '',
+        state: listing.state || '',
+        pincode: listing.pincode || '',
         askingPrice: Number(listing.askingPrice) || 0,
         isDistressed: listing.isDistressed || false,
-        distressReason: listing.distressReason || "",
-        description: listing.description || "",
+        distressReason: listing.distressReason || '',
+        description: listing.description || '',
       });
     }
   }, [listing, isEditing, form]);
@@ -145,17 +145,17 @@ export default function ListingForm() {
     mutationFn: msmeApi.createListing,
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "MSME listing created successfully",
+        title: 'Success',
+        description: 'MSME listing created successfully',
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/msme/my-listings"] });
-      navigate("/seller/dashboard");
+      queryClient.invalidateQueries({ queryKey: ['/api/msme/my-listings'] });
+      navigate('/seller/dashboard');
     },
     onError: (error) => {
       toast({
-        title: "Error",
+        title: 'Error',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     },
   });
@@ -164,17 +164,17 @@ export default function ListingForm() {
     mutationFn: (data: any) => msmeApi.updateListing(Number(id), data),
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "MSME listing updated successfully",
+        title: 'Success',
+        description: 'MSME listing updated successfully',
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/msme/my-listings"] });
-      navigate("/seller/dashboard");
+      queryClient.invalidateQueries({ queryKey: ['/api/msme/my-listings'] });
+      navigate('/seller/dashboard');
     },
     onError: (error) => {
       toast({
-        title: "Error",
+        title: 'Error',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     },
   });
@@ -198,7 +198,7 @@ export default function ListingForm() {
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
-      
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <Link href="/seller/dashboard">
@@ -208,10 +208,10 @@ export default function ListingForm() {
             </Button>
           </Link>
           <h1 className="text-3xl font-bold text-gray-900">
-            {isEditing ? "Edit" : "Create"} MSME Listing
+            {isEditing ? 'Edit' : 'Create'} MSME Listing
           </h1>
           <p className="text-gray-600">
-            {isEditing ? "Update your" : "Create a new"} MSME listing to connect with potential buyers
+            {isEditing ? 'Update your' : 'Create a new'} MSME listing to connect with potential buyers
           </p>
         </div>
 
@@ -240,7 +240,7 @@ export default function ListingForm() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="businessType"
@@ -286,7 +286,7 @@ export default function ListingForm() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="establishedYear"
@@ -294,9 +294,9 @@ export default function ListingForm() {
                       <FormItem>
                         <FormLabel>Established Year *</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            placeholder="e.g., 2010" 
+                          <Input
+                            type="number"
+                            placeholder="e.g., 2010"
                             {...field}
                             onChange={(e) => field.onChange(Number(e.target.value))}
                           />
@@ -332,7 +332,7 @@ export default function ListingForm() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="registrationNumber"
@@ -362,7 +362,7 @@ export default function ListingForm() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="panNumber"
@@ -397,10 +397,10 @@ export default function ListingForm() {
                       <FormItem>
                         <FormLabel>Annual Turnover (₹ Crore) *</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
+                          <Input
+                            type="number"
                             step="0.01"
-                            placeholder="e.g., 5.25" 
+                            placeholder="e.g., 5.25"
                             {...field}
                             onChange={(e) => field.onChange(Number(e.target.value))}
                           />
@@ -409,7 +409,7 @@ export default function ListingForm() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="netProfit"
@@ -417,10 +417,10 @@ export default function ListingForm() {
                       <FormItem>
                         <FormLabel>Net Profit (₹ Crore)</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
+                          <Input
+                            type="number"
                             step="0.01"
-                            placeholder="e.g., 0.85" 
+                            placeholder="e.g., 0.85"
                             {...field}
                             onChange={(e) => field.onChange(Number(e.target.value))}
                           />
@@ -439,10 +439,10 @@ export default function ListingForm() {
                       <FormItem>
                         <FormLabel>Total Assets (₹ Crore) *</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
+                          <Input
+                            type="number"
                             step="0.01"
-                            placeholder="e.g., 8.50" 
+                            placeholder="e.g., 8.50"
                             {...field}
                             onChange={(e) => field.onChange(Number(e.target.value))}
                           />
@@ -451,7 +451,7 @@ export default function ListingForm() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="totalLiabilities"
@@ -459,10 +459,10 @@ export default function ListingForm() {
                       <FormItem>
                         <FormLabel>Total Liabilities (₹ Crore) *</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
+                          <Input
+                            type="number"
                             step="0.01"
-                            placeholder="e.g., 3.20" 
+                            placeholder="e.g., 3.20"
                             {...field}
                             onChange={(e) => field.onChange(Number(e.target.value))}
                           />
@@ -481,9 +481,9 @@ export default function ListingForm() {
                       <FormItem>
                         <FormLabel>Employee Count *</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            placeholder="e.g., 50" 
+                          <Input
+                            type="number"
+                            placeholder="e.g., 50"
                             {...field}
                             onChange={(e) => field.onChange(Number(e.target.value))}
                           />
@@ -492,7 +492,7 @@ export default function ListingForm() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="askingPrice"
@@ -500,10 +500,10 @@ export default function ListingForm() {
                       <FormItem>
                         <FormLabel>Asking Price (₹ Crore) *</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
+                          <Input
+                            type="number"
                             step="0.01"
-                            placeholder="e.g., 12.50" 
+                            placeholder="e.g., 12.50"
                             {...field}
                             onChange={(e) => field.onChange(Number(e.target.value))}
                           />
@@ -550,7 +550,7 @@ export default function ListingForm() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="state"
@@ -564,7 +564,7 @@ export default function ListingForm() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="pincode"
@@ -595,10 +595,10 @@ export default function ListingForm() {
                     <FormItem>
                       <FormLabel>Business Description *</FormLabel>
                       <FormControl>
-                        <Textarea 
+                        <Textarea
                           placeholder="Describe your business, products, services, market position, etc."
                           className="min-h-[100px]"
-                          {...field} 
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -628,7 +628,7 @@ export default function ListingForm() {
                   />
                 </div>
 
-                {form.watch("isDistressed") && (
+                {form.watch('isDistressed') && (
                   <FormField
                     control={form.control}
                     name="distressReason"
@@ -636,9 +636,9 @@ export default function ListingForm() {
                       <FormItem>
                         <FormLabel>Distress Reason</FormLabel>
                         <FormControl>
-                          <Textarea 
+                          <Textarea
                             placeholder="Explain the reason for distress"
-                            {...field} 
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -653,8 +653,8 @@ export default function ListingForm() {
               <Link href="/seller/dashboard">
                 <Button variant="outline">Cancel</Button>
               </Link>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={createMutation.isPending || updateMutation.isPending}
                 className="bg-primary hover:bg-primary hover:opacity-90"
               >
@@ -662,7 +662,7 @@ export default function ListingForm() {
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                 )}
                 <Save className="h-4 w-4 mr-2" />
-                {isEditing ? "Update" : "Create"} Listing
+                {isEditing ? 'Update' : 'Create'} Listing
               </Button>
             </div>
           </form>

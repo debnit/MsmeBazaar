@@ -1,6 +1,6 @@
-import { EscrowAccount, EscrowMilestone, EscrowTransaction, InsertEscrowAccount, InsertEscrowMilestone, InsertEscrowTransaction } from "@shared/schema";
-import { storage } from "../storage";
-import { notificationService } from "./notifications";
+import { EscrowAccount, EscrowMilestone, EscrowTransaction, InsertEscrowAccount, InsertEscrowMilestone, InsertEscrowTransaction } from '@shared/schema';
+import { storage } from '../storage';
+import { notificationService } from './notifications';
 
 export class EscrowService {
   private escrows = new Map<number, EscrowAccount>();
@@ -15,9 +15,9 @@ export class EscrowService {
       id: this.nextEscrowId++,
       ...accountData,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
-    
+
     this.escrows.set(account.id, account);
     return account;
   }
@@ -40,7 +40,7 @@ export class EscrowService {
       amount,
       type: 'deposit',
       status: 'completed',
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
     this.transactions.set(transaction.id, transaction);
@@ -52,7 +52,7 @@ export class EscrowService {
       type: 'escrow_funded',
       title: 'Escrow Account Funded',
       message: `Escrow account for your listing has been funded with ₹${amount.toLocaleString('en-IN')}`,
-      metadata: { escrowId, amount }
+      metadata: { escrowId, amount },
     });
 
     return true;
@@ -71,7 +71,7 @@ export class EscrowService {
     // Check if all milestones are completed
     const escrowMilestones = Array.from(this.milestones.values())
       .filter(m => m.escrowId === escrowId);
-    
+
     const allMilestonesCompleted = escrowMilestones.every(m => m.status === 'completed');
     if (!allMilestonesCompleted) {
       throw new Error('All milestones must be completed before releasing funds');
@@ -91,7 +91,7 @@ export class EscrowService {
       amount: sellerAmount,
       type: 'withdrawal',
       status: 'completed',
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
     this.transactions.set(sellerTransaction.id, sellerTransaction);
@@ -106,7 +106,7 @@ export class EscrowService {
         amount: agentCommission,
         type: 'commission',
         status: 'completed',
-        createdAt: new Date()
+        createdAt: new Date(),
       };
 
       this.transactions.set(agentTransaction.id, agentTransaction);
@@ -116,7 +116,7 @@ export class EscrowService {
         type: 'commission_paid',
         title: 'Commission Payment',
         message: `You've received a commission of ₹${agentCommission.toLocaleString('en-IN')}`,
-        metadata: { escrowId, amount: agentCommission }
+        metadata: { escrowId, amount: agentCommission },
       });
     }
 
@@ -128,14 +128,14 @@ export class EscrowService {
       type: 'funds_released',
       title: 'Funds Released',
       message: `₹${sellerAmount.toLocaleString('en-IN')} has been released to your account`,
-      metadata: { escrowId, amount: sellerAmount }
+      metadata: { escrowId, amount: sellerAmount },
     });
 
     await notificationService.sendNotification(escrow.buyerId, {
       type: 'transaction_completed',
       title: 'Transaction Completed',
       message: 'The business acquisition transaction has been completed successfully',
-      metadata: { escrowId }
+      metadata: { escrowId },
     });
 
     return true;
@@ -146,9 +146,9 @@ export class EscrowService {
       id: this.nextMilestoneId++,
       ...milestoneData,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
-    
+
     this.milestones.set(milestone.id, milestone);
     return milestone;
   }
@@ -174,14 +174,14 @@ export class EscrowService {
         type: 'milestone_completed',
         title: 'Milestone Completed',
         message: `Milestone "${milestone.title}" has been completed`,
-        metadata: { milestoneId, escrowId: milestone.escrowId }
+        metadata: { milestoneId, escrowId: milestone.escrowId },
       });
 
       await notificationService.sendNotification(escrow.sellerId, {
         type: 'milestone_completed',
         title: 'Milestone Completed',
         message: `Milestone "${milestone.title}" has been completed`,
-        metadata: { milestoneId, escrowId: milestone.escrowId }
+        metadata: { milestoneId, escrowId: milestone.escrowId },
       });
     }
 
@@ -225,7 +225,7 @@ export class EscrowService {
       amount: escrow.amount,
       type: 'refund',
       status: 'completed',
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
     this.transactions.set(refundTransaction.id, refundTransaction);
@@ -237,14 +237,14 @@ export class EscrowService {
       type: 'refund_processed',
       title: 'Refund Processed',
       message: `Your escrow amount of ₹${escrow.amount.toLocaleString('en-IN')} has been refunded. Reason: ${reason}`,
-      metadata: { escrowId, amount: escrow.amount, reason }
+      metadata: { escrowId, amount: escrow.amount, reason },
     });
 
     await notificationService.sendNotification(escrow.sellerId, {
       type: 'transaction_cancelled',
       title: 'Transaction Cancelled',
       message: `The transaction has been cancelled and funds have been refunded to the buyer. Reason: ${reason}`,
-      metadata: { escrowId, reason }
+      metadata: { escrowId, reason },
     });
 
     return true;

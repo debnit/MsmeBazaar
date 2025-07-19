@@ -1,18 +1,18 @@
-import * as React from "react"
-import { ModernToast, ToastContainer } from "./modern-toast"
-import { useToast } from "@/hooks/use-toast"
+import * as React from 'react';
+import { ModernToast, ToastContainer } from './modern-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export function ModernToaster() {
-  const { toasts, dismiss } = useToast()
+  const { toasts, dismiss } = useToast();
 
   if (toasts.length === 0) {
-    return null
+    return null;
   }
 
   // Handle dismiss (synchronous)
   const handleDismiss = (toastId: string) => {
-    dismiss(toastId)
-  }
+    dismiss(toastId);
+  };
 
   return (
     <ToastContainer position="top-right">
@@ -27,5 +27,5 @@ export function ModernToaster() {
         />
       ))}
     </ToastContainer>
-  )
+  );
 }

@@ -56,14 +56,14 @@ class MSMESentryMonitoring {
         // Filter out known non-critical errors
         if (event.exception) {
           const error = event.exception.values?.[0];
-          if (error?.type === 'ValidationError' || 
+          if (error?.type === 'ValidationError' ||
               error?.value?.includes('ECONNREFUSED') ||
               error?.value?.includes('timeout')) {
             return null; // Don't send these errors
           }
         }
         return event;
-      }
+      },
     };
 
     const finalConfig = { ...defaultConfig, ...config };
@@ -83,7 +83,7 @@ class MSMESentryMonitoring {
     return Sentry.Handlers.requestHandler({
       user: ['id', 'email', 'role'],
       request: ['method', 'url', 'headers'],
-      transaction: 'methodPath'
+      transaction: 'methodPath',
     });
   }
 
@@ -96,12 +96,12 @@ class MSMESentryMonitoring {
       shouldHandleError: (error) => {
         // Only handle 5xx errors
         return error.status >= 500;
-      }
+      },
     });
   }
 
   public captureException(error: Error, context?: any) {
-    if (!this.initialized) return;
+    if (!this.initialized) {return;}
 
     Sentry.withScope((scope) => {
       if (context) {
@@ -112,7 +112,7 @@ class MSMESentryMonitoring {
   }
 
   public captureMessage(message: string, level: Sentry.SeverityLevel = 'info', context?: any) {
-    if (!this.initialized) return;
+    if (!this.initialized) {return;}
 
     Sentry.withScope((scope) => {
       if (context) {
@@ -123,37 +123,37 @@ class MSMESentryMonitoring {
   }
 
   public setUser(user: { id: string; email?: string; role?: string }) {
-    if (!this.initialized) return;
+    if (!this.initialized) {return;}
 
     Sentry.setUser(user);
   }
 
   public setTag(key: string, value: string) {
-    if (!this.initialized) return;
+    if (!this.initialized) {return;}
 
     Sentry.setTag(key, value);
   }
 
   public setContext(key: string, context: any) {
-    if (!this.initialized) return;
+    if (!this.initialized) {return;}
 
     Sentry.setContext(key, context);
   }
 
   public addBreadcrumb(breadcrumb: Sentry.Breadcrumb) {
-    if (!this.initialized) return;
+    if (!this.initialized) {return;}
 
     Sentry.addBreadcrumb(breadcrumb);
   }
 
   public startTransaction(name: string, op: string) {
-    if (!this.initialized) return null;
+    if (!this.initialized) {return null;}
 
     return Sentry.startTransaction({ name, op });
   }
 
   public configureScope(callback: (scope: Sentry.Scope) => void) {
-    if (!this.initialized) return;
+    if (!this.initialized) {return;}
 
     Sentry.configureScope(callback);
   }
@@ -161,10 +161,10 @@ class MSMESentryMonitoring {
   // Custom middleware for tracking business metrics
   public businessMetricsMiddleware() {
     return (req: Request, res: Response, next: NextFunction) => {
-      if (!this.initialized) return next();
+      if (!this.initialized) {return next();}
 
       const startTime = Date.now();
-      
+
       // Track business-specific events
       this.addBreadcrumb({
         message: `API Request: ${req.method} ${req.path}`,
@@ -174,8 +174,8 @@ class MSMESentryMonitoring {
           method: req.method,
           path: req.path,
           userAgent: req.get('User-Agent'),
-          ip: req.ip
-        }
+          ip: req.ip,
+        },
       });
 
       // Track user context if available
@@ -183,14 +183,14 @@ class MSMESentryMonitoring {
         this.setUser({
           id: req.user.id.toString(),
           email: req.user.email,
-          role: req.user.role
+          role: req.user.role,
         });
       }
 
       // Track performance metrics
       res.on('finish', () => {
         const duration = Date.now() - startTime;
-        
+
         this.addBreadcrumb({
           message: `API Response: ${res.statusCode} in ${duration}ms`,
           category: 'api',
@@ -199,8 +199,8 @@ class MSMESentryMonitoring {
             statusCode: res.statusCode,
             duration,
             path: req.path,
-            method: req.method
-          }
+            method: req.method,
+          },
         });
 
         // Track slow requests
@@ -208,7 +208,7 @@ class MSMESentryMonitoring {
           this.captureMessage(`Slow API request: ${req.method} ${req.path}`, 'warning', {
             duration,
             statusCode: res.statusCode,
-            userAgent: req.get('User-Agent')
+            userAgent: req.get('User-Agent'),
           });
         }
       });
@@ -219,13 +219,13 @@ class MSMESentryMonitoring {
 
   // Track MSME-specific business events
   public trackMSMEEvent(event: string, data: any) {
-    if (!this.initialized) return;
+    if (!this.initialized) {return;}
 
     this.addBreadcrumb({
       message: `MSME Event: ${event}`,
       category: 'business',
       level: 'info',
-      data
+      data,
     });
 
     // Track critical business events as messages
@@ -234,7 +234,7 @@ class MSMESentryMonitoring {
       'interest_expressed',
       'valuation_requested',
       'loan_application_submitted',
-      'transaction_completed'
+      'transaction_completed',
     ];
 
     if (criticalEvents.includes(event)) {
@@ -244,13 +244,13 @@ class MSMESentryMonitoring {
 
   // Track ML model performance
   public trackMLPerformance(modelName: string, metrics: any) {
-    if (!this.initialized) return;
+    if (!this.initialized) {return;}
 
     this.addBreadcrumb({
       message: `ML Model Performance: ${modelName}`,
       category: 'ml',
       level: 'info',
-      data: metrics
+      data: metrics,
     });
 
     // Alert on poor model performance
@@ -261,13 +261,13 @@ class MSMESentryMonitoring {
 
   // Track queue system performance
   public trackQueuePerformance(queueName: string, metrics: any) {
-    if (!this.initialized) return;
+    if (!this.initialized) {return;}
 
     this.addBreadcrumb({
       message: `Queue Performance: ${queueName}`,
       category: 'queue',
       level: 'info',
-      data: metrics
+      data: metrics,
     });
 
     // Alert on queue backlogs
@@ -291,19 +291,19 @@ export const sentryErrorHandler = () => sentryMonitoring.getErrorHandler();
 export const sentryBusinessMetrics = () => sentryMonitoring.businessMetricsMiddleware();
 
 // Export convenience functions
-export const captureException = (error: Error, context?: any) => 
+export const captureException = (error: Error, context?: any) =>
   sentryMonitoring.captureException(error, context);
 
-export const captureMessage = (message: string, level?: Sentry.SeverityLevel, context?: any) => 
+export const captureMessage = (message: string, level?: Sentry.SeverityLevel, context?: any) =>
   sentryMonitoring.captureMessage(message, level, context);
 
-export const trackMSMEEvent = (event: string, data: any) => 
+export const trackMSMEEvent = (event: string, data: any) =>
   sentryMonitoring.trackMSMEEvent(event, data);
 
-export const trackMLPerformance = (modelName: string, metrics: any) => 
+export const trackMLPerformance = (modelName: string, metrics: any) =>
   sentryMonitoring.trackMLPerformance(modelName, metrics);
 
-export const trackQueuePerformance = (queueName: string, metrics: any) => 
+export const trackQueuePerformance = (queueName: string, metrics: any) =>
   sentryMonitoring.trackQueuePerformance(queueName, metrics);
 
 export { sentryMonitoring };

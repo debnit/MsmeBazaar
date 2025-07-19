@@ -123,7 +123,7 @@ export const adminApi = {
   async getMSMEOnboardingQueue(
     page: number = 1,
     limit: number = 10,
-    status?: string
+    status?: string,
   ): Promise<{
     items: MSMEOnboardingItem[];
     total: number;
@@ -136,7 +136,7 @@ export const adminApi = {
       limit: limit.toString(),
       ...(status && { status }),
     });
-    
+
     const response = await adminClient.get(`/msme-onboarding?${params}`);
     return response.data;
   },
@@ -144,7 +144,7 @@ export const adminApi = {
   async updateMSMEStatus(
     msmeId: string,
     status: string,
-    notes?: string
+    notes?: string,
   ): Promise<{ success: boolean; message: string }> {
     const response = await adminClient.put(`/msme-onboarding/${msmeId}/status`, {
       status,
@@ -157,7 +157,7 @@ export const adminApi = {
   async getKYCVerificationQueue(
     page: number = 1,
     limit: number = 10,
-    status?: string
+    status?: string,
   ): Promise<{
     items: KYCVerificationItem[];
     total: number;
@@ -170,7 +170,7 @@ export const adminApi = {
       limit: limit.toString(),
       ...(status && { status }),
     });
-    
+
     const response = await adminClient.get(`/kyc-verification?${params}`);
     return response.data;
   },
@@ -178,7 +178,7 @@ export const adminApi = {
   async updateDocumentStatus(
     documentId: string,
     status: 'APPROVED' | 'REJECTED',
-    notes?: string
+    notes?: string,
   ): Promise<{ success: boolean; message: string }> {
     const response = await adminClient.put(`/documents/${documentId}/status`, {
       status,
@@ -191,7 +191,7 @@ export const adminApi = {
   async getValuationRequests(
     page: number = 1,
     limit: number = 10,
-    status?: string
+    status?: string,
   ): Promise<{
     items: ValuationRequest[];
     total: number;
@@ -204,16 +204,16 @@ export const adminApi = {
       limit: limit.toString(),
       ...(status && { status }),
     });
-    
+
     const response = await adminClient.get(`/valuations?${params}`);
     return response.data;
   },
 
   async triggerValuation(
     msmeId: string,
-    method: 'ML_MODEL' | 'RULE_BASED' | 'HYBRID' | 'MANUAL'
+    method: 'ML_MODEL' | 'RULE_BASED' | 'HYBRID' | 'MANUAL',
   ): Promise<{ success: boolean; valuation_id: string }> {
-    const response = await adminClient.post(`/valuations/trigger`, {
+    const response = await adminClient.post('/valuations/trigger', {
       msme_id: msmeId,
       method,
     });
@@ -223,7 +223,7 @@ export const adminApi = {
   async overrideValuation(
     valuationId: string,
     estimatedValue: number,
-    notes?: string
+    notes?: string,
   ): Promise<{ success: boolean; message: string }> {
     const response = await adminClient.put(`/valuations/${valuationId}/override`, {
       estimated_value: estimatedValue,
@@ -235,22 +235,22 @@ export const adminApi = {
   // Analytics and Reports
   async getAnalytics(
     startDate: string,
-    endDate: string
+    endDate: string,
   ): Promise<ChartData> {
     const params = new URLSearchParams({
       start_date: startDate,
       end_date: endDate,
     });
-    
+
     const response = await adminClient.get(`/analytics?${params}`);
     return response.data;
   },
 
   async exportReport(
     type: 'msme' | 'kyc' | 'valuations' | 'analytics',
-    format: 'csv' | 'excel' | 'pdf'
+    format: 'csv' | 'excel' | 'pdf',
   ): Promise<Blob> {
-    const response = await adminClient.get(`/reports/export`, {
+    const response = await adminClient.get('/reports/export', {
       params: { type, format },
       responseType: 'blob',
     });
@@ -271,7 +271,7 @@ export const adminApi = {
     page: number = 1,
     limit: number = 10,
     userId?: string,
-    action?: string
+    action?: string,
   ): Promise<{
     items: any[];
     total: number;
@@ -285,7 +285,7 @@ export const adminApi = {
       ...(userId && { user_id: userId }),
       ...(action && { action }),
     });
-    
+
     const response = await adminClient.get(`/audit-logs?${params}`);
     return response.data;
   },
@@ -304,7 +304,7 @@ adminClient.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor to handle errors
@@ -325,7 +325,7 @@ adminClient.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default adminClient;

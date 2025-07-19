@@ -1,7 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Search,
   TrendingUp,
@@ -9,10 +9,10 @@ import {
   Heart,
   FileText,
   Building,
-} from "lucide-react";
-import { Link } from "wouter";
-import Navbar from "@/components/layout/navbar";
-import { dashboardApi, buyerApi } from "@/lib/api";
+} from 'lucide-react';
+import { Link } from 'wouter';
+import Navbar from '@/components/layout/navbar';
+import { dashboardApi, buyerApi } from '@/lib/api';
 
 export default function BuyerDashboard() {
   // Mock data for development
@@ -20,7 +20,7 @@ export default function BuyerDashboard() {
     totalViewed: 28,
     totalInterests: 5,
     activeInterests: 3,
-    completedDeals: 1
+    completedDeals: 1,
   };
   const statsLoading = false;
 
@@ -28,54 +28,54 @@ export default function BuyerDashboard() {
     {
       id: 1,
       msme: {
-        companyName: "Mumbai Textiles Pvt Ltd",
-        industry: "Textiles",
-        askingPrice: "2.5",
-        location: "Mumbai, Maharashtra"
+        companyName: 'Mumbai Textiles Pvt Ltd',
+        industry: 'Textiles',
+        askingPrice: '2.5',
+        location: 'Mumbai, Maharashtra',
       },
-      status: "active",
-      interestDate: "2024-01-15",
-      lastUpdated: "2024-01-20"
+      status: 'active',
+      interestDate: '2024-01-15',
+      lastUpdated: '2024-01-20',
     },
     {
       id: 2,
       msme: {
-        companyName: "Pune Food Processing Ltd",
-        industry: "Food Processing",
-        askingPrice: "1.8",
-        location: "Pune, Maharashtra"
+        companyName: 'Pune Food Processing Ltd',
+        industry: 'Food Processing',
+        askingPrice: '1.8',
+        location: 'Pune, Maharashtra',
       },
-      status: "accepted",
-      interestDate: "2024-01-10",
-      lastUpdated: "2024-01-18"
+      status: 'accepted',
+      interestDate: '2024-01-10',
+      lastUpdated: '2024-01-18',
     },
     {
       id: 3,
       msme: {
-        companyName: "Chennai Auto Parts Ltd",
-        industry: "Automotive",
-        askingPrice: "3.2",
-        location: "Chennai, Tamil Nadu"
+        companyName: 'Chennai Auto Parts Ltd',
+        industry: 'Automotive',
+        askingPrice: '3.2',
+        location: 'Chennai, Tamil Nadu',
       },
-      status: "withdrawn",
-      interestDate: "2024-01-05",
-      lastUpdated: "2024-01-12"
-    }
+      status: 'withdrawn',
+      interestDate: '2024-01-05',
+      lastUpdated: '2024-01-12',
+    },
   ];
   const interestsLoading = false;
 
   const getInterestStatusBadge = (status: string) => {
     switch (status) {
-      case "active":
-        return <Badge className="bg-green-100 text-green-800">Active</Badge>;
-      case "withdrawn":
-        return <Badge className="bg-gray-100 text-gray-800">Withdrawn</Badge>;
-      case "accepted":
-        return <Badge className="bg-blue-100 text-blue-800">Accepted</Badge>;
-      case "rejected":
-        return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
+    case 'active':
+      return <Badge className="bg-green-100 text-green-800">Active</Badge>;
+    case 'withdrawn':
+      return <Badge className="bg-gray-100 text-gray-800">Withdrawn</Badge>;
+    case 'accepted':
+      return <Badge className="bg-blue-100 text-blue-800">Accepted</Badge>;
+    case 'rejected':
+      return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
+    default:
+      return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
     }
   };
 
@@ -116,7 +116,7 @@ export default function BuyerDashboard() {
                     Total Interests
                   </p>
                   <p className="text-2xl font-semibold text-gray-900">
-                    {statsLoading ? "..." : stats?.totalInterests || 0}
+                    {statsLoading ? '...' : stats?.totalInterests || 0}
                   </p>
                 </div>
               </div>
@@ -134,7 +134,7 @@ export default function BuyerDashboard() {
                     Active Interests
                   </p>
                   <p className="text-2xl font-semibold text-gray-900">
-                    {statsLoading ? "..." : stats?.activeInterests || 0}
+                    {statsLoading ? '...' : stats?.activeInterests || 0}
                   </p>
                 </div>
               </div>
@@ -152,7 +152,7 @@ export default function BuyerDashboard() {
                     Loan Applications
                   </p>
                   <p className="text-2xl font-semibold text-gray-900">
-                    {statsLoading ? "..." : "3"}
+                    {statsLoading ? '...' : '3'}
                   </p>
                 </div>
               </div>
@@ -170,7 +170,7 @@ export default function BuyerDashboard() {
                     Acquisitions
                   </p>
                   <p className="text-2xl font-semibold text-gray-900">
-                    {statsLoading ? "..." : "1"}
+                    {statsLoading ? '...' : '1'}
                   </p>
                 </div>
               </div>
@@ -219,10 +219,10 @@ export default function BuyerDashboard() {
                         <Building className="h-8 w-8 text-primary mr-3" />
                         <div>
                           <p className="font-medium text-gray-900">
-                            {interest.msme?.companyName || "Company Name"}
+                            {interest.msme?.companyName || 'Company Name'}
                           </p>
                           <p className="text-sm text-gray-500">
-                            {interest.msme?.industry || "Industry"}
+                            {interest.msme?.industry || 'Industry'}
                           </p>
                         </div>
                       </div>
@@ -231,7 +231,7 @@ export default function BuyerDashboard() {
                         <p className="text-sm text-gray-500 mt-1">
                           {interest.offerAmount
                             ? `₹${interest.offerAmount} Cr`
-                            : "No offer"}
+                            : 'No offer'}
                         </p>
                       </div>
                     </div>

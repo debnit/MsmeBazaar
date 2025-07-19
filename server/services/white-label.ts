@@ -135,16 +135,16 @@ class WhiteLabelService {
     };
 
     this.configs.set(config.partnerId, whiteLabelConfig);
-    
+
     // Setup partner subdomain
     await this.setupPartnerDomain(config.partnerId, config.domain);
-    
+
     // Generate custom CSS
     await this.generateCustomCSS(config.partnerId, config.branding);
-    
+
     // Initialize default pages
     await this.createDefaultPages(config.partnerId, config.customization);
-    
+
     return whiteLabelConfig;
   }
 
@@ -177,17 +177,17 @@ class WhiteLabelService {
     };
 
     this.configs.set(partnerId, updatedConfig);
-    
+
     // Update CSS if branding changed
     if (updates.branding) {
       await this.generateCustomCSS(partnerId, updatedConfig.branding);
     }
-    
+
     // Update domain if changed
     if (updates.domain) {
       await this.setupPartnerDomain(partnerId, updates.domain);
     }
-    
+
     return updatedConfig;
   }
 
@@ -203,12 +203,12 @@ class WhiteLabelService {
     if (!this.customPages.has(page.partnerId)) {
       this.customPages.set(page.partnerId, []);
     }
-    
+
     this.customPages.get(page.partnerId)!.push(customPage);
-    
+
     // Generate static HTML
     await this.generatePageHTML(customPage);
-    
+
     return customPage;
   }
 
@@ -221,7 +221,7 @@ class WhiteLabelService {
   async updateCustomPage(partnerId: string, pageId: string, updates: Partial<CustomPage>): Promise<CustomPage> {
     const pages = this.customPages.get(partnerId) || [];
     const pageIndex = pages.findIndex(p => p.id === pageId);
-    
+
     if (pageIndex === -1) {
       throw new Error('Custom page not found');
     }
@@ -234,7 +234,7 @@ class WhiteLabelService {
 
     // Regenerate HTML
     await this.generatePageHTML(pages[pageIndex]);
-    
+
     return pages[pageIndex];
   }
 
@@ -248,9 +248,9 @@ class WhiteLabelService {
     if (!this.customWorkflows.has(workflow.partnerId)) {
       this.customWorkflows.set(workflow.partnerId, []);
     }
-    
+
     this.customWorkflows.get(workflow.partnerId)!.push(customWorkflow);
-    
+
     return customWorkflow;
   }
 
@@ -263,7 +263,7 @@ class WhiteLabelService {
   async processCustomWorkflow(partnerId: string, workflowId: string, userData: any): Promise<any> {
     const workflows = this.customWorkflows.get(partnerId) || [];
     const workflow = workflows.find(w => w.id === workflowId);
-    
+
     if (!workflow) {
       throw new Error('Custom workflow not found');
     }
@@ -280,16 +280,16 @@ class WhiteLabelService {
     for (const step of workflow.steps.sort((a, b) => a.order - b.order)) {
       const stepResult = await this.processWorkflowStep(step, userData);
       result.steps.push(stepResult);
-      
+
       if (!stepResult.success && step.required) {
         break;
       }
-      
+
       result.currentStep++;
     }
 
     result.completed = result.currentStep === workflow.steps.length;
-    
+
     return result;
   }
 
@@ -339,10 +339,10 @@ class WhiteLabelService {
     }
 
     const apiKey = `wl_${partnerId}_${Date.now()}_${Math.random().toString(36).substr(2, 16)}`;
-    
+
     // Store API key with partner association
     await this.storeAPIKey(partnerId, apiKey);
-    
+
     return apiKey;
   }
 
@@ -353,12 +353,12 @@ class WhiteLabelService {
     if (parts.length >= 2 && parts[0] === 'wl') {
       const partnerId = parts[1];
       const config = await this.getWhiteLabelConfig(partnerId);
-      
+
       if (config && config.active) {
         return { partnerId, config };
       }
     }
-    
+
     return null;
   }
 
@@ -384,23 +384,23 @@ class WhiteLabelService {
   // Calculate partner commission
   async calculateCommission(partnerId: string, transactionAmount: number): Promise<number> {
     const structure = await this.getCommissionStructure(partnerId);
-    
+
     for (const tier of structure.tiers) {
       if (transactionAmount >= tier.min && transactionAmount < tier.max) {
         return Math.max(
           structure.minimumAmount,
-          (transactionAmount * tier.rate) / 100
+          (transactionAmount * tier.rate) / 100,
         );
       }
     }
-    
+
     return structure.minimumAmount;
   }
 
   // Process partner payout
   async processPartnerPayout(partnerId: string, period: string): Promise<any> {
     const analytics = await this.getPartnerAnalytics(partnerId, period);
-    
+
     const payout = {
       partnerId,
       period,
@@ -532,18 +532,18 @@ class WhiteLabelService {
   private async processWorkflowStep(step: WorkflowStep, userData: any): Promise<any> {
     // Process workflow step based on type
     switch (step.type) {
-      case 'form':
-        return this.processFormStep(step, userData);
-      case 'document':
-        return this.processDocumentStep(step, userData);
-      case 'verification':
-        return this.processVerificationStep(step, userData);
-      case 'approval':
-        return this.processApprovalStep(step, userData);
-      case 'notification':
-        return this.processNotificationStep(step, userData);
-      default:
-        return { success: false, message: 'Unknown step type' };
+    case 'form':
+      return this.processFormStep(step, userData);
+    case 'document':
+      return this.processDocumentStep(step, userData);
+    case 'verification':
+      return this.processVerificationStep(step, userData);
+    case 'approval':
+      return this.processApprovalStep(step, userData);
+    case 'notification':
+      return this.processNotificationStep(step, userData);
+    default:
+      return { success: false, message: 'Unknown step type' };
     }
   }
 
@@ -551,7 +551,7 @@ class WhiteLabelService {
     // Validate form data
     const requiredFields = step.config.requiredFields || [];
     const missingFields = requiredFields.filter(field => !userData[field]);
-    
+
     if (missingFields.length > 0) {
       return {
         success: false,
@@ -559,7 +559,7 @@ class WhiteLabelService {
         missingFields,
       };
     }
-    
+
     return { success: true, data: userData };
   }
 
@@ -567,11 +567,11 @@ class WhiteLabelService {
     // Validate document upload
     const requiredDocuments = step.config.requiredDocuments || [];
     const uploadedDocuments = userData.documents || [];
-    
-    const missingDocuments = requiredDocuments.filter(doc => 
-      !uploadedDocuments.some(upload => upload.type === doc)
+
+    const missingDocuments = requiredDocuments.filter(doc =>
+      !uploadedDocuments.some(upload => upload.type === doc),
     );
-    
+
     if (missingDocuments.length > 0) {
       return {
         success: false,
@@ -579,7 +579,7 @@ class WhiteLabelService {
         missingDocuments,
       };
     }
-    
+
     return { success: true, documents: uploadedDocuments };
   }
 
@@ -622,20 +622,20 @@ class WhiteLabelService {
 // Middleware for white-label detection
 export const whiteLabelMiddleware = async (req: any, res: any, next: any) => {
   const host = req.get('host');
-  
+
   if (host && host !== 'localhost:5000' && host !== 'msmesquare.com') {
     const config = await whiteLabelService.getConfigByDomain(host);
-    
+
     if (config) {
       req.whiteLabelConfig = config;
       req.partnerId = config.partnerId;
-      
+
       // Set custom headers
       res.set('X-Partner-ID', config.partnerId);
       res.set('X-Partner-Name', config.partnerName);
     }
   }
-  
+
   next();
 };
 

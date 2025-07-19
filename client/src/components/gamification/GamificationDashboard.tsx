@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { 
-  Trophy, 
-  Star, 
-  Target, 
-  TrendingUp, 
-  Award, 
-  Users, 
+import {
+  Trophy,
+  Star,
+  Target,
+  TrendingUp,
+  Award,
+  Users,
   Zap,
   Gift,
   Crown,
   Medal,
   Flame,
-  ChevronRight
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api, queryKeys } from '@/lib/api';
@@ -102,30 +102,30 @@ export const GamificationDashboard: React.FC = () => {
       y: 0,
       transition: {
         duration: 0.6,
-        staggerChildren: 0.1
-      }
-    }
+        staggerChildren: 0.1,
+      },
+    },
   };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
+    visible: { opacity: 1, y: 0 },
   };
 
   const getLevelColor = (level: number) => {
-    if (level >= 15) return 'from-purple-500 to-pink-500';
-    if (level >= 10) return 'from-yellow-400 to-orange-500';
-    if (level >= 5) return 'from-blue-500 to-cyan-500';
+    if (level >= 15) {return 'from-purple-500 to-pink-500';}
+    if (level >= 10) {return 'from-yellow-400 to-orange-500';}
+    if (level >= 5) {return 'from-blue-500 to-cyan-500';}
     return 'from-green-400 to-blue-500';
   };
 
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
-      case 'legendary': return 'from-purple-500 to-pink-500';
-      case 'epic': return 'from-yellow-400 to-orange-500';
-      case 'rare': return 'from-blue-500 to-cyan-500';
-      case 'uncommon': return 'from-green-400 to-teal-500';
-      default: return 'from-gray-400 to-gray-500';
+    case 'legendary': return 'from-purple-500 to-pink-500';
+    case 'epic': return 'from-yellow-400 to-orange-500';
+    case 'rare': return 'from-blue-500 to-cyan-500';
+    case 'uncommon': return 'from-green-400 to-teal-500';
+    default: return 'from-gray-400 to-gray-500';
     }
   };
 
@@ -136,17 +136,17 @@ export const GamificationDashboard: React.FC = () => {
       className={cn(
         'relative p-6 rounded-xl bg-gradient-to-br shadow-soft border border-border/50',
         'hover:shadow-medium transition-all duration-300',
-        color
+        color,
       )}
     >
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-medium text-white/80 mb-1">{title}</h3>
-          <motion.p 
+          <motion.p
             className="text-3xl font-bold text-white"
             initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 200 }}
+            transition={{ type: 'spring', stiffness: 200 }}
           >
             {value}
           </motion.p>
@@ -166,12 +166,12 @@ export const GamificationDashboard: React.FC = () => {
   );
 
   const ProgressBar = ({ progress, className }: { progress: number; className?: string }) => (
-    <div className={cn("h-2 bg-muted rounded-full overflow-hidden", className)}>
+    <div className={cn('h-2 bg-muted rounded-full overflow-hidden', className)}>
       <motion.div
         className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full"
         initial={{ width: 0 }}
         animate={{ width: `${progress}%` }}
-        transition={{ duration: 1, ease: "easeOut" }}
+        transition={{ duration: 1, ease: 'easeOut' }}
       />
     </div>
   );
@@ -182,9 +182,9 @@ export const GamificationDashboard: React.FC = () => {
       whileTap={{ scale: 0.95 }}
       className={cn(
         'relative p-4 rounded-lg border transition-all duration-300',
-        earned 
+        earned
           ? 'bg-gradient-to-br shadow-medium border-primary/20' + ' ' + getRarityColor(badge.rarity)
-          : 'bg-muted/50 border-muted hover:border-border grayscale'
+          : 'bg-muted/50 border-muted hover:border-border grayscale',
       )}
     >
       <div className="text-center">
@@ -197,13 +197,13 @@ export const GamificationDashboard: React.FC = () => {
         </motion.div>
         <h3 className={cn(
           'font-semibold mb-1',
-          earned ? 'text-white' : 'text-muted-foreground'
+          earned ? 'text-white' : 'text-muted-foreground',
         )}>
           {badge.name}
         </h3>
         <p className={cn(
           'text-xs',
-          earned ? 'text-white/80' : 'text-muted-foreground'
+          earned ? 'text-white/80' : 'text-muted-foreground',
         )}>
           {badge.description}
         </p>
@@ -211,7 +211,7 @@ export const GamificationDashboard: React.FC = () => {
           <Star className="h-3 w-3 text-yellow-400" />
           <span className={cn(
             'text-xs font-medium',
-            earned ? 'text-white' : 'text-muted-foreground'
+            earned ? 'text-white' : 'text-muted-foreground',
           )}>
             {badge.points_required} pts
           </span>
@@ -234,9 +234,9 @@ export const GamificationDashboard: React.FC = () => {
       whileHover={{ scale: 1.02 }}
       className={cn(
         'p-4 rounded-lg border flex items-center gap-4 transition-all duration-300',
-        earned 
+        earned
           ? 'bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/20'
-          : 'bg-muted/50 border-muted'
+          : 'bg-muted/50 border-muted',
       )}
     >
       <motion.div
@@ -244,7 +244,7 @@ export const GamificationDashboard: React.FC = () => {
         transition={{ duration: 1, repeat: Infinity, repeatDelay: 2 }}
         className={cn(
           'text-3xl p-2 rounded-full',
-          earned ? 'bg-green-500/20' : 'bg-muted'
+          earned ? 'bg-green-500/20' : 'bg-muted',
         )}
       >
         {achievement.icon}
@@ -252,7 +252,7 @@ export const GamificationDashboard: React.FC = () => {
       <div className="flex-1">
         <h3 className={cn(
           'font-semibold',
-          earned ? 'text-foreground' : 'text-muted-foreground'
+          earned ? 'text-foreground' : 'text-muted-foreground',
         )}>
           {achievement.name}
         </h3>
@@ -283,14 +283,14 @@ export const GamificationDashboard: React.FC = () => {
       whileHover={{ scale: 1.02, backgroundColor: 'rgba(59, 130, 246, 0.05)' }}
       className={cn(
         'flex items-center gap-4 p-4 rounded-lg transition-all duration-300',
-        isCurrentUser && 'bg-primary/10 border border-primary/20'
+        isCurrentUser && 'bg-primary/10 border border-primary/20',
       )}
     >
       <div className={cn(
         'flex items-center justify-center w-8 h-8 rounded-full font-bold',
-        entry.rank <= 3 
+        entry.rank <= 3
           ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white'
-          : 'bg-muted text-muted-foreground'
+          : 'bg-muted text-muted-foreground',
       )}>
         {entry.rank <= 3 ? (
           <Crown className="h-4 w-4" />
@@ -298,12 +298,12 @@ export const GamificationDashboard: React.FC = () => {
           entry.rank
         )}
       </div>
-      
+
       <div className="flex-1">
         <div className="flex items-center gap-2">
           <h3 className={cn(
             'font-semibold',
-            isCurrentUser && 'text-primary'
+            isCurrentUser && 'text-primary',
           )}>
             {entry.username}
           </h3>
@@ -318,7 +318,7 @@ export const GamificationDashboard: React.FC = () => {
           <span>{entry.badges_count} badges</span>
         </div>
       </div>
-      
+
       <div className="text-right">
         <div className="flex items-center gap-1">
           <Star className="h-4 w-4 text-yellow-500" />
@@ -333,7 +333,7 @@ export const GamificationDashboard: React.FC = () => {
       <div className="flex items-center justify-center h-64">
         <motion.div
           animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
         >
           <Flame className="h-8 w-8 text-primary" />
         </motion.div>
@@ -357,7 +357,7 @@ export const GamificationDashboard: React.FC = () => {
       </motion.div>
 
       {/* Quick Stats */}
-      <motion.div 
+      <motion.div
         variants={itemVariants}
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
       >
@@ -389,7 +389,7 @@ export const GamificationDashboard: React.FC = () => {
       </motion.div>
 
       {/* Level Progress */}
-      <motion.div 
+      <motion.div
         variants={itemVariants}
         className="card-base p-6"
       >
@@ -397,12 +397,12 @@ export const GamificationDashboard: React.FC = () => {
           <h2 className="text-xl font-semibold">Level Progress</h2>
           <motion.div
             animate={{ rotate: [0, 360] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
           >
             <Flame className="h-5 w-5 text-orange-500" />
           </motion.div>
         </div>
-        
+
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">
@@ -412,9 +412,9 @@ export const GamificationDashboard: React.FC = () => {
               {userStats?.next_level_points || 0} points to next level
             </span>
           </div>
-          
+
           <ProgressBar progress={userStats?.progress_percentage || 0} />
-          
+
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">
               {userStats?.total_points || 0} points
@@ -439,7 +439,7 @@ export const GamificationDashboard: React.FC = () => {
                   'flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md transition-all duration-200',
                   selectedTab === tab.id
                     ? 'bg-background text-primary shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
+                    : 'text-muted-foreground hover:text-foreground',
                 )}
               >
                 <Icon className="h-4 w-4" />

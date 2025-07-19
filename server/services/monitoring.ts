@@ -87,7 +87,7 @@ class MonitoringService extends EventEmitter {
       this.recordCrash({
         error: error.message,
         stack: error.stack || '',
-        severity: 'fatal'
+        severity: 'fatal',
       });
     });
 
@@ -96,7 +96,7 @@ class MonitoringService extends EventEmitter {
       this.recordCrash({
         error: `Unhandled Rejection: ${reason}`,
         stack: reason instanceof Error ? reason.stack || '' : '',
-        severity: 'critical'
+        severity: 'critical',
       });
     });
 
@@ -109,7 +109,7 @@ class MonitoringService extends EventEmitter {
         error: warning.message,
         stack: warning.stack,
         severity: 'medium',
-        responseTime: 0
+        responseTime: 0,
       });
     });
 
@@ -119,7 +119,7 @@ class MonitoringService extends EventEmitter {
         this.recordCrash({
           error: `Process exited with code ${code}`,
           stack: '',
-          severity: 'critical'
+          severity: 'critical',
         });
       }
     });
@@ -163,7 +163,7 @@ class MonitoringService extends EventEmitter {
       userId: errorData.userId,
       severity: errorData.severity || 'medium',
       responseTime: errorData.responseTime || 0,
-      resolved: false
+      resolved: false,
     };
 
     this.errors.push(errorLog);
@@ -191,7 +191,7 @@ class MonitoringService extends EventEmitter {
       memoryUsage: process.memoryUsage(),
       uptime: process.uptime(),
       restartCount: this.restartCount,
-      severity: crashData.severity || 'critical'
+      severity: crashData.severity || 'critical',
     };
 
     this.crashes.push(crash);
@@ -215,7 +215,7 @@ class MonitoringService extends EventEmitter {
       statusCode: metricData.statusCode || 200,
       memoryUsage: process.memoryUsage().heapUsed,
       cpuUsage: process.cpuUsage().system,
-      activeConnections: metricData.activeConnections || 0
+      activeConnections: metricData.activeConnections || 0,
     };
 
     this.performanceMetrics.push(metric);
@@ -232,31 +232,31 @@ class MonitoringService extends EventEmitter {
   getHealthMetrics(): HealthMetrics {
     const now = new Date();
     const hourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-    
+
     // Filter recent data
     const recentErrors = this.errors.filter(e => e.timestamp > hourAgo);
     const recentCrashes = this.crashes.filter(c => c.timestamp > hourAgo);
     const recentPerformance = this.performanceMetrics.filter(p => p.timestamp > hourAgo);
-    
+
     // Calculate error rate
     const totalRequests = recentPerformance.length;
     const totalErrors = recentErrors.length;
     const errorRate = totalRequests > 0 ? (totalErrors / totalRequests) * 100 : 0;
-    
+
     // Calculate crash rate
     const totalCrashes = recentCrashes.length;
     const crashRate = totalRequests > 0 ? (totalCrashes / totalRequests) * 100 : 0;
-    
+
     // Calculate average response time
     const recentResponseTimes = this.responseTimes.slice(-100); // Last 100 requests
-    const averageResponseTime = recentResponseTimes.length > 0 
-      ? recentResponseTimes.reduce((a, b) => a + b, 0) / recentResponseTimes.length 
+    const averageResponseTime = recentResponseTimes.length > 0
+      ? recentResponseTimes.reduce((a, b) => a + b, 0) / recentResponseTimes.length
       : 0;
-    
+
     // Count critical and high severity errors
     const criticalErrors = recentErrors.filter(e => e.severity === 'critical').length;
     const highSeverityErrors = recentErrors.filter(e => e.severity === 'high').length;
-    
+
     return {
       crashRate,
       errorRate,
@@ -268,7 +268,7 @@ class MonitoringService extends EventEmitter {
       highSeverityErrors,
       uptime: process.uptime(),
       memoryUsage: process.memoryUsage(),
-      timestamp: now.toISOString()
+      timestamp: now.toISOString(),
     };
   }
 
@@ -277,18 +277,18 @@ class MonitoringService extends EventEmitter {
     const cutoffTime = new Date(Date.now() - hours * 60 * 60 * 1000);
     const recentCrashes = this.crashes.filter(c => c.timestamp > cutoffTime);
     const recentRequests = this.performanceMetrics.filter(p => p.timestamp > cutoffTime);
-    
+
     return recentRequests.length > 0 ? (recentCrashes.length / recentRequests.length) * 100 : 0;
   }
 
   // Get errors by route
   getErrorsByRoute(): [string, number][] {
     const errorCounts: { [route: string]: number } = {};
-    
+
     this.errors.forEach(error => {
       errorCounts[error.route] = (errorCounts[error.route] || 0) + 1;
     });
-    
+
     return Object.entries(errorCounts)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10);
@@ -297,7 +297,7 @@ class MonitoringService extends EventEmitter {
   // Get slow routes
   getSlowRoutes(): { route: string; averageTime: number; requestCount: number }[] {
     const routeStats: { [route: string]: { total: number; count: number } } = {};
-    
+
     this.performanceMetrics.forEach(metric => {
       if (!routeStats[metric.route]) {
         routeStats[metric.route] = { total: 0, count: 0 };
@@ -305,12 +305,12 @@ class MonitoringService extends EventEmitter {
       routeStats[metric.route].total += metric.responseTime;
       routeStats[metric.route].count++;
     });
-    
+
     return Object.entries(routeStats)
       .map(([route, stats]) => ({
         route,
         averageTime: Math.round(stats.total / stats.count),
-        requestCount: stats.count
+        requestCount: stats.count,
       }))
       .sort((a, b) => b.averageTime - a.averageTime)
       .slice(0, 10);
@@ -339,10 +339,10 @@ class MonitoringService extends EventEmitter {
   } {
     const cutoffTime = new Date(Date.now() - hours * 60 * 60 * 1000);
     const recentMetrics = this.performanceMetrics.filter(m => m.timestamp > cutoffTime);
-    
+
     // Group by hour
     const hourlyData: { [hour: string]: { responseTime: number[]; errors: number; memory: number[] } } = {};
-    
+
     recentMetrics.forEach(metric => {
       const hour = new Date(metric.timestamp).toISOString().slice(0, 13);
       if (!hourlyData[hour]) {
@@ -351,7 +351,7 @@ class MonitoringService extends EventEmitter {
       hourlyData[hour].responseTime.push(metric.responseTime);
       hourlyData[hour].memory.push(metric.memoryUsage);
     });
-    
+
     // Count errors by hour
     this.errors.forEach(error => {
       const hour = new Date(error.timestamp).toISOString().slice(0, 13);
@@ -359,9 +359,9 @@ class MonitoringService extends EventEmitter {
         hourlyData[hour].errors++;
       }
     });
-    
+
     const sortedHours = Object.keys(hourlyData).sort();
-    
+
     return {
       averageResponseTime: sortedHours.map(hour => {
         const times = hourlyData[hour].responseTime;
@@ -376,7 +376,7 @@ class MonitoringService extends EventEmitter {
         const memory = hourlyData[hour].memory;
         return memory.length > 0 ? memory.reduce((a, b) => a + b, 0) / memory.length : 0;
       }),
-      timestamps: sortedHours
+      timestamps: sortedHours,
     };
   }
 
@@ -397,18 +397,18 @@ class MonitoringService extends EventEmitter {
     slowResponseTimes: boolean;
     highErrorRate: boolean;
     recentCrashes: CrashEvent[];
-  } {
+    } {
     const recentErrors = this.getRecentErrors(100);
     const criticalErrors = recentErrors.filter(e => e.severity === 'critical' && !e.resolved);
     const recentCrashes = this.getRecentCrashes(5);
     const metrics = this.getHealthMetrics();
-    
+
     return {
       criticalErrors,
       highMemoryUsage: metrics.memoryUsage.heapUsed > 500 * 1024 * 1024, // 500MB
       slowResponseTimes: metrics.averageResponseTime > 5000, // 5 seconds
       highErrorRate: metrics.errorRate > 10, // 10%
-      recentCrashes
+      recentCrashes,
     };
   }
 
@@ -419,25 +419,25 @@ class MonitoringService extends EventEmitter {
       crashes: this.crashes,
       performanceMetrics: this.performanceMetrics,
       healthMetrics: this.getHealthMetrics(),
-      exportTimestamp: new Date().toISOString()
+      exportTimestamp: new Date().toISOString(),
     };
-    
+
     if (format === 'json') {
       return JSON.stringify(data, null, 2);
-    } else {
-      // Convert to CSV format (simplified)
-      const csvLines = ['timestamp,type,route,error,responseTime,severity'];
-      
-      this.errors.forEach(error => {
-        csvLines.push(`${error.timestamp.toISOString()},error,${error.route},"${error.error}",${error.responseTime},${error.severity}`);
-      });
-      
-      this.crashes.forEach(crash => {
-        csvLines.push(`${crash.timestamp.toISOString()},crash,system,"${crash.error}",0,${crash.severity}`);
-      });
-      
-      return csvLines.join('\n');
     }
+    // Convert to CSV format (simplified)
+    const csvLines = ['timestamp,type,route,error,responseTime,severity'];
+
+    this.errors.forEach(error => {
+      csvLines.push(`${error.timestamp.toISOString()},error,${error.route},"${error.error}",${error.responseTime},${error.severity}`);
+    });
+
+    this.crashes.forEach(crash => {
+      csvLines.push(`${crash.timestamp.toISOString()},crash,system,"${crash.error}",0,${crash.severity}`);
+    });
+
+    return csvLines.join('\n');
+
   }
 
   // Reset monitoring data
@@ -459,21 +459,21 @@ export const monitoringService = new MonitoringService();
 export function monitoringMiddleware() {
   return (req: any, res: any, next: any) => {
     const startTime = Date.now();
-    
+
     // Override res.end to capture response time
     const originalEnd = res.end;
     res.end = function(chunk: any, encoding: any) {
       const responseTime = Date.now() - startTime;
-      
+
       // Record performance metric
       monitoringService.recordPerformance({
         route: req.path,
         method: req.method,
         responseTime,
         statusCode: res.statusCode,
-        activeConnections: req.socket?.server?.connections || 0
+        activeConnections: req.socket?.server?.connections || 0,
       });
-      
+
       // Record error if status code indicates error
       if (res.statusCode >= 400) {
         monitoringService.recordError({
@@ -486,13 +486,13 @@ export function monitoringMiddleware() {
           ip: req.ip,
           userId: req.user?.id,
           severity: res.statusCode >= 500 ? 'high' : 'medium',
-          responseTime
+          responseTime,
         });
       }
-      
+
       originalEnd.call(this, chunk, encoding);
     };
-    
+
     next();
   };
 }

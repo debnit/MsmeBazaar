@@ -1,4 +1,4 @@
-import { useState, useEffect, ReactNode, ReactElement } from "react";
+import { useState, useEffect, ReactNode, ReactElement } from 'react';
 
 export type ToastActionElement = ReactElement;
 
@@ -7,7 +7,7 @@ export type ToastProps = {
   title?: ReactNode;
   description?: ReactNode;
   action?: ToastActionElement;
-  variant?: "default" | "destructive" | "success" | "warning";
+  variant?: 'default' | 'destructive' | 'success' | 'warning';
 };
 
 export function useToast() {
@@ -17,10 +17,10 @@ export function useToast() {
     setTimeout(() => {
       setToasts([
         {
-          id: "abc123",
-          title: "Welcome",
-          description: "Toast test",
-          variant: "success",
+          id: 'abc123',
+          title: 'Welcome',
+          description: 'Toast test',
+          variant: 'success',
         },
       ]);
     }, 1000);
@@ -31,5 +31,5 @@ export function useToast() {
 try {
   const [toasts, setToasts] = useState<ToastProps[]>([]);
 } catch (err) {
-  console.error("useState crashed", err);
+  console.error('useState crashed', err);
 }

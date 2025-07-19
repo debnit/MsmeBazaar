@@ -1,10 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Users, DollarSign, TrendingUp, Building, Phone, Mail } from "lucide-react";
-import Navbar from "@/components/layout/navbar";
-import { dashboardApi } from "@/lib/api";
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Users, DollarSign, TrendingUp, Building, Phone, Mail } from 'lucide-react';
+import Navbar from '@/components/layout/navbar';
+import { dashboardApi } from '@/lib/api';
 
 export default function AgentDashboard() {
   // Mock data for development
@@ -12,7 +12,7 @@ export default function AgentDashboard() {
     totalAssignments: 3,
     activeAssignments: 2,
     completedDeals: 1,
-    totalCommissions: "12.65"
+    totalCommissions: '12.65',
   };
   const statsLoading = false;
 
@@ -20,61 +20,61 @@ export default function AgentDashboard() {
     {
       id: 1,
       msme: {
-        companyName: "Mumbai Textiles Pvt Ltd",
-        industry: "Textiles",
-        askingPrice: "2.5",
-        city: "Mumbai",
-        state: "Maharashtra"
+        companyName: 'Mumbai Textiles Pvt Ltd',
+        industry: 'Textiles',
+        askingPrice: '2.5',
+        city: 'Mumbai',
+        state: 'Maharashtra',
       },
-      commission: "2.5",
-      status: "active",
-      potentialEarnings: "6.25"
+      commission: '2.5',
+      status: 'active',
+      potentialEarnings: '6.25',
     },
     {
       id: 2,
       msme: {
-        companyName: "Pune Food Processing Ltd",
-        industry: "Food Processing",
-        askingPrice: "1.8",
-        city: "Pune",
-        state: "Maharashtra"
+        companyName: 'Pune Food Processing Ltd',
+        industry: 'Food Processing',
+        askingPrice: '1.8',
+        city: 'Pune',
+        state: 'Maharashtra',
       },
-      commission: "3.0",
-      status: "completed",
-      potentialEarnings: "5.40"
+      commission: '3.0',
+      status: 'completed',
+      potentialEarnings: '5.40',
     },
     {
       id: 3,
       msme: {
-        companyName: "Chennai Auto Parts Ltd",
-        industry: "Automotive",
-        askingPrice: "3.2",
-        city: "Chennai",
-        state: "Tamil Nadu"
+        companyName: 'Chennai Auto Parts Ltd',
+        industry: 'Automotive',
+        askingPrice: '3.2',
+        city: 'Chennai',
+        state: 'Tamil Nadu',
       },
-      commission: "2.8",
-      status: "active",
-      potentialEarnings: "8.96"
-    }
+      commission: '2.8',
+      status: 'active',
+      potentialEarnings: '8.96',
+    },
   ];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "active":
-        return <Badge className="bg-green-100 text-green-800">Active</Badge>;
-      case "completed":
-        return <Badge className="bg-blue-100 text-blue-800">Completed</Badge>;
-      case "cancelled":
-        return <Badge className="bg-red-100 text-red-800">Cancelled</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
+    case 'active':
+      return <Badge className="bg-green-100 text-green-800">Active</Badge>;
+    case 'completed':
+      return <Badge className="bg-blue-100 text-blue-800">Completed</Badge>;
+    case 'cancelled':
+      return <Badge className="bg-red-100 text-red-800">Cancelled</Badge>;
+    default:
+      return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Agent Dashboard</h1>
@@ -92,7 +92,7 @@ export default function AgentDashboard() {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500">Total Assignments</p>
                   <p className="text-2xl font-semibold text-gray-900">
-                    {statsLoading ? "..." : stats?.totalAssignments || 0}
+                    {statsLoading ? '...' : stats?.totalAssignments || 0}
                   </p>
                 </div>
               </div>
@@ -108,7 +108,7 @@ export default function AgentDashboard() {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500">Active Assignments</p>
                   <p className="text-2xl font-semibold text-gray-900">
-                    {statsLoading ? "..." : stats?.activeAssignments || 0}
+                    {statsLoading ? '...' : stats?.activeAssignments || 0}
                   </p>
                 </div>
               </div>
@@ -124,7 +124,7 @@ export default function AgentDashboard() {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500">Total Earnings</p>
                   <p className="text-2xl font-semibold text-gray-900">
-                    ₹{statsLoading ? "..." : stats?.totalEarnings || 0} L
+                    ₹{statsLoading ? '...' : stats?.totalEarnings || 0} L
                   </p>
                 </div>
               </div>
@@ -140,7 +140,7 @@ export default function AgentDashboard() {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500">Completed Deals</p>
                   <p className="text-2xl font-semibold text-gray-900">
-                    {statsLoading ? "..." : "12"}
+                    {statsLoading ? '...' : '12'}
                   </p>
                 </div>
               </div>

@@ -74,7 +74,7 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
       if (mask) {
         processedValue = applyMask(newValue, mask);
         rawValue = removeMask(processedValue, mask);
-        
+
         // Calculate new cursor position
         const newCursor = getCursorPosition(internalValue, processedValue, oldCursor, mask);
         setCursorPosition(newCursor);
@@ -106,12 +106,12 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
     };
 
     // Determine input type
-    const inputType = showPasswordToggle 
-      ? (showPassword ? 'text' : 'password') 
+    const inputType = showPasswordToggle
+      ? (showPassword ? 'text' : 'password')
       : type;
 
     // Generate placeholder
-    const inputPlaceholder = mask 
+    const inputPlaceholder = mask
       ? (placeholder || getMaskPlaceholder(mask))
       : placeholder;
 
@@ -130,11 +130,11 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
     };
 
     // Status classes
-    const statusClasses = error 
-      ? 'border-destructive focus-visible:ring-destructive' 
-      : success 
-      ? 'border-success focus-visible:ring-success'
-      : 'focus-visible:ring-ring';
+    const statusClasses = error
+      ? 'border-destructive focus-visible:ring-destructive'
+      : success
+        ? 'border-success focus-visible:ring-success'
+        : 'focus-visible:ring-ring';
 
     const hasLeftContent = leftIcon;
     const hasRightContent = rightIcon || showPasswordToggle || loading || error || success;
@@ -143,12 +143,12 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
       <div className={cn('form-field', fullWidth && 'w-full', className)}>
         {/* Label */}
         {label && (
-          <label 
+          <label
             htmlFor={fieldId}
             className={cn(
               'form-label block mb-2',
               required && "after:content-['*'] after:ml-1 after:text-destructive",
-              disabled && 'opacity-60'
+              disabled && 'opacity-60',
             )}
           >
             {label}
@@ -207,7 +207,7 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
             <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
               {/* Loading spinner */}
               {loading && (
-                <Loader2 
+                <Loader2
                   className="h-4 w-4 animate-spin text-muted-foreground"
                   aria-label="Loading"
                 />
@@ -215,7 +215,7 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
 
               {/* Success icon */}
               {success && !loading && (
-                <CheckCircle2 
+                <CheckCircle2
                   className="h-4 w-4 text-success"
                   aria-label="Success"
                 />
@@ -223,7 +223,7 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
 
               {/* Error icon */}
               {error && !loading && (
-                <AlertCircle 
+                <AlertCircle
                   className="h-4 w-4 text-destructive"
                   aria-label="Error"
                 />
@@ -238,7 +238,7 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
                     'inline-flex items-center justify-center',
                     'h-4 w-4 text-muted-foreground hover:text-foreground',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                    'transition-colors'
+                    'transition-colors',
                   )}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   tabIndex={-1}
@@ -263,7 +263,7 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
 
         {/* Description */}
         {description && (
-          <p 
+          <p
             id={`${fieldId}-description`}
             className="form-description mt-1 text-sm text-muted-foreground"
           >
@@ -273,7 +273,7 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
 
         {/* Error message */}
         {error && (
-          <p 
+          <p
             id={`${fieldId}-error`}
             className="form-error mt-1 text-sm text-destructive flex items-center gap-1"
             role="alert"
@@ -285,7 +285,7 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
 
         {/* Success message */}
         {success && !error && (
-          <p 
+          <p
             id={`${fieldId}-success`}
             className="mt-1 text-sm text-success flex items-center gap-1"
           >
@@ -295,7 +295,7 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
 FormField.displayName = 'FormField';
@@ -377,22 +377,22 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     };
 
     // Status classes
-    const statusClasses = error 
-      ? 'border-destructive focus-visible:ring-destructive' 
-      : success 
-      ? 'border-success focus-visible:ring-success'
-      : 'focus-visible:ring-ring';
+    const statusClasses = error
+      ? 'border-destructive focus-visible:ring-destructive'
+      : success
+        ? 'border-success focus-visible:ring-success'
+        : 'focus-visible:ring-ring';
 
     return (
       <div className={cn('form-field', fullWidth && 'w-full', className)}>
         {/* Label */}
         {label && (
-          <label 
+          <label
             htmlFor={fieldId}
             className={cn(
               'form-label block mb-2',
               required && "after:content-['*'] after:ml-1 after:text-destructive",
-              disabled && 'opacity-60'
+              disabled && 'opacity-60',
             )}
           >
             {label}
@@ -440,7 +440,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           <div className="mt-1 text-right">
             <span className={cn(
               'text-xs',
-              isOverLimit ? 'text-destructive' : 'text-muted-foreground'
+              isOverLimit ? 'text-destructive' : 'text-muted-foreground',
             )}>
               {charCount}/{maxLength}
             </span>
@@ -449,7 +449,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
 
         {/* Description */}
         {description && (
-          <p 
+          <p
             id={`${fieldId}-description`}
             className="form-description mt-1 text-sm text-muted-foreground"
           >
@@ -459,7 +459,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
 
         {/* Error message */}
         {error && (
-          <p 
+          <p
             id={`${fieldId}-error`}
             className="form-error mt-1 text-sm text-destructive flex items-center gap-1"
             role="alert"
@@ -471,7 +471,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
 
         {/* Success message */}
         {success && !error && (
-          <p 
+          <p
             id={`${fieldId}-success`}
             className="mt-1 text-sm text-success flex items-center gap-1"
           >
@@ -481,7 +481,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
 Textarea.displayName = 'Textarea';

@@ -126,35 +126,35 @@ class AgentGamificationService {
   // Update agent stats after a transaction
   async updateAgentStats(agentId: string, transaction: any): Promise<void> {
     const profile = await this.getAgentProfile(agentId);
-    
+
     // Update statistics
     profile.statistics.totalDeals += 1;
     profile.statistics.totalRevenue += transaction.amount;
     profile.totalEarnings += transaction.commission;
-    
+
     // Award experience points
     const experienceGained = this.calculateExperiencePoints(transaction);
     profile.experience += experienceGained;
-    
+
     // Check for level up
     const newLevel = this.calculateLevel(profile.experience);
     if (newLevel > profile.level) {
       await this.handleLevelUp(agentId, profile.level, newLevel);
       profile.level = newLevel;
     }
-    
+
     // Update streaks
     await this.updateStreaks(agentId, 'deal_completed');
-    
+
     // Check achievements
     await this.checkAchievements(agentId);
-    
+
     // Award badges
     await this.checkBadgeEligibility(agentId);
-    
+
     // Update profile
     this.agentProfiles.set(agentId, profile);
-    
+
     // Queue leaderboard update
     await queueManager.addSystemTask('update_leaderboards', { agentId });
   }
@@ -162,11 +162,11 @@ class AgentGamificationService {
   // Get leaderboard for specific period and category
   async getLeaderboard(period: string, category: string): Promise<Leaderboard> {
     const key = `${period}_${category}`;
-    
+
     if (!this.leaderboards.has(key)) {
       await this.generateLeaderboard(period as any, category as any);
     }
-    
+
     return this.leaderboards.get(key)!;
   }
 
@@ -182,12 +182,12 @@ class AgentGamificationService {
       teamBadges: [],
       challenges: [],
     };
-    
+
     this.teams.set(team.id, team);
-    
+
     // Award team creation badge
     await this.awardBadge(leaderId, 'team_leader');
-    
+
     return team;
   }
 
@@ -197,17 +197,17 @@ class AgentGamificationService {
     if (!team) {
       throw new Error('Team not found');
     }
-    
+
     if (team.members.includes(agentId)) {
       throw new Error('Agent already in team');
     }
-    
+
     team.members.push(agentId);
     this.teams.set(teamId, team);
-    
+
     // Award team player badge
     await this.awardBadge(agentId, 'team_player');
-    
+
     // Notify team members
     await notificationService.sendNotification({
       userId: team.leader,
@@ -226,12 +226,12 @@ class AgentGamificationService {
       currentProgress: 0,
       participants: [],
     };
-    
+
     this.challenges.set(newChallenge.id, newChallenge);
-    
+
     // Notify eligible agents
     await this.notifyEligibleAgents(newChallenge);
-    
+
     return newChallenge;
   }
 
@@ -241,14 +241,14 @@ class AgentGamificationService {
     if (!challenge) {
       throw new Error('Challenge not found');
     }
-    
+
     if (challenge.participants.includes(agentId)) {
       throw new Error('Agent already participating');
     }
-    
+
     challenge.participants.push(agentId);
     this.challenges.set(challengeId, challenge);
-    
+
     // Send welcome notification
     await notificationService.sendNotification({
       userId: agentId,
@@ -269,14 +269,14 @@ class AgentGamificationService {
   async getAvailableRewards(agentId: string): Promise<Reward[]> {
     const profile = await this.getAgentProfile(agentId);
     const rewards: Reward[] = [];
-    
+
     // Level-based rewards
     rewards.push({
       type: 'commission_boost',
       value: profile.level * 0.5,
       description: `${profile.level * 0.5}% commission boost for Level ${profile.level}`,
     });
-    
+
     // Streak rewards
     const activeStreaks = profile.streaks.filter(s => s.active);
     activeStreaks.forEach(streak => {
@@ -289,7 +289,7 @@ class AgentGamificationService {
         });
       }
     });
-    
+
     return rewards;
   }
 
@@ -335,7 +335,7 @@ class AgentGamificationService {
     if (!agent) {
       throw new Error('Agent not found');
     }
-    
+
     const profile: AgentProfile = {
       agentId,
       level: 1,
@@ -355,24 +355,24 @@ class AgentGamificationService {
         monthlyGrowth: 0,
       },
     };
-    
+
     this.agentProfiles.set(agentId, profile);
   }
 
   private calculateExperiencePoints(transaction: any): number {
     let points = 100; // Base points
-    
+
     // Bonus for transaction size
-    if (transaction.amount > 1000000) points += 50;
-    if (transaction.amount > 5000000) points += 100;
-    
+    if (transaction.amount > 1000000) {points += 50;}
+    if (transaction.amount > 5000000) {points += 100;}
+
     // Bonus for client satisfaction
-    if (transaction.rating >= 4.5) points += 25;
-    if (transaction.rating >= 4.8) points += 50;
-    
+    if (transaction.rating >= 4.5) {points += 25;}
+    if (transaction.rating >= 4.8) {points += 50;}
+
     // Bonus for quick response
-    if (transaction.responseTime < 2) points += 25;
-    
+    if (transaction.responseTime < 2) {points += 25;}
+
     return points;
   }
 
@@ -389,10 +389,10 @@ class AgentGamificationService {
       message: `Congratulations! You've reached Level ${newLevel}`,
       data: { oldLevel, newLevel },
     });
-    
+
     // Award level-up badge
     await this.awardBadge(agentId, `level_${newLevel}`);
-    
+
     // Unlock new features or rewards
     await this.unlockLevelRewards(agentId, newLevel);
   }
@@ -400,7 +400,7 @@ class AgentGamificationService {
   private async updateStreaks(agentId: string, action: string): Promise<void> {
     const profile = await this.getAgentProfile(agentId);
     const today = new Date().toISOString().split('T')[0];
-    
+
     profile.streaks.forEach(streak => {
       if (streak.type === 'daily_login' && action === 'login') {
         const lastUpdate = streak.lastUpdateDate;
@@ -420,32 +420,32 @@ class AgentGamificationService {
 
   private async checkAchievements(agentId: string): Promise<void> {
     const profile = await this.getAgentProfile(agentId);
-    
+
     profile.achievements.forEach(achievement => {
-      if (achievement.completed) return;
-      
+      if (achievement.completed) {return;}
+
       // Check different achievement types
       switch (achievement.id) {
-        case 'first_deal':
-          if (profile.statistics.totalDeals >= 1) {
-            this.completeAchievement(agentId, achievement);
-          }
-          break;
-        case 'deal_maker':
-          if (profile.statistics.totalDeals >= 10) {
-            this.completeAchievement(agentId, achievement);
-          }
-          break;
-        case 'high_earner':
-          if (profile.totalEarnings >= 100000) {
-            this.completeAchievement(agentId, achievement);
-          }
-          break;
-        case 'client_champion':
-          if (profile.statistics.averageRating >= 4.8) {
-            this.completeAchievement(agentId, achievement);
-          }
-          break;
+      case 'first_deal':
+        if (profile.statistics.totalDeals >= 1) {
+          this.completeAchievement(agentId, achievement);
+        }
+        break;
+      case 'deal_maker':
+        if (profile.statistics.totalDeals >= 10) {
+          this.completeAchievement(agentId, achievement);
+        }
+        break;
+      case 'high_earner':
+        if (profile.totalEarnings >= 100000) {
+          this.completeAchievement(agentId, achievement);
+        }
+        break;
+      case 'client_champion':
+        if (profile.statistics.averageRating >= 4.8) {
+          this.completeAchievement(agentId, achievement);
+        }
+        break;
       }
     });
   }
@@ -453,11 +453,11 @@ class AgentGamificationService {
   private async completeAchievement(agentId: string, achievement: Achievement): Promise<void> {
     achievement.completed = true;
     achievement.completedAt = new Date().toISOString();
-    
+
     // Award points and rewards
     const profile = await this.getAgentProfile(agentId);
     profile.experience += achievement.points;
-    
+
     // Send notification
     await notificationService.sendNotification({
       userId: agentId,
@@ -470,16 +470,16 @@ class AgentGamificationService {
 
   private async checkBadgeEligibility(agentId: string): Promise<void> {
     const profile = await this.getAgentProfile(agentId);
-    
+
     // Check for various badge conditions
     if (profile.statistics.totalDeals >= 50 && !this.hasBadge(profile, 'deal_master')) {
       await this.awardBadge(agentId, 'deal_master');
     }
-    
+
     if (profile.statistics.averageRating >= 4.9 && !this.hasBadge(profile, 'excellence_award')) {
       await this.awardBadge(agentId, 'excellence_award');
     }
-    
+
     if (profile.totalEarnings >= 500000 && !this.hasBadge(profile, 'top_earner')) {
       await this.awardBadge(agentId, 'top_earner');
     }
@@ -488,13 +488,13 @@ class AgentGamificationService {
   private async awardBadge(agentId: string, badgeId: string): Promise<void> {
     const profile = await this.getAgentProfile(agentId);
     const badgeData = this.getBadgeData(badgeId);
-    
+
     if (badgeData && !this.hasBadge(profile, badgeId)) {
       profile.badges.push({
         ...badgeData,
         earnedAt: new Date().toISOString(),
       });
-      
+
       // Send notification
       await notificationService.sendNotification({
         userId: agentId,
@@ -508,23 +508,23 @@ class AgentGamificationService {
 
   private async generateLeaderboard(period: Leaderboard['period'], category: Leaderboard['category']): Promise<void> {
     const agents = Array.from(this.agentProfiles.values());
-    
+
     // Sort agents based on category
     agents.sort((a, b) => {
       switch (category) {
-        case 'earnings':
-          return b.totalEarnings - a.totalEarnings;
-        case 'deals':
-          return b.statistics.totalDeals - a.statistics.totalDeals;
-        case 'rating':
-          return b.statistics.averageRating - a.statistics.averageRating;
-        case 'growth':
-          return b.statistics.monthlyGrowth - a.statistics.monthlyGrowth;
-        default:
-          return 0;
+      case 'earnings':
+        return b.totalEarnings - a.totalEarnings;
+      case 'deals':
+        return b.statistics.totalDeals - a.statistics.totalDeals;
+      case 'rating':
+        return b.statistics.averageRating - a.statistics.averageRating;
+      case 'growth':
+        return b.statistics.monthlyGrowth - a.statistics.monthlyGrowth;
+      default:
+        return 0;
       }
     });
-    
+
     // Create leaderboard entries
     const entries: LeaderboardEntry[] = agents.slice(0, 50).map((agent, index) => ({
       agentId: agent.agentId,
@@ -535,14 +535,14 @@ class AgentGamificationService {
       level: agent.level,
       badge: agent.badges[0]?.name,
     }));
-    
+
     const leaderboard: Leaderboard = {
       period,
       category,
       entries,
       lastUpdated: new Date().toISOString(),
     };
-    
+
     this.leaderboards.set(`${period}_${category}`, leaderboard);
   }
 
@@ -640,22 +640,22 @@ class AgentGamificationService {
         category: 'sales' as const,
       },
     };
-    
+
     return badges[badgeId] || null;
   }
 
   private getScoreForCategory(agent: AgentProfile, category: string): number {
     switch (category) {
-      case 'earnings':
-        return agent.totalEarnings;
-      case 'deals':
-        return agent.statistics.totalDeals;
-      case 'rating':
-        return agent.statistics.averageRating;
-      case 'growth':
-        return agent.statistics.monthlyGrowth;
-      default:
-        return 0;
+    case 'earnings':
+      return agent.totalEarnings;
+    case 'deals':
+      return agent.statistics.totalDeals;
+    case 'rating':
+      return agent.statistics.averageRating;
+    case 'growth':
+      return agent.statistics.monthlyGrowth;
+    default:
+      return 0;
     }
   }
 

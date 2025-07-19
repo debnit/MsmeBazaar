@@ -6,9 +6,9 @@ export default function Analytics() {
     queryKey: ['/api/analytics'],
     queryFn: async () => {
       const response = await fetch('/api/analytics');
-      if (!response.ok) throw new Error('Failed to fetch analytics');
+      if (!response.ok) {throw new Error('Failed to fetch analytics');}
       return response.json();
-    }
+    },
   });
 
   if (isLoading) {
@@ -22,7 +22,7 @@ export default function Analytics() {
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Analytics Dashboard</h1>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
@@ -32,7 +32,7 @@ export default function Analytics() {
             <div className="text-3xl font-bold">{analytics?.totalUsers || 0}</div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>Active Listings</CardTitle>
@@ -41,7 +41,7 @@ export default function Analytics() {
             <div className="text-3xl font-bold">{analytics?.activeListings || 0}</div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>Total Transactions</CardTitle>

@@ -64,14 +64,14 @@ export function validateUserState(data: any): ValidationResult {
     return {
       isValid: errors.length === 0,
       errors,
-      sanitized
+      sanitized,
     };
   } catch (error) {
     console.warn('User state validation failed:', error);
     return {
       isValid: false,
       errors: ['Validation failed'],
-      sanitized: null
+      sanitized: null,
     };
   }
 }
@@ -137,14 +137,14 @@ export function validateMSMEState(data: any): ValidationResult {
     return {
       isValid: errors.length === 0,
       errors,
-      sanitized
+      sanitized,
     };
   } catch (error) {
     console.warn('MSME state validation failed:', error);
     return {
       isValid: false,
       errors: ['Validation failed'],
-      sanitized: null
+      sanitized: null,
     };
   }
 }
@@ -193,14 +193,14 @@ export function validateLoanApplicationState(data: any): ValidationResult {
     return {
       isValid: errors.length === 0,
       errors,
-      sanitized
+      sanitized,
     };
   } catch (error) {
     console.warn('Loan application state validation failed:', error);
     return {
       isValid: false,
       errors: ['Validation failed'],
-      sanitized: null
+      sanitized: null,
     };
   }
 }
@@ -238,14 +238,14 @@ export function validateRequestBody(data: any, requiredFields: string[]): Valida
     return {
       isValid: errors.length === 0,
       errors,
-      sanitized
+      sanitized,
     };
   } catch (error) {
     console.warn('Request body validation failed:', error);
     return {
       isValid: false,
       errors: ['Validation failed'],
-      sanitized: null
+      sanitized: null,
     };
   }
 }
@@ -292,6 +292,6 @@ export function validateSortOptions(query: any, allowedFields: string[]): { sort
 
   return {
     sortBy: allowedFields.includes(sortBy) ? sortBy : 'id',
-    sortOrder: sortOrder === 'desc' ? 'desc' : 'asc'
+    sortOrder: sortOrder === 'desc' ? 'desc' : 'asc',
   };
 }

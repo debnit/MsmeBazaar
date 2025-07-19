@@ -19,7 +19,7 @@ const defaultState: AppState = {
   notifications: [],
   preferences: {},
   theme: 'light',
-  language: 'en'
+  language: 'en',
 };
 
 // State manager class with null safety and memory management
@@ -50,7 +50,7 @@ export class StateManager {
       const handleBeforeUnload = () => {
         this.destroy();
       };
-      
+
       window.addEventListener('beforeunload', handleBeforeUnload);
       this.cleanupTasks.push(() => {
         window.removeEventListener('beforeunload', handleBeforeUnload);
@@ -62,7 +62,7 @@ export class StateManager {
           this.saveState();
         }
       };
-      
+
       document.addEventListener('visibilitychange', handleVisibilityChange);
       this.cleanupTasks.push(() => {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -74,7 +74,7 @@ export class StateManager {
     try {
       // Load from localStorage with fallback to defaults
       const savedState = safeLocalStorage('appState', defaultState);
-      
+
       // Validate and merge with defaults to ensure all required properties exist
       return {
         user: safeGet(savedState, 'user', null),
@@ -82,7 +82,7 @@ export class StateManager {
         notifications: safeArray(safeGet(savedState, 'notifications', [])),
         preferences: safeGet(savedState, 'preferences', {}),
         theme: safeGet(savedState, 'theme', 'light') as 'light' | 'dark',
-        language: safeGet(savedState, 'language', 'en') as 'en' | 'hi' | 'or'
+        language: safeGet(savedState, 'language', 'en') as 'en' | 'hi' | 'or',
       };
     } catch (error) {
       console.warn('Failed to load initial state, using defaults:', error);
@@ -92,14 +92,14 @@ export class StateManager {
 
   // Debounced state saving to prevent excessive localStorage writes
   private saveState(): void {
-    if (this.isDestroyed) return;
-    
+    if (this.isDestroyed) {return;}
+
     try {
       // Clear existing timeout
       if (this.debounceTimeout) {
         clearTimeout(this.debounceTimeout);
       }
-      
+
       // Debounce state saving
       this.debounceTimeout = setTimeout(() => {
         if (!this.isDestroyed) {
@@ -119,7 +119,7 @@ export class StateManager {
     }
 
     this.listeners.push(listener);
-    
+
     // Return unsubscribe function
     return () => {
       this.unsubscribe(listener);
@@ -136,11 +136,11 @@ export class StateManager {
 
   // Notify all listeners with error handling
   private notifyListeners(): void {
-    if (this.isDestroyed) return;
+    if (this.isDestroyed) {return;}
 
     // Create a copy of listeners to prevent issues if listeners array is modified during iteration
     const currentListeners = [...this.listeners];
-    
+
     currentListeners.forEach(listener => {
       try {
         safeCall(listener, this.state);
@@ -172,12 +172,12 @@ export class StateManager {
       // Merge with existing state
       this.state = {
         ...this.state,
-        ...partialState
+        ...partialState,
       };
 
       // Save to localStorage
       this.saveState();
-      
+
       // Notify listeners
       this.notifyListeners();
     } catch (error) {
@@ -189,33 +189,33 @@ export class StateManager {
   setUser(user: any): void {
     this.setState({
       user,
-      isAuthenticated: !!user
+      isAuthenticated: !!user,
     });
   }
 
   clearUser(): void {
     this.setState({
       user: null,
-      isAuthenticated: false
+      isAuthenticated: false,
     });
   }
 
   // Notification methods with size limit to prevent memory bloat
   addNotification(notification: any): void {
     const notifications = [...this.state.notifications, notification];
-    
+
     // Limit notifications to prevent memory issues
     const maxNotifications = 50;
     if (notifications.length > maxNotifications) {
       notifications.splice(0, notifications.length - maxNotifications);
     }
-    
+
     this.setState({ notifications });
   }
 
   removeNotification(notificationId: string): void {
     const notifications = this.state.notifications.filter(
-      n => safeGet(n, 'id', '') !== notificationId
+      n => safeGet(n, 'id', '') !== notificationId,
     );
     this.setState({ notifications });
   }
@@ -229,8 +229,8 @@ export class StateManager {
     this.setState({
       preferences: {
         ...this.state.preferences,
-        [key]: value
-      }
+        [key]: value,
+      },
     });
   }
 
@@ -250,29 +250,29 @@ export class StateManager {
 
   // Reset state to defaults
   reset(): void {
-    if (this.isDestroyed) return;
-    
+    if (this.isDestroyed) {return;}
+
     this.state = { ...defaultState };
     this.saveState();
     this.notifyListeners();
   }
 
   // Get memory usage information
-  getMemoryInfo(): { 
+  getMemoryInfo(): {
     listenersCount: number;
     stateSize: number;
     notificationsCount: number;
-  } {
+    } {
     return {
       listenersCount: this.listeners.length,
       stateSize: JSON.stringify(this.state).length,
-      notificationsCount: this.state.notifications.length
+      notificationsCount: this.state.notifications.length,
     };
   }
 
   // Clean up resources
   destroy(): void {
-    if (this.isDestroyed) return;
+    if (this.isDestroyed) {return;}
 
     // Mark as destroyed
     this.isDestroyed = true;
@@ -319,14 +319,14 @@ export function useStateManager(): {
   setTheme: (theme: 'light' | 'dark') => void;
   setLanguage: (language: 'en' | 'hi' | 'or') => void;
   reset: () => void;
-} {
-  const [state, setReactState] = React.useState<AppState>(() => 
-    StateManager.getInstance().getState()
+  } {
+  const [state, setReactState] = React.useState<AppState>(() =>
+    StateManager.getInstance().getState(),
   );
 
   React.useEffect(() => {
     const stateManager = StateManager.getInstance();
-    
+
     // Subscribe to state changes
     const unsubscribe = stateManager.subscribe((newState) => {
       setReactState(newState);
@@ -350,7 +350,7 @@ export function useStateManager(): {
     removeNotification: stateManager.removeNotification.bind(stateManager),
     setTheme: stateManager.setTheme.bind(stateManager),
     setLanguage: stateManager.setLanguage.bind(stateManager),
-    reset: stateManager.reset.bind(stateManager)
+    reset: stateManager.reset.bind(stateManager),
   };
 }
 
@@ -363,6 +363,6 @@ if (process.env.NODE_ENV === 'development') {
     getMemoryInfo: () => stateManager.getMemoryInfo(),
     getState: () => stateManager.getState(),
     destroy: () => stateManager.destroy(),
-    listenersCount: () => (stateManager as any).listeners.length
+    listenersCount: () => (stateManager as any).listeners.length,
   };
 }

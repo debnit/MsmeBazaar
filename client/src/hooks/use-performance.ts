@@ -5,33 +5,33 @@ export const usePerformance = () => {
   const [metrics, setMetrics] = useState({
     loadTime: 0,
     renderTime: 0,
-    memoryUsage: 0
+    memoryUsage: 0,
   });
 
   useEffect(() => {
     const startTime = performance.now();
-    
+
     // Measure load time
     const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
-    
+
     // Measure render time
     const renderTime = performance.now() - startTime;
-    
+
     // Measure memory usage (if available)
     const memoryUsage = (performance as any).memory?.usedJSHeapSize || 0;
-    
+
     setMetrics({
       loadTime,
       renderTime,
-      memoryUsage
+      memoryUsage,
     });
-    
+
     // Log performance metrics in development
     if (process.env.NODE_ENV === 'development') {
       console.log('Performance metrics:', {
         loadTime: `${loadTime}ms`,
         renderTime: `${renderTime.toFixed(2)}ms`,
-        memoryUsage: `${(memoryUsage / 1024 / 1024).toFixed(2)}MB`
+        memoryUsage: `${(memoryUsage / 1024 / 1024).toFixed(2)}MB`,
       });
     }
   }, []);
@@ -44,7 +44,7 @@ export const useLazyLoad = (ref: React.RefObject<HTMLElement>) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    if (!ref.current) return;
+    if (!ref.current) {return;}
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -53,7 +53,7 @@ export const useLazyLoad = (ref: React.RefObject<HTMLElement>) => {
           observer.disconnect();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     observer.observe(ref.current);
@@ -67,7 +67,7 @@ export const useLazyLoad = (ref: React.RefObject<HTMLElement>) => {
 // Hook for prefetching data
 export const usePrefetch = (url: string, condition: boolean = true) => {
   useEffect(() => {
-    if (!condition) return;
+    if (!condition) {return;}
 
     const prefetch = async () => {
       try {
@@ -112,6 +112,6 @@ export const useLoadingState = (initialState: boolean = false) => {
     error,
     startLoading,
     stopLoading,
-    setLoadingError
+    setLoadingError,
   };
 };

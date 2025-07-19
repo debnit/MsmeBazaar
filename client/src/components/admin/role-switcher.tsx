@@ -17,32 +17,32 @@ const roleConfig = {
     icon: Crown,
     label: 'Admin',
     color: 'bg-purple-100 text-purple-800',
-    description: 'Full system access and management'
+    description: 'Full system access and management',
   },
   seller: {
     icon: Building,
     label: 'Seller',
     color: 'bg-blue-100 text-blue-800',
-    description: 'List and manage business sales'
+    description: 'List and manage business sales',
   },
   buyer: {
     icon: User,
     label: 'Buyer',
     color: 'bg-green-100 text-green-800',
-    description: 'Browse and purchase businesses'
+    description: 'Browse and purchase businesses',
   },
   agent: {
     icon: Users,
     label: 'Agent',
     color: 'bg-orange-100 text-orange-800',
-    description: 'Facilitate transactions and earn commissions'
+    description: 'Facilitate transactions and earn commissions',
   },
   nbfc: {
     icon: CreditCard,
     label: 'NBFC',
     color: 'bg-indigo-100 text-indigo-800',
-    description: 'Provide financing and loan services'
-  }
+    description: 'Provide financing and loan services',
+  },
 };
 
 export function RoleSwitcher({ onRoleChange }: RoleSwitcherProps) {
@@ -57,25 +57,25 @@ export function RoleSwitcher({ onRoleChange }: RoleSwitcherProps) {
   }
 
   const handleRoleSwitch = async (newRole: string) => {
-    if (newRole === user?.role) return;
-    
+    if (newRole === user?.role) {return;}
+
     setIsLoading(true);
     try {
       await switchRole(newRole);
       setSelectedRole(newRole);
       onRoleChange?.(newRole);
-      
+
       const roleInfo = roleConfig[newRole as keyof typeof roleConfig];
       toast({
         title: 'Role Switched',
         description: `Now acting as ${roleInfo.label}`,
-        variant: 'success'
+        variant: 'success',
       });
     } catch (error) {
       toast({
         title: 'Role Switch Failed',
         description: 'Unable to switch role. Please try again.',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);

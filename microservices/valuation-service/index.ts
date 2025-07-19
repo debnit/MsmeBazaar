@@ -18,13 +18,13 @@ app.get('/health', (req, res) => {
 app.post('/valuate', async (req, res) => {
   try {
     const { businessData } = req.body;
-    
+
     const valuation = await serverMemoryManager.loadPage(
       `valuation-${JSON.stringify(businessData)}`,
       () => calculateValuation(businessData),
-      'medium'
+      'medium',
     );
-    
+
     res.json(valuation);
   } catch (error) {
     res.status(500).json({ error: 'Valuation failed' });
@@ -35,14 +35,14 @@ app.post('/valuate', async (req, res) => {
 async function calculateValuation(data: any) {
   // Simulate ML processing time
   await new Promise(resolve => setTimeout(resolve, 100));
-  
+
   const {
     revenue = 0,
     profit = 0,
     assets = 0,
     employees = 0,
     industry = 'general',
-    location = 'unknown'
+    location = 'unknown',
   } = data;
 
   // Industry multipliers
@@ -53,7 +53,7 @@ async function calculateValuation(data: any) {
     'manufacturing': 5.5,
     'retail': 4.2,
     'services': 4.8,
-    'general': 4.0
+    'general': 4.0,
   };
 
   // Location multipliers (for Indian cities)
@@ -65,7 +65,7 @@ async function calculateValuation(data: any) {
     'pune': 1.1,
     'chennai': 1.1,
     'kolkata': 1.05,
-    'unknown': 1.0
+    'unknown': 1.0,
   };
 
   const industryMultiplier = industryMultipliers[industry.toLowerCase()] || 4.0;
@@ -93,27 +93,27 @@ async function calculateValuation(data: any) {
       revenueMultiple: Math.round(revenueMultiple),
       profitMultiple: Math.round(profitMultiple),
       assetValue: Math.round(assetValue),
-      employeeValue: Math.round(employeeValue)
+      employeeValue: Math.round(employeeValue),
     },
     multipliers: {
       industry: industryMultiplier,
-      location: locationMultiplier
+      location: locationMultiplier,
     },
     confidence: calculateConfidence(data),
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 }
 
 function calculateConfidence(data: any): number {
   let score = 0;
-  
-  if (data.revenue > 0) score += 25;
-  if (data.profit > 0) score += 25;
-  if (data.assets > 0) score += 20;
-  if (data.employees > 0) score += 15;
-  if (data.industry !== 'general') score += 10;
-  if (data.location !== 'unknown') score += 5;
-  
+
+  if (data.revenue > 0) {score += 25;}
+  if (data.profit > 0) {score += 25;}
+  if (data.assets > 0) {score += 20;}
+  if (data.employees > 0) {score += 15;}
+  if (data.industry !== 'general') {score += 10;}
+  if (data.location !== 'unknown') {score += 5;}
+
   return Math.min(score, 100);
 }
 
@@ -124,9 +124,9 @@ app.get('/history/:businessId', async (req, res) => {
     const history = await serverMemoryManager.loadPage(
       `history-${req.params.businessId}`,
       () => Promise.resolve([]),
-      'low'
+      'low',
     );
-    
+
     res.json(history);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch history' });

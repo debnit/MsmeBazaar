@@ -8,7 +8,7 @@ const router = Router();
 router.post('/webhook', async (req, res) => {
   try {
     const { entry } = req.body;
-    
+
     if (entry && entry.length > 0) {
       for (const item of entry) {
         if (item.changes && item.changes.length > 0) {
@@ -23,7 +23,7 @@ router.post('/webhook', async (req, res) => {
         }
       }
     }
-    
+
     res.status(200).send('OK');
   } catch (error) {
     console.error('WhatsApp webhook error:', error);
@@ -48,15 +48,15 @@ router.get('/webhook', (req, res) => {
 router.post('/send-message', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
     const { to, message } = req.body;
-    
+
     // Mock WhatsApp API call
     const result = {
       messaging_product: 'whatsapp',
       to,
       type: 'text',
-      text: { body: message }
+      text: { body: message },
     };
-    
+
     res.json({ success: true, result });
   } catch (error) {
     console.error('Send WhatsApp message error:', error);
@@ -77,9 +77,9 @@ router.get('/templates', authenticateToken, requireRole('admin'), async (req, re
         components: [
           {
             type: 'BODY',
-            text: 'Welcome to MSMESquare! 🎉\n\nYour account has been created successfully. Start exploring MSME opportunities and connect with verified buyers and sellers.'
-          }
-        ]
+            text: 'Welcome to MSMESquare! 🎉\n\nYour account has been created successfully. Start exploring MSME opportunities and connect with verified buyers and sellers.',
+          },
+        ],
       },
       {
         id: 'retention_nudge',
@@ -90,12 +90,12 @@ router.get('/templates', authenticateToken, requireRole('admin'), async (req, re
         components: [
           {
             type: 'BODY',
-            text: 'Hi there! 👋\n\nWe noticed you haven\'t logged into MSMESquare recently. Don\'t miss out on new MSME listings and business opportunities!'
-          }
-        ]
-      }
+            text: 'Hi there! 👋\n\nWe noticed you haven\'t logged into MSMESquare recently. Don\'t miss out on new MSME listings and business opportunities!',
+          },
+        ],
+      },
     ];
-    
+
     res.json(templates);
   } catch (error) {
     console.error('Get WhatsApp templates error:', error);

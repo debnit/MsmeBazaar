@@ -29,59 +29,59 @@ export class AutoScaler {
   private collectMetrics() {
     const now = new Date();
     const memUsage = process.memoryUsage();
-    
+
     // Simulate CPU usage (in production, use actual CPU metrics)
     const cpuUsage = Math.random() * 100;
-    
+
     // Calculate memory usage percentage
     const memoryUsage = (memUsage.heapUsed / memUsage.heapTotal) * 100;
-    
+
     // Simulate request count (in production, use actual request metrics)
     const requestCount = Math.floor(Math.random() * 1000);
-    
+
     this.metrics.push({
       timestamp: now,
       cpu: cpuUsage,
       memory: memoryUsage,
-      requests: requestCount
+      requests: requestCount,
     });
-    
+
     // Keep only last 10 minutes of metrics
-    this.metrics = this.metrics.filter(m => 
-      now.getTime() - m.timestamp.getTime() < 10 * 60 * 1000
+    this.metrics = this.metrics.filter(m =>
+      now.getTime() - m.timestamp.getTime() < 10 * 60 * 1000,
     );
-    
+
     this.evaluateScaling();
   }
 
   private evaluateScaling() {
-    if (this.metrics.length < 3) return;
-    
+    if (this.metrics.length < 3) {return;}
+
     const now = new Date();
     const timeSinceLastScaling = now.getTime() - this.lastScalingAction.getTime();
-    
+
     // Respect cooldown period
     if (timeSinceLastScaling < this.config.cooldownPeriod * 1000) {
       return;
     }
-    
+
     const recentMetrics = this.metrics.slice(-5); // Last 5 minutes
     const avgCPU = recentMetrics.reduce((sum, m) => sum + m.cpu, 0) / recentMetrics.length;
     const avgMemory = recentMetrics.reduce((sum, m) => sum + m.memory, 0) / recentMetrics.length;
     const avgRequests = recentMetrics.reduce((sum, m) => sum + m.requests, 0) / recentMetrics.length;
-    
+
     const shouldScaleUp = (
       avgCPU > this.config.targetCPUUtilization ||
       avgMemory > this.config.targetMemoryUtilization ||
       avgRequests > this.config.scaleUpThreshold
     ) && this.currentInstances < this.config.maxInstances;
-    
+
     const shouldScaleDown = (
       avgCPU < this.config.targetCPUUtilization * 0.5 &&
       avgMemory < this.config.targetMemoryUtilization * 0.5 &&
       avgRequests < this.config.scaleDownThreshold
     ) && this.currentInstances > this.config.minInstances;
-    
+
     if (shouldScaleUp) {
       this.scaleUp();
     } else if (shouldScaleDown) {
@@ -92,9 +92,9 @@ export class AutoScaler {
   private scaleUp() {
     this.currentInstances++;
     this.lastScalingAction = new Date();
-    
+
     console.log(`📈 Scaling UP to ${this.currentInstances} instances`);
-    
+
     // In production, this would trigger container orchestration
     this.triggerScaling('up');
   }
@@ -102,9 +102,9 @@ export class AutoScaler {
   private scaleDown() {
     this.currentInstances--;
     this.lastScalingAction = new Date();
-    
+
     console.log(`📉 Scaling DOWN to ${this.currentInstances} instances`);
-    
+
     // In production, this would trigger container orchestration
     this.triggerScaling('down');
   }
@@ -112,11 +112,11 @@ export class AutoScaler {
   private triggerScaling(direction: 'up' | 'down') {
     // This would integrate with Kubernetes, Docker Swarm, or cloud auto-scaling services
     console.log(`🔄 Triggering ${direction} scaling event`);
-    
+
     // Example Kubernetes scaling command (would be executed via kubectl or K8s API)
     const kubectlCommand = `kubectl scale deployment msmesquare-api --replicas=${this.currentInstances}`;
     console.log(`K8s Command: ${kubectlCommand}`);
-    
+
     // Example Docker Swarm scaling
     const swarmCommand = `docker service scale msmesquare-stack_api=${this.currentInstances}`;
     console.log(`Swarm Command: ${swarmCommand}`);
@@ -127,7 +127,7 @@ export class AutoScaler {
       currentInstances: this.currentInstances,
       config: this.config,
       recentMetrics: this.metrics.slice(-5),
-      lastScalingAction: this.lastScalingAction
+      lastScalingAction: this.lastScalingAction,
     };
   }
 }
@@ -141,9 +141,9 @@ export class LoadBalancer {
     this.servers = serverList.map(server => ({
       ...server,
       health: 'healthy' as const,
-      load: 0
+      load: 0,
     }));
-    
+
     this.startHealthChecks();
   }
 
@@ -159,7 +159,7 @@ export class LoadBalancer {
         // In production, this would make actual HTTP requests
         const response = await fetch(`${server.url}/health`);
         server.health = response.ok ? 'healthy' : 'unhealthy';
-        
+
         // Simulate load calculation
         server.load = Math.random() * 100;
       } catch (error) {
@@ -172,51 +172,51 @@ export class LoadBalancer {
   // Round-robin load balancing
   getNextServer() {
     const healthyServers = this.servers.filter(s => s.health === 'healthy');
-    
+
     if (healthyServers.length === 0) {
       throw new Error('No healthy servers available');
     }
-    
+
     const server = healthyServers[this.currentIndex % healthyServers.length];
     this.currentIndex++;
-    
+
     return server;
   }
 
   // Least connections load balancing
   getLeastLoadedServer() {
     const healthyServers = this.servers.filter(s => s.health === 'healthy');
-    
+
     if (healthyServers.length === 0) {
       throw new Error('No healthy servers available');
     }
-    
-    return healthyServers.reduce((least, current) => 
-      current.load < least.load ? current : least
+
+    return healthyServers.reduce((least, current) =>
+      current.load < least.load ? current : least,
     );
   }
 
   // Weighted round-robin
   getWeightedServer() {
     const healthyServers = this.servers.filter(s => s.health === 'healthy');
-    
+
     if (healthyServers.length === 0) {
       throw new Error('No healthy servers available');
     }
-    
+
     // Choose server based on inverse of load (lower load = higher weight)
     const weights = healthyServers.map(s => 100 - s.load);
     const totalWeight = weights.reduce((sum, w) => sum + w, 0);
-    
+
     let random = Math.random() * totalWeight;
-    
+
     for (let i = 0; i < healthyServers.length; i++) {
       random -= weights[i];
       if (random <= 0) {
         return healthyServers[i];
       }
     }
-    
+
     return healthyServers[0];
   }
 
@@ -225,7 +225,7 @@ export class LoadBalancer {
       servers: this.servers,
       healthyCount: this.servers.filter(s => s.health === 'healthy').length,
       totalCount: this.servers.length,
-      averageLoad: this.servers.reduce((sum, s) => sum + s.load, 0) / this.servers.length
+      averageLoad: this.servers.reduce((sum, s) => sum + s.load, 0) / this.servers.length,
     };
   }
 }
@@ -240,7 +240,7 @@ export class CircuitBreaker {
   constructor(
     private failureThreshold: number = 5,
     private timeout: number = 60000, // 1 minute
-    private monitoringPeriod: number = 10000 // 10 seconds
+    private monitoringPeriod: number = 10000, // 10 seconds
   ) {}
 
   async execute<T>(operation: () => Promise<T>): Promise<T> {
@@ -265,7 +265,7 @@ export class CircuitBreaker {
 
   private onSuccess() {
     this.failures = 0;
-    
+
     if (this.state === 'half-open') {
       this.successCount++;
       if (this.successCount >= 3) {
@@ -277,7 +277,7 @@ export class CircuitBreaker {
   private onFailure() {
     this.failures++;
     this.lastFailureTime = Date.now();
-    
+
     if (this.failures >= this.failureThreshold) {
       this.state = 'open';
     }
@@ -288,7 +288,7 @@ export class CircuitBreaker {
       state: this.state,
       failures: this.failures,
       lastFailureTime: this.lastFailureTime,
-      successCount: this.successCount
+      successCount: this.successCount,
     };
   }
 }
@@ -301,7 +301,7 @@ export const defaultScalingConfig: ScalingConfig = {
   targetMemoryUtilization: 80,
   scaleUpThreshold: 100, // requests per minute
   scaleDownThreshold: 20, // requests per minute
-  cooldownPeriod: 300 // 5 minutes
+  cooldownPeriod: 300, // 5 minutes
 };
 
 // Initialize auto-scaler
@@ -311,7 +311,7 @@ export const autoScaler = new AutoScaler(defaultScalingConfig);
 export const loadBalancer = new LoadBalancer([
   { id: 'server1', url: 'http://localhost:5000' },
   { id: 'server2', url: 'http://localhost:5001' },
-  { id: 'server3', url: 'http://localhost:5002' }
+  { id: 'server3', url: 'http://localhost:5002' },
 ]);
 
 // Circuit breakers for external services
@@ -319,5 +319,5 @@ export const circuitBreakers = {
   database: new CircuitBreaker(5, 60000, 10000),
   redis: new CircuitBreaker(3, 30000, 5000),
   stripe: new CircuitBreaker(5, 120000, 15000),
-  valuation: new CircuitBreaker(10, 300000, 30000)
+  valuation: new CircuitBreaker(10, 300000, 30000),
 };

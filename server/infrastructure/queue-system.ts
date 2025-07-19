@@ -144,7 +144,7 @@ class QueueManager {
   // Public API methods
   async addValuation(businessId: string, options: any = {}): Promise<Job> {
     const queue = this.queues.get('valuation');
-    if (!queue) throw new Error('Valuation queue not found');
+    if (!queue) {throw new Error('Valuation queue not found');}
 
     return await queue.add('business_valuation', {
       businessId,
@@ -158,7 +158,7 @@ class QueueManager {
 
   async addMatchmaking(buyerId: string, criteria: any = {}): Promise<Job> {
     const queue = this.queues.get('matchmaking');
-    if (!queue) throw new Error('Matchmaking queue not found');
+    if (!queue) {throw new Error('Matchmaking queue not found');}
 
     return await queue.add('buyer_matching', {
       buyerId,
@@ -171,7 +171,7 @@ class QueueManager {
 
   async addNotification(userId: string, type: string, data: any): Promise<Job> {
     const queue = this.queues.get('notifications');
-    if (!queue) throw new Error('Notification queue not found');
+    if (!queue) {throw new Error('Notification queue not found');}
 
     return await queue.add('send_notification', {
       userId,
@@ -183,7 +183,7 @@ class QueueManager {
 
   async addPayment(paymentData: any): Promise<Job> {
     const queue = this.queues.get('payments');
-    if (!queue) throw new Error('Payment queue not found');
+    if (!queue) {throw new Error('Payment queue not found');}
 
     return await queue.add('process_payment', {
       ...paymentData,
@@ -195,7 +195,7 @@ class QueueManager {
 
   async addDocumentGeneration(documentType: string, data: any, userId: string): Promise<Job> {
     const queue = this.queues.get('documents');
-    if (!queue) throw new Error('Document queue not found');
+    if (!queue) {throw new Error('Document queue not found');}
 
     return await queue.add('generate_document', {
       documentType,
@@ -207,7 +207,7 @@ class QueueManager {
 
   async addEmail(to: string, subject: string, template: string, data: any): Promise<Job> {
     const queue = this.queues.get('email');
-    if (!queue) throw new Error('Email queue not found');
+    if (!queue) {throw new Error('Email queue not found');}
 
     return await queue.add('send_email', {
       to,
@@ -220,7 +220,7 @@ class QueueManager {
 
   async addWhatsApp(to: string, messageType: string, data: any): Promise<Job> {
     const queue = this.queues.get('whatsapp');
-    if (!queue) throw new Error('WhatsApp queue not found');
+    if (!queue) {throw new Error('WhatsApp queue not found');}
 
     return await queue.add('send_whatsapp', {
       to,
@@ -232,7 +232,7 @@ class QueueManager {
 
   async addMLTraining(modelType: string, trainingData: any): Promise<Job> {
     const queue = this.queues.get('ml_training');
-    if (!queue) throw new Error('ML training queue not found');
+    if (!queue) {throw new Error('ML training queue not found');}
 
     return await queue.add('train_model', {
       modelType,
@@ -245,7 +245,7 @@ class QueueManager {
 
   async addDataProcessing(taskType: string, data: any): Promise<Job> {
     const queue = this.queues.get('data_processing');
-    if (!queue) throw new Error('Data processing queue not found');
+    if (!queue) {throw new Error('Data processing queue not found');}
 
     return await queue.add('process_data', {
       taskType,
@@ -256,7 +256,7 @@ class QueueManager {
 
   async addSystemTask(taskType: string, data: any): Promise<Job> {
     const queue = this.queues.get('system_tasks');
-    if (!queue) throw new Error('System tasks queue not found');
+    if (!queue) {throw new Error('System tasks queue not found');}
 
     return await queue.add('system_task', {
       taskType,
@@ -269,7 +269,7 @@ class QueueManager {
   private async processValuationJob(job: Job): Promise<JobResult> {
     try {
       const { businessId, options } = job.data;
-      
+
       // Get business data
       const businessData = await this.getBusinessData(businessId);
       if (!businessData) {
@@ -278,10 +278,10 @@ class QueueManager {
 
       // Process valuation
       const result = await mlValuationEngine.valuateBusiness(businessData);
-      
+
       // Store result
       await this.storeValuationResult(businessId, result);
-      
+
       // Send notification if requested
       if (options.notifyUser) {
         await this.addNotification(businessData.ownerId, 'valuation_complete', {
@@ -299,7 +299,7 @@ class QueueManager {
   private async processMatchmakingJob(job: Job): Promise<JobResult> {
     try {
       const { buyerId, criteria } = job.data;
-      
+
       // Get buyer profile
       const buyerProfile = await this.getBuyerProfile(buyerId);
       if (!buyerProfile) {
@@ -308,13 +308,13 @@ class QueueManager {
 
       // Get available businesses
       const businesses = await this.getAvailableBusinesses(criteria);
-      
+
       // Process matching
       const result = await mlMatchmakingEngine.findMatches(buyerProfile, businesses);
-      
+
       // Store result
       await this.storeMatchingResult(buyerId, result);
-      
+
       // Send notification
       await this.addNotification(buyerId, 'matching_complete', {
         matches: result.matches.length,
@@ -330,7 +330,7 @@ class QueueManager {
   private async processNotificationJob(job: Job): Promise<JobResult> {
     try {
       const { userId, type, data } = job.data;
-      
+
       // Get user preferences
       const user = await this.getUserData(userId);
       if (!user) {
@@ -339,17 +339,17 @@ class QueueManager {
 
       // Send notification based on type
       switch (type) {
-        case 'email':
-          await this.addEmail(user.email, data.subject, data.template, data);
-          break;
-        case 'whatsapp':
-          await this.addWhatsApp(user.phone, data.messageType, data);
-          break;
-        case 'push':
-          await this.sendPushNotification(userId, data);
-          break;
-        default:
-          console.warn('Unknown notification type:', type);
+      case 'email':
+        await this.addEmail(user.email, data.subject, data.template, data);
+        break;
+      case 'whatsapp':
+        await this.addWhatsApp(user.phone, data.messageType, data);
+        break;
+      case 'push':
+        await this.sendPushNotification(userId, data);
+        break;
+      default:
+        console.warn('Unknown notification type:', type);
       }
 
       return { success: true };
@@ -361,27 +361,27 @@ class QueueManager {
   private async processPaymentJob(job: Job): Promise<JobResult> {
     try {
       const paymentData = job.data;
-      
+
       // Process payment based on type
       switch (paymentData.type) {
-        case 'subscription':
-          await razorpayService.handlePaymentSuccess(
-            paymentData.paymentId,
-            paymentData.orderId,
-            paymentData.signature
-          );
-          break;
-        case 'escrow_release':
-          await razorpayService.releaseEscrowFunds(
-            paymentData.escrowId,
-            paymentData.releaseReason
-          );
-          break;
-        case 'agent_payout':
-          await razorpayService.processAgentPayouts();
-          break;
-        default:
-          console.warn('Unknown payment type:', paymentData.type);
+      case 'subscription':
+        await razorpayService.handlePaymentSuccess(
+          paymentData.paymentId,
+          paymentData.orderId,
+          paymentData.signature,
+        );
+        break;
+      case 'escrow_release':
+        await razorpayService.releaseEscrowFunds(
+          paymentData.escrowId,
+          paymentData.releaseReason,
+        );
+        break;
+      case 'agent_payout':
+        await razorpayService.processAgentPayouts();
+        break;
+      default:
+        console.warn('Unknown payment type:', paymentData.type);
       }
 
       return { success: true };
@@ -393,22 +393,22 @@ class QueueManager {
   private async processDocumentJob(job: Job): Promise<JobResult> {
     try {
       const { documentType, data, userId } = job.data;
-      
+
       // Generate document based on type
       let documentUrl = '';
-      
+
       switch (documentType) {
-        case 'valuation_report':
-          documentUrl = await this.generateValuationReport(data);
-          break;
-        case 'matchmaking_report':
-          documentUrl = await this.generateMatchmakingReport(data);
-          break;
-        case 'transaction_receipt':
-          documentUrl = await this.generateTransactionReceipt(data);
-          break;
-        default:
-          throw new Error('Unknown document type');
+      case 'valuation_report':
+        documentUrl = await this.generateValuationReport(data);
+        break;
+      case 'matchmaking_report':
+        documentUrl = await this.generateMatchmakingReport(data);
+        break;
+      case 'transaction_receipt':
+        documentUrl = await this.generateTransactionReceipt(data);
+        break;
+      default:
+        throw new Error('Unknown document type');
       }
 
       // Notify user
@@ -426,20 +426,20 @@ class QueueManager {
   private async processMLTrainingJob(job: Job): Promise<JobResult> {
     try {
       const { modelType, trainingData } = job.data;
-      
+
       // Train model based on type
       let result;
-      
+
       switch (modelType) {
-        case 'valuation':
-          result = await mlValuationEngine.retrainModel(trainingData);
-          break;
-        case 'matchmaking':
-          // Implement matchmaking model retraining
-          result = { success: true, message: 'Matchmaking model retrained' };
-          break;
-        default:
-          throw new Error('Unknown model type');
+      case 'valuation':
+        result = await mlValuationEngine.retrainModel(trainingData);
+        break;
+      case 'matchmaking':
+        // Implement matchmaking model retraining
+        result = { success: true, message: 'Matchmaking model retrained' };
+        break;
+      default:
+        throw new Error('Unknown model type');
       }
 
       return { success: true, data: result };
@@ -451,10 +451,10 @@ class QueueManager {
   private async processEmailJob(job: Job): Promise<JobResult> {
     try {
       const { to, subject, template, data } = job.data;
-      
+
       // Send email using email service
       await this.sendEmail(to, subject, template, data);
-      
+
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
@@ -464,14 +464,14 @@ class QueueManager {
   private async processWhatsAppJob(job: Job): Promise<JobResult> {
     try {
       const { to, messageType, data } = job.data;
-      
+
       // Send WhatsApp message
       const success = await whatsappService.sendMessage({
         to,
         type: messageType,
         content: data,
       });
-      
+
       return { success };
     } catch (error) {
       return { success: false, error: error.message };
@@ -481,20 +481,20 @@ class QueueManager {
   private async processDataJob(job: Job): Promise<JobResult> {
     try {
       const { taskType, data } = job.data;
-      
+
       // Process data based on task type
       switch (taskType) {
-        case 'analytics_aggregation':
-          await this.aggregateAnalytics(data);
-          break;
-        case 'data_cleanup':
-          await this.cleanupData(data);
-          break;
-        case 'export_data':
-          await this.exportData(data);
-          break;
-        default:
-          console.warn('Unknown data task type:', taskType);
+      case 'analytics_aggregation':
+        await this.aggregateAnalytics(data);
+        break;
+      case 'data_cleanup':
+        await this.cleanupData(data);
+        break;
+      case 'export_data':
+        await this.exportData(data);
+        break;
+      default:
+        console.warn('Unknown data task type:', taskType);
       }
 
       return { success: true };
@@ -506,20 +506,20 @@ class QueueManager {
   private async processSystemTaskJob(job: Job): Promise<JobResult> {
     try {
       const { taskType, data } = job.data;
-      
+
       // Process system task
       switch (taskType) {
-        case 'health_check':
-          await this.performHealthCheck();
-          break;
-        case 'cache_cleanup':
-          await this.cleanupCache();
-          break;
-        case 'backup_data':
-          await this.backupData(data);
-          break;
-        default:
-          console.warn('Unknown system task type:', taskType);
+      case 'health_check':
+        await this.performHealthCheck();
+        break;
+      case 'cache_cleanup':
+        await this.cleanupCache();
+        break;
+      case 'backup_data':
+        await this.backupData(data);
+        break;
+      default:
+        console.warn('Unknown system task type:', taskType);
       }
 
       return { success: true };
@@ -608,7 +608,7 @@ class QueueManager {
   // Queue management methods
   async getQueueStats(): Promise<any> {
     const stats = {};
-    
+
     for (const [name, queue] of this.queues) {
       stats[name] = {
         waiting: await queue.getWaiting(),
@@ -617,7 +617,7 @@ class QueueManager {
         failed: await queue.getFailed(),
       };
     }
-    
+
     return stats;
   }
 
@@ -645,10 +645,10 @@ class QueueManager {
   async shutdown(): Promise<void> {
     // Close all workers
     await Promise.all(Array.from(this.workers.values()).map(worker => worker.close()));
-    
+
     // Close all queues
     await Promise.all(Array.from(this.queues.values()).map(queue => queue.close()));
-    
+
     // Close Redis connection
     await this.redis.quit();
   }

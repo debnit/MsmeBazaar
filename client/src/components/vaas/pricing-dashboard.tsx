@@ -4,18 +4,18 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  TrendingUp, 
-  Shield, 
-  Zap, 
-  Users, 
-  Building, 
-  CreditCard, 
+import {
+  TrendingUp,
+  Shield,
+  Zap,
+  Users,
+  Building,
+  CreditCard,
   Target,
   BarChart3,
   Lock,
   Crown,
-  Sparkles
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { apiRequest } from '@/lib/api-client';
@@ -52,7 +52,7 @@ export function VaaSPricingDashboard() {
     try {
       const [pricingResponse, analyticsResponse] = await Promise.all([
         apiRequest('/api/vaas/pricing'),
-        apiRequest('/api/vaas/analytics')
+        apiRequest('/api/vaas/analytics'),
       ]);
 
       setTiers(pricingResponse.tiers);
@@ -69,7 +69,7 @@ export function VaaSPricingDashboard() {
       'msme': Building,
       'buyer': Users,
       'agent': Target,
-      'nbfc': CreditCard
+      'nbfc': CreditCard,
     };
     return icons[targetUser as keyof typeof icons] || Building;
   };
@@ -79,7 +79,7 @@ export function VaaSPricingDashboard() {
       'msme': 'bg-blue-100 text-blue-800',
       'buyer': 'bg-green-100 text-green-800',
       'agent': 'bg-orange-100 text-orange-800',
-      'nbfc': 'bg-purple-100 text-purple-800'
+      'nbfc': 'bg-purple-100 text-purple-800',
     };
     return colors[targetUser as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
@@ -117,7 +117,7 @@ export function VaaSPricingDashboard() {
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           More MSMEs → Better Data → Higher Trust → Defensible Pricing
         </p>
-        
+
         {/* Network Effect Metrics */}
         {networkMetrics && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
@@ -157,7 +157,7 @@ export function VaaSPricingDashboard() {
         {tiers.map((tier) => {
           const Icon = getTierIcon(tier.targetUser);
           const isPopular = tier.id === 'buyer-diligence' || tier.id === 'nbfc-saas';
-          
+
           return (
             <Card key={tier.id} className={`relative ${isPopular ? 'ring-2 ring-blue-500' : ''}`}>
               {isPopular && (
@@ -168,7 +168,7 @@ export function VaaSPricingDashboard() {
                   </Badge>
                 </div>
               )}
-              
+
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Icon className="h-5 w-5" />
@@ -180,7 +180,7 @@ export function VaaSPricingDashboard() {
                   </Badge>
                 </CardDescription>
               </CardHeader>
-              
+
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-baseline gap-2">
@@ -192,12 +192,12 @@ export function VaaSPricingDashboard() {
                       <span className="text-sm text-muted-foreground">per month</span>
                     )}
                   </div>
-                  
+
                   <div className="text-sm text-muted-foreground">
                     {tier.reportFormat} report format
                   </div>
                 </div>
-                
+
                 <ul className="space-y-2">
                   {tier.features.map((feature, index) => (
                     <li key={index} className="flex items-center gap-2 text-sm">
@@ -206,10 +206,10 @@ export function VaaSPricingDashboard() {
                     </li>
                   ))}
                 </ul>
-                
-                <Button 
+
+                <Button
                   className="w-full"
-                  variant={isPopular ? "default" : "outline"}
+                  variant={isPopular ? 'default' : 'outline'}
                   onClick={() => setSelectedTier(tier)}
                 >
                   {tier.price === 0 ? 'Get Started' : 'Choose Plan'}
@@ -257,7 +257,7 @@ export function VaaSPricingDashboard() {
                 </div>
               </div>
             </div>
-            
+
             <div className="space-y-4">
               <h3 className="font-semibold flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />

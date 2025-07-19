@@ -13,16 +13,16 @@ router.post('/api/users/solid-create', async (req, res) => {
   try {
     const userService = serviceFactory.createUserService();
     const user = await userService.createUser(req.body);
-    
+
     res.json({
       success: true,
       data: user,
-      pattern: 'SOLID-compliant'
+      pattern: 'SOLID-compliant',
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -32,22 +32,22 @@ router.post('/api/users/sharded-create', async (req, res) => {
   try {
     const { ShardedUserRepository } = await import('../architecture/sharding-system');
     const userRepo = new ShardedUserRepository(shardingService.userShard);
-    
+
     const user = await userRepo.createUser({
       ...req.body,
       id: Date.now().toString(),
-      region: req.body.region || 'default'
+      region: req.body.region || 'default',
     });
-    
+
     res.json({
       success: true,
       data: user,
-      shard: 'geographic'
+      shard: 'geographic',
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -56,25 +56,25 @@ router.post('/api/users/sharded-create', async (req, res) => {
 router.post('/api/features/load-on-demand', async (req, res) => {
   try {
     const { featureName } = req.body;
-    
+
     if (!featureName) {
       return res.status(400).json({
         success: false,
-        error: 'Feature name is required'
+        error: 'Feature name is required',
       });
     }
-    
+
     await onDemandLoader.loadFeature(featureName);
-    
+
     res.json({
       success: true,
       message: `Feature ${featureName} loaded successfully`,
-      loadedFeatures: onDemandLoader.getLoadedFeatures()
+      loadedFeatures: onDemandLoader.getLoadedFeatures(),
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -83,26 +83,26 @@ router.post('/api/features/load-on-demand', async (req, res) => {
 router.post('/api/resources/acquire', async (req, res) => {
   try {
     const { resourceName } = req.body;
-    
+
     if (!resourceName) {
       return res.status(400).json({
         success: false,
-        error: 'Resource name is required'
+        error: 'Resource name is required',
       });
     }
-    
+
     const resource = await resourceManager.acquireResource(resourceName);
-    
+
     res.json({
       success: true,
       message: `Resource ${resourceName} acquired successfully`,
       resource: resource,
-      stats: resourceManager.getResourceStats()
+      stats: resourceManager.getResourceStats(),
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -112,25 +112,25 @@ router.get('/api/cache/:key', async (req, res) => {
   try {
     const { key } = req.params;
     const value = await cacheManager.get(key);
-    
+
     if (value) {
       res.json({
         success: true,
         data: value,
         cached: true,
-        stats: await cacheManager.getStats()
+        stats: await cacheManager.getStats(),
       });
     } else {
       res.status(404).json({
         success: false,
         message: 'Key not found in cache',
-        cached: false
+        cached: false,
       });
     }
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -139,18 +139,18 @@ router.post('/api/cache/:key', async (req, res) => {
   try {
     const { key } = req.params;
     const { value, ttl } = req.body;
-    
+
     await cacheManager.set(key, value, ttl);
-    
+
     res.json({
       success: true,
       message: `Key ${key} cached successfully`,
-      stats: await cacheManager.getStats()
+      stats: await cacheManager.getStats(),
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -159,17 +159,17 @@ router.post('/api/cache/:key', async (req, res) => {
 router.delete('/api/cache/:key', async (req, res) => {
   try {
     const { key } = req.params;
-    
+
     await cacheInvalidator.invalidateKey(key);
-    
+
     res.json({
       success: true,
-      message: `Key ${key} invalidated successfully`
+      message: `Key ${key} invalidated successfully`,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -179,22 +179,22 @@ router.post('/api/msme/sharded-create', async (req, res) => {
   try {
     const { ShardedMSMERepository } = await import('../architecture/sharding-system');
     const msmeRepo = new ShardedMSMERepository(shardingService.msmeShard);
-    
+
     const msme = await msmeRepo.createMSME({
       ...req.body,
       id: Date.now().toString(),
-      location: req.body.location || 'default'
+      location: req.body.location || 'default',
     });
-    
+
     res.json({
       success: true,
       data: msme,
-      shard: 'hash-based'
+      shard: 'hash-based',
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -203,25 +203,25 @@ router.get('/api/msme/search-sharded', async (req, res) => {
   try {
     const { ShardedMSMERepository } = await import('../architecture/sharding-system');
     const msmeRepo = new ShardedMSMERepository(shardingService.msmeShard);
-    
+
     const { industry, minValuation, maxValuation } = req.query;
-    
+
     const results = await msmeRepo.searchMSMEs({
       industry: industry as string,
       minValuation: parseInt(minValuation as string) || 0,
-      maxValuation: parseInt(maxValuation as string) || 1000000
+      maxValuation: parseInt(maxValuation as string) || 1000000,
     });
-    
+
     res.json({
       success: true,
       data: results,
       count: results.length,
-      sharding: 'distributed-search'
+      sharding: 'distributed-search',
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -232,26 +232,26 @@ router.get('/api/architecture/status', async (req, res) => {
     const status = {
       stagedLoading: {
         loadedStages: stagedLoader.getLoadedStages(),
-        onDemandFeatures: onDemandLoader.getLoadedFeatures()
+        onDemandFeatures: onDemandLoader.getLoadedFeatures(),
       },
       resources: resourceManager.getResourceStats(),
       cache: await cacheManager.getStats(),
       sharding: {
         userShard: 'geographic',
         msmeShard: 'hash-based',
-        transactionShard: 'range-based'
+        transactionShard: 'range-based',
       },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
-    
+
     res.json({
       success: true,
-      data: status
+      data: status,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -266,17 +266,17 @@ router.get('/api/architecture/performance', async (req, res) => {
       loadedModules: Object.keys(require.cache).length,
       pid: process.pid,
       architecture: process.arch,
-      platform: process.platform
+      platform: process.platform,
     };
-    
+
     res.json({
       success: true,
-      data: performance
+      data: performance,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });

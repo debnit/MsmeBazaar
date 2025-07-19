@@ -4,9 +4,9 @@ import { Loader2, TrendingUp, Building2, Users, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Loading fallback components
-const LoadingSkeleton: React.FC<{ className?: string; variant?: 'card' | 'table' | 'chart' | 'dashboard' }> = ({ 
-  className, 
-  variant = 'card' 
+const LoadingSkeleton: React.FC<{ className?: string; variant?: 'card' | 'table' | 'chart' | 'dashboard' }> = ({
+  className,
+  variant = 'card',
 }) => {
   const skeletonVariants = {
     pulse: {
@@ -14,137 +14,137 @@ const LoadingSkeleton: React.FC<{ className?: string; variant?: 'card' | 'table'
       transition: {
         duration: 1.5,
         repeat: Infinity,
-        ease: "easeInOut"
-      }
-    }
+        ease: 'easeInOut',
+      },
+    },
   };
 
   switch (variant) {
-    case 'table':
-      return (
-        <div className={cn("space-y-3", className)}>
-          {Array.from({ length: 5 }).map((_, i) => (
+  case 'table':
+    return (
+      <div className={cn('space-y-3', className)}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <motion.div
+            key={i}
+            variants={skeletonVariants}
+            animate="pulse"
+            className="flex items-center space-x-4 p-4 bg-muted rounded-lg"
+          >
+            <div className="h-10 w-10 bg-muted-foreground/20 rounded-full" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-muted-foreground/20 rounded w-3/4" />
+              <div className="h-3 bg-muted-foreground/20 rounded w-1/2" />
+            </div>
+            <div className="h-4 bg-muted-foreground/20 rounded w-20" />
+          </motion.div>
+        ))}
+      </div>
+    );
+
+  case 'chart':
+    return (
+      <motion.div
+        variants={skeletonVariants}
+        animate="pulse"
+        className={cn('space-y-4', className)}
+      >
+        <div className="h-6 bg-muted-foreground/20 rounded w-1/3" />
+        <div className="h-64 bg-muted-foreground/20 rounded" />
+        <div className="flex justify-between">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-4 bg-muted-foreground/20 rounded w-16" />
+          ))}
+        </div>
+      </motion.div>
+    );
+
+  case 'dashboard':
+    return (
+      <div className={cn('space-y-6', className)}>
+        {/* Header skeleton */}
+        <motion.div
+          variants={skeletonVariants}
+          animate="pulse"
+          className="space-y-2"
+        >
+          <div className="h-8 bg-muted-foreground/20 rounded w-1/4" />
+          <div className="h-4 bg-muted-foreground/20 rounded w-1/2" />
+        </motion.div>
+
+        {/* Stats cards skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
             <motion.div
               key={i}
               variants={skeletonVariants}
               animate="pulse"
-              className="flex items-center space-x-4 p-4 bg-muted rounded-lg"
+              className="p-6 bg-muted rounded-lg space-y-3"
             >
-              <div className="h-10 w-10 bg-muted-foreground/20 rounded-full" />
-              <div className="flex-1 space-y-2">
-                <div className="h-4 bg-muted-foreground/20 rounded w-3/4" />
-                <div className="h-3 bg-muted-foreground/20 rounded w-1/2" />
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <div className="h-4 bg-muted-foreground/20 rounded w-20" />
+                  <div className="h-8 bg-muted-foreground/20 rounded w-16" />
+                </div>
+                <div className="h-10 w-10 bg-muted-foreground/20 rounded-full" />
               </div>
-              <div className="h-4 bg-muted-foreground/20 rounded w-20" />
             </motion.div>
           ))}
         </div>
-      );
 
-    case 'chart':
-      return (
+        {/* Chart skeleton */}
         <motion.div
           variants={skeletonVariants}
           animate="pulse"
-          className={cn("space-y-4", className)}
+          className="p-6 bg-muted rounded-lg"
         >
-          <div className="h-6 bg-muted-foreground/20 rounded w-1/3" />
+          <div className="h-6 bg-muted-foreground/20 rounded w-1/4 mb-4" />
           <div className="h-64 bg-muted-foreground/20 rounded" />
-          <div className="flex justify-between">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-4 bg-muted-foreground/20 rounded w-16" />
-            ))}
-          </div>
         </motion.div>
-      );
+      </div>
+    );
 
-    case 'dashboard':
-      return (
-        <div className={cn("space-y-6", className)}>
-          {/* Header skeleton */}
-          <motion.div
-            variants={skeletonVariants}
-            animate="pulse"
-            className="space-y-2"
-          >
-            <div className="h-8 bg-muted-foreground/20 rounded w-1/4" />
-            <div className="h-4 bg-muted-foreground/20 rounded w-1/2" />
-          </motion.div>
-
-          {/* Stats cards skeleton */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <motion.div
-                key={i}
-                variants={skeletonVariants}
-                animate="pulse"
-                className="p-6 bg-muted rounded-lg space-y-3"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <div className="h-4 bg-muted-foreground/20 rounded w-20" />
-                    <div className="h-8 bg-muted-foreground/20 rounded w-16" />
-                  </div>
-                  <div className="h-10 w-10 bg-muted-foreground/20 rounded-full" />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Chart skeleton */}
-          <motion.div
-            variants={skeletonVariants}
-            animate="pulse"
-            className="p-6 bg-muted rounded-lg"
-          >
-            <div className="h-6 bg-muted-foreground/20 rounded w-1/4 mb-4" />
-            <div className="h-64 bg-muted-foreground/20 rounded" />
-          </motion.div>
+  default:
+    return (
+      <motion.div
+        variants={skeletonVariants}
+        animate="pulse"
+        className={cn('p-6 bg-muted rounded-lg space-y-4', className)}
+      >
+        <div className="h-6 bg-muted-foreground/20 rounded w-1/3" />
+        <div className="space-y-2">
+          <div className="h-4 bg-muted-foreground/20 rounded w-full" />
+          <div className="h-4 bg-muted-foreground/20 rounded w-3/4" />
+          <div className="h-4 bg-muted-foreground/20 rounded w-1/2" />
         </div>
-      );
-
-    default:
-      return (
-        <motion.div
-          variants={skeletonVariants}
-          animate="pulse"
-          className={cn("p-6 bg-muted rounded-lg space-y-4", className)}
-        >
-          <div className="h-6 bg-muted-foreground/20 rounded w-1/3" />
-          <div className="space-y-2">
-            <div className="h-4 bg-muted-foreground/20 rounded w-full" />
-            <div className="h-4 bg-muted-foreground/20 rounded w-3/4" />
-            <div className="h-4 bg-muted-foreground/20 rounded w-1/2" />
-          </div>
-        </motion.div>
-      );
+      </motion.div>
+    );
   }
 };
 
 // Enhanced loading spinner with context
-const LoadingSpinner: React.FC<{ 
-  message?: string; 
+const LoadingSpinner: React.FC<{
+  message?: string;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
-}> = ({ 
-  message = "Loading...", 
+}> = ({
+  message = 'Loading...',
   className,
-  size = 'md'
+  size = 'md',
 }) => {
   const sizeClasses = {
     sm: 'h-4 w-4',
     md: 'h-8 w-8',
-    lg: 'h-12 w-12'
+    lg: 'h-12 w-12',
   };
 
   return (
-    <div className={cn("flex flex-col items-center justify-center space-y-4 p-8", className)}>
+    <div className={cn('flex flex-col items-center justify-center space-y-4 p-8', className)}>
       <motion.div
         animate={{ rotate: 360 }}
-        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
         className="relative"
       >
-        <Loader2 className={cn("text-primary", sizeClasses[size])} />
+        <Loader2 className={cn('text-primary', sizeClasses[size])} />
       </motion.div>
       <motion.p
         initial={{ opacity: 0, y: 10 }}
@@ -159,40 +159,40 @@ const LoadingSpinner: React.FC<{
 };
 
 // Lazy load heavy components
-const LazyAnalyticsDashboard = React.lazy(() => 
+const LazyAnalyticsDashboard = React.lazy(() =>
   import('@/components/analytics/AnalyticsDashboard').then(module => ({
-    default: module.AnalyticsDashboard
-  }))
+    default: module.AnalyticsDashboard,
+  })),
 );
 
-const LazyMSMETable = React.lazy(() => 
+const LazyMSMETable = React.lazy(() =>
   import('@/components/msme/MSMETable').then(module => ({
-    default: module.MSMETable
-  }))
+    default: module.MSMETable,
+  })),
 );
 
-const LazyValuationChart = React.lazy(() => 
+const LazyValuationChart = React.lazy(() =>
   import('@/components/charts/ValuationChart').then(module => ({
-    default: module.ValuationChart
-  }))
+    default: module.ValuationChart,
+  })),
 );
 
-const LazyGamificationDashboard = React.lazy(() => 
+const LazyGamificationDashboard = React.lazy(() =>
   import('@/components/gamification/GamificationDashboard').then(module => ({
-    default: module.GamificationDashboard
-  }))
+    default: module.GamificationDashboard,
+  })),
 );
 
-const LazyMSMERegistrationForm = React.lazy(() => 
+const LazyMSMERegistrationForm = React.lazy(() =>
   import('@/components/forms/MSMERegistrationForm').then(module => ({
-    default: module.MSMERegistrationForm
-  }))
+    default: module.MSMERegistrationForm,
+  })),
 );
 
-const LazyInteractiveMap = React.lazy(() => 
+const LazyInteractiveMap = React.lazy(() =>
   import('@/components/maps/InteractiveMap').then(module => ({
-    default: module.InteractiveMap
-  }))
+    default: module.InteractiveMap,
+  })),
 );
 
 // Wrapper components with error boundaries and loading states
@@ -240,11 +240,11 @@ export const PerformanceWrapper: React.FC<{
 }> = ({ children, componentName, onLoadTime }) => {
   React.useEffect(() => {
     const startTime = performance.now();
-    
+
     return () => {
       const loadTime = performance.now() - startTime;
       onLoadTime?.(loadTime);
-      
+
       // Log performance metrics
       if (process.env.NODE_ENV === 'development') {
         console.log(`${componentName} loaded in ${loadTime.toFixed(2)}ms`);
@@ -276,7 +276,7 @@ export const ProgressiveImage: React.FC<{
   };
 
   return (
-    <div className={cn("relative overflow-hidden", className)}>
+    <div className={cn('relative overflow-hidden', className)}>
       {/* Placeholder */}
       {!loaded && !error && (
         <motion.div
@@ -305,7 +305,7 @@ export const ProgressiveImage: React.FC<{
         initial={{ opacity: 0 }}
         animate={{ opacity: loaded ? 1 : 0 }}
         transition={{ duration: 0.3 }}
-        className={cn("w-full h-full object-cover", className)}
+        className={cn('w-full h-full object-cover', className)}
         loading="lazy"
       />
 
@@ -322,13 +322,13 @@ export const ProgressiveImage: React.FC<{
 // Intersection Observer hook for lazy loading
 export const useIntersectionObserver = (
   ref: React.RefObject<Element>,
-  options: IntersectionObserverInit = {}
+  options: IntersectionObserverInit = {},
 ) => {
   const [isVisible, setIsVisible] = React.useState(false);
 
   React.useEffect(() => {
     const element = ref.current;
-    if (!element) return;
+    if (!element) {return;}
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -337,7 +337,7 @@ export const useIntersectionObserver = (
       {
         threshold: 0.1,
         ...options,
-      }
+      },
     );
 
     observer.observe(element);
@@ -376,5 +376,5 @@ export {
   LazyValuationChart,
   LazyGamificationDashboard,
   LazyMSMERegistrationForm,
-  LazyInteractiveMap
+  LazyInteractiveMap,
 };

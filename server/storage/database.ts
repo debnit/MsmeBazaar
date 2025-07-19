@@ -46,10 +46,10 @@ import {
   type PlatformRevenue,
   type InsertPlatformRevenue,
   type UserSubscription,
-} from "@shared/schema";
-import { db } from "../db";
-import { eq, and, desc, ilike, sql, or } from "drizzle-orm";
-import bcrypt from "bcrypt";
+} from '@shared/schema';
+import { db } from '../db';
+import { eq, and, desc, ilike, sql, or } from 'drizzle-orm';
+import bcrypt from 'bcrypt';
 
 export interface IStorage {
   // User operations
@@ -59,12 +59,12 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User>;
   authenticateUser(email: string, password: string): Promise<User | null>;
-  
+
   // NBFC operations
   createNbfcDetails(nbfc: InsertNbfcDetails): Promise<NbfcDetails>;
   getNbfcDetails(userId: number): Promise<NbfcDetails | undefined>;
   updateNbfcDetails(userId: number, nbfc: Partial<InsertNbfcDetails>): Promise<NbfcDetails>;
-  
+
   // MSME operations
   createMsmeListing(listing: InsertMsmeListing): Promise<MsmeListing>;
   getMsmeListing(id: number): Promise<MsmeListing | undefined>;
@@ -72,64 +72,64 @@ export interface IStorage {
   getUserMsmeListings(userId: number): Promise<MsmeListing[]>;
   updateMsmeListing(id: number, listing: Partial<InsertMsmeListing>): Promise<MsmeListing>;
   deleteMsmeListing(id: number): Promise<void>;
-  
+
   // Loan application operations
   createLoanApplication(application: InsertLoanApplication): Promise<LoanApplication>;
   getLoanApplication(id: number): Promise<LoanApplication | undefined>;
   getLoanApplications(filters?: { nbfcId?: number; buyerId?: number; status?: string }): Promise<LoanApplication[]>;
   updateLoanApplication(id: number, application: Partial<InsertLoanApplication>): Promise<LoanApplication>;
-  
+
   // Buyer interest operations
   createBuyerInterest(interest: InsertBuyerInterest): Promise<BuyerInterest>;
   getBuyerInterests(msmeId: number): Promise<BuyerInterest[]>;
   getUserBuyerInterests(userId: number): Promise<BuyerInterest[]>;
   updateBuyerInterest(id: number, interest: Partial<InsertBuyerInterest>): Promise<BuyerInterest>;
-  
+
   // Agent operations
   createAgentAssignment(assignment: InsertAgentAssignment): Promise<AgentAssignment>;
   getAgentAssignments(agentId: number): Promise<AgentAssignment[]>;
   updateAgentAssignment(id: number, assignment: Partial<InsertAgentAssignment>): Promise<AgentAssignment>;
-  
+
   // Loan product operations
   createLoanProduct(product: InsertLoanProduct): Promise<LoanProduct>;
   getLoanProducts(nbfcId?: number): Promise<LoanProduct[]>;
   updateLoanProduct(id: number, product: Partial<InsertLoanProduct>): Promise<LoanProduct>;
-  
+
   // Compliance operations
   createComplianceRecord(record: InsertComplianceRecord): Promise<ComplianceRecord>;
   getComplianceRecords(nbfcId: number): Promise<ComplianceRecord[]>;
   updateComplianceRecord(id: number, record: Partial<InsertComplianceRecord>): Promise<ComplianceRecord>;
-  
+
   // Analytics
   getDashboardStats(userId: number, role: string): Promise<any>;
-  
+
   // Monetization operations
   createAgentCommission(commission: InsertAgentCommission): Promise<AgentCommission>;
   getAgentCommissions(agentId: number): Promise<AgentCommission[]>;
   updateAgentCommission(id: number, commission: Partial<InsertAgentCommission>): Promise<AgentCommission>;
-  
+
   createValuationPayment(payment: InsertValuationPayment): Promise<ValuationPayment>;
   getValuationPaymentByPaymentId(paymentId: string): Promise<ValuationPayment | undefined>;
   updateValuationPayment(paymentId: string, payment: Partial<InsertValuationPayment>): Promise<ValuationPayment>;
-  
+
   createMatchmakingReportPayment(payment: InsertMatchmakingReportPayment): Promise<MatchmakingReportPayment>;
   getMatchmakingReportPaymentByPaymentId(paymentId: string): Promise<MatchmakingReportPayment | undefined>;
   updateMatchmakingReportPayment(paymentId: string, payment: Partial<InsertMatchmakingReportPayment>): Promise<MatchmakingReportPayment>;
-  
+
   createLeadCredit(credit: InsertLeadCredit): Promise<LeadCredit>;
   getLeadCredits(userId: number): Promise<LeadCredit | undefined>;
   updateLeadCredits(userId: number, credit: Partial<InsertLeadCredit>): Promise<LeadCredit>;
-  
+
   createLeadPurchase(purchase: InsertLeadPurchase): Promise<LeadPurchase>;
   getLeadPurchases(sellerId: number): Promise<LeadPurchase[]>;
-  
+
   createApiAccess(access: InsertApiAccess): Promise<ApiAccess>;
   getApiAccess(apiKey: string): Promise<ApiAccess | undefined>;
   updateApiAccess(id: number, access: Partial<InsertApiAccess>): Promise<ApiAccess>;
-  
+
   createPlatformRevenue(revenue: InsertPlatformRevenue): Promise<PlatformRevenue>;
   getPlatformRevenue(filters?: { startDate?: Date; endDate?: Date; status?: string }): Promise<PlatformRevenue[]>;
-  
+
   getUserActiveSubscription(userId: number): Promise<UserSubscription | undefined>;
 }
 
@@ -185,7 +185,7 @@ export class DatabaseStorage implements IStorage {
 
   async authenticateUser(email: string, password: string): Promise<User | null> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
-    
+
     if (!user || !user.password) {
       return null;
     }
@@ -248,27 +248,27 @@ export class DatabaseStorage implements IStorage {
 
   async getMsmeListings(filters?: { status?: string; industry?: string; city?: string }): Promise<MsmeListing[]> {
     let query = db.select().from(msmeListings);
-    
+
     if (filters) {
       const conditions = [];
-      
+
       if (filters.status) {
         conditions.push(eq(msmeListings.status, filters.status));
       }
-      
+
       if (filters.industry) {
         conditions.push(eq(msmeListings.industry, filters.industry));
       }
-      
+
       if (filters.city) {
         conditions.push(eq(msmeListings.city, filters.city));
       }
-      
+
       if (conditions.length > 0) {
         query = query.where(and(...conditions));
       }
     }
-    
+
     return await query.orderBy(desc(msmeListings.createdAt));
   }
 
@@ -318,27 +318,27 @@ export class DatabaseStorage implements IStorage {
 
   async getLoanApplications(filters?: { nbfcId?: number; buyerId?: number; status?: string }): Promise<LoanApplication[]> {
     let query = db.select().from(loanApplications);
-    
+
     if (filters) {
       const conditions = [];
-      
+
       if (filters.nbfcId) {
         conditions.push(eq(loanApplications.nbfcId, filters.nbfcId));
       }
-      
+
       if (filters.buyerId) {
         conditions.push(eq(loanApplications.buyerId, filters.buyerId));
       }
-      
+
       if (filters.status) {
         conditions.push(eq(loanApplications.status, filters.status));
       }
-      
+
       if (conditions.length > 0) {
         query = query.where(and(...conditions));
       }
     }
-    
+
     return await query.orderBy(desc(loanApplications.createdAt));
   }
 
@@ -440,11 +440,11 @@ export class DatabaseStorage implements IStorage {
 
   async getLoanProducts(nbfcId?: number): Promise<LoanProduct[]> {
     let query = db.select().from(loanProducts);
-    
+
     if (nbfcId) {
       query = query.where(eq(loanProducts.nbfcId, nbfcId));
     }
-    
+
     return await query.orderBy(desc(loanProducts.createdAt));
   }
 
@@ -526,99 +526,99 @@ export class DatabaseStorage implements IStorage {
 
       // Role-specific stats
       switch (role) {
-        case 'seller':
-          const userListings = await db
-            .select()
-            .from(msmeListings)
-            .where(eq(msmeListings.sellerId, userId))
-            .orderBy(desc(msmeListings.createdAt))
-            .limit(5);
-          stats.myListings = userListings.length;
-          stats.recentListings = userListings;
+      case 'seller':
+        const userListings = await db
+          .select()
+          .from(msmeListings)
+          .where(eq(msmeListings.sellerId, userId))
+          .orderBy(desc(msmeListings.createdAt))
+          .limit(5);
+        stats.myListings = userListings.length;
+        stats.recentListings = userListings;
 
-          const myInterests = await db
-            .select()
-            .from(buyerInterests)
-            .where(eq(buyerInterests.msmeId, sql`ANY(SELECT id FROM msme_listings WHERE seller_id = ${userId})`))
-            .orderBy(desc(buyerInterests.createdAt))
-            .limit(5);
-          stats.recentInterests = myInterests;
-          break;
+        const myInterests = await db
+          .select()
+          .from(buyerInterests)
+          .where(eq(buyerInterests.msmeId, sql`ANY(SELECT id FROM msme_listings WHERE seller_id = ${userId})`))
+          .orderBy(desc(buyerInterests.createdAt))
+          .limit(5);
+        stats.recentInterests = myInterests;
+        break;
 
-        case 'buyer':
-          const myBuyerInterests = await db
-            .select()
-            .from(buyerInterests)
-            .where(eq(buyerInterests.buyerId, userId))
-            .orderBy(desc(buyerInterests.createdAt))
-            .limit(5);
-          stats.myInterests = myBuyerInterests.length;
-          stats.recentInterests = myBuyerInterests;
+      case 'buyer':
+        const myBuyerInterests = await db
+          .select()
+          .from(buyerInterests)
+          .where(eq(buyerInterests.buyerId, userId))
+          .orderBy(desc(buyerInterests.createdAt))
+          .limit(5);
+        stats.myInterests = myBuyerInterests.length;
+        stats.recentInterests = myBuyerInterests;
 
-          const myLoanApps = await db
-            .select()
-            .from(loanApplications)
-            .where(eq(loanApplications.buyerId, userId))
-            .orderBy(desc(loanApplications.createdAt))
-            .limit(5);
-          stats.myLoanApplications = myLoanApps.length;
-          stats.recentLoanApplications = myLoanApps;
-          break;
+        const myLoanApps = await db
+          .select()
+          .from(loanApplications)
+          .where(eq(loanApplications.buyerId, userId))
+          .orderBy(desc(loanApplications.createdAt))
+          .limit(5);
+        stats.myLoanApplications = myLoanApps.length;
+        stats.recentLoanApplications = myLoanApps;
+        break;
 
-        case 'nbfc':
-          const nbfcLoans = await db
-            .select()
-            .from(loanApplications)
-            .where(eq(loanApplications.nbfcId, userId))
-            .orderBy(desc(loanApplications.createdAt))
-            .limit(5);
-          stats.assignedLoans = nbfcLoans.length;
-          stats.recentLoanApplications = nbfcLoans;
+      case 'nbfc':
+        const nbfcLoans = await db
+          .select()
+          .from(loanApplications)
+          .where(eq(loanApplications.nbfcId, userId))
+          .orderBy(desc(loanApplications.createdAt))
+          .limit(5);
+        stats.assignedLoans = nbfcLoans.length;
+        stats.recentLoanApplications = nbfcLoans;
 
-          const nbfcProducts = await db
-            .select()
-            .from(loanProducts)
-            .where(eq(loanProducts.nbfcId, userId))
-            .orderBy(desc(loanProducts.createdAt))
-            .limit(5);
-          stats.myProducts = nbfcProducts.length;
-          stats.recentProducts = nbfcProducts;
-          break;
+        const nbfcProducts = await db
+          .select()
+          .from(loanProducts)
+          .where(eq(loanProducts.nbfcId, userId))
+          .orderBy(desc(loanProducts.createdAt))
+          .limit(5);
+        stats.myProducts = nbfcProducts.length;
+        stats.recentProducts = nbfcProducts;
+        break;
 
-        case 'agent':
-          const agentAssigns = await db
-            .select()
-            .from(agentAssignments)
-            .where(eq(agentAssignments.agentId, userId))
-            .orderBy(desc(agentAssignments.createdAt))
-            .limit(5);
-          stats.myAssignments = agentAssigns.length;
-          stats.recentAssignments = agentAssigns;
-          break;
+      case 'agent':
+        const agentAssigns = await db
+          .select()
+          .from(agentAssignments)
+          .where(eq(agentAssignments.agentId, userId))
+          .orderBy(desc(agentAssignments.createdAt))
+          .limit(5);
+        stats.myAssignments = agentAssigns.length;
+        stats.recentAssignments = agentAssigns;
+        break;
 
-        case 'admin':
-          // Get recent activities across all entities
-          const recentListings = await db
-            .select()
-            .from(msmeListings)
-            .orderBy(desc(msmeListings.createdAt))
-            .limit(10);
-          stats.recentListings = recentListings;
+      case 'admin':
+        // Get recent activities across all entities
+        const recentListings = await db
+          .select()
+          .from(msmeListings)
+          .orderBy(desc(msmeListings.createdAt))
+          .limit(10);
+        stats.recentListings = recentListings;
 
-          const recentLoans = await db
-            .select()
-            .from(loanApplications)
-            .orderBy(desc(loanApplications.createdAt))
-            .limit(10);
-          stats.recentLoanApplications = recentLoans;
+        const recentLoans = await db
+          .select()
+          .from(loanApplications)
+          .orderBy(desc(loanApplications.createdAt))
+          .limit(10);
+        stats.recentLoanApplications = recentLoans;
 
-          const recentUsers = await db
-            .select()
-            .from(users)
-            .orderBy(desc(users.createdAt))
-            .limit(10);
-          stats.recentUsers = recentUsers;
-          break;
+        const recentUsers = await db
+          .select()
+          .from(users)
+          .orderBy(desc(users.createdAt))
+          .limit(10);
+        stats.recentUsers = recentUsers;
+        break;
       }
 
       return stats;
@@ -637,20 +637,20 @@ export class DatabaseStorage implements IStorage {
   // Search functionality
   async searchMsmeListings(query: string, filters?: any): Promise<MsmeListing[]> {
     let dbQuery = db.select().from(msmeListings);
-    
+
     const conditions = [];
-    
+
     if (query) {
       conditions.push(
         or(
           ilike(msmeListings.companyName, `%${query}%`),
           ilike(msmeListings.industry, `%${query}%`),
           ilike(msmeListings.businessType, `%${query}%`),
-          ilike(msmeListings.description, `%${query}%`)
-        )
+          ilike(msmeListings.description, `%${query}%`),
+        ),
       );
     }
-    
+
     if (filters) {
       if (filters.industry) {
         conditions.push(eq(msmeListings.industry, filters.industry));
@@ -668,11 +668,11 @@ export class DatabaseStorage implements IStorage {
         conditions.push(sql`${msmeListings.askingPrice} <= ${filters.maxPrice}`);
       }
     }
-    
+
     if (conditions.length > 0) {
       dbQuery = dbQuery.where(and(...conditions));
     }
-    
+
     return await dbQuery
       .orderBy(desc(msmeListings.createdAt))
       .limit(50);
@@ -681,27 +681,27 @@ export class DatabaseStorage implements IStorage {
   // Get user with relations
   async getUserWithRelations(id: number): Promise<any> {
     const user = await this.getUser(id);
-    if (!user) return null;
+    if (!user) {return null;}
 
     const result: any = { ...user };
 
     // Get related data based on role
     switch (user.role) {
-      case 'seller':
-        result.listings = await this.getUserMsmeListings(id);
-        break;
-      case 'buyer':
-        result.interests = await this.getUserBuyerInterests(id);
-        result.loanApplications = await this.getLoanApplications({ buyerId: id });
-        break;
-      case 'nbfc':
-        result.details = await this.getNbfcDetails(id);
-        result.loanApplications = await this.getLoanApplications({ nbfcId: id });
-        result.products = await this.getLoanProducts(id);
-        break;
-      case 'agent':
-        result.assignments = await this.getAgentAssignments(id);
-        break;
+    case 'seller':
+      result.listings = await this.getUserMsmeListings(id);
+      break;
+    case 'buyer':
+      result.interests = await this.getUserBuyerInterests(id);
+      result.loanApplications = await this.getLoanApplications({ buyerId: id });
+      break;
+    case 'nbfc':
+      result.details = await this.getNbfcDetails(id);
+      result.loanApplications = await this.getLoanApplications({ nbfcId: id });
+      result.products = await this.getLoanProducts(id);
+      break;
+    case 'agent':
+      result.assignments = await this.getAgentAssignments(id);
+      break;
     }
 
     return result;
@@ -740,7 +740,7 @@ export class DatabaseStorage implements IStorage {
     const industriesCounts = await db
       .select({
         industry: msmeListings.industry,
-        count: sql<number>`count(*)`
+        count: sql<number>`count(*)`,
       })
       .from(msmeListings)
       .where(eq(msmeListings.status, 'active'))
@@ -908,19 +908,19 @@ export class DatabaseStorage implements IStorage {
 
   async getPlatformRevenue(filters?: { startDate?: Date; endDate?: Date; status?: string }): Promise<PlatformRevenue[]> {
     let query = db.select().from(platformRevenue);
-    
+
     if (filters?.startDate) {
       query = query.where(sql`${platformRevenue.createdAt} >= ${filters.startDate}`);
     }
-    
+
     if (filters?.endDate) {
       query = query.where(sql`${platformRevenue.createdAt} <= ${filters.endDate}`);
     }
-    
+
     if (filters?.status) {
       query = query.where(eq(platformRevenue.status, filters.status));
     }
-    
+
     return await query.orderBy(desc(platformRevenue.createdAt));
   }
 
@@ -932,8 +932,8 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(userSubscriptions.userId, userId),
           eq(userSubscriptions.status, 'active'),
-          sql`${userSubscriptions.endDate} > NOW()`
-        )
+          sql`${userSubscriptions.endDate} > NOW()`,
+        ),
       );
     return result;
   }

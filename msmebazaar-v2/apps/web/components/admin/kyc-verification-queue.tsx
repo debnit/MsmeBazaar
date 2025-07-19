@@ -5,12 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import {
   Table,
@@ -29,17 +29,17 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Search, 
-  Filter, 
-  Eye, 
-  CheckCircle, 
-  XCircle, 
+import {
+  Search,
+  Filter,
+  Eye,
+  CheckCircle,
+  XCircle,
   FileText,
   Download,
   Building,
   Calendar,
-  ExternalLink
+  ExternalLink,
 } from 'lucide-react';
 import { KYCVerificationItem, adminApi } from '@/lib/api/admin';
 import { formatDate } from '@/lib/utils';
@@ -51,10 +51,10 @@ interface KYCVerificationQueueProps {
   onRefresh?: () => void;
 }
 
-export function KYCVerificationQueue({ 
-  items, 
-  isLoading, 
-  onRefresh 
+export function KYCVerificationQueue({
+  items,
+  isLoading,
+  onRefresh,
 }: KYCVerificationQueueProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -68,13 +68,13 @@ export function KYCVerificationQueue({
 
   // Filter items based on search and status
   const filteredItems = items.filter(item => {
-    const matchesSearch = 
+    const matchesSearch =
       item.msme.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.msme.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.document_type.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -84,7 +84,7 @@ export function KYCVerificationQueue({
       APPROVED: { variant: 'success' as const, label: 'Approved' },
       REJECTED: { variant: 'error' as const, label: 'Rejected' },
     };
-    
+
     const config = statusConfig[status as keyof typeof statusConfig];
     return (
       <Badge variant={config.variant}>
@@ -105,7 +105,7 @@ export function KYCVerificationQueue({
       BUSINESS_PLAN: { label: 'Business Plan', color: 'bg-pink-100 text-pink-800' },
       OTHER: { label: 'Other', color: 'bg-gray-100 text-gray-800' },
     };
-    
+
     const config = typeConfig[type as keyof typeof typeConfig] || typeConfig.OTHER;
     return (
       <Badge className={config.color}>
@@ -115,9 +115,9 @@ export function KYCVerificationQueue({
   };
 
   const handleDocumentAction = async (
-    documentId: string, 
-    status: 'APPROVED' | 'REJECTED', 
-    notes: string
+    documentId: string,
+    status: 'APPROVED' | 'REJECTED',
+    notes: string,
   ) => {
     setIsUpdating(true);
     try {
@@ -134,8 +134,8 @@ export function KYCVerificationQueue({
   };
 
   const openActionDialog = (
-    type: 'approve' | 'reject' | 'view', 
-    document: KYCVerificationItem
+    type: 'approve' | 'reject' | 'view',
+    document: KYCVerificationItem,
   ) => {
     setActionDialog({ open: true, type, document });
     setNotes('');
@@ -180,7 +180,7 @@ export function KYCVerificationQueue({
             Refresh
           </Button>
         </div>
-        
+
         {/* Filters */}
         <div className="flex items-center gap-4 mt-4">
           <div className="relative flex-1">
@@ -192,7 +192,7 @@ export function KYCVerificationQueue({
               className="pl-10"
             />
           </div>
-          
+
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-48">
               <Filter className="h-4 w-4 mr-2" />
@@ -207,7 +207,7 @@ export function KYCVerificationQueue({
           </Select>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         <div className="rounded-md border">
           <Table>
@@ -242,29 +242,29 @@ export function KYCVerificationQueue({
                         </div>
                       </div>
                     </TableCell>
-                    
+
                     <TableCell>
                       {getDocumentTypeBadge(item.document_type)}
                     </TableCell>
-                    
+
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-gray-400" />
                         <span className="text-sm truncate max-w-32">{item.file_name}</span>
                       </div>
                     </TableCell>
-                    
+
                     <TableCell>
                       {getStatusBadge(item.status)}
                     </TableCell>
-                    
+
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Calendar className="h-3 w-3 text-gray-400" />
                         <span className="text-sm">{formatDate(item.created_at)}</span>
                       </div>
                     </TableCell>
-                    
+
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Button
@@ -274,7 +274,7 @@ export function KYCVerificationQueue({
                         >
                           <ExternalLink className="h-4 w-4" />
                         </Button>
-                        
+
                         <Button
                           variant="ghost"
                           size="sm"
@@ -282,7 +282,7 @@ export function KYCVerificationQueue({
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        
+
                         {item.status === 'PENDING' && (
                           <>
                             <Button
@@ -314,8 +314,8 @@ export function KYCVerificationQueue({
       </CardContent>
 
       {/* Action Dialog */}
-      <Dialog 
-        open={actionDialog.open} 
+      <Dialog
+        open={actionDialog.open}
         onOpenChange={(open) => setActionDialog({ ...actionDialog, open })}
       >
         <DialogContent className="max-w-2xl">
@@ -371,7 +371,7 @@ export function KYCVerificationQueue({
                     <p className="text-sm text-gray-600">{formatDate(actionDialog.document.created_at)}</p>
                   </div>
                 </div>
-                
+
                 <div className="mt-4">
                   <Button
                     variant="outline"
@@ -401,19 +401,19 @@ export function KYCVerificationQueue({
           )}
 
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setActionDialog({ ...actionDialog, open: false })}
             >
               Cancel
             </Button>
-            
+
             {actionDialog.type === 'approve' && (
               <Button
                 onClick={() => handleDocumentAction(
-                  actionDialog.document!.id, 
-                  'APPROVED', 
-                  notes
+                  actionDialog.document!.id,
+                  'APPROVED',
+                  notes,
                 )}
                 disabled={isUpdating}
                 className="bg-green-600 hover:bg-green-700"
@@ -421,14 +421,14 @@ export function KYCVerificationQueue({
                 {isUpdating ? 'Approving...' : 'Approve'}
               </Button>
             )}
-            
+
             {actionDialog.type === 'reject' && (
               <Button
                 variant="destructive"
                 onClick={() => handleDocumentAction(
-                  actionDialog.document!.id, 
-                  'REJECTED', 
-                  notes
+                  actionDialog.document!.id,
+                  'REJECTED',
+                  notes,
                 )}
                 disabled={isUpdating}
               >

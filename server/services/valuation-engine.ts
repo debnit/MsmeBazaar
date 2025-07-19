@@ -44,7 +44,7 @@ export class MSMEValuationEngine {
     'agriculture': 1.5,
     'finance': 4.0,
     'hospitality': 1.6,
-    'default': 2.0
+    'default': 2.0,
   };
 
   private stateEconomicFactors: { [key: string]: number } = {
@@ -59,7 +59,7 @@ export class MSMEValuationEngine {
     'Rajasthan': 0.98,
     'Madhya Pradesh': 0.92,
     'Odisha': 0.90,
-    'default': 1.00
+    'default': 1.00,
   };
 
   /**
@@ -85,10 +85,10 @@ export class MSMEValuationEngine {
     );
 
     // Apply adjustments
-    const adjustedValuation = baseValuation * 
-      (1 + growthAdjustment) * 
-      (1 - distressScore) * 
-      liquidityFactor * 
+    const adjustedValuation = baseValuation *
+      (1 + growthAdjustment) *
+      (1 - distressScore) *
+      liquidityFactor *
       marketPositionScore;
 
     // Calculate confidence based on data quality
@@ -104,7 +104,7 @@ export class MSMEValuationEngine {
       growthAdjustment,
       marketPositionScore,
       finalValuation: Math.round(adjustedValuation),
-      confidence
+      confidence,
     };
   }
 
@@ -114,10 +114,10 @@ export class MSMEValuationEngine {
   private calculateRevenueMultiple(data: MSMEValuationData): number {
     const industryMultiplier = this.industryMultipliers[data.industry] || this.industryMultipliers.default;
     const profitMarginFactor = data.netProfit / data.annualTurnover;
-    
+
     // Adjust multiplier based on profit margin
     const adjustedMultiplier = industryMultiplier * (1 + profitMarginFactor * 2);
-    
+
     return data.annualTurnover * Math.min(adjustedMultiplier, 5.0);
   }
 
@@ -127,10 +127,10 @@ export class MSMEValuationEngine {
   private calculateAssetValue(data: MSMEValuationData): number {
     const netAssets = data.totalAssets - data.totalLiabilities;
     const assetUtilizationRatio = data.annualTurnover / data.totalAssets;
-    
+
     // Higher asset utilization = higher valuation
     const utilizationBonus = Math.min(assetUtilizationRatio * 0.5, 1.0);
-    
+
     return netAssets * (1 + utilizationBonus);
   }
 
@@ -140,7 +140,7 @@ export class MSMEValuationEngine {
   private calculateIndustryFactor(data: MSMEValuationData): number {
     const baseMultiplier = this.industryMultipliers[data.industry] || this.industryMultipliers.default;
     const stateMultiplier = this.stateEconomicFactors[data.state] || this.stateEconomicFactors.default;
-    
+
     return baseMultiplier * stateMultiplier;
   }
 
@@ -149,16 +149,16 @@ export class MSMEValuationEngine {
    */
   private calculateDistressScore(data: MSMEValuationData): number {
     let distressScore = 0;
-    
+
     // Financial distress indicators
-    if (data.isDistressed) distressScore += 0.3;
-    if (data.debtToEquity && data.debtToEquity > 2) distressScore += 0.2;
-    if (data.netProfit < 0) distressScore += 0.4;
-    
+    if (data.isDistressed) {distressScore += 0.3;}
+    if (data.debtToEquity && data.debtToEquity > 2) {distressScore += 0.2;}
+    if (data.netProfit < 0) {distressScore += 0.4;}
+
     // Age factor
     const businessAge = new Date().getFullYear() - data.establishedYear;
-    if (businessAge < 2) distressScore += 0.1;
-    
+    if (businessAge < 2) {distressScore += 0.1;}
+
     return Math.min(distressScore, 0.8); // Max 80% distress
   }
 
@@ -169,7 +169,7 @@ export class MSMEValuationEngine {
     const profitMargin = data.netProfit / data.annualTurnover;
     const roa = data.netProfit / data.totalAssets;
     const employeeProductivity = data.annualTurnover / data.employeeCount;
-    
+
     // Weighted profitability score
     return (profitMargin * 0.4) + (roa * 0.3) + (employeeProductivity / 1000000 * 0.3);
   }
@@ -179,11 +179,11 @@ export class MSMEValuationEngine {
    */
   private calculateLiquidityFactor(data: MSMEValuationData): number {
     const assetLiabilityRatio = data.totalAssets / data.totalLiabilities;
-    
-    if (assetLiabilityRatio > 3) return 1.2;
-    if (assetLiabilityRatio > 2) return 1.1;
-    if (assetLiabilityRatio > 1.5) return 1.0;
-    if (assetLiabilityRatio > 1) return 0.9;
+
+    if (assetLiabilityRatio > 3) {return 1.2;}
+    if (assetLiabilityRatio > 2) {return 1.1;}
+    if (assetLiabilityRatio > 1.5) {return 1.0;}
+    if (assetLiabilityRatio > 1) {return 0.9;}
     return 0.7;
   }
 
@@ -193,10 +193,10 @@ export class MSMEValuationEngine {
   private calculateGrowthAdjustment(data: MSMEValuationData): number {
     const growthRate = data.growthRate || 0.05; // Default 5% growth
     const businessAge = new Date().getFullYear() - data.establishedYear;
-    
+
     // Younger businesses with higher growth get premium
     const ageFactor = Math.max(0.5, 1 - (businessAge / 20));
-    
+
     return growthRate * ageFactor;
   }
 
@@ -206,16 +206,16 @@ export class MSMEValuationEngine {
   private calculateMarketPositionScore(data: MSMEValuationData): number {
     const employeeCount = data.employeeCount;
     const businessAge = new Date().getFullYear() - data.establishedYear;
-    
+
     // Size factor
     let sizeScore = 0.8;
-    if (employeeCount > 100) sizeScore = 1.2;
-    else if (employeeCount > 50) sizeScore = 1.1;
-    else if (employeeCount > 20) sizeScore = 1.0;
-    
+    if (employeeCount > 100) {sizeScore = 1.2;}
+    else if (employeeCount > 50) {sizeScore = 1.1;}
+    else if (employeeCount > 20) {sizeScore = 1.0;}
+
     // Stability factor
     const stabilityScore = Math.min(1.0 + (businessAge / 50), 1.3);
-    
+
     return sizeScore * stabilityScore;
   }
 
@@ -224,17 +224,17 @@ export class MSMEValuationEngine {
    */
   private calculateConfidence(data: MSMEValuationData): number {
     let confidence = 0.6; // Base confidence
-    
+
     // Data completeness
     const fields = Object.keys(data);
     const completeness = fields.filter(field => data[field as keyof MSMEValuationData] !== undefined).length / fields.length;
     confidence += completeness * 0.2;
-    
+
     // Financial data quality
-    if (data.netProfit > 0) confidence += 0.1;
-    if (data.totalAssets > data.totalLiabilities) confidence += 0.1;
-    if (data.annualTurnover > 0) confidence += 0.1;
-    
+    if (data.netProfit > 0) {confidence += 0.1;}
+    if (data.totalAssets > data.totalLiabilities) {confidence += 0.1;}
+    if (data.annualTurnover > 0) {confidence += 0.1;}
+
     return Math.min(confidence, 0.95); // Max 95% confidence
   }
 
@@ -249,44 +249,44 @@ export class MSMEValuationEngine {
         valuationDate: new Date().toISOString(),
         finalValuation: factors.finalValuation,
         confidence: factors.confidence,
-        methodology: 'XGBoost + CatBoost + Market Intelligence'
+        methodology: 'XGBoost + CatBoost + Market Intelligence',
       },
       valuation_components: {
         revenueMultiple: {
           value: factors.revenueMultiple,
           weight: '35%',
-          description: 'Revenue-based valuation using industry multipliers'
+          description: 'Revenue-based valuation using industry multipliers',
         },
         assetValue: {
           value: factors.assetValue,
           weight: '25%',
-          description: 'Net asset value with utilization adjustments'
+          description: 'Net asset value with utilization adjustments',
         },
         earningsMultiple: {
           value: data.netProfit * 8,
           weight: '20%',
-          description: 'Earnings-based valuation'
+          description: 'Earnings-based valuation',
         },
         industryAdjustment: {
           value: data.annualTurnover * factors.industryFactor,
           weight: '20%',
-          description: 'Industry and location-specific adjustments'
-        }
+          description: 'Industry and location-specific adjustments',
+        },
       },
       risk_factors: {
         distressScore: factors.distressScore,
         liquidityRisk: 1 - factors.liquidityFactor,
         marketPosition: factors.marketPositionScore,
-        growthPotential: factors.growthAdjustment
+        growthPotential: factors.growthAdjustment,
       },
       benchmarks: {
         industry: data.industry,
         industryMultiplier: this.industryMultipliers[data.industry] || this.industryMultipliers.default,
         stateEconomicFactor: this.stateEconomicFactors[data.state] || this.stateEconomicFactors.default,
-        profitabilityIndex: factors.profitabilityIndex
+        profitabilityIndex: factors.profitabilityIndex,
       },
       ip_notice: 'This valuation uses proprietary MSMESquare algorithms and is confidential',
-      disclaimer: 'Valuation is based on data provided and market conditions at time of analysis'
+      disclaimer: 'Valuation is based on data provided and market conditions at time of analysis',
     };
   }
 }

@@ -1,7 +1,7 @@
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Building, Users, TrendingUp, Shield, Zap, Globe } from 'lucide-react'
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Building, Users, TrendingUp, Shield, Zap, Globe } from 'lucide-react';
 
 export default function HomePage() {
   return (
@@ -35,7 +35,7 @@ export default function HomePage() {
               Connect. <span className="text-gradient">Grow.</span> Scale.
             </h2>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              A modular platform to onboard MSMEs and match them with buyers, investors, and acquisition opportunities. 
+              A modular platform to onboard MSMEs and match them with buyers, investors, and acquisition opportunities.
               Powered by AI for intelligent matching and automated valuations.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -205,5 +205,5 @@ export default function HomePage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }

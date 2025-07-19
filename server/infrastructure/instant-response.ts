@@ -10,7 +10,7 @@ const CRITICAL_ENDPOINTS = [
   '/api/health',
   '/api/auth/me',
   '/api/msme-listings',
-  '/api/dashboard-stats'
+  '/api/dashboard-stats',
 ];
 
 // Precomputed responses for instant delivery
@@ -23,7 +23,7 @@ export const initializeInstantResponses = () => {
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    version: '1.0.0'
+    version: '1.0.0',
   });
 
   // Precompute dashboard stats
@@ -31,7 +31,7 @@ export const initializeInstantResponses = () => {
     totalUsers: 0,
     activeListings: 0,
     totalTransactions: 0,
-    lastUpdated: new Date().toISOString()
+    lastUpdated: new Date().toISOString(),
   });
 
   console.log('✅ Instant response system initialized');
@@ -41,17 +41,17 @@ export const initializeInstantResponses = () => {
 export const instantResponseMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const start = performance.now();
   const cacheKey = `${req.method}:${req.path}`;
-  
+
   // Check if this is a critical endpoint
   const isCritical = CRITICAL_ENDPOINTS.some(endpoint => req.path.startsWith(endpoint));
-  
+
   if (isCritical && req.method === 'GET') {
     // Check precomputed responses first
     const precomputed = precomputedResponses.get(req.path);
     if (precomputed) {
       return res.json(precomputed);
     }
-    
+
     // Check cache
     const cached = responseCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < cached.ttl) {
@@ -60,7 +60,7 @@ export const instantResponseMiddleware = (req: Request, res: Response, next: Nex
       return res.json(cached.data);
     }
   }
-  
+
   // Override res.json to cache the response
   const originalJson = res.json;
   res.json = function(data: any) {
@@ -68,15 +68,15 @@ export const instantResponseMiddleware = (req: Request, res: Response, next: Nex
       responseCache.set(cacheKey, {
         data,
         timestamp: Date.now(),
-        ttl: CACHE_TTL
+        ttl: CACHE_TTL,
       });
     }
-    
+
     res.setHeader('X-Cache', 'MISS');
     res.setHeader('X-Response-Time', `${performance.now() - start}ms`);
     return originalJson.call(this, data);
   };
-  
+
   next();
 };
 
@@ -89,7 +89,7 @@ export const refreshPrecomputedResponses = () => {
       healthData.timestamp = new Date().toISOString();
       healthData.uptime = process.uptime();
     }
-    
+
     // Clear old cache entries
     const now = Date.now();
     for (const [key, entry] of responseCache.entries()) {
@@ -107,12 +107,12 @@ export const criticalPathOptimization = (req: Request, res: Response, next: Next
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     res.setHeader('Expires', new Date(Date.now() + 31536000000).toUTCString());
   }
-  
+
   // Optimize critical API responses
   if (req.path.startsWith('/api/')) {
     res.setHeader('Cache-Control', 'public, max-age=300'); // 5 minutes
     res.setHeader('ETag', `"${Date.now()}"`);
   }
-  
+
   next();
 };

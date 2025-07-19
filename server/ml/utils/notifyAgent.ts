@@ -7,8 +7,8 @@ export async function notifyAgent(agentId: number, transaction: EscrowTransactio
 
   // MSG91 template ID (pre-approved), use your template and sender
   const payload = {
-    template_id: "YOUR_MSG91_TEMPLATE_ID",
-    sender: "MSMEBAZ",
+    template_id: 'YOUR_MSG91_TEMPLATE_ID',
+    sender: 'MSMEBAZ',
     short_url: 1,
     recipient: `91${agent.mobile}`,  // or full international number
     variables_values: message,
@@ -19,7 +19,7 @@ export async function notifyAgent(agentId: number, transaction: EscrowTransactio
       headers: {
         'authkey': process.env.MSG91_AUTH_KEY || '', // keep in .env
         'Content-Type': 'application/json',
-      }
+      },
     });
     console.log(`✅ WhatsApp sent to agent ${agent.name}`);
   } catch (err) {

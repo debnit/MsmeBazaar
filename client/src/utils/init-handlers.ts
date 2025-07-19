@@ -4,21 +4,21 @@ import { safeExecute, safeCall } from './null-safe';
 
 // Initialize global error handlers
 export function initializeGlobalErrorHandlers() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {return;}
 
   // Handle unhandled promise rejections
   window.addEventListener('unhandledrejection', (event) => {
     console.warn('Unhandled promise rejection:', event.reason);
-    
+
     // Log to monitoring service if available
     if ((window as any).monitoringService) {
       safeCall((window as any).monitoringService.recordError, undefined, {
         type: 'unhandledRejection',
         reason: event.reason,
-        promise: event.promise
+        promise: event.promise,
       });
     }
-    
+
     // Prevent default browser behavior
     event.preventDefault();
   });
@@ -26,7 +26,7 @@ export function initializeGlobalErrorHandlers() {
   // Handle uncaught errors
   window.addEventListener('error', (event) => {
     console.warn('Uncaught error:', event.error);
-    
+
     // Log to monitoring service if available
     if ((window as any).monitoringService) {
       safeCall((window as any).monitoringService.recordError, undefined, {
@@ -35,7 +35,7 @@ export function initializeGlobalErrorHandlers() {
         filename: event.filename,
         lineno: event.lineno,
         colno: event.colno,
-        error: event.error
+        error: event.error,
       });
     }
   });
@@ -62,7 +62,7 @@ export function initializeGlobalErrorHandlers() {
 
 // Initialize performance monitoring
 export function initializePerformanceMonitoring() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {return;}
 
   // Monitor long tasks
   if ('PerformanceObserver' in window) {
@@ -94,7 +94,7 @@ export function initializePerformanceMonitoring() {
 
 // Initialize state cleanup
 export function initializeStateCleanup() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {return;}
 
   // Clean up state on page unload
   window.addEventListener('beforeunload', () => {
@@ -108,7 +108,7 @@ export function initializeStateCleanup() {
           }
         });
       }
-      
+
       // Clear session storage
       if (window.sessionStorage) {
         window.sessionStorage.clear();

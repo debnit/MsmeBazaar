@@ -16,7 +16,7 @@ class ClientPerformanceMonitor {
   }
 
   private initializeMonitoring(): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {return;}
 
     // Monitor navigation timing
     if (window.performance && window.performance.timing) {
@@ -97,7 +97,7 @@ class ClientPerformanceMonitor {
     const criticalResources = [
       '/api/auth/me',
       '/api/dashboard/stats',
-      '/api/notifications'
+      '/api/notifications',
     ];
 
     criticalResources.forEach((url) => {

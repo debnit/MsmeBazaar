@@ -10,18 +10,18 @@ const router = Router();
 router.post('/api/users/atomic-create', async (req, res) => {
   try {
     const { userData, profileData } = req.body;
-    
+
     // Use atomic operation instead of separate queries
     const result = await atomicOperations.createUserWithProfile(userData, profileData);
-    
+
     res.json({
       success: true,
-      data: result
+      data: result,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -30,18 +30,18 @@ router.post('/api/users/atomic-create', async (req, res) => {
 router.post('/api/msme/atomic-create', async (req, res) => {
   try {
     const { msmeData, valuationData } = req.body;
-    
+
     // Use atomic operation for MSME + valuation
     const result = await atomicOperations.createMSMEWithValuation(msmeData, valuationData);
-    
+
     res.json({
       success: true,
-      data: result
+      data: result,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -51,27 +51,27 @@ router.get('/api/cached-data/:key', async (req, res) => {
   try {
     const { key } = req.params;
     const maxAge = parseInt(req.query.maxAge as string) || 300000; // 5 minutes default
-    
+
     // Try to get cached data first
     const cachedData = minimalPolling.getCachedData(key, maxAge);
-    
+
     if (cachedData) {
       res.json({
         success: true,
         data: cachedData,
-        cached: true
+        cached: true,
       });
     } else {
       res.json({
         success: false,
         message: 'Data not available or expired',
-        cached: false
+        cached: false,
       });
     }
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -80,18 +80,18 @@ router.get('/api/cached-data/:key', async (req, res) => {
 router.post('/api/process-heavy-task', async (req, res) => {
   try {
     const { taskType, data } = req.body;
-    
+
     // Use hardware optimization for CPU-intensive tasks
     const result = await hardwareOptimization.executeInWorker(taskType, data);
-    
+
     res.json({
       success: true,
-      data: result
+      data: result,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -100,19 +100,19 @@ router.post('/api/process-heavy-task', async (req, res) => {
 router.post('/api/batch-update', async (req, res) => {
   try {
     const { updates } = req.body;
-    
+
     // Use atomic batch operations
     const results = await atomicOperations.batchUpdateListings(updates);
-    
+
     res.json({
       success: true,
       data: results,
-      count: results.length
+      count: results.length,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -123,17 +123,17 @@ router.get('/api/optimization-status', async (req, res) => {
     const status = {
       hardware: hardwareOptimization.getHardwareStatus(),
       polling: minimalPolling.getPollingStatus(),
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
-    
+
     res.json({
       success: true,
-      data: status
+      data: status,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });

@@ -21,7 +21,7 @@ export const preloadCriticalResources = () => {
 export const preloadRouteComponents = () => {
   // Preload common routes
   const routes = ['/dashboard', '/seller/dashboard', '/buyer/dashboard'];
-  
+
   routes.forEach(route => {
     const link = document.createElement('link');
     link.rel = 'prefetch';
@@ -34,7 +34,7 @@ export const preloadRouteComponents = () => {
 export const initializePreloading = () => {
   if (typeof window !== 'undefined') {
     preloadCriticalResources();
-    
+
     // Preload route components after initial load
     setTimeout(preloadRouteComponents, 1000);
   }

@@ -144,7 +144,7 @@ class RetentionSystem {
   // Track user engagement
   async trackEngagement(userId: string, metrics: Partial<EngagementMetrics>): Promise<void> {
     const today = new Date().toISOString().split('T')[0];
-    
+
     const engagement: EngagementMetrics = {
       userId,
       date: today,
@@ -168,16 +168,16 @@ class RetentionSystem {
   // Identify users at risk of churning
   async identifyChurnRisk(): Promise<string[]> {
     const atRiskUsers: string[] = [];
-    
+
     // Get all user profiles
     const profiles = await this.getAllRetentionProfiles();
-    
+
     for (const profile of profiles) {
       const riskScore = await this.calculateChurnRisk(profile);
-      
+
       if (riskScore > 70) {
         atRiskUsers.push(profile.userId);
-        
+
         // Trigger high-priority retention campaign
         await this.triggerUrgentRetentionCampaign(profile);
       }
@@ -191,13 +191,13 @@ class RetentionSystem {
     console.log('Running daily retention check...');
 
     const inactiveUsers = await this.getInactiveUsers();
-    
+
     for (const user of inactiveUsers) {
       const profile = await this.getRetentionProfile(user.id);
-      if (!profile) continue;
+      if (!profile) {continue;}
 
       const daysSinceLastActivity = Math.floor(
-        (Date.now() - new Date(profile.lastActivity).getTime()) / (24 * 60 * 60 * 1000)
+        (Date.now() - new Date(profile.lastActivity).getTime()) / (24 * 60 * 60 * 1000),
       );
 
       // Trigger appropriate campaigns based on user type and inactivity period
@@ -209,13 +209,13 @@ class RetentionSystem {
   async generatePersonalizedMessage(
     userId: string,
     template: string,
-    variables: Record<string, any>
+    variables: Record<string, any>,
   ): Promise<string> {
     const profile = await this.getRetentionProfile(userId);
-    if (!profile) return '';
+    if (!profile) {return '';}
 
     const user = await storage.getUserById(userId);
-    if (!user) return '';
+    if (!user) {return '';}
 
     // Base message templates
     const templates = {
@@ -226,7 +226,7 @@ class RetentionSystem {
     };
 
     let message = templates[template] || '';
-    
+
     // Replace variables
     const allVariables = {
       firstName: user.firstName || 'User',
@@ -247,21 +247,21 @@ class RetentionSystem {
   async sendRetentionNotification(
     userId: string,
     channel: 'email' | 'whatsapp' | 'sms',
-    content: { subject: string; message: string }
+    content: { subject: string; message: string },
   ): Promise<void> {
     const user = await storage.getUserById(userId);
-    if (!user) return;
+    if (!user) {return;}
 
     switch (channel) {
-      case 'email':
-        await this.sendEmailNotification(user.email, content.subject, content.message);
-        break;
-      case 'whatsapp':
-        await this.sendWhatsAppNotification(user.phone, content.message);
-        break;
-      case 'sms':
-        await this.sendSMSNotification(user.phone, content.message);
-        break;
+    case 'email':
+      await this.sendEmailNotification(user.email, content.subject, content.message);
+      break;
+    case 'whatsapp':
+      await this.sendWhatsAppNotification(user.phone, content.message);
+      break;
+    case 'sms':
+      await this.sendSMSNotification(user.phone, content.message);
+      break;
     }
 
     // Track notification sent
@@ -272,13 +272,13 @@ class RetentionSystem {
   async runRetentionExperiment(
     campaignId: string,
     variant: 'control' | 'experimental',
-    userId: string
+    userId: string,
   ): Promise<void> {
     const campaign = this.campaigns.get(campaignId);
-    if (!campaign) return;
+    if (!campaign) {return;}
 
     let content = campaign.content;
-    
+
     if (variant === 'experimental') {
       // Use experimental version
       content = await this.getExperimentalContent(campaignId);
@@ -287,7 +287,7 @@ class RetentionSystem {
     const message = await this.generatePersonalizedMessage(
       userId,
       content.template,
-      content.variables
+      content.variables,
     );
 
     // Send notification
@@ -306,17 +306,17 @@ class RetentionSystem {
   async getRetentionAnalytics(period: string = '30d'): Promise<RetentionStats> {
     const endDate = new Date();
     const startDate = new Date();
-    
+
     switch (period) {
-      case '7d':
-        startDate.setDate(endDate.getDate() - 7);
-        break;
-      case '30d':
-        startDate.setDate(endDate.getDate() - 30);
-        break;
-      case '90d':
-        startDate.setDate(endDate.getDate() - 90);
-        break;
+    case '7d':
+      startDate.setDate(endDate.getDate() - 7);
+      break;
+    case '30d':
+      startDate.setDate(endDate.getDate() - 30);
+      break;
+    case '90d':
+      startDate.setDate(endDate.getDate() - 90);
+      break;
     }
 
     // Mock analytics - in production, query actual data
@@ -345,16 +345,16 @@ class RetentionSystem {
   // Advanced segmentation
   async segmentUsers(): Promise<Map<string, string[]>> {
     const segments = new Map<string, string[]>();
-    
+
     // Get all users
     const users = await storage.getAllUsers();
-    
+
     for (const user of users) {
       const profile = await this.getRetentionProfile(user.id);
-      if (!profile) continue;
+      if (!profile) {continue;}
 
       const userSegments = await this.calculateUserSegments(user, profile);
-      
+
       userSegments.forEach(segment => {
         if (!segments.has(segment)) {
           segments.set(segment, []);
@@ -369,7 +369,7 @@ class RetentionSystem {
   // Predictive churn modeling
   async predictChurnProbability(userId: string): Promise<number> {
     const profile = await this.getRetentionProfile(userId);
-    if (!profile) return 0;
+    if (!profile) {return 0;}
 
     const engagementHistory = await this.getEngagementHistory(userId);
     const behaviorFeatures = await this.extractBehaviorFeatures(userId, engagementHistory);
@@ -377,7 +377,7 @@ class RetentionSystem {
     // Simple predictive model (in production, use ML model)
     const features = {
       daysSinceLastActivity: Math.floor(
-        (Date.now() - new Date(profile.lastActivity).getTime()) / (24 * 60 * 60 * 1000)
+        (Date.now() - new Date(profile.lastActivity).getTime()) / (24 * 60 * 60 * 1000),
       ),
       avgSessionLength: behaviorFeatures.avgSessionLength,
       actionFrequency: behaviorFeatures.actionFrequency,
@@ -387,12 +387,12 @@ class RetentionSystem {
 
     // Weighted scoring
     let churnScore = 0;
-    
-    if (features.daysSinceLastActivity > 14) churnScore += 30;
-    if (features.avgSessionLength < 2) churnScore += 20;
-    if (features.actionFrequency < 0.1) churnScore += 25;
-    if (features.conversionRate < 0.05) churnScore += 15;
-    if (features.engagementTrend < -0.2) churnScore += 10;
+
+    if (features.daysSinceLastActivity > 14) {churnScore += 30;}
+    if (features.avgSessionLength < 2) {churnScore += 20;}
+    if (features.actionFrequency < 0.1) {churnScore += 25;}
+    if (features.conversionRate < 0.05) {churnScore += 15;}
+    if (features.engagementTrend < -0.2) {churnScore += 10;}
 
     return Math.min(100, churnScore);
   }
@@ -405,7 +405,7 @@ class RetentionSystem {
 
   private async updateRetentionProfile(userId: string, engagement: EngagementMetrics): Promise<void> {
     const profile = await this.getRetentionProfile(userId);
-    if (!profile) return;
+    if (!profile) {return;}
 
     // Update engagement score
     const newEngagementScore = this.calculateEngagementScore(engagement);
@@ -418,7 +418,7 @@ class RetentionSystem {
 
   private async evaluateCampaignTriggers(userId: string): Promise<void> {
     const profile = await this.getRetentionProfile(userId);
-    if (!profile) return;
+    if (!profile) {return;}
 
     // Check if any campaigns should be triggered
     for (const campaign of this.campaigns.values()) {
@@ -430,23 +430,23 @@ class RetentionSystem {
 
   private async calculateChurnRisk(profile: RetentionProfile): Promise<number> {
     const daysSinceLastActivity = Math.floor(
-      (Date.now() - new Date(profile.lastActivity).getTime()) / (24 * 60 * 60 * 1000)
+      (Date.now() - new Date(profile.lastActivity).getTime()) / (24 * 60 * 60 * 1000),
     );
 
     let riskScore = 0;
-    
+
     // Inactivity risk
-    if (daysSinceLastActivity > 30) riskScore += 40;
-    else if (daysSinceLastActivity > 14) riskScore += 25;
-    else if (daysSinceLastActivity > 7) riskScore += 10;
+    if (daysSinceLastActivity > 30) {riskScore += 40;}
+    else if (daysSinceLastActivity > 14) {riskScore += 25;}
+    else if (daysSinceLastActivity > 7) {riskScore += 10;}
 
     // Engagement risk
-    if (profile.engagementScore < 20) riskScore += 30;
-    else if (profile.engagementScore < 50) riskScore += 15;
+    if (profile.engagementScore < 20) {riskScore += 30;}
+    else if (profile.engagementScore < 50) {riskScore += 15;}
 
     // User type specific risk
-    if (profile.userType === 'buyer' && daysSinceLastActivity > 14) riskScore += 10;
-    if (profile.userType === 'seller' && daysSinceLastActivity > 21) riskScore += 10;
+    if (profile.userType === 'buyer' && daysSinceLastActivity > 14) {riskScore += 10;}
+    if (profile.userType === 'seller' && daysSinceLastActivity > 21) {riskScore += 10;}
 
     return Math.min(100, riskScore);
   }
@@ -487,9 +487,9 @@ class RetentionSystem {
 
   private async triggerInactivityCampaigns(profile: RetentionProfile, daysSinceLastActivity: number): Promise<void> {
     const applicableCampaigns = Array.from(this.campaigns.values()).filter(campaign => {
-      if (!campaign.active) return false;
-      if (campaign.trigger !== 'inactivity') return false;
-      
+      if (!campaign.active) {return false;}
+      if (campaign.trigger !== 'inactivity') {return false;}
+
       // Check if campaign applies to user type
       return campaign.targetSegment.includes(profile.userType);
     });
@@ -503,7 +503,7 @@ class RetentionSystem {
     const message = await this.generatePersonalizedMessage(
       userId,
       campaign.content.template,
-      campaign.content.variables
+      campaign.content.variables,
     );
 
     for (const channel of campaign.channels) {
@@ -626,19 +626,19 @@ MSMESquare Team`;
 
   private async calculateUserSegments(user: any, profile: RetentionProfile): Promise<string[]> {
     const segments: string[] = [];
-    
+
     // Basic segmentation
     segments.push(profile.userType);
-    
-    if (profile.engagementScore > 80) segments.push('high_engagement');
-    if (profile.engagementScore < 30) segments.push('low_engagement');
-    
+
+    if (profile.engagementScore > 80) {segments.push('high_engagement');}
+    if (profile.engagementScore < 30) {segments.push('low_engagement');}
+
     const daysSinceLastActivity = Math.floor(
-      (Date.now() - new Date(profile.lastActivity).getTime()) / (24 * 60 * 60 * 1000)
+      (Date.now() - new Date(profile.lastActivity).getTime()) / (24 * 60 * 60 * 1000),
     );
-    
-    if (daysSinceLastActivity > 7) segments.push('inactive');
-    if (daysSinceLastActivity <= 1) segments.push('active');
+
+    if (daysSinceLastActivity > 7) {segments.push('inactive');}
+    if (daysSinceLastActivity <= 1) {segments.push('active');}
 
     return segments;
   }

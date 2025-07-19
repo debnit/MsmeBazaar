@@ -46,6 +46,6 @@ export const preloadComponents = () => {
 export const initializeLazyLoading = () => {
   // Preload critical components after initial render
   setTimeout(preloadComponents, 1000);
-  
+
   console.log('Lazy loading initialized - non-critical components deferred');
 };

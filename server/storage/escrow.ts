@@ -1,5 +1,5 @@
-import { eq, and, desc, sql, or } from "drizzle-orm";
-import { db } from "../db";
+import { eq, and, desc, sql, or } from 'drizzle-orm';
+import { db } from '../db';
 import {
   escrowAccounts,
   escrowMilestones,
@@ -10,7 +10,7 @@ import {
   type InsertEscrowMilestone,
   type EscrowTransaction,
   type InsertEscrowTransaction,
-} from "@shared/schema";
+} from '@shared/schema';
 
 // Database storage class for escrow operations
 export class EscrowStorage {
@@ -63,7 +63,7 @@ export class EscrowStorage {
   // Get escrow account with relations
   async getEscrowAccountWithRelations(id: number): Promise<any> {
     const escrow = await this.getEscrowAccount(id);
-    if (!escrow) return null;
+    if (!escrow) {return null;}
 
     const milestones = await this.getEscrowMilestones(id);
     const transactions = await this.getEscrowTransactions(id);
@@ -137,8 +137,8 @@ export class EscrowStorage {
       .where(
         or(
           eq(escrowAccounts.buyerId, userId),
-          eq(escrowAccounts.sellerId, userId)
-        )
+          eq(escrowAccounts.sellerId, userId),
+        ),
       )
       .orderBy(desc(escrowAccounts.createdAt));
   }
@@ -180,7 +180,7 @@ export class EscrowStorage {
     const statusCounts = await db
       .select({
         status: escrowAccounts.status,
-        count: sql<number>`count(*)`
+        count: sql<number>`count(*)`,
       })
       .from(escrowAccounts)
       .groupBy(escrowAccounts.status);
@@ -248,13 +248,13 @@ export class EscrowStorage {
   // Get escrow statistics
   async getEscrowStatistics(): Promise<any> {
     const analytics = await this.getEscrowAnalytics();
-    
+
     // Transaction statistics
     const transactionStats = await db
       .select({
         type: escrowTransactions.type,
         count: sql<number>`count(*)`,
-        totalAmount: sql<number>`sum(amount)`
+        totalAmount: sql<number>`sum(amount)`,
       })
       .from(escrowTransactions)
       .groupBy(escrowTransactions.type);
@@ -264,7 +264,7 @@ export class EscrowStorage {
       .select({
         month: sql<string>`to_char(created_at, 'YYYY-MM')`,
         count: sql<number>`count(*)`,
-        volume: sql<number>`sum(amount)`
+        volume: sql<number>`sum(amount)`,
       })
       .from(escrowAccounts)
       .groupBy(sql`to_char(created_at, 'YYYY-MM')`)
@@ -276,7 +276,7 @@ export class EscrowStorage {
       transactionStatistics: transactionStats.reduce((acc, curr) => {
         acc[curr.type] = {
           count: curr.count,
-          totalAmount: curr.totalAmount
+          totalAmount: curr.totalAmount,
         };
         return acc;
       }, {} as Record<string, any>),

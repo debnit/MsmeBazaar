@@ -35,14 +35,14 @@ export function calculateMatchScore(
 ): number {
   let score = 0;
 
-  if (msme.sector === buyer.sector) score += 40;
-  if (msme.turnover >= buyer.minTurnover) score += 20;
+  if (msme.sector === buyer.sector) {score += 40;}
+  if (msme.turnover >= buyer.minTurnover) {score += 20;}
   if (
     msme.assetsValue >= buyer.assetRange[0] &&
     msme.assetsValue <= buyer.assetRange[1]
   )
-    score += 20;
-  if (msme.yearsActive >= buyer.minYears) score += 20;
+  {score += 20;}
+  if (msme.yearsActive >= buyer.minYears) {score += 20;}
 
   return score;
 }

@@ -79,8 +79,8 @@ class AppHealthMonitor {
     // Performance health check
     this.healthChecks.set('performance', async () => {
       const metrics = performanceMonitor.getCurrentMetrics();
-      if (!metrics) return true;
-      
+      if (!metrics) {return true;}
+
       return metrics.responseTime < 2000 && metrics.errorRate < 0.05;
     });
 
@@ -100,7 +100,7 @@ class AppHealthMonitor {
     this.healthCheckInterval = setInterval(async () => {
       const report = await this.generateHealthReport();
       this.lastHealthReport = report;
-      
+
       // Handle critical issues
       if (report.status === 'critical') {
         this.handleCriticalIssues(report);
@@ -119,7 +119,7 @@ class AppHealthMonitor {
       try {
         const isHealthy = await check();
         const responseTime = Date.now() - startTime;
-        
+
         services.push({
           name,
           status: isHealthy ? 'up' : 'down',
@@ -152,7 +152,7 @@ class AppHealthMonitor {
     // Get system metrics
     const memoryUsage = process.memoryUsage();
     const perfMetrics = performanceMonitor.getCurrentMetrics();
-    
+
     const metrics = {
       memory: {
         used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
@@ -191,9 +191,9 @@ class AppHealthMonitor {
     // Determine overall status
     const criticalAlerts = alerts.filter(a => a.level === 'critical');
     const downServices = services.filter(s => s.status === 'down');
-    
+
     let status: 'healthy' | 'degraded' | 'critical' = 'healthy';
-    
+
     if (criticalAlerts.length > 0 || downServices.length > 2) {
       status = 'critical';
     } else if (downServices.length > 0 || alerts.length > 0) {
@@ -211,12 +211,12 @@ class AppHealthMonitor {
 
   private handleCriticalIssues(report: HealthReport): void {
     console.error('🚨 Critical health issues detected:', report.alerts);
-    
+
     // Trigger emergency optimization
     try {
       memoryManager.clearCache();
       resourceOptimizer.optimizePerformance();
-      
+
       if (global.gc) {
         global.gc();
       }

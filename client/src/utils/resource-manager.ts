@@ -27,7 +27,7 @@ export class ResourceManager {
   // Acquire resource with automatic cleanup and tracing
   public async acquireResource(resourceId: string, owner: string, timeout: number = 5000): Promise<boolean> {
     const startTime = performance.now();
-    
+
     return new Promise((resolve, reject) => {
       const currentTime = Date.now();
       const existingLock = this.locks.get(resourceId);
@@ -39,14 +39,14 @@ export class ResourceManager {
           id: resourceId,
           owner,
           timestamp: currentTime,
-          timeout
+          timeout,
         });
-        
+
         const duration = performance.now() - startTime;
         if (duration > 50) {
           console.warn(`ResourceManager.acquireResource(${resourceId}) took ${duration.toFixed(2)}ms`);
         }
-        
+
         resolve(true);
         return;
       }
@@ -55,7 +55,7 @@ export class ResourceManager {
       if (!this.waitingQueue.has(resourceId)) {
         this.waitingQueue.set(resourceId, []);
       }
-      
+
       this.waitingQueue.get(resourceId)!.push({ resolve, reject });
 
       // Set timeout for waiting
@@ -65,10 +65,10 @@ export class ResourceManager {
           const index = queue.findIndex(item => item.resolve === resolve);
           if (index > -1) {
             queue.splice(index, 1);
-            
+
             const duration = performance.now() - startTime;
             console.warn(`ResourceManager.acquireResource(${resourceId}) timed out after ${duration.toFixed(2)}ms`);
-            
+
             resolve(false); // Timeout
           }
         }
@@ -79,10 +79,10 @@ export class ResourceManager {
   // Release resource with tracing
   public releaseResource(resourceId: string, owner: string): boolean {
     const startTime = performance.now();
-    
+
     try {
       const lock = this.locks.get(resourceId);
-      
+
       if (!lock || lock.owner !== owner) {
         return false; // Not owner or doesn't exist
       }
@@ -95,15 +95,15 @@ export class ResourceManager {
       if (queue && queue.length > 0) {
         const next = queue.shift()!;
         const currentTime = Date.now();
-        
+
         // Give resource to next in queue
         this.locks.set(resourceId, {
           id: resourceId,
           owner: `queue-${currentTime}`,
           timestamp: currentTime,
-          timeout: 5000
+          timeout: 5000,
         });
-        
+
         next.resolve(true);
       }
 
@@ -122,25 +122,25 @@ export class ResourceManager {
   // Check if resource is locked
   public isResourceLocked(resourceId: string): boolean {
     const lock = this.locks.get(resourceId);
-    if (!lock) return false;
-    
+    if (!lock) {return false;}
+
     const currentTime = Date.now();
     if (currentTime > lock.timestamp + lock.timeout) {
       this.locks.delete(resourceId);
       return false;
     }
-    
+
     return true;
   }
 
   // Clean up expired locks
   private cleanupExpiredLocks(): void {
     const currentTime = Date.now();
-    
+
     for (const [resourceId, lock] of this.locks.entries()) {
       if (currentTime > lock.timestamp + lock.timeout) {
         this.locks.delete(resourceId);
-        
+
         // Process waiting queue for this resource
         const queue = this.waitingQueue.get(resourceId);
         if (queue && queue.length > 0) {
@@ -157,33 +157,33 @@ export class ResourceManager {
     if (!lock) {
       return { locked: false };
     }
-    
+
     const currentTime = Date.now();
     const timeLeft = (lock.timestamp + lock.timeout) - currentTime;
-    
+
     if (timeLeft <= 0) {
       this.locks.delete(resourceId);
       return { locked: false };
     }
-    
+
     return {
       locked: true,
       owner: lock.owner,
-      timeLeft
+      timeLeft,
     };
   }
 
   // Force release all resources for owner
   public forceReleaseAll(owner: string): number {
     let count = 0;
-    
+
     for (const [resourceId, lock] of this.locks.entries()) {
       if (lock.owner === owner) {
         this.locks.delete(resourceId);
         count++;
       }
     }
-    
+
     return count;
   }
 }

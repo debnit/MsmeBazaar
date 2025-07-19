@@ -6,19 +6,19 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  DollarSign, 
-  MessageCircle, 
-  Users, 
-  BarChart3, 
-  Settings, 
+import {
+  DollarSign,
+  MessageCircle,
+  Users,
+  BarChart3,
+  Settings,
   Shield,
   FileText,
   Target,
   TrendingUp,
   Activity,
   Crown,
-  Calculator
+  Calculator,
 } from 'lucide-react';
 import { Link } from 'wouter';
 

@@ -52,14 +52,14 @@ class ResourceMonitor extends EventEmitter {
   }
 
   async start(): Promise<void> {
-    if (this.monitoring) return;
-    
+    if (this.monitoring) {return;}
+
     this.monitoring = true;
-    
+
     try {
       // Use minimal polling instead of aggressive intervals
       const { minimalPolling } = await import('./minimal-polling');
-      
+
       minimalPolling.startSmartPolling(
         'resource-monitoring',
         async () => this.checkResources(),
@@ -67,8 +67,8 @@ class ResourceMonitor extends EventEmitter {
           initialInterval: 60000, // 1 minute
           maxInterval: 300000, // 5 minutes
           backoffMultiplier: 1.5,
-          condition: () => this.monitoring
-        }
+          condition: () => this.monitoring,
+        },
       );
     } catch (error) {
       console.warn('Resource monitoring fallback to simple interval');
@@ -76,29 +76,29 @@ class ResourceMonitor extends EventEmitter {
         this.checkResources();
       }, 120000); // 2 minutes fallback
     }
-    
+
     console.log('🔍 Resource monitoring started');
   }
 
   stop(): void {
-    if (!this.monitoring) return;
-    
+    if (!this.monitoring) {return;}
+
     this.monitoring = false;
     if (this.interval) {
       clearInterval(this.interval);
       this.interval = null;
     }
-    
+
     console.log('🛑 Resource monitoring stopped');
   }
 
   private checkResources(): void {
     const memoryUsage = process.memoryUsage();
     const perfMetrics = performanceMonitor.getCurrentMetrics();
-    
+
     // Check memory
     this.checkMemory(memoryUsage);
-    
+
     // Check performance metrics
     if (perfMetrics) {
       this.checkPerformance(perfMetrics);
@@ -107,7 +107,7 @@ class ResourceMonitor extends EventEmitter {
 
   private checkMemory(memoryUsage: NodeJS.MemoryUsage): void {
     const used = memoryUsage.heapUsed;
-    
+
     if (used > this.thresholds.memory.critical) {
       this.emit('critical', {
         type: 'memory',
@@ -115,7 +115,7 @@ class ResourceMonitor extends EventEmitter {
         value: used,
         threshold: this.thresholds.memory.critical,
       });
-      
+
       // Trigger immediate cleanup
       this.emergencyCleanup();
     } else if (used > this.thresholds.memory.warning) {
@@ -125,7 +125,7 @@ class ResourceMonitor extends EventEmitter {
         value: used,
         threshold: this.thresholds.memory.warning,
       });
-      
+
       // Trigger gentle cleanup
       this.gentleCleanup();
     }
@@ -148,7 +148,7 @@ class ResourceMonitor extends EventEmitter {
         threshold: this.thresholds.responseTime.warning,
       });
     }
-    
+
     // Check error rate
     if (metrics.errorRate > 0.1) { // 10%
       this.emit('critical', {
@@ -169,22 +169,22 @@ class ResourceMonitor extends EventEmitter {
 
   private emergencyCleanup(): void {
     // Silent emergency cleanup - removed console.log to reduce noise
-    
+
     // Clear all caches
     memoryManager.clearCache();
-    
+
     // Force garbage collection
     if (global.gc) {
       global.gc();
     }
-    
+
     // Reduce monitoring frequency temporarily
     if (this.interval) {
       clearInterval(this.interval);
       this.interval = setInterval(() => {
         this.checkResources();
       }, 10000); // Reduce to every 10 seconds
-      
+
       // Restore normal frequency after 2 minutes
       setTimeout(() => {
         if (this.interval) {
@@ -199,13 +199,13 @@ class ResourceMonitor extends EventEmitter {
 
   private gentleCleanup(): void {
     // Silent cleanup - removed console.log to reduce noise
-    
+
     // Clear expired cache entries
     const cacheStats = this.getCacheStats();
     if (cacheStats.utilization > 70) {
       memoryManager.clearCache();
     }
-    
+
     // Optional garbage collection
     if (global.gc && Math.random() < 0.3) { // 30% chance
       global.gc();
@@ -215,7 +215,7 @@ class ResourceMonitor extends EventEmitter {
   getStatus(): any {
     const memoryUsage = process.memoryUsage();
     const perfMetrics = performanceMonitor.getCurrentMetrics();
-    
+
     return {
       monitoring: this.monitoring,
       memory: {
@@ -235,16 +235,16 @@ class ResourceMonitor extends EventEmitter {
   }
 
   private getMemoryStatus(used: number): string {
-    if (used > this.thresholds.memory.critical) return 'critical';
-    if (used > this.thresholds.memory.warning) return 'warning';
+    if (used > this.thresholds.memory.critical) {return 'critical';}
+    if (used > this.thresholds.memory.warning) {return 'warning';}
     return 'healthy';
   }
 
   private getPerformanceStatus(metrics: any): string {
-    if (metrics.responseTime > this.thresholds.responseTime.critical || 
-        metrics.errorRate > 0.1) return 'critical';
+    if (metrics.responseTime > this.thresholds.responseTime.critical ||
+        metrics.errorRate > 0.1) {return 'critical';}
     if (metrics.responseTime > this.thresholds.responseTime.warning ||
-        metrics.errorRate > 0.05) return 'warning';
+        metrics.errorRate > 0.05) {return 'warning';}
     return 'healthy';
   }
 

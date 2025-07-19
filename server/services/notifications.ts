@@ -1,5 +1,5 @@
-import { NotificationTemplate, NotificationHistoryRecord, NotificationPreference, InsertNotificationHistory } from "@shared/schema";
-import { storage } from "../storage";
+import { NotificationTemplate, NotificationHistoryRecord, NotificationPreference, InsertNotificationHistory } from '@shared/schema';
+import { storage } from '../storage';
 
 export interface NotificationData {
   type: string;
@@ -27,7 +27,7 @@ export class NotificationService {
         body: 'Your escrow account has been funded with ₹{{amount}}',
         type: 'email',
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       {
         id: 2,
@@ -36,7 +36,7 @@ export class NotificationService {
         body: '₹{{amount}} has been released to your account',
         type: 'email',
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       {
         id: 3,
@@ -45,7 +45,7 @@ export class NotificationService {
         body: 'Your loan application for ₹{{amount}} has been approved',
         type: 'email',
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       {
         id: 4,
@@ -54,8 +54,8 @@ export class NotificationService {
         body: 'A buyer has expressed interest in your MSME listing',
         type: 'email',
         createdAt: new Date(),
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     ];
 
     defaultTemplates.forEach(template => {
@@ -82,7 +82,7 @@ export class NotificationService {
         message: this.processTemplate(data.message, data.metadata || {}),
         metadata: data.metadata || {},
         isRead: false,
-        createdAt: new Date()
+        createdAt: new Date(),
       };
 
       this.history.set(historyRecord.id, historyRecord);
@@ -156,7 +156,7 @@ export class NotificationService {
       pushEnabled: preferences.pushEnabled ?? existing?.pushEnabled ?? true,
       disabledTypes: preferences.disabledTypes ?? existing?.disabledTypes ?? [],
       createdAt: existing?.createdAt || new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     this.preferences.set(userId, updated);

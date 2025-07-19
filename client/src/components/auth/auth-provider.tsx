@@ -37,12 +37,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user: null,
     isAuthenticated: false,
     isLoading: true,
-    error: null
+    error: null,
   });
 
   const getToken = useCallback(() => {
-    return localStorage.getItem('token') || 
-           sessionStorage.getItem('token') || 
+    return localStorage.getItem('token') ||
+           sessionStorage.getItem('token') ||
            null;
   }, []);
 
@@ -63,21 +63,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string, remember: boolean = true) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
-    
+
     try {
       const response = await apiRequest('/api/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password }),
       });
 
       const { user, token } = response;
       setToken(token, remember);
-      
+
       setState({
         user,
         isAuthenticated: true,
         isLoading: false,
-        error: null
+        error: null,
       });
 
       return { success: true, user };
@@ -85,30 +85,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setState(prev => ({
         ...prev,
         isLoading: false,
-        error: error.message || 'Login failed'
+        error: error.message || 'Login failed',
       }));
-      
+
       return { success: false, error: error.message || 'Login failed' };
     }
   }, [setToken]);
 
   const register = useCallback(async (data: any) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
-    
+
     try {
       const response = await apiRequest('/api/auth/register', {
         method: 'POST',
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
 
       const { user, token } = response;
       setToken(token);
-      
+
       setState({
         user,
         isAuthenticated: true,
         isLoading: false,
-        error: null
+        error: null,
       });
 
       return { success: true, user };
@@ -116,9 +116,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setState(prev => ({
         ...prev,
         isLoading: false,
-        error: error.message || 'Registration failed'
+        error: error.message || 'Registration failed',
       }));
-      
+
       return { success: false, error: error.message || 'Registration failed' };
     }
   }, [setToken]);
@@ -129,13 +129,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: null,
       isAuthenticated: false,
       isLoading: false,
-      error: null
+      error: null,
     });
   }, [removeToken]);
 
   const checkAuth = useCallback(async () => {
     const token = getToken();
-    
+
     if (!token) {
       setState(prev => ({ ...prev, isLoading: false }));
       return;
@@ -147,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isAuthenticated: true,
         isLoading: false,
-        error: null
+        error: null,
       });
     } catch (error: any) {
       console.error('Auth check failed:', error);
@@ -156,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: null,
         isAuthenticated: false,
         isLoading: false,
-        error: null
+        error: null,
       });
     }
   }, [getToken, removeToken]);
@@ -176,17 +176,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     removeToken,
     isAdmin: state.user?.role === 'admin' || state.user?.role === 'super_admin',
     hasPermission: (permission: string) => {
-      if (!state.user) return false;
-      if (state.user.role === 'super_admin') return true;
+      if (!state.user) {return false;}
+      if (state.user.role === 'super_admin') {return true;}
       if (state.user.role === 'admin') {
         // Define admin permissions
         const adminPermissions = ['view_dashboard', 'manage_users', 'view_reports', 'manage_msmes'];
         return adminPermissions.includes(permission);
       }
       return false;
-    }
+    },
   };
-  
+
   return (
     <AuthContext.Provider value={value}>
       {children}

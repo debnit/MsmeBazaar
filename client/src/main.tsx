@@ -28,7 +28,7 @@ safeRuntime.initializeFeature(
   },
   () => {
     console.log('Safe runtime initialized with limited features');
-  }
+  },
 );
 
 // Initialize function tracing
@@ -42,7 +42,7 @@ if (process.env.NODE_ENV === 'development') {
     if (stats.totalCalls > 0) {
       console.log('Toast Performance Stats:', stats);
     }
-    
+
     const useToastStats = functionTracer.getPerformanceStats('useToast');
     if (useToastStats.totalCalls > 0) {
       console.log('useToast Performance Stats:', useToastStats);
@@ -54,7 +54,7 @@ if (process.env.NODE_ENV === 'development') {
 const deferredInit = () => {
   // Initialize service worker for aggressive caching
   registerServiceWorker();
-  
+
   // Initialize performance monitoring
   if (process.env.NODE_ENV === 'development') {
     console.log('🚀 Advanced performance optimizations active');
@@ -68,7 +68,7 @@ root.render(
     <QueryClientProvider client={queryClient}>
       <App />
     </QueryClientProvider>
-  </StrictMode>
+  </StrictMode>,
 );
 
 // Run deferred initialization after app mount

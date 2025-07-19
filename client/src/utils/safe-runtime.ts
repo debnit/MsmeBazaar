@@ -26,41 +26,41 @@ export class SafeRuntime {
 
     try {
       switch (feature) {
-        case 'performance.memory':
-          compatible = typeof window !== 'undefined' && 
-                      'performance' in window && 
+      case 'performance.memory':
+        compatible = typeof window !== 'undefined' &&
+                      'performance' in window &&
                       (performance as any).memory !== undefined;
-          break;
-        
-        case 'local-storage':
-          compatible = typeof window !== 'undefined' && 
-                      'localStorage' in window && 
+        break;
+
+      case 'local-storage':
+        compatible = typeof window !== 'undefined' &&
+                      'localStorage' in window &&
                       window.localStorage !== null;
-          break;
-        
-        case 'session-storage':
-          compatible = typeof window !== 'undefined' && 
-                      'sessionStorage' in window && 
+        break;
+
+      case 'session-storage':
+        compatible = typeof window !== 'undefined' &&
+                      'sessionStorage' in window &&
                       window.sessionStorage !== null;
-          break;
-        
-        case 'web-workers':
-          compatible = typeof window !== 'undefined' && 
+        break;
+
+      case 'web-workers':
+        compatible = typeof window !== 'undefined' &&
                       'Worker' in window;
-          break;
-        
-        case 'service-worker':
-          compatible = typeof window !== 'undefined' && 
+        break;
+
+      case 'service-worker':
+        compatible = typeof window !== 'undefined' &&
                       'serviceWorker' in navigator;
-          break;
-        
-        case 'gc':
-          compatible = typeof window !== 'undefined' && 
+        break;
+
+      case 'gc':
+        compatible = typeof window !== 'undefined' &&
                       (window as any).gc !== undefined;
-          break;
-        
-        default:
-          compatible = false;
+        break;
+
+      default:
+        compatible = false;
       }
     } catch (error) {
       compatible = false;
@@ -79,13 +79,13 @@ export class SafeRuntime {
           resolve(true);
           return;
         }
-        
+
         // Wait and retry
         setTimeout(tryAcquire, 100);
       };
-      
+
       tryAcquire();
-      
+
       // Timeout fallback
       setTimeout(() => {
         if (!this.resourceLocks.has(resourceId)) {
@@ -107,7 +107,7 @@ export class SafeRuntime {
   public safeExecute<T>(
     operation: () => T,
     fallback: T,
-    errorHandler?: (error: Error) => void
+    errorHandler?: (error: Error) => void,
   ): T {
     try {
       return operation();
@@ -162,10 +162,10 @@ export class SafeRuntime {
     featureName: string,
     dependencies: string[],
     initFunction: () => void,
-    fallbackFunction?: () => void
+    fallbackFunction?: () => void,
   ): boolean {
     const { missing } = this.checkDependencies(dependencies);
-    
+
     if (missing.length > 0) {
       console.warn(`Feature ${featureName} missing dependencies:`, missing);
       if (fallbackFunction) {
@@ -185,7 +185,7 @@ export class SafeRuntime {
         if (fallbackFunction) {
           this.safeExecute(fallbackFunction, undefined);
         }
-      }
+      },
     );
   }
 }
@@ -198,17 +198,17 @@ export class SimpleStateManager {
   // Set state value
   public setState<T>(key: string, value: T): void {
     const runtime = SafeRuntime.getInstance();
-    
+
     runtime.safeExecute(() => {
       this.state[key] = value;
-      
+
       // Notify listeners
       const keyListeners = this.listeners[key] || [];
       keyListeners.forEach(listener => {
         runtime.safeExecute(
           () => listener(value),
           undefined,
-          (error) => console.warn('State listener error:', error)
+          (error) => console.warn('State listener error:', error),
         );
       });
     }, undefined);
@@ -217,24 +217,24 @@ export class SimpleStateManager {
   // Get state value
   public getState<T>(key: string, defaultValue: T): T {
     const runtime = SafeRuntime.getInstance();
-    
+
     return runtime.safeExecute(
       () => this.state[key] ?? defaultValue,
-      defaultValue
+      defaultValue,
     );
   }
 
   // Subscribe to state changes
   public subscribe<T>(key: string, listener: (value: T) => void): () => void {
     const runtime = SafeRuntime.getInstance();
-    
+
     return runtime.safeExecute(() => {
       if (!this.listeners[key]) {
         this.listeners[key] = [];
       }
-      
+
       this.listeners[key].push(listener);
-      
+
       // Return unsubscribe function
       return () => {
         const listeners = this.listeners[key] || [];
@@ -249,7 +249,7 @@ export class SimpleStateManager {
   // Clear state
   public clearState(key?: string): void {
     const runtime = SafeRuntime.getInstance();
-    
+
     runtime.safeExecute(() => {
       if (key) {
         delete this.state[key];
@@ -289,15 +289,15 @@ export class SafeToastManager {
     action?: any;
   }): Promise<void> {
     const startTime = performance.now();
-    
+
     try {
-      if (!toast || !toast.id) return;
+      if (!toast || !toast.id) {return;}
 
       // Use async state management
       const currentToasts = await this.getToastsAsync();
       const newToasts = [...currentToasts, toast];
       await this.setToastsAsync(newToasts);
-      
+
       const duration = performance.now() - startTime;
       if (duration > 10) {
         console.warn(`SafeToastManager.addToast took ${duration.toFixed(2)}ms`);
@@ -310,15 +310,15 @@ export class SafeToastManager {
   // Remove toast with tracing (async)
   public async removeToast(id: string): Promise<void> {
     const startTime = performance.now();
-    
+
     try {
-      if (!id) return;
+      if (!id) {return;}
 
       // Use async state management
       const currentToasts = await this.getToastsAsync();
       const newToasts = currentToasts.filter((toast: any) => toast.id !== id);
       await this.setToastsAsync(newToasts);
-      
+
       const duration = performance.now() - startTime;
       if (duration > 10) {
         console.warn(`SafeToastManager.removeToast took ${duration.toFixed(2)}ms`);
@@ -331,10 +331,10 @@ export class SafeToastManager {
   // Clear all toasts with tracing (async)
   public async clearToasts(): Promise<void> {
     const startTime = performance.now();
-    
+
     try {
       await this.setToastsAsync([]);
-      
+
       const duration = performance.now() - startTime;
       if (duration > 10) {
         console.warn(`SafeToastManager.clearToasts took ${duration.toFixed(2)}ms`);
@@ -347,15 +347,15 @@ export class SafeToastManager {
   // Get toasts with tracing
   public getToasts(): any[] {
     const startTime = performance.now();
-    
+
     try {
       const toasts = this.stateManager.getState('toasts', []);
-      
+
       const duration = performance.now() - startTime;
       if (duration > 5) {
         console.warn(`SafeToastManager.getToasts took ${duration.toFixed(2)}ms`);
       }
-      
+
       return toasts;
     } catch (error) {
       console.error('SafeToastManager.getToasts failed:', error);
@@ -366,15 +366,15 @@ export class SafeToastManager {
   // Subscribe to toast changes with tracing (async)
   public async subscribe(listener: (toasts: any[]) => void): Promise<() => void> {
     const startTime = performance.now();
-    
+
     try {
       const unsubscribe = this.stateManager.subscribe('toasts', listener);
-      
+
       const duration = performance.now() - startTime;
       if (duration > 10) {
         console.warn(`SafeToastManager.subscribe took ${duration.toFixed(2)}ms`);
       }
-      
+
       return unsubscribe;
     } catch (error) {
       console.error('SafeToastManager.subscribe failed:', error);
@@ -385,15 +385,15 @@ export class SafeToastManager {
   // Synchronous subscribe for React hooks
   public subscribeSync(listener: (toasts: any[]) => void): () => void {
     const startTime = performance.now();
-    
+
     try {
       const unsubscribe = this.stateManager.subscribe('toasts', listener);
-      
+
       const duration = performance.now() - startTime;
       if (duration > 10) {
         console.warn(`SafeToastManager.subscribeSync took ${duration.toFixed(2)}ms`);
       }
-      
+
       return unsubscribe;
     } catch (error) {
       console.error('SafeToastManager.subscribeSync failed:', error);
@@ -448,7 +448,7 @@ export class SafeMemoryManager {
       'memory-management',
       ['performance.memory'],
       () => this.startMemoryMonitoring(),
-      () => this.startBasicCleanup()
+      () => this.startBasicCleanup(),
     );
   }
 

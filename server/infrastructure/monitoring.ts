@@ -53,18 +53,18 @@ export class MetricsService {
       name: 'msmesquare_http_request_duration_seconds',
       help: 'Duration of HTTP requests in seconds',
       labelNames: ['method', 'route', 'status_code', 'user_role'],
-      buckets: [0.1, 0.5, 1, 2, 5, 10]
+      buckets: [0.1, 0.5, 1, 2, 5, 10],
     });
 
     this.httpRequestsTotal = new Counter({
       name: 'msmesquare_http_requests_total',
       help: 'Total number of HTTP requests',
-      labelNames: ['method', 'route', 'status_code', 'user_role']
+      labelNames: ['method', 'route', 'status_code', 'user_role'],
     });
 
     this.activeConnections = new Gauge({
       name: 'msmesquare_active_connections',
-      help: 'Number of active connections'
+      help: 'Number of active connections',
     });
 
     // Business metrics
@@ -72,44 +72,44 @@ export class MetricsService {
       msmeListings: new Counter({
         name: 'msmesquare_msme_listings_total',
         help: 'Total number of MSME listings created',
-        labelNames: ['industry', 'city', 'status']
+        labelNames: ['industry', 'city', 'status'],
       }),
-      
+
       loanApplications: new Counter({
         name: 'msmesquare_loan_applications_total',
         help: 'Total number of loan applications',
-        labelNames: ['status', 'nbfc_id']
+        labelNames: ['status', 'nbfc_id'],
       }),
-      
+
       subscriptionRevenue: new Counter({
         name: 'msmesquare_subscription_revenue_total',
         help: 'Total subscription revenue in INR',
-        labelNames: ['plan_type', 'payment_status']
+        labelNames: ['plan_type', 'payment_status'],
       }),
-      
+
       valuationRequests: new Counter({
         name: 'msmesquare_valuation_requests_total',
         help: 'Total number of valuation requests',
-        labelNames: ['business_type', 'user_role']
+        labelNames: ['business_type', 'user_role'],
       }),
-      
+
       matchmakingRequests: new Counter({
         name: 'msmesquare_matchmaking_requests_total',
         help: 'Total number of matchmaking requests',
-        labelNames: ['match_type', 'success']
+        labelNames: ['match_type', 'success'],
       }),
-      
+
       escrowTransactions: new Counter({
         name: 'msmesquare_escrow_transactions_total',
         help: 'Total number of escrow transactions',
-        labelNames: ['transaction_type', 'status']
-      })
+        labelNames: ['transaction_type', 'status'],
+      }),
     };
 
     register.registerMetric(this.httpRequestDuration);
     register.registerMetric(this.httpRequestsTotal);
     register.registerMetric(this.activeConnections);
-    
+
     Object.values(this.businessMetrics).forEach(metric => {
       register.registerMetric(metric);
     });
@@ -119,21 +119,21 @@ export class MetricsService {
   requestMetrics() {
     return (req: any, res: any, next: any) => {
       const start = Date.now();
-      
+
       res.on('finish', () => {
         const duration = (Date.now() - start) / 1000;
         const route = req.route?.path || req.path;
         const userRole = req.user?.role || 'anonymous';
-        
+
         this.httpRequestDuration
           .labels(req.method, route, res.statusCode.toString(), userRole)
           .observe(duration);
-          
+
         this.httpRequestsTotal
           .labels(req.method, route, res.statusCode.toString(), userRole)
           .inc();
       });
-      
+
       next();
     };
   }
@@ -193,8 +193,8 @@ export function setupMonitoring(app: Express) {
       services: {
         redis: 'connected',
         stripe: 'connected',
-        sentry: process.env.SENTRY_DSN ? 'enabled' : 'disabled'
-      }
+        sentry: process.env.SENTRY_DSN ? 'enabled' : 'disabled',
+      },
     };
 
     res.json(health);
@@ -230,16 +230,16 @@ export class PerformanceMonitor {
 
   static endTimer(name: string): number {
     const start = this.timers.get(name);
-    if (!start) return 0;
-    
+    if (!start) {return 0;}
+
     const duration = Date.now() - start;
     this.timers.delete(name);
-    
+
     // Log slow operations
     if (duration > 1000) {
       console.warn(`⚠️ Slow operation: ${name} took ${duration}ms`);
     }
-    
+
     return duration;
   }
 
@@ -248,14 +248,14 @@ export class PerformanceMonitor {
     try {
       const result = await fn();
       const duration = this.endTimer(name);
-      
+
       // Track in metrics
       if (name.includes('database')) {
         // Database operation metrics
       } else if (name.includes('valuation')) {
         // Valuation metrics
       }
-      
+
       return result;
     } catch (error) {
       this.endTimer(name);
@@ -274,30 +274,30 @@ export function trackError(error: Error, context?: Record<string, any>) {
       Sentry.captureException(error);
     });
   }
-  
+
   console.error('Error tracked:', error.message, context);
 }
 
 // Business metrics tracking helper
 export function trackBusinessEvent(event: string, data: Record<string, any>) {
   switch (event) {
-    case 'msme_listing_created':
-      metricsService.trackMSMEListing(data.industry, data.city, data.status);
-      break;
-    case 'loan_application_submitted':
-      metricsService.trackLoanApplication(data.status, data.nbfcId);
-      break;
-    case 'subscription_payment':
-      metricsService.trackSubscriptionRevenue(data.planType, data.status, data.amount);
-      break;
-    case 'valuation_requested':
-      metricsService.trackValuationRequest(data.businessType, data.userRole);
-      break;
-    case 'matchmaking_requested':
-      metricsService.trackMatchmakingRequest(data.matchType, data.success);
-      break;
-    case 'escrow_transaction':
-      metricsService.trackEscrowTransaction(data.transactionType, data.status);
-      break;
+  case 'msme_listing_created':
+    metricsService.trackMSMEListing(data.industry, data.city, data.status);
+    break;
+  case 'loan_application_submitted':
+    metricsService.trackLoanApplication(data.status, data.nbfcId);
+    break;
+  case 'subscription_payment':
+    metricsService.trackSubscriptionRevenue(data.planType, data.status, data.amount);
+    break;
+  case 'valuation_requested':
+    metricsService.trackValuationRequest(data.businessType, data.userRole);
+    break;
+  case 'matchmaking_requested':
+    metricsService.trackMatchmakingRequest(data.matchType, data.success);
+    break;
+  case 'escrow_transaction':
+    metricsService.trackEscrowTransaction(data.transactionType, data.status);
+    break;
   }
 }

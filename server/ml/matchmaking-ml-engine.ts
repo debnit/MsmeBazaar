@@ -71,13 +71,13 @@ class MLMatchmakingEngine {
   async findMatches(
     buyerProfile: BuyerProfile,
     availableBusinesses: BusinessListing[],
-    limit: number = 10
+    limit: number = 10,
   ): Promise<MatchingResponse> {
     const startTime = Date.now();
 
     // Try ML-based matching first
     const mlResult = await this.tryMLMatching(buyerProfile, availableBusinesses);
-    
+
     if (mlResult && mlResult.confidence >= this.fallbackThreshold) {
       return this.formatMLResult(mlResult, startTime);
     }
@@ -85,7 +85,7 @@ class MLMatchmakingEngine {
     // Fallback to enhanced heuristic matching
     console.log(`ML confidence ${mlResult?.confidence || 0} < ${this.fallbackThreshold}, using heuristic fallback`);
     const heuristicResult = await this.heuristicMatching(buyerProfile, availableBusinesses, limit);
-    
+
     // Hybrid approach for moderate confidence
     if (mlResult && mlResult.confidence >= 0.4) {
       return this.hybridMatching(mlResult, heuristicResult, startTime);
@@ -94,13 +94,13 @@ class MLMatchmakingEngine {
     return {
       ...heuristicResult,
       processingTime: Date.now() - startTime,
-      methodology: 'heuristic'
+      methodology: 'heuristic',
     };
   }
 
   private async tryMLMatching(
     buyerProfile: BuyerProfile,
-    businesses: BusinessListing[]
+    businesses: BusinessListing[],
   ): Promise<any> {
     try {
       const requestData = {
@@ -128,7 +128,7 @@ class MLMatchmakingEngine {
 
   private extractBuyerFeatures(buyer: BuyerProfile): Record<string, number> {
     const prefs = buyer.preferences;
-    
+
     return {
       investment_capacity: buyer.investmentCapacity,
       min_revenue: prefs.minRevenue,
@@ -144,8 +144,8 @@ class MLMatchmakingEngine {
       prefers_healthcare: prefs.industries.includes('healthcare') ? 1 : 0,
       prefers_finance: prefs.industries.includes('finance') ? 1 : 0,
       prefers_manufacturing: prefs.industries.includes('manufacturing') ? 1 : 0,
-      prefers_tier1_cities: prefs.preferredLocations.some(loc => 
-        ['mumbai', 'bangalore', 'delhi'].includes(loc.toLowerCase())
+      prefers_tier1_cities: prefs.preferredLocations.some(loc =>
+        ['mumbai', 'bangalore', 'delhi'].includes(loc.toLowerCase()),
       ) ? 1 : 0,
       requires_certifications: prefs.requiredCertifications?.length || 0,
       max_employees: prefs.maxEmployees || 1000,
@@ -156,7 +156,7 @@ class MLMatchmakingEngine {
   private extractBusinessFeatures(business: BusinessListing): Record<string, number> {
     const currentYear = new Date().getFullYear();
     const businessAge = currentYear - business.yearEstablished;
-    
+
     return {
       business_id: parseInt(business.id) || 0,
       revenue: business.revenue,
@@ -176,8 +176,8 @@ class MLMatchmakingEngine {
       is_tier1_city: ['mumbai', 'bangalore', 'delhi'].includes(business.location.toLowerCase()) ? 1 : 0,
       is_tier2_city: ['pune', 'hyderabad', 'chennai'].includes(business.location.toLowerCase()) ? 1 : 0,
       certification_count: business.certifications.length,
-      has_iso_certification: business.certifications.some(cert => 
-        cert.toLowerCase().includes('iso')
+      has_iso_certification: business.certifications.some(cert =>
+        cert.toLowerCase().includes('iso'),
       ) ? 1 : 0,
     };
   }
@@ -185,14 +185,14 @@ class MLMatchmakingEngine {
   private async heuristicMatching(
     buyerProfile: BuyerProfile,
     businesses: BusinessListing[],
-    limit: number
+    limit: number,
   ): Promise<MatchingResponse> {
     const matches: MatchResult[] = [];
     const prefs = buyerProfile.preferences;
 
     for (const business of businesses) {
       const matchScore = this.calculateHeuristicScore(buyerProfile, business);
-      
+
       if (matchScore > 0.3) { // Minimum threshold
         const match: MatchResult = {
           businessId: business.id,
@@ -201,9 +201,9 @@ class MLMatchmakingEngine {
           confidence: 0.8, // Heuristic confidence
           reasons: this.generateMatchReasons(buyerProfile, business, matchScore),
           riskAssessment: this.assessRisk(business, buyerProfile.preferences.riskTolerance),
-          recommendedAction: this.getRecommendedAction(matchScore, business.riskScore)
+          recommendedAction: this.getRecommendedAction(matchScore, business.riskScore),
         };
-        
+
         matches.push(match);
       }
     }
@@ -217,7 +217,7 @@ class MLMatchmakingEngine {
       confidence: 0.8,
       methodology: 'heuristic',
       processingTime: 0,
-      recommendations: this.generateRecommendations(buyerProfile, matches.slice(0, limit))
+      recommendations: this.generateRecommendations(buyerProfile, matches.slice(0, limit)),
     };
   }
 
@@ -263,9 +263,9 @@ class MLMatchmakingEngine {
 
     // Risk tolerance (10% weight)
     const riskScore = this.normalizeRiskScore(business.riskScore);
-    const riskTolerance = prefs.riskTolerance === 'low' ? 0.3 : 
-                         prefs.riskTolerance === 'medium' ? 0.6 : 0.9;
-    
+    const riskTolerance = prefs.riskTolerance === 'low' ? 0.3 :
+      prefs.riskTolerance === 'medium' ? 0.6 : 0.9;
+
     if (riskScore <= riskTolerance) {
       score += 0.10;
     } else {
@@ -321,14 +321,14 @@ class MLMatchmakingEngine {
   }
 
   private assessRisk(business: BusinessListing, riskTolerance: string): 'low' | 'medium' | 'high' {
-    if (business.riskScore < 30) return 'low';
-    if (business.riskScore < 60) return 'medium';
+    if (business.riskScore < 30) {return 'low';}
+    if (business.riskScore < 60) {return 'medium';}
     return 'high';
   }
 
   private getRecommendedAction(matchScore: number, riskScore: number): 'pursue' | 'consider' | 'pass' {
-    if (matchScore > 0.8 && riskScore < 40) return 'pursue';
-    if (matchScore > 0.6 && riskScore < 60) return 'consider';
+    if (matchScore > 0.8 && riskScore < 40) {return 'pursue';}
+    if (matchScore > 0.6 && riskScore < 60) {return 'consider';}
     return 'pass';
   }
 
@@ -340,7 +340,7 @@ class MLMatchmakingEngine {
       recommendations.push('Increase budget range or expand industry preferences');
     } else if (matches.length > 0) {
       const avgScore = matches.reduce((sum, m) => sum + m.matchScore, 0) / matches.length;
-      
+
       if (avgScore > 0.8) {
         recommendations.push('Excellent matches found - consider scheduling due diligence');
       } else if (avgScore > 0.6) {
@@ -377,23 +377,23 @@ class MLMatchmakingEngine {
         confidence: match.confidence,
         reasons: match.reasons || [],
         riskAssessment: match.risk_assessment,
-        recommendedAction: match.recommended_action
+        recommendedAction: match.recommended_action,
       })),
       totalMatches: mlResult.matches.length,
       confidence: mlResult.confidence,
       methodology: 'ml',
       processingTime: Date.now() - startTime,
-      recommendations: mlResult.recommendations || []
+      recommendations: mlResult.recommendations || [],
     };
   }
 
   private hybridMatching(mlResult: any, heuristicResult: MatchingResponse, startTime: number): MatchingResponse {
     // Combine ML and heuristic results
     const hybridMatches: MatchResult[] = [];
-    
+
     // Merge matches by business ID
     const businessMap = new Map<string, MatchResult>();
-    
+
     // Add ML matches
     mlResult.matches.forEach((match: any) => {
       businessMap.set(match.business_id, {
@@ -403,7 +403,7 @@ class MLMatchmakingEngine {
         confidence: match.confidence,
         reasons: match.reasons || [],
         riskAssessment: match.risk_assessment,
-        recommendedAction: match.recommended_action
+        recommendedAction: match.recommended_action,
       });
     });
 
@@ -418,7 +418,7 @@ class MLMatchmakingEngine {
       } else {
         businessMap.set(match.businessId, {
           ...match,
-          matchScore: match.matchScore * 0.4 // Weight heuristic result
+          matchScore: match.matchScore * 0.4, // Weight heuristic result
         });
       }
     });
@@ -435,8 +435,8 @@ class MLMatchmakingEngine {
       processingTime: Date.now() - startTime,
       recommendations: [
         ...mlResult.recommendations || [],
-        ...heuristicResult.recommendations
-      ].slice(0, 5)
+        ...heuristicResult.recommendations,
+      ].slice(0, 5),
     };
   }
 
@@ -446,22 +446,22 @@ class MLMatchmakingEngine {
     const cachedHistory = await serverMemoryManager.loadPage(
       historyKey,
       () => Promise.resolve([]),
-      'medium'
+      'medium',
     );
-    
+
     return cachedHistory;
   }
 
   async saveMatchingResult(buyerId: string, result: MatchingResponse): Promise<void> {
     const historyKey = `matching_history:${buyerId}`;
     const timestamp = new Date().toISOString();
-    
+
     const historyEntry = {
       timestamp,
       matches: result.matches.length,
       confidence: result.confidence,
       methodology: result.methodology,
-      topMatch: result.matches[0]?.businessName || null
+      topMatch: result.matches[0]?.businessName || null,
     };
 
     // Save to cache
@@ -471,7 +471,7 @@ class MLMatchmakingEngine {
         const existing = await this.getMatchingHistory(buyerId);
         return [...existing, historyEntry].slice(-50); // Keep last 50 entries
       },
-      'high'
+      'high',
     );
   }
 

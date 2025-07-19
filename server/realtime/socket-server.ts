@@ -29,13 +29,13 @@ export class MSMESocketServer {
   constructor(httpServer: HTTPServer) {
     this.io = new SocketIOServer(httpServer, {
       cors: {
-        origin: process.env.NODE_ENV === 'production' ? false : "*",
-        methods: ["GET", "POST"],
-        credentials: true
+        origin: process.env.NODE_ENV === 'production' ? false : '*',
+        methods: ['GET', 'POST'],
+        credentials: true,
       },
       transports: ['websocket', 'polling'],
       pingTimeout: 60000,
-      pingInterval: 25000
+      pingInterval: 25000,
     });
 
     this.setupMiddleware();
@@ -46,7 +46,7 @@ export class MSMESocketServer {
     // Authentication middleware
     this.io.use(async (socket: AuthenticatedSocket, next) => {
       try {
-        const token = socket.handshake.auth.token || 
+        const token = socket.handshake.auth.token ||
                      socket.handshake.headers.authorization?.split(' ')[1];
 
         if (!token) {
@@ -150,114 +150,114 @@ export class MSMESocketServer {
 
   private handleJoinRoom(socket: AuthenticatedSocket, data: { roomId: string; type: string; metadata?: any }) {
     const { roomId, type, metadata } = data;
-    
+
     socket.join(roomId);
-    
+
     if (!this.rooms.has(roomId)) {
       this.rooms.set(roomId, {
         users: new Set(),
         type: type as any,
-        metadata
+        metadata,
       });
     }
-    
+
     const room = this.rooms.get(roomId)!;
     room.users.add(socket.userId!.toString());
-    
+
     // Notify others in the room
     socket.to(roomId).emit('user_joined', {
       userId: socket.userId,
       userRole: socket.userRole,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
+
     socket.emit('room_joined', {
       roomId,
       userCount: room.users.size,
-      type: room.type
+      type: room.type,
     });
   }
 
   private handleLeaveRoom(socket: AuthenticatedSocket, data: { roomId: string }) {
     const { roomId } = data;
-    
+
     socket.leave(roomId);
-    
+
     const room = this.rooms.get(roomId);
     if (room) {
       room.users.delete(socket.userId!.toString());
-      
+
       if (room.users.size === 0) {
         this.rooms.delete(roomId);
       }
     }
-    
+
     socket.to(roomId).emit('user_left', {
       userId: socket.userId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
   private handleViewListing(socket: AuthenticatedSocket, data: { msmeId: string; metadata?: any }) {
     const { msmeId, metadata } = data;
-    
+
     // Track buyer activity
     this.trackBuyerActivity(socket.userId!, 'listing_view', msmeId, metadata);
-    
+
     // Notify listing owner
     this.notifyListingOwner(msmeId, {
       type: 'listing_viewed',
       buyerId: socket.userId,
       timestamp: new Date().toISOString(),
-      metadata
+      metadata,
     });
-    
+
     // Join listing room for real-time updates
     socket.join(`listing_${msmeId}`);
   }
 
   private handleExpressInterest(socket: AuthenticatedSocket, data: { msmeId: string; message?: string }) {
     const { msmeId, message } = data;
-    
+
     // Track high-value buyer activity
     this.trackBuyerActivity(socket.userId!, 'interest_expression', msmeId, { message });
-    
+
     // Notify listing owner immediately
     this.notifyListingOwner(msmeId, {
       type: 'interest_expressed',
       buyerId: socket.userId,
       message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
+
     // Notify agents in the area
     this.notifyAgents(msmeId, {
       type: 'potential_match',
       buyerId: socket.userId,
       msmeId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
   private handleSendMessage(socket: AuthenticatedSocket, data: { roomId: string; message: string; recipientId?: string }) {
     const { roomId, message, recipientId } = data;
-    
+
     const messageData = {
       id: Date.now().toString(),
       senderId: socket.userId,
       senderRole: socket.userRole,
       message,
       timestamp: new Date().toISOString(),
-      recipientId
+      recipientId,
     };
-    
+
     // Send to specific recipient or broadcast to room
     if (recipientId) {
       socket.to(`user_${recipientId}`).emit('message_received', messageData);
     } else {
       socket.to(roomId).emit('message_received', messageData);
     }
-    
+
     // Confirm message sent
     socket.emit('message_sent', messageData);
   }
@@ -265,14 +265,14 @@ export class MSMESocketServer {
   private handleTypingStart(socket: AuthenticatedSocket, data: { roomId: string }) {
     socket.to(data.roomId).emit('user_typing', {
       userId: socket.userId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
   private handleTypingStop(socket: AuthenticatedSocket, data: { roomId: string }) {
     socket.to(data.roomId).emit('user_stopped_typing', {
       userId: socket.userId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -283,33 +283,33 @@ export class MSMESocketServer {
   private handleRequestValuation(socket: AuthenticatedSocket, data: { msmeId: string; companyData: any }) {
     // Track valuation request
     this.trackBuyerActivity(socket.userId!, 'valuation_request', data.msmeId);
-    
+
     // Emit to valuation service (would integrate with queue system)
     socket.emit('valuation_initiated', {
       msmeId: data.msmeId,
       estimatedTime: '2-3 minutes',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
   private handlePlaceBid(socket: AuthenticatedSocket, data: { msmeId: string; amount: number; terms?: any }) {
     const { msmeId, amount, terms } = data;
-    
+
     // Broadcast bid to all interested parties
     this.io.to(`listing_${msmeId}`).emit('bid_placed', {
       bidderId: socket.userId,
       amount,
       terms,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
+
     // Notify listing owner
     this.notifyListingOwner(msmeId, {
       type: 'bid_placed',
       bidderId: socket.userId,
       amount,
       terms,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -318,13 +318,13 @@ export class MSMESocketServer {
     // This would typically update the notifications table
     socket.emit('notification_read', {
       notificationId: data.notificationId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
   private handleDisconnect(socket: AuthenticatedSocket) {
     console.log(`User ${socket.userId} disconnected`);
-    
+
     // Clean up user socket tracking
     if (socket.userId) {
       const userId = socket.userId.toString();
@@ -336,14 +336,14 @@ export class MSMESocketServer {
         }
       }
     }
-    
+
     // Clean up room memberships
     this.rooms.forEach((room, roomId) => {
       if (room.users.has(socket.userId!.toString())) {
         room.users.delete(socket.userId!.toString());
         socket.to(roomId).emit('user_left', {
           userId: socket.userId,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }
     });
@@ -356,7 +356,7 @@ export class MSMESocketServer {
       action,
       msmeId,
       metadata,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 

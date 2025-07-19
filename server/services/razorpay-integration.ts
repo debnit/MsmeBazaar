@@ -56,10 +56,10 @@ class RazorpayService {
     userId: string,
     amount: number,
     productType: PaymentOrder['productType'],
-    metadata?: any
+    metadata?: any,
   ): Promise<PaymentOrder> {
     const receipt = `${productType}_${userId}_${Date.now()}`;
-    
+
     const orderOptions = {
       amount: amount * 100, // Convert to paise
       currency: 'INR',
@@ -73,7 +73,7 @@ class RazorpayService {
 
     try {
       const order = await this.razorpay.orders.create(orderOptions);
-      
+
       const paymentOrder: PaymentOrder = {
         orderId: order.id,
         amount: amount,
@@ -103,12 +103,12 @@ class RazorpayService {
     };
 
     const amount = amounts[planType];
-    
+
     return await this.createPaymentOrder(
       userId,
       amount,
       'subscription',
-      { planType, duration: 'monthly' }
+      { planType, duration: 'monthly' },
     );
   }
 
@@ -120,12 +120,12 @@ class RazorpayService {
     };
 
     const amount = amounts[reportType];
-    
+
     return await this.createPaymentOrder(
       userId,
       amount,
       'valuation',
-      { businessId, reportType }
+      { businessId, reportType },
     );
   }
 
@@ -135,7 +135,7 @@ class RazorpayService {
       userId,
       99,
       'matchmaking',
-      { requestId }
+      { requestId },
     );
   }
 
@@ -146,7 +146,7 @@ class RazorpayService {
       .createHmac('sha256', this.razorpay.key_secret)
       .update(body.toString())
       .digest('hex');
-    
+
     return expectedSignature === signature;
   }
 
@@ -168,17 +168,17 @@ class RazorpayService {
 
     // Process based on product type
     switch (paymentOrder.productType) {
-      case 'subscription':
-        await this.processSubscriptionPayment(paymentOrder);
-        break;
-      case 'valuation':
-        await this.processValuationPayment(paymentOrder);
-        break;
-      case 'matchmaking':
-        await this.processMatchmakingPayment(paymentOrder);
-        break;
-      default:
-        console.warn('Unknown product type:', paymentOrder.productType);
+    case 'subscription':
+      await this.processSubscriptionPayment(paymentOrder);
+      break;
+    case 'valuation':
+      await this.processValuationPayment(paymentOrder);
+      break;
+    case 'matchmaking':
+      await this.processMatchmakingPayment(paymentOrder);
+      break;
+    default:
+      console.warn('Unknown product type:', paymentOrder.productType);
     }
   }
 
@@ -188,7 +188,7 @@ class RazorpayService {
     amount: number,
     buyerId: string,
     sellerId: string,
-    agentId?: string
+    agentId?: string,
   ): Promise<EscrowAccount> {
     const escrowAccount: EscrowAccount = {
       id: `escrow_${Date.now()}`,
@@ -257,7 +257,7 @@ class RazorpayService {
     amount: number,
     commission: number,
     transactionId: string,
-    payoutMethod: AgentPayout['payoutMethod']
+    payoutMethod: AgentPayout['payoutMethod'],
   ): Promise<AgentPayout> {
     const payout: AgentPayout = {
       id: `payout_${Date.now()}`,
@@ -348,20 +348,20 @@ class RazorpayService {
     const payload = body.payload;
 
     switch (event) {
-      case 'payment.captured':
-        await this.handlePaymentCaptured(payload.payment.entity);
-        break;
-      case 'payment.failed':
-        await this.handlePaymentFailed(payload.payment.entity);
-        break;
-      case 'payout.processed':
-        await this.handlePayoutProcessed(payload.payout.entity);
-        break;
-      case 'payout.failed':
-        await this.handlePayoutFailed(payload.payout.entity);
-        break;
-      default:
-        console.log('Unhandled webhook event:', event);
+    case 'payment.captured':
+      await this.handlePaymentCaptured(payload.payment.entity);
+      break;
+    case 'payment.failed':
+      await this.handlePaymentFailed(payload.payment.entity);
+      break;
+    case 'payout.processed':
+      await this.handlePayoutProcessed(payload.payout.entity);
+      break;
+    case 'payout.failed':
+      await this.handlePayoutFailed(payload.payout.entity);
+      break;
+    default:
+      console.log('Unhandled webhook event:', event);
     }
   }
 
@@ -369,19 +369,19 @@ class RazorpayService {
   async getRevenueAnalytics(period: string = '30d'): Promise<any> {
     const endDate = new Date();
     const startDate = new Date();
-    
+
     switch (period) {
-      case '7d':
-        startDate.setDate(endDate.getDate() - 7);
-        break;
-      case '30d':
-        startDate.setDate(endDate.getDate() - 30);
-        break;
-      case '90d':
-        startDate.setDate(endDate.getDate() - 90);
-        break;
-      default:
-        startDate.setDate(endDate.getDate() - 30);
+    case '7d':
+      startDate.setDate(endDate.getDate() - 7);
+      break;
+    case '30d':
+      startDate.setDate(endDate.getDate() - 30);
+      break;
+    case '90d':
+      startDate.setDate(endDate.getDate() - 90);
+      break;
+    default:
+      startDate.setDate(endDate.getDate() - 30);
     }
 
     // Mock analytics data - in production, query actual transactions
@@ -439,7 +439,7 @@ class RazorpayService {
     await queueManager.addDocumentGeneration(
       'valuation_report',
       { businessId: 'extracted_from_order' },
-      order.userId
+      order.userId,
     );
   }
 
@@ -484,7 +484,7 @@ class RazorpayService {
         splits.agent,
         splits.agent,
         account.transactionId,
-        'bank_transfer'
+        'bank_transfer',
       );
     }
   }

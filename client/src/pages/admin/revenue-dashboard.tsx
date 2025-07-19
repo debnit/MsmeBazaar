@@ -9,13 +9,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { 
-  DollarSign, 
-  TrendingUp, 
-  Users, 
-  Target, 
-  CreditCard, 
-  FileText, 
+import {
+  DollarSign,
+  TrendingUp,
+  Users,
+  Target,
+  CreditCard,
+  FileText,
   Star,
   Crown,
   Shield,
@@ -24,7 +24,7 @@ import {
   IndianRupee,
   Handshake,
   UserCheck,
-  Building
+  Building,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/api-client';
@@ -69,25 +69,25 @@ interface EaaSMetrics {
 
 export default function RevenueDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
-  
+
   const { data: revenueMetrics, isLoading: metricsLoading } = useQuery({
     queryKey: ['/api/admin/revenue-metrics', selectedPeriod],
-    queryFn: () => apiRequest(`/api/admin/revenue-metrics?period=${selectedPeriod}`)
+    queryFn: () => apiRequest(`/api/admin/revenue-metrics?period=${selectedPeriod}`),
   });
 
   const { data: subscriptionStats } = useQuery({
     queryKey: ['/api/admin/subscription-stats'],
-    queryFn: () => apiRequest('/api/admin/subscription-stats')
+    queryFn: () => apiRequest('/api/admin/subscription-stats'),
   });
 
   const { data: commissionBreakdown } = useQuery({
     queryKey: ['/api/admin/commission-breakdown', selectedPeriod],
-    queryFn: () => apiRequest(`/api/admin/commission-breakdown?period=${selectedPeriod}`)
+    queryFn: () => apiRequest(`/api/admin/commission-breakdown?period=${selectedPeriod}`),
   });
 
   const { data: eaasMetrics } = useQuery({
     queryKey: ['/api/admin/eaas-metrics', selectedPeriod],
-    queryFn: () => apiRequest(`/api/admin/eaas-metrics?period=${selectedPeriod}`)
+    queryFn: () => apiRequest(`/api/admin/eaas-metrics?period=${selectedPeriod}`),
   });
 
   const formatCurrency = (amount: number) => {
@@ -95,7 +95,7 @@ export default function RevenueDashboard() {
       style: 'currency',
       currency: 'INR',
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(amount);
   };
 

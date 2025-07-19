@@ -24,9 +24,9 @@ export function calculateValuation(data: ValuationRequest): ValuationResult {
   const industryMultiplier = getIndustryMultiplier(data.industry);
   const locationMultiplier = getLocationMultiplier(data.location);
   const ageMultiplier = getAgeMultiplier(data.age);
-  
+
   const estimatedValue = baseValue * industryMultiplier * locationMultiplier * ageMultiplier;
-  
+
   return {
     estimatedValue: Math.round(estimatedValue),
     confidence: 0.75,
@@ -34,8 +34,8 @@ export function calculateValuation(data: ValuationRequest): ValuationResult {
       revenue: data.revenue * 2.5,
       assets: data.assets * 0.8,
       market: industryMultiplier,
-      location: locationMultiplier
-    }
+      location: locationMultiplier,
+    },
   };
 }
 
@@ -46,9 +46,9 @@ function getIndustryMultiplier(industry: string): number {
     'retail': 1.0,
     'services': 1.1,
     'healthcare': 1.3,
-    'default': 1.0
+    'default': 1.0,
   };
-  
+
   return multipliers[industry.toLowerCase()] || multipliers.default;
 }
 
@@ -59,16 +59,16 @@ function getLocationMultiplier(location: string): number {
     'bangalore': 1.15,
     'hyderabad': 1.1,
     'pune': 1.1,
-    'default': 1.0
+    'default': 1.0,
   };
-  
+
   return multipliers[location.toLowerCase()] || multipliers.default;
 }
 
 function getAgeMultiplier(age: number): number {
-  if (age < 1) return 0.8;
-  if (age < 3) return 0.9;
-  if (age < 5) return 1.0;
-  if (age < 10) return 1.1;
+  if (age < 1) {return 0.8;}
+  if (age < 3) {return 0.9;}
+  if (age < 5) {return 1.0;}
+  if (age < 10) {return 1.1;}
   return 1.0;
 }

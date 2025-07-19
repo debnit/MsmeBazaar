@@ -120,14 +120,14 @@ class AICopilotService {
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
-    
+
     this.initializeKnowledgeBase();
   }
 
   // Start a new copilot session
   async startSession(userId: string, userType: CopilotContext['userType']): Promise<string> {
     const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     const context: CopilotContext = {
       userId,
       userType,
@@ -156,10 +156,10 @@ class AICopilotService {
 
     // Detect intent and extract entities
     const intent = await this.detectIntent(message, context);
-    
+
     // Generate response based on intent
     const response = await this.generateResponse(message, intent, context);
-    
+
     // Add assistant response to history
     await this.addAssistantMessage(sessionId, response.message, {
       intent: intent.name,
@@ -177,7 +177,7 @@ class AICopilotService {
   private async generateResponse(
     message: string,
     intent: any,
-    context: CopilotContext
+    context: CopilotContext,
   ): Promise<CopilotResponse> {
     const systemPrompt = this.buildSystemPrompt(context);
     const businessContext = await this.getRelevantBusinessContext(message, context);
@@ -208,12 +208,12 @@ Response should be in JSON format with:
 
     try {
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
         messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: prompt }
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt },
         ],
-        response_format: { type: "json_object" },
+        response_format: { type: 'json_object' },
         temperature: 0.7,
         max_tokens: 1000,
       });
@@ -235,7 +235,7 @@ Response should be in JSON format with:
   // Intent detection using GPT
   private async detectIntent(message: string, context: CopilotContext): Promise<any> {
     const intents = this.getIntentsByUserType(context.userType);
-    
+
     const prompt = `
 Analyze this message and determine the user's intent.
 
@@ -253,11 +253,11 @@ Return JSON with:
 
     try {
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
         messages: [
-          { role: "user", content: prompt }
+          { role: 'user', content: prompt },
         ],
-        response_format: { type: "json_object" },
+        response_format: { type: 'json_object' },
         temperature: 0.3,
         max_tokens: 300,
       });
@@ -280,22 +280,22 @@ Return JSON with:
 
     // Load context based on user type
     switch (context.userType) {
-      case 'agent':
-        businessContext.currentListings = await this.getAgentListings(context.userId);
-        businessContext.marketData = await this.getMarketInsights();
-        break;
-      case 'buyer':
-        businessContext.currentListings = await this.getBuyerRecommendations(context.userId);
-        businessContext.marketData = await this.getBuyerMarketData(context.userId);
-        break;
-      case 'seller':
-        businessContext.currentListings = await this.getSellerListings(context.userId);
-        businessContext.marketData = await this.getSellerMarketData(context.userId);
-        break;
-      case 'nbfc':
-        businessContext.currentListings = await this.getNBFCApplications(context.userId);
-        businessContext.marketData = await this.getLendingMarketData();
-        break;
+    case 'agent':
+      businessContext.currentListings = await this.getAgentListings(context.userId);
+      businessContext.marketData = await this.getMarketInsights();
+      break;
+    case 'buyer':
+      businessContext.currentListings = await this.getBuyerRecommendations(context.userId);
+      businessContext.marketData = await this.getBuyerMarketData(context.userId);
+      break;
+    case 'seller':
+      businessContext.currentListings = await this.getSellerListings(context.userId);
+      businessContext.marketData = await this.getSellerMarketData(context.userId);
+      break;
+    case 'nbfc':
+      businessContext.currentListings = await this.getNBFCApplications(context.userId);
+      businessContext.marketData = await this.getLendingMarketData();
+      break;
     }
 
     return businessContext;
@@ -303,16 +303,16 @@ Return JSON with:
 
   // Get relevant knowledge base content
   private async getRelevantKnowledge(message: string, intent: any): Promise<any> {
-    const relevantFAQs = this.knowledgeBase.faqs.filter(faq => 
-      faq.tags.some(tag => message.toLowerCase().includes(tag.toLowerCase()))
+    const relevantFAQs = this.knowledgeBase.faqs.filter(faq =>
+      faq.tags.some(tag => message.toLowerCase().includes(tag.toLowerCase())),
     ).slice(0, 5);
 
     const relevantPolicies = this.knowledgeBase.policies.filter(policy =>
-      policy.content.toLowerCase().includes(intent.name.toLowerCase())
+      policy.content.toLowerCase().includes(intent.name.toLowerCase()),
     ).slice(0, 3);
 
     const relevantRules = this.knowledgeBase.businessRules.filter(rule =>
-      rule.condition.toLowerCase().includes(intent.name.toLowerCase())
+      rule.condition.toLowerCase().includes(intent.name.toLowerCase()),
     ).slice(0, 3);
 
     return {
@@ -326,20 +326,20 @@ Return JSON with:
   // Agent-specific queries
   async handleAgentQuery(query: string, agentId: string): Promise<CopilotResponse> {
     const agentContext = await this.getAgentContext(agentId);
-    
+
     // Common agent queries
     if (query.toLowerCase().includes('commission')) {
       return await this.getCommissionInfo(agentId);
     }
-    
+
     if (query.toLowerCase().includes('client') || query.toLowerCase().includes('lead')) {
       return await this.getClientInsights(agentId);
     }
-    
+
     if (query.toLowerCase().includes('performance')) {
       return await this.getPerformanceAnalysis(agentId);
     }
-    
+
     if (query.toLowerCase().includes('market')) {
       return await this.getMarketAnalysis(agentContext.specialization);
     }
@@ -351,20 +351,20 @@ Return JSON with:
   // Buyer-specific queries
   async handleBuyerQuery(query: string, buyerId: string): Promise<CopilotResponse> {
     const buyerContext = await this.getBuyerContext(buyerId);
-    
+
     // Common buyer queries
     if (query.toLowerCase().includes('recommend') || query.toLowerCase().includes('suggest')) {
       return await this.getBusinessRecommendations(buyerId);
     }
-    
+
     if (query.toLowerCase().includes('valuation') || query.toLowerCase().includes('price')) {
       return await this.getValuationInsights(buyerId);
     }
-    
+
     if (query.toLowerCase().includes('financing') || query.toLowerCase().includes('loan')) {
       return await this.getFinancingOptions(buyerId);
     }
-    
+
     if (query.toLowerCase().includes('due diligence')) {
       return await this.getDueDiligenceGuidance(buyerId);
     }
@@ -376,7 +376,7 @@ Return JSON with:
   // Real-time business insights
   async getBusinessInsights(userId: string, userType: string): Promise<BusinessInsight[]> {
     const insights: BusinessInsight[] = [];
-    
+
     // Market trend insights
     const marketTrends = await this.getMarketTrends();
     insights.push(...marketTrends.map(trend => ({
@@ -425,7 +425,7 @@ Return JSON with:
 
     // Get potential matches
     const potentialMatches = await this.findPotentialMatches(agentId);
-    
+
     suggestions.push(...potentialMatches.map(match => ({
       type: 'contact' as const,
       label: `Contact ${match.buyerName} for ${match.businessName}`,
@@ -472,11 +472,11 @@ Never provide:
     const messages = {
       agent: "Hello! I'm your AI assistant. I can help you with client management, deal suggestions, market insights, and commission tracking. What would you like to know?",
       buyer: "Welcome! I'm here to help you find the perfect business opportunity. I can provide recommendations, valuation insights, and financing guidance. How can I assist you today?",
-      seller: "Hi there! I can help you optimize your business listing, understand market trends, and connect with potential buyers. What would you like to explore?",
-      nbfc: "Greetings! I can assist with loan application reviews, risk assessments, and portfolio management. What information do you need?",
+      seller: 'Hi there! I can help you optimize your business listing, understand market trends, and connect with potential buyers. What would you like to explore?',
+      nbfc: 'Greetings! I can assist with loan application reviews, risk assessments, and portfolio management. What information do you need?',
     };
 
-    return messages[userType] || "Hello! How can I help you today?";
+    return messages[userType] || 'Hello! How can I help you today?';
   }
 
   private getIntentsByUserType(userType: string): string[] {
@@ -498,9 +498,9 @@ Never provide:
         { type: 'contact', label: 'Contact Support', payload: { type: 'support' } },
       ],
       quickReplies: [
-        "Show me my recent activity",
+        'Show me my recent activity',
         "What's trending in the market?",
-        "How can I improve my performance?",
+        'How can I improve my performance?',
       ],
       requiresHuman: false,
     };
@@ -628,11 +628,11 @@ Never provide:
     // Simple relevance scoring - in production, use more sophisticated NLP
     const queryLower = query.toLowerCase();
     const questionLower = faq.question.toLowerCase();
-    
-    if (questionLower.includes(queryLower)) return 1.0;
-    if (faq.answer.toLowerCase().includes(queryLower)) return 0.8;
-    if (faq.tags.some(tag => queryLower.includes(tag.toLowerCase()))) return 0.6;
-    
+
+    if (questionLower.includes(queryLower)) {return 1.0;}
+    if (faq.answer.toLowerCase().includes(queryLower)) {return 0.8;}
+    if (faq.tags.some(tag => queryLower.includes(tag.toLowerCase()))) {return 0.6;}
+
     return 0.0;
   }
 

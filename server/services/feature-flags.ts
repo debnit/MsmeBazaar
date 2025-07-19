@@ -73,7 +73,7 @@ class FeatureFlagService {
     }
 
     const userId = userContext.userId || 'anonymous';
-    
+
     // Check if user already has an assigned variant
     if (this.userVariants.has(userId) && this.userVariants.get(userId)!.has(flagKey)) {
       return this.userVariants.get(userId)!.get(flagKey)!;
@@ -81,7 +81,7 @@ class FeatureFlagService {
 
     // Assign variant based on consistent hashing
     const variant = this.assignVariant(flagKey, userId, flag.variants);
-    
+
     // Store variant assignment
     if (!this.userVariants.has(userId)) {
       this.userVariants.set(userId, new Map());
@@ -193,7 +193,7 @@ class FeatureFlagService {
   } {
     const variant = this.getVariant(testKey, userContext);
     const config = this.getConfig(testKey, userContext);
-    
+
     return {
       variant: variant || 'control',
       inTest: variant !== null,
@@ -297,51 +297,51 @@ class FeatureFlagService {
   }
 
   private isInRollout(flagKey: string, userContext: UserContext, percentage: number): boolean {
-    if (percentage >= 100) return true;
-    if (percentage <= 0) return false;
+    if (percentage >= 100) {return true;}
+    if (percentage <= 0) {return false;}
 
     const userId = userContext.userId || 'anonymous';
     const hash = this.hashString(`${flagKey}:${userId}`);
     const bucket = hash % 100;
-    
+
     return bucket < percentage;
   }
 
   private evaluateConditions(conditions: FeatureCondition[], userContext: UserContext): boolean {
     return conditions.every(condition => {
       switch (condition.type) {
-        case 'user_id':
-          return this.evaluateCondition(userContext.userId, condition);
-        case 'user_type':
-          return this.evaluateCondition(userContext.userType, condition);
-        case 'location':
-          return this.evaluateCondition(userContext.location, condition);
-        case 'subscription':
-          return this.evaluateCondition(userContext.subscriptionTier, condition);
-        case 'custom':
-          return this.evaluateCustomCondition(condition, userContext);
-        default:
-          return false;
+      case 'user_id':
+        return this.evaluateCondition(userContext.userId, condition);
+      case 'user_type':
+        return this.evaluateCondition(userContext.userType, condition);
+      case 'location':
+        return this.evaluateCondition(userContext.location, condition);
+      case 'subscription':
+        return this.evaluateCondition(userContext.subscriptionTier, condition);
+      case 'custom':
+        return this.evaluateCustomCondition(condition, userContext);
+      default:
+        return false;
       }
     });
   }
 
   private evaluateCondition(value: any, condition: FeatureCondition): boolean {
     switch (condition.operator) {
-      case 'equals':
-        return value === condition.value;
-      case 'contains':
-        return typeof value === 'string' && value.includes(condition.value as string);
-      case 'in':
-        return Array.isArray(condition.value) && condition.value.includes(value);
-      case 'not_in':
-        return Array.isArray(condition.value) && !condition.value.includes(value);
-      case 'greater_than':
-        return typeof value === 'number' && value > (condition.value as number);
-      case 'less_than':
-        return typeof value === 'number' && value < (condition.value as number);
-      default:
-        return false;
+    case 'equals':
+      return value === condition.value;
+    case 'contains':
+      return typeof value === 'string' && value.includes(condition.value as string);
+    case 'in':
+      return Array.isArray(condition.value) && condition.value.includes(value);
+    case 'not_in':
+      return Array.isArray(condition.value) && !condition.value.includes(value);
+    case 'greater_than':
+      return typeof value === 'number' && value > (condition.value as number);
+    case 'less_than':
+      return typeof value === 'number' && value < (condition.value as number);
+    default:
+      return false;
     }
   }
 
@@ -353,7 +353,7 @@ class FeatureFlagService {
   private assignVariant(flagKey: string, userId: string, variants: FeatureVariant[]): string {
     const hash = this.hashString(`${flagKey}:${userId}:variant`);
     const bucket = hash % 100;
-    
+
     let cumulativePercentage = 0;
     for (const variant of variants) {
       cumulativePercentage += variant.percentage;
@@ -361,7 +361,7 @@ class FeatureFlagService {
         return variant.key;
       }
     }
-    
+
     // Fallback to first variant
     return variants[0]?.key || 'default';
   }
@@ -394,7 +394,7 @@ export const featureFlagMiddleware = (flagKey: string, fallback: boolean = false
     };
 
     const isEnabled = featureFlagService.isEnabled(flagKey, userContext);
-    
+
     if (!isEnabled && !fallback) {
       return res.status(404).json({ error: 'Feature not available' });
     }

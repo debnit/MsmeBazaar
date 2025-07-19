@@ -14,9 +14,9 @@ interface LazyRouteProps extends Omit<RouteProps, 'component'> {
 
 export const LazyRoute = ({ component, fallback = <LoadingSpinner />, ...props }: LazyRouteProps) => {
   const LazyComponent = lazy(component);
-  
+
   return (
-    <Route 
+    <Route
       {...props}
       component={(params) => (
         <Suspense fallback={fallback}>

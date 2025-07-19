@@ -58,23 +58,23 @@ export class MSMEVectorSearch {
   constructor() {
     const pineconeApiKey = process.env.PINECONE_API_KEY;
     const openaiApiKey = process.env.OPENAI_API_KEY;
-    
+
     if (!pineconeApiKey || !openaiApiKey) {
       console.warn('Pinecone or OpenAI API keys not found. Vector search will be disabled.');
       return;
     }
-    
+
     this.pinecone = new Pinecone({
       apiKey: pineconeApiKey,
     });
-    
+
     this.openai = new OpenAI({
       apiKey: openaiApiKey,
     });
-    
+
     this.indexName = process.env.PINECONE_INDEX_NAME || 'msme-matchmaking';
     this.dimension = 1536; // OpenAI embedding dimension
-    
+
     this.initializeIndex();
   }
 
@@ -93,11 +93,11 @@ export class MSMEVectorSearch {
           spec: {
             serverless: {
               cloud: 'aws',
-              region: 'us-east-1'
-            }
-          }
+              region: 'us-east-1',
+            },
+          },
         });
-        
+
         console.log(`Created Pinecone index: ${this.indexName}`);
       }
     } catch (error) {
@@ -131,7 +131,7 @@ export class MSMEVectorSearch {
       `Revenue Streams: ${listing.revenueStreams?.join(', ') || ''}`,
       `Assets: ${listing.assets?.join(', ') || ''}`,
       `Growth Potential: ${listing.growthPotential || ''}`,
-      `Market Position: ${listing.marketPosition || ''}`
+      `Market Position: ${listing.marketPosition || ''}`,
     ].join('\n');
 
     try {
@@ -171,7 +171,7 @@ export class MSMEVectorSearch {
       `Acquisition Strategy: ${buyer.acquisitionStrategy || ''}`,
       `Due Diligence Requirements: ${buyer.dueDiligenceRequirements?.join(', ') || ''}`,
       `Financing Preference: ${buyer.financingPreference || ''}`,
-      `Post Acquisition Plans: ${buyer.postAcquisitionPlans || ''}`
+      `Post Acquisition Plans: ${buyer.postAcquisitionPlans || ''}`,
     ].join('\n');
 
     try {
@@ -200,7 +200,7 @@ export class MSMEVectorSearch {
       }
 
       const embedding = await this.generateMSMEEmbedding(msmeId);
-      
+
       const vector: MSMEVector = {
         id: `msme_${msmeId}`,
         values: embedding,
@@ -214,8 +214,8 @@ export class MSMEVectorSearch {
           location: `${listing.city}, ${listing.state}`,
           established_year: listing.establishedYear || new Date().getFullYear(),
           employee_count: listing.employeeCount || 0,
-          tags: listing.tags || []
-        }
+          tags: listing.tags || [],
+        },
       };
 
       const index = this.pinecone.index(this.indexName);
@@ -227,13 +227,13 @@ export class MSMEVectorSearch {
         entityType: 'msme',
         embedding: embedding,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       }).onConflictDoUpdate({
         target: [vectorEmbeddings.entityId, vectorEmbeddings.entityType],
         set: {
           embedding: embedding,
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       });
 
       console.log(`Indexed MSME listing: ${msmeId}`);
@@ -256,7 +256,7 @@ export class MSMEVectorSearch {
       }
 
       const embedding = await this.generateBuyerEmbedding(buyerId);
-      
+
       const vector: BuyerVector = {
         id: `buyer_${buyerId}`,
         values: embedding,
@@ -268,8 +268,8 @@ export class MSMEVectorSearch {
           budget_max: buyer.budgetMax || 0,
           preferred_locations: buyer.preferredLocations || [],
           experience_level: buyer.experienceLevel || '',
-          investment_timeline: buyer.investmentTimeline || ''
-        }
+          investment_timeline: buyer.investmentTimeline || '',
+        },
       };
 
       const index = this.pinecone.index(this.indexName);
@@ -281,13 +281,13 @@ export class MSMEVectorSearch {
         entityType: 'buyer',
         embedding: embedding,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       }).onConflictDoUpdate({
         target: [vectorEmbeddings.entityId, vectorEmbeddings.entityType],
         set: {
           embedding: embedding,
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       });
 
       console.log(`Indexed buyer profile: ${buyerId}`);
@@ -305,21 +305,21 @@ export class MSMEVectorSearch {
   }>> {
     try {
       const buyerEmbedding = await this.generateBuyerEmbedding(buyerId);
-      
+
       const index = this.pinecone.index(this.indexName);
       const queryResponse = await index.query({
         vector: buyerEmbedding,
         topK: limit,
         includeMetadata: true,
         filter: {
-          entity_type: { $eq: 'msme' }
-        }
+          entity_type: { $eq: 'msme' },
+        },
       });
 
       return queryResponse.matches?.map(match => ({
         msme_id: match.metadata?.msme_id as number,
         similarity_score: match.score || 0,
-        metadata: match.metadata
+        metadata: match.metadata,
       })) || [];
     } catch (error) {
       console.error('Failed to find similar MSMEs:', error);
@@ -335,21 +335,21 @@ export class MSMEVectorSearch {
   }>> {
     try {
       const msmeEmbedding = await this.generateMSMEEmbedding(msmeId);
-      
+
       const index = this.pinecone.index(this.indexName);
       const queryResponse = await index.query({
         vector: msmeEmbedding,
         topK: limit,
         includeMetadata: true,
         filter: {
-          entity_type: { $eq: 'buyer' }
-        }
+          entity_type: { $eq: 'buyer' },
+        },
       });
 
       return queryResponse.matches?.map(match => ({
         buyer_id: match.metadata?.buyer_id as number,
         similarity_score: match.score || 0,
-        metadata: match.metadata
+        metadata: match.metadata,
       })) || [];
     } catch (error) {
       console.error('Failed to find similar buyers:', error);
@@ -381,7 +381,7 @@ export class MSMEVectorSearch {
           matchReasons.push(`Industry match: ${similar.metadata.industry}`);
         }
 
-        if (similar.metadata.asking_price >= (buyer.budgetMin || 0) && 
+        if (similar.metadata.asking_price >= (buyer.budgetMin || 0) &&
             similar.metadata.asking_price <= (buyer.budgetMax || Number.MAX_SAFE_INTEGER)) {
           matchReasons.push(`Budget compatible: ₹${similar.metadata.asking_price.toLocaleString()}`);
         }
@@ -402,7 +402,7 @@ export class MSMEVectorSearch {
           buyer_id: buyerId,
           similarity_score: similar.similarity_score,
           match_reasons: matchReasons,
-          confidence_level: confidenceLevel
+          confidence_level: confidenceLevel,
         });
       }
 
@@ -432,14 +432,14 @@ export class MSMEVectorSearch {
         topK: limit,
         includeMetadata: true,
         filter: {
-          entity_type: { $eq: 'msme' }
-        }
+          entity_type: { $eq: 'msme' },
+        },
       });
 
       return queryResponse.matches?.map(match => ({
         msme_id: match.metadata?.msme_id as number,
         similarity_score: match.score || 0,
-        metadata: match.metadata
+        metadata: match.metadata,
       })) || [];
     } catch (error) {
       console.error('Failed to perform semantic search:', error);
@@ -466,11 +466,11 @@ export class MSMEVectorSearch {
         }
 
         const vectors: MSMEVector[] = [];
-        
+
         for (const listing of listings) {
           try {
             const embedding = await this.generateMSMEEmbedding(listing.id);
-            
+
             vectors.push({
               id: `msme_${listing.id}`,
               values: embedding,
@@ -484,10 +484,10 @@ export class MSMEVectorSearch {
                 location: `${listing.city}, ${listing.state}`,
                 established_year: listing.establishedYear || new Date().getFullYear(),
                 employee_count: listing.employeeCount || 0,
-                tags: listing.tags || []
-              }
+                tags: listing.tags || [],
+              },
             });
-            
+
             // Rate limiting for OpenAI API
             await new Promise(resolve => setTimeout(resolve, 100));
           } catch (error) {
@@ -502,7 +502,7 @@ export class MSMEVectorSearch {
         }
 
         offset += batchSize;
-        
+
         // Rate limiting for Pinecone API
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
@@ -522,12 +522,12 @@ export class MSMEVectorSearch {
     try {
       const index = this.pinecone.index(this.indexName);
       const stats = await index.describeIndexStats();
-      
+
       return {
         totalVectors: stats.totalVectorCount || 0,
         dimension: stats.dimension || 0,
         indexFullness: stats.indexFullness || 0,
-        namespaces: stats.namespaces || {}
+        namespaces: stats.namespaces || {},
       };
     } catch (error) {
       console.error('Failed to get index stats:', error);
@@ -550,13 +550,13 @@ export class MSMEVectorSearch {
     try {
       const index = this.pinecone.index(this.indexName);
       await index.deleteOne(`${entityType}_${entityId}`);
-      
+
       // Also delete from database
       await db
         .delete(vectorEmbeddings)
         .where(and(
           eq(vectorEmbeddings.entityId, entityId),
-          eq(vectorEmbeddings.entityType, entityType)
+          eq(vectorEmbeddings.entityType, entityType),
         ));
     } catch (error) {
       console.error('Failed to delete vector:', error);

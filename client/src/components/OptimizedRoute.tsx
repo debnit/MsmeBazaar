@@ -8,14 +8,14 @@ interface OptimizedRouteProps extends RouteProps {
   fallback?: React.ReactNode;
 }
 
-export const OptimizedRoute = ({ 
-  component: Component, 
-  fallback = <LoadingSpinner />, 
-  ...props 
+export const OptimizedRoute = ({
+  component: Component,
+  fallback = <LoadingSpinner />,
+  ...props
 }: OptimizedRouteProps) => {
   return (
-    <Route 
-      {...props} 
+    <Route
+      {...props}
       component={(params) => (
         <Suspense fallback={fallback}>
           <Component {...params} />
@@ -26,11 +26,11 @@ export const OptimizedRoute = ({
 };
 
 // Preload components on hover
-export const PreloadOnHover = ({ 
-  onMouseEnter, 
-  children, 
-  loader 
-}: { 
+export const PreloadOnHover = ({
+  onMouseEnter,
+  children,
+  loader,
+}: {
   onMouseEnter?: () => void;
   children: React.ReactNode;
   loader: () => Promise<any>;

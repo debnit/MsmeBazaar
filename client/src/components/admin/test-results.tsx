@@ -28,23 +28,23 @@ export function TestResults({ results, onRetryTest, onUpgrade }: TestResultsProp
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const getStatusBadge = (result: TestResult) => {
-    const variant = 
+    const variant =
       result.status === 403
         ? 'destructive'  // Authenticated but lacks permission
         : result.status === 401
-        ? 'secondary'    // Not authenticated
-        : result.success
-        ? 'default'      // Success
-        : 'outline';     // Other errors
+          ? 'secondary'    // Not authenticated
+          : result.success
+            ? 'default'      // Success
+            : 'outline';     // Other errors
 
-    const icon = 
+    const icon =
       result.status === 403
         ? <Lock className="h-3 w-3 mr-1" />
         : result.status === 401
-        ? <Shield className="h-3 w-3 mr-1" />
-        : result.success
-        ? <CheckCircle className="h-3 w-3 mr-1" />
-        : <XCircle className="h-3 w-3 mr-1" />;
+          ? <Shield className="h-3 w-3 mr-1" />
+          : result.success
+            ? <CheckCircle className="h-3 w-3 mr-1" />
+            : <XCircle className="h-3 w-3 mr-1" />;
 
     return (
       <Badge variant={variant} className="flex items-center">
@@ -65,7 +65,7 @@ export function TestResults({ results, onRetryTest, onUpgrade }: TestResultsProp
   };
 
   const filteredResults = results.filter(result => {
-    if (showOnlyFailed && result.success) return false;
+    if (showOnlyFailed && result.success) {return false;}
     if (selectedCategory !== 'all') {
       // Filter by permission category if needed
       return result.permissions?.some(p => p.startsWith(selectedCategory));
@@ -78,7 +78,7 @@ export function TestResults({ results, onRetryTest, onUpgrade }: TestResultsProp
     passed: results.filter(r => r.success).length,
     failed: results.filter(r => !r.success).length,
     auth_failures: results.filter(r => r.status === 401).length,
-    permission_failures: results.filter(r => r.status === 403).length
+    permission_failures: results.filter(r => r.status === 403).length,
   };
 
   const hasPermissionFailures = stats.permission_failures > 0;
@@ -138,38 +138,38 @@ export function TestResults({ results, onRetryTest, onUpgrade }: TestResultsProp
       {/* Filter Controls */}
       <div className="flex flex-wrap gap-2">
         <Button
-          variant={showOnlyFailed ? "default" : "outline"}
+          variant={showOnlyFailed ? 'default' : 'outline'}
           size="sm"
           onClick={() => setShowOnlyFailed(!showOnlyFailed)}
         >
           <Filter className="h-4 w-4 mr-2" />
           {showOnlyFailed ? 'Show All' : 'Show Failures'}
         </Button>
-        
+
         <div className="flex gap-2">
           <Button
-            variant={selectedCategory === 'all' ? "default" : "outline"}
+            variant={selectedCategory === 'all' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setSelectedCategory('all')}
           >
             All Categories
           </Button>
           <Button
-            variant={selectedCategory === 'listing' ? "default" : "outline"}
+            variant={selectedCategory === 'listing' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setSelectedCategory('listing')}
           >
             Listings
           </Button>
           <Button
-            variant={selectedCategory === 'valuation' ? "default" : "outline"}
+            variant={selectedCategory === 'valuation' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setSelectedCategory('valuation')}
           >
             Valuation
           </Button>
           <Button
-            variant={selectedCategory === 'transaction' ? "default" : "outline"}
+            variant={selectedCategory === 'transaction' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setSelectedCategory('transaction')}
           >
@@ -212,7 +212,7 @@ export function TestResults({ results, onRetryTest, onUpgrade }: TestResultsProp
                 <p className="text-sm text-muted-foreground">
                   {getStatusMessage(result)}
                 </p>
-                
+
                 {result.permissions && result.permissions.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {result.permissions.map((permission) => (
@@ -222,7 +222,7 @@ export function TestResults({ results, onRetryTest, onUpgrade }: TestResultsProp
                     ))}
                   </div>
                 )}
-                
+
                 {!result.success && result.status === 403 && (
                   <Alert>
                     <Lock className="h-4 w-4" />
@@ -231,7 +231,7 @@ export function TestResults({ results, onRetryTest, onUpgrade }: TestResultsProp
                     </AlertDescription>
                   </Alert>
                 )}
-                
+
                 {!result.success && result.status === 401 && (
                   <Alert>
                     <Shield className="h-4 w-4" />
@@ -240,7 +240,7 @@ export function TestResults({ results, onRetryTest, onUpgrade }: TestResultsProp
                     </AlertDescription>
                   </Alert>
                 )}
-                
+
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">
                     {new Date(result.timestamp).toLocaleString()}

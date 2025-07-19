@@ -1,9 +1,9 @@
-import { useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Gift, Star, Coins, Clock, X } from "lucide-react";
+import { useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Gift, Star, Coins, Clock, X } from 'lucide-react';
 
 interface SpinWheelProps {
   isVisible: boolean;
@@ -24,36 +24,36 @@ const rewards = [
   { type: 'coins', value: 15, color: '#F97316', label: '15 Coins' },
 ];
 
-export function SpinWheel({ 
-  isVisible, 
-  onClose, 
-  onWin, 
-  canSpin, 
-  nextSpinTime 
+export function SpinWheel({
+  isVisible,
+  onClose,
+  onWin,
+  canSpin,
+  nextSpinTime,
 }: SpinWheelProps) {
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const wheelRef = useRef<HTMLDivElement>(null);
 
   const spinWheel = () => {
-    if (!canSpin || isSpinning) return;
-    
+    if (!canSpin || isSpinning) {return;}
+
     setIsSpinning(true);
-    
+
     // Calculate random rotation (multiple full rotations + random angle)
     const baseRotation = rotation;
     const spins = 5 + Math.random() * 5; // 5-10 full rotations
     const finalAngle = Math.random() * 360;
     const totalRotation = baseRotation + (spins * 360) + finalAngle;
-    
+
     setRotation(totalRotation);
-    
+
     // Determine winning reward based on final angle
     const segmentAngle = 360 / rewards.length;
     const normalizedAngle = (360 - (finalAngle % 360)) % 360;
     const winningIndex = Math.floor(normalizedAngle / segmentAngle);
     const winningReward = rewards[winningIndex];
-    
+
     // Show result after spin animation
     setTimeout(() => {
       setIsSpinning(false);
@@ -64,12 +64,12 @@ export function SpinWheel({
   const getTimeUntilNextSpin = () => {
     const now = new Date();
     const timeDiff = nextSpinTime.getTime() - now.getTime();
-    
-    if (timeDiff <= 0) return "Available now!";
-    
+
+    if (timeDiff <= 0) {return 'Available now!';}
+
     const hours = Math.floor(timeDiff / (1000 * 60 * 60));
     const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     return `${hours}h ${minutes}m`;
   };
 
@@ -112,29 +112,29 @@ export function SpinWheel({
                     ref={wheelRef}
                     className="relative w-full h-full rounded-full border-4 border-gray-300 overflow-hidden"
                     animate={{ rotate: rotation }}
-                    transition={{ 
+                    transition={{
                       duration: isSpinning ? 3 : 0,
-                      ease: isSpinning ? "easeOut" : "linear"
+                      ease: isSpinning ? 'easeOut' : 'linear',
                     }}
                   >
                     {rewards.map((reward, index) => {
                       const angle = (360 / rewards.length) * index;
                       const nextAngle = (360 / rewards.length) * (index + 1);
-                      
+
                       return (
                         <div
                           key={index}
                           className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm"
                           style={{
                             background: `conic-gradient(from ${angle}deg, ${reward.color} 0deg, ${reward.color} ${360 / rewards.length}deg, transparent ${360 / rewards.length}deg)`,
-                            clipPath: `polygon(50% 50%, ${50 + 50 * Math.cos((angle - 90) * Math.PI / 180)}% ${50 + 50 * Math.sin((angle - 90) * Math.PI / 180)}%, ${50 + 50 * Math.cos((nextAngle - 90) * Math.PI / 180)}% ${50 + 50 * Math.sin((nextAngle - 90) * Math.PI / 180)}%)`
+                            clipPath: `polygon(50% 50%, ${50 + 50 * Math.cos((angle - 90) * Math.PI / 180)}% ${50 + 50 * Math.sin((angle - 90) * Math.PI / 180)}%, ${50 + 50 * Math.cos((nextAngle - 90) * Math.PI / 180)}% ${50 + 50 * Math.sin((nextAngle - 90) * Math.PI / 180)}%)`,
                           }}
                         >
                           <div
                             className="absolute text-center"
                             style={{
                               transform: `rotate(${angle + (360 / rewards.length) / 2}deg)`,
-                              transformOrigin: '50% 50%'
+                              transformOrigin: '50% 50%',
                             }}
                           >
                             <div className="flex flex-col items-center">
@@ -150,13 +150,13 @@ export function SpinWheel({
                       );
                     })}
                   </motion.div>
-                  
+
                   {/* Pointer */}
                   <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2 z-10">
                     <div className="w-0 h-0 border-l-4 border-r-4 border-b-8 border-l-transparent border-r-transparent border-b-gray-800"></div>
                   </div>
                 </div>
-                
+
                 {canSpin ? (
                   <div className="space-y-4">
                     <p className="text-gray-600">

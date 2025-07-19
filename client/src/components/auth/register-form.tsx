@@ -1,30 +1,30 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, UserPlus, AlertCircle } from "lucide-react";
-import { register as registerUser } from "@/lib/auth";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
+import { Eye, EyeOff, UserPlus, AlertCircle } from 'lucide-react';
+import { register as registerUser } from '@/lib/auth';
 
 const registerSchema = z.object({
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email address"),
+  firstName: z.string().min(2, 'First name must be at least 2 characters'),
+  lastName: z.string().min(2, 'Last name must be at least 2 characters'),
+  email: z.string().email('Please enter a valid email address'),
   phone: z.string().optional(),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string().min(6, "Please confirm your password"),
-  role: z.enum(["seller", "buyer", "agent", "nbfc"], {
-    required_error: "Please select a role",
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string().min(6, 'Please confirm your password'),
+  role: z.enum(['seller', 'buyer', 'agent', 'nbfc'], {
+    required_error: 'Please select a role',
   }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
-  path: ["confirmPassword"],
+  path: ['confirmPassword'],
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
@@ -38,12 +38,12 @@ export default function RegisterForm() {
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      password: "",
-      confirmPassword: "",
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      password: '',
+      confirmPassword: '',
       role: undefined,
     },
   });
@@ -52,17 +52,17 @@ export default function RegisterForm() {
     mutationFn: registerUser,
     onSuccess: (data) => {
       toast({
-        title: "Registration Successful",
+        title: 'Registration Successful',
         description: `Welcome to MSMEAtlas, ${data.user.firstName}!`,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       // Navigation will be handled by the App component based on auth state
     },
     onError: (error) => {
       toast({
-        title: "Registration Failed",
+        title: 'Registration Failed',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     },
   });
@@ -81,7 +81,7 @@ export default function RegisterForm() {
             <Input
               id="firstName"
               placeholder="Enter first name"
-              {...form.register("firstName")}
+              {...form.register('firstName')}
               className="mt-1"
             />
             {form.formState.errors.firstName && (
@@ -96,7 +96,7 @@ export default function RegisterForm() {
             <Input
               id="lastName"
               placeholder="Enter last name"
-              {...form.register("lastName")}
+              {...form.register('lastName')}
               className="mt-1"
             />
             {form.formState.errors.lastName && (
@@ -113,7 +113,7 @@ export default function RegisterForm() {
             id="email"
             type="email"
             placeholder="Enter your email"
-            {...form.register("email")}
+            {...form.register('email')}
             className="mt-1"
           />
           {form.formState.errors.email && (
@@ -129,14 +129,14 @@ export default function RegisterForm() {
             id="phone"
             type="tel"
             placeholder="Enter phone number"
-            {...form.register("phone")}
+            {...form.register('phone')}
             className="mt-1"
           />
         </div>
 
         <div>
           <Label htmlFor="role">Role</Label>
-          <Select onValueChange={(value) => form.setValue("role", value as any)}>
+          <Select onValueChange={(value) => form.setValue('role', value as any)}>
             <SelectTrigger className="mt-1">
               <SelectValue placeholder="Select your role" />
             </SelectTrigger>
@@ -159,9 +159,9 @@ export default function RegisterForm() {
           <div className="relative mt-1">
             <Input
               id="password"
-              type={showPassword ? "text" : "password"}
+              type={showPassword ? 'text' : 'password'}
               placeholder="Create a password"
-              {...form.register("password")}
+              {...form.register('password')}
               className="pr-10"
             />
             <Button
@@ -190,9 +190,9 @@ export default function RegisterForm() {
           <div className="relative mt-1">
             <Input
               id="confirmPassword"
-              type={showConfirmPassword ? "text" : "password"}
+              type={showConfirmPassword ? 'text' : 'password'}
               placeholder="Confirm your password"
-              {...form.register("confirmPassword")}
+              {...form.register('confirmPassword')}
               className="pr-10"
             />
             <Button
@@ -221,7 +221,7 @@ export default function RegisterForm() {
         <Alert className="border-red-200 bg-red-50">
           <AlertCircle className="h-4 w-4 text-red-600" />
           <AlertDescription className="text-red-800">
-            {registerMutation.error?.message || "Registration failed. Please try again."}
+            {registerMutation.error?.message || 'Registration failed. Please try again.'}
           </AlertDescription>
         </Alert>
       )}

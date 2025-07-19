@@ -1,4 +1,4 @@
-import { MsmeListing } from "@shared/schema";
+import { MsmeListing } from '@shared/schema';
 
 // Geographic coordinates for major Odisha cities/districts
 export const odishaCoordinates: { [key: string]: { lat: number; lng: number } } = {
@@ -31,7 +31,7 @@ export const odishaCoordinates: { [key: string]: { lat: number; lng: number } } 
   'Rayagada': { lat: 19.1679, lng: 83.4136 },
   'Sambalpur': { lat: 21.4667, lng: 83.9833 },
   'Subarnapur': { lat: 20.8333, lng: 83.9000 },
-  'Sundargarh': { lat: 22.1167, lng: 84.0167 }
+  'Sundargarh': { lat: 22.1167, lng: 84.0167 },
 };
 
 // Function to calculate distance between two points using Haversine formula
@@ -39,11 +39,11 @@ export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2
   const R = 6371; // Earth's radius in kilometers
   const dLat = toRadians(lat2 - lat1);
   const dLon = toRadians(lon2 - lon1);
-  
+
   const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
     Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  
+
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c; // Distance in kilometers
 }
@@ -55,21 +55,21 @@ function toRadians(degrees: number): number {
 // Get coordinates for a city/district
 export function getCoordinates(location: string): { lat: number; lng: number } | null {
   const normalized = location.trim().toLowerCase();
-  
+
   // Try exact match first
   for (const [city, coords] of Object.entries(odishaCoordinates)) {
     if (city.toLowerCase() === normalized) {
       return coords;
     }
   }
-  
+
   // Try partial match
   for (const [city, coords] of Object.entries(odishaCoordinates)) {
     if (city.toLowerCase().includes(normalized) || normalized.includes(city.toLowerCase())) {
       return coords;
     }
   }
-  
+
   return null;
 }
 
@@ -77,11 +77,11 @@ export function getCoordinates(location: string): { lat: number; lng: number } |
 export function getDistanceBetweenLocations(location1: string, location2: string): number | null {
   const coords1 = getCoordinates(location1);
   const coords2 = getCoordinates(location2);
-  
+
   if (!coords1 || !coords2) {
     return null;
   }
-  
+
   return calculateDistance(coords1.lat, coords1.lng, coords2.lat, coords2.lng);
 }
 
@@ -108,19 +108,19 @@ export interface GeographicMatchResult {
 
 // Calculate proximity score based on distance
 export function calculateProximityScore(distance: number | null): number {
-  if (distance === null) return 0;
-  
+  if (distance === null) {return 0;}
+
   // Proximity scoring:
   // 0-25 km: 1.0 (excellent)
   // 25-50 km: 0.8 (very good)
   // 50-100 km: 0.6 (good)
   // 100-200 km: 0.4 (fair)
   // 200+ km: 0.2 (poor)
-  
-  if (distance <= 25) return 1.0;
-  if (distance <= 50) return 0.8;
-  if (distance <= 100) return 0.6;
-  if (distance <= 200) return 0.4;
+
+  if (distance <= 25) {return 1.0;}
+  if (distance <= 50) {return 0.8;}
+  if (distance <= 100) {return 0.6;}
+  if (distance <= 200) {return 0.4;}
   return 0.2;
 }
 
@@ -128,7 +128,7 @@ export function calculateProximityScore(distance: number | null): number {
 export function isSameDistrict(location1: string, location2: string): boolean {
   const normalized1 = location1.trim().toLowerCase();
   const normalized2 = location2.trim().toLowerCase();
-  
+
   // Check if either location contains the other
   return normalized1.includes(normalized2) || normalized2.includes(normalized1);
 }
@@ -136,23 +136,23 @@ export function isSameDistrict(location1: string, location2: string): boolean {
 // Get nearby districts for a given district
 export function getNearbyDistricts(district: string, maxDistance: number = 100): string[] {
   const baseCoords = getCoordinates(district);
-  if (!baseCoords) return [];
-  
+  if (!baseCoords) {return [];}
+
   const nearby: string[] = [];
-  
+
   for (const [districtName, coords] of Object.entries(odishaCoordinates)) {
-    if (districtName.toLowerCase() === district.toLowerCase()) continue;
-    
+    if (districtName.toLowerCase() === district.toLowerCase()) {continue;}
+
     const distance = calculateDistance(baseCoords.lat, baseCoords.lng, coords.lat, coords.lng);
     if (distance <= maxDistance) {
       nearby.push(districtName);
     }
   }
-  
+
   return nearby.sort((a, b) => {
-    const distA = calculateDistance(baseCoords.lat, baseCoords.lng, 
+    const distA = calculateDistance(baseCoords.lat, baseCoords.lng,
       odishaCoordinates[a].lat, odishaCoordinates[a].lng);
-    const distB = calculateDistance(baseCoords.lat, baseCoords.lng, 
+    const distB = calculateDistance(baseCoords.lat, baseCoords.lng,
       odishaCoordinates[b].lat, odishaCoordinates[b].lng);
     return distA - distB;
   });
@@ -160,17 +160,17 @@ export function getNearbyDistricts(district: string, maxDistance: number = 100):
 
 // Format distance for display
 export function formatDistance(distance: number | null, language: 'en' | 'hi' | 'or' = 'en'): string {
-  if (distance === null) return '';
-  
+  if (distance === null) {return '';}
+
   const rounded = Math.round(distance);
-  
+
   switch (language) {
-    case 'hi':
-      return `${rounded} किमी दूर`;
-    case 'or':
-      return `${rounded} କିମି ଦୂରରେ`;
-    default:
-      return `${rounded} km away`;
+  case 'hi':
+    return `${rounded} किमी दूर`;
+  case 'or':
+    return `${rounded} କିମି ଦୂରରେ`;
+  default:
+    return `${rounded} km away`;
   }
 }
 
@@ -178,36 +178,36 @@ export function formatDistance(distance: number | null, language: 'en' | 'hi' | 
 export function clusterByGeography(listings: MsmeListing[], clusterRadius: number = 50): MsmeListing[][] {
   const clusters: MsmeListing[][] = [];
   const processed = new Set<number>();
-  
+
   for (const listing of listings) {
-    if (processed.has(listing.id)) continue;
-    
+    if (processed.has(listing.id)) {continue;}
+
     const cluster: MsmeListing[] = [listing];
     processed.add(listing.id);
-    
+
     const baseCoords = getCoordinates(listing.city || '');
-    if (!baseCoords) continue;
-    
+    if (!baseCoords) {continue;}
+
     // Find nearby listings
     for (const otherListing of listings) {
-      if (processed.has(otherListing.id)) continue;
-      
+      if (processed.has(otherListing.id)) {continue;}
+
       const otherCoords = getCoordinates(otherListing.city || '');
-      if (!otherCoords) continue;
-      
+      if (!otherCoords) {continue;}
+
       const distance = calculateDistance(
         baseCoords.lat, baseCoords.lng,
-        otherCoords.lat, otherCoords.lng
+        otherCoords.lat, otherCoords.lng,
       );
-      
+
       if (distance <= clusterRadius) {
         cluster.push(otherListing);
         processed.add(otherListing.id);
       }
     }
-    
+
     clusters.push(cluster);
   }
-  
+
   return clusters;
 }

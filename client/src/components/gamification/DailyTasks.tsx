@@ -1,21 +1,21 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { 
-  CheckCircle, 
-  Target, 
-  Clock, 
-  Star, 
-  X, 
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import {
+  CheckCircle,
+  Target,
+  Clock,
+  Star,
+  X,
   Gift,
   Users,
   FileText,
   MessageCircle,
-  TrendingUp
-} from "lucide-react";
+  TrendingUp,
+} from 'lucide-react';
 
 interface DailyTasksProps {
   isVisible: boolean;
@@ -35,10 +35,10 @@ interface Task {
   icon: React.ReactNode;
 }
 
-export function DailyTasks({ 
-  isVisible, 
-  onClose, 
-  onTaskComplete 
+export function DailyTasks({
+  isVisible,
+  onClose,
+  onTaskComplete,
 }: DailyTasksProps) {
   const [tasks, setTasks] = useState<Task[]>([
     {
@@ -50,7 +50,7 @@ export function DailyTasks({
       maxProgress: 100,
       completed: false,
       category: 'business',
-      icon: <Users className="w-5 h-5" />
+      icon: <Users className="w-5 h-5" />,
     },
     {
       id: 'create_listing',
@@ -61,7 +61,7 @@ export function DailyTasks({
       maxProgress: 1,
       completed: false,
       category: 'business',
-      icon: <FileText className="w-5 h-5" />
+      icon: <FileText className="w-5 h-5" />,
     },
     {
       id: 'browse_listings',
@@ -72,7 +72,7 @@ export function DailyTasks({
       maxProgress: 5,
       completed: false,
       category: 'engagement',
-      icon: <Target className="w-5 h-5" />
+      icon: <Target className="w-5 h-5" />,
     },
     {
       id: 'send_message',
@@ -83,7 +83,7 @@ export function DailyTasks({
       maxProgress: 3,
       completed: false,
       category: 'social',
-      icon: <MessageCircle className="w-5 h-5" />
+      icon: <MessageCircle className="w-5 h-5" />,
     },
     {
       id: 'daily_login',
@@ -94,7 +94,7 @@ export function DailyTasks({
       maxProgress: 1,
       completed: true,
       category: 'engagement',
-      icon: <CheckCircle className="w-5 h-5" />
+      icon: <CheckCircle className="w-5 h-5" />,
     },
     {
       id: 'share_listing',
@@ -105,38 +105,38 @@ export function DailyTasks({
       maxProgress: 1,
       completed: false,
       category: 'social',
-      icon: <TrendingUp className="w-5 h-5" />
-    }
+      icon: <TrendingUp className="w-5 h-5" />,
+    },
   ]);
 
   const handleCompleteTask = (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
-    if (!task || task.completed) return;
+    if (!task || task.completed) {return;}
 
-    setTasks(prev => prev.map(t => 
-      t.id === taskId ? { ...t, completed: true, progress: t.maxProgress } : t
+    setTasks(prev => prev.map(t =>
+      t.id === taskId ? { ...t, completed: true, progress: t.maxProgress } : t,
     ));
-    
+
     onTaskComplete(taskId, task.reward);
   };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'business': return 'bg-blue-500';
-      case 'social': return 'bg-purple-500';
-      case 'engagement': return 'bg-green-500';
-      case 'learning': return 'bg-orange-500';
-      default: return 'bg-gray-500';
+    case 'business': return 'bg-blue-500';
+    case 'social': return 'bg-purple-500';
+    case 'engagement': return 'bg-green-500';
+    case 'learning': return 'bg-orange-500';
+    default: return 'bg-gray-500';
     }
   };
 
   const getCategoryName = (category: string) => {
     switch (category) {
-      case 'business': return 'Business';
-      case 'social': return 'Social';
-      case 'engagement': return 'Engagement';
-      case 'learning': return 'Learning';
-      default: return 'Other';
+    case 'business': return 'Business';
+    case 'social': return 'Social';
+    case 'engagement': return 'Engagement';
+    case 'learning': return 'Learning';
+    default: return 'Other';
     }
   };
 
@@ -174,7 +174,7 @@ export function DailyTasks({
                     <X className="w-4 h-4" />
                   </Button>
                 </div>
-                
+
                 {/* Progress Summary */}
                 <div className="grid grid-cols-2 gap-4 mt-4">
                   <div className="flex items-center space-x-2">
@@ -193,15 +193,15 @@ export function DailyTasks({
                   </div>
                 </div>
               </CardHeader>
-              
+
               <CardContent className="max-h-[60vh] overflow-y-auto">
                 <div className="space-y-4">
                   {tasks.map((task) => (
                     <motion.div
                       key={task.id}
                       className={`p-4 rounded-lg border-2 transition-all duration-200 ${
-                        task.completed 
-                          ? 'bg-green-50 border-green-200' 
+                        task.completed
+                          ? 'bg-green-50 border-green-200'
                           : 'bg-gray-50 border-gray-200 hover:border-gray-300'
                       }`}
                       whileHover={{ scale: 1.02 }}
@@ -219,7 +219,7 @@ export function DailyTasks({
                               </Badge>
                             </div>
                             <p className="text-sm text-gray-600 mb-3">{task.description}</p>
-                            
+
                             {/* Progress Bar */}
                             <div className="space-y-2">
                               <div className="flex items-center justify-between text-sm">
@@ -233,14 +233,14 @@ export function DailyTasks({
                                   </span>
                                 </div>
                               </div>
-                              <Progress 
-                                value={(task.progress / task.maxProgress) * 100} 
+                              <Progress
+                                value={(task.progress / task.maxProgress) * 100}
                                 className="h-2"
                               />
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="ml-4">
                           {task.completed ? (
                             <div className="flex items-center space-x-2 text-green-600">
@@ -267,7 +267,7 @@ export function DailyTasks({
                     </motion.div>
                   ))}
                 </div>
-                
+
                 {/* Daily Bonus */}
                 <div className="mt-6 p-4 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg">
                   <div className="flex items-center justify-between">

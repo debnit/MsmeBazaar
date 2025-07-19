@@ -1,74 +1,74 @@
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Shield, CheckCircle, AlertCircle, Clock, Download, ExternalLink } from "lucide-react";
-import { nbfcApi } from "@/lib/api";
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Shield, CheckCircle, AlertCircle, Clock, Download, ExternalLink } from 'lucide-react';
+import { nbfcApi } from '@/lib/api';
 
 export default function ComplianceStatusWidget() {
   const { data: complianceRecords, isLoading } = useQuery({
-    queryKey: ["/api/nbfc/compliance"],
+    queryKey: ['/api/nbfc/compliance'],
     queryFn: nbfcApi.getCompliance,
   });
 
   // Mock compliance data for demonstration
   const mockCompliance = {
-    overall: "compliant",
+    overall: 'compliant',
     items: [
       {
-        name: "Master Directions",
-        status: "compliant",
-        description: "All master directions are being followed as per RBI guidelines",
-        lastChecked: "2024-01-15",
-        nextReview: "2024-02-15"
+        name: 'Master Directions',
+        status: 'compliant',
+        description: 'All master directions are being followed as per RBI guidelines',
+        lastChecked: '2024-01-15',
+        nextReview: '2024-02-15',
       },
       {
-        name: "MSME Lending Guidelines",
-        status: "compliant",
-        description: "MSME lending guidelines are being followed. Fair practices code implemented.",
-        lastChecked: "2024-01-15",
-        nextReview: "2024-02-15"
+        name: 'MSME Lending Guidelines',
+        status: 'compliant',
+        description: 'MSME lending guidelines are being followed. Fair practices code implemented.',
+        lastChecked: '2024-01-15',
+        nextReview: '2024-02-15',
       },
       {
-        name: "Scale-based Regulation",
-        status: "under_review",
-        description: "Current tier: upper. Scale-based regulation compliance under review.",
-        lastChecked: "2024-01-10",
-        nextReview: "2024-02-10"
+        name: 'Scale-based Regulation',
+        status: 'under_review',
+        description: 'Current tier: upper. Scale-based regulation compliance under review.',
+        lastChecked: '2024-01-10',
+        nextReview: '2024-02-10',
       },
       {
-        name: "SRO Membership",
-        status: "compliant",
-        description: "Active membership with MFIN (recognized SRO). Regular compliance reporting.",
-        lastChecked: "2024-01-15",
-        nextReview: "2024-02-15"
-      }
-    ]
+        name: 'SRO Membership',
+        status: 'compliant',
+        description: 'Active membership with MFIN (recognized SRO). Regular compliance reporting.',
+        lastChecked: '2024-01-15',
+        nextReview: '2024-02-15',
+      },
+    ],
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "compliant":
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case "non_compliant":
-        return <AlertCircle className="h-4 w-4 text-red-600" />;
-      case "under_review":
-        return <Clock className="h-4 w-4 text-yellow-600" />;
-      default:
-        return <AlertCircle className="h-4 w-4 text-gray-600" />;
+    case 'compliant':
+      return <CheckCircle className="h-4 w-4 text-green-600" />;
+    case 'non_compliant':
+      return <AlertCircle className="h-4 w-4 text-red-600" />;
+    case 'under_review':
+      return <Clock className="h-4 w-4 text-yellow-600" />;
+    default:
+      return <AlertCircle className="h-4 w-4 text-gray-600" />;
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "compliant":
-        return <Badge className="bg-green-100 text-green-800">Compliant</Badge>;
-      case "non_compliant":
-        return <Badge className="bg-red-100 text-red-800">Non-Compliant</Badge>;
-      case "under_review":
-        return <Badge className="bg-yellow-100 text-yellow-800">Under Review</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-800">Unknown</Badge>;
+    case 'compliant':
+      return <Badge className="bg-green-100 text-green-800">Compliant</Badge>;
+    case 'non_compliant':
+      return <Badge className="bg-red-100 text-red-800">Non-Compliant</Badge>;
+    case 'under_review':
+      return <Badge className="bg-yellow-100 text-yellow-800">Under Review</Badge>;
+    default:
+      return <Badge className="bg-gray-100 text-gray-800">Unknown</Badge>;
     }
   };
 

@@ -61,7 +61,7 @@ export default function AICopilot() {
       if (response.ok) {
         const data = await response.json();
         setSessionId(data.sessionId);
-        
+
         // Add welcome message
         setMessages([{
           id: 'welcome',
@@ -70,24 +70,24 @@ export default function AICopilot() {
           timestamp: new Date().toISOString(),
           quickReplies: [
             "What's trending in my industry?",
-            "Show me my performance metrics",
-            "Help me find potential clients",
-            "What are my recent opportunities?"
-          ]
+            'Show me my performance metrics',
+            'Help me find potential clients',
+            'What are my recent opportunities?',
+          ],
         }]);
       }
     } catch (error) {
       console.error('Failed to initialize session:', error);
       toast({
-        title: "Connection Error",
-        description: "Unable to connect to AI assistant. Please try again.",
-        variant: "destructive",
+        title: 'Connection Error',
+        description: 'Unable to connect to AI assistant. Please try again.',
+        variant: 'destructive',
       });
     }
   };
 
   const sendMessage = async (message: string) => {
-    if (!message.trim() || !sessionId) return;
+    if (!message.trim() || !sessionId) {return;}
 
     const userMessage: CopilotMessage = {
       id: Date.now().toString(),
@@ -115,7 +115,7 @@ export default function AICopilot() {
 
       if (response.ok) {
         const data = await response.json();
-        
+
         const assistantMessage: CopilotMessage = {
           id: Date.now().toString() + '_assistant',
           role: 'assistant',
@@ -133,9 +133,9 @@ export default function AICopilot() {
     } catch (error) {
       console.error('Failed to send message:', error);
       toast({
-        title: "Message Failed",
-        description: "Unable to send message. Please try again.",
-        variant: "destructive",
+        title: 'Message Failed',
+        description: 'Unable to send message. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -144,27 +144,27 @@ export default function AICopilot() {
 
   const handleActionClick = (action: CopilotAction) => {
     switch (action.type) {
-      case 'navigate':
-        if (action.payload.route) {
-          window.location.href = action.payload.route;
-        }
-        break;
-      case 'filter':
-        // Handle filter action
-        console.log('Filter action:', action.payload);
-        break;
-      case 'schedule':
-        // Handle schedule action
-        console.log('Schedule action:', action.payload);
-        break;
-      case 'contact':
-        // Handle contact action
-        console.log('Contact action:', action.payload);
-        break;
-      case 'generate_report':
-        // Handle report generation
-        console.log('Generate report:', action.payload);
-        break;
+    case 'navigate':
+      if (action.payload.route) {
+        window.location.href = action.payload.route;
+      }
+      break;
+    case 'filter':
+      // Handle filter action
+      console.log('Filter action:', action.payload);
+      break;
+    case 'schedule':
+      // Handle schedule action
+      console.log('Schedule action:', action.payload);
+      break;
+    case 'contact':
+      // Handle contact action
+      console.log('Contact action:', action.payload);
+      break;
+    case 'generate_report':
+      // Handle report generation
+      console.log('Generate report:', action.payload);
+      break;
     }
   };
 
@@ -180,8 +180,8 @@ export default function AICopilot() {
     const messages = {
       agent: "Hello! I'm your AI assistant. I can help you with client management, deal suggestions, market insights, and commission tracking. What would you like to know?",
       buyer: "Welcome! I'm here to help you find the perfect business opportunity. I can provide recommendations, valuation insights, and financing guidance. How can I assist you today?",
-      seller: "Hi there! I can help you optimize your business listing, understand market trends, and connect with potential buyers. What would you like to explore?",
-      nbfc: "Greetings! I can assist with loan application reviews, risk assessments, and portfolio management. What information do you need?",
+      seller: 'Hi there! I can help you optimize your business listing, understand market trends, and connect with potential buyers. What would you like to explore?',
+      nbfc: 'Greetings! I can assist with loan application reviews, risk assessments, and portfolio management. What information do you need?',
     };
 
     return messages[user?.userType as keyof typeof messages] || messages.buyer;
@@ -189,31 +189,31 @@ export default function AICopilot() {
 
   const getInsightIcon = (type: string) => {
     switch (type) {
-      case 'market_trend':
-        return <TrendingUp className="w-4 h-4" />;
-      case 'pricing':
-        return <TrendingUp className="w-4 h-4" />;
-      case 'opportunity':
-        return <MessageSquare className="w-4 h-4" />;
-      case 'risk':
-        return <MessageSquare className="w-4 h-4" />;
-      default:
-        return <Bot className="w-4 h-4" />;
+    case 'market_trend':
+      return <TrendingUp className="w-4 h-4" />;
+    case 'pricing':
+      return <TrendingUp className="w-4 h-4" />;
+    case 'opportunity':
+      return <MessageSquare className="w-4 h-4" />;
+    case 'risk':
+      return <MessageSquare className="w-4 h-4" />;
+    default:
+      return <Bot className="w-4 h-4" />;
     }
   };
 
   const getInsightColor = (type: string) => {
     switch (type) {
-      case 'market_trend':
-        return 'bg-blue-100 text-blue-800';
-      case 'pricing':
-        return 'bg-green-100 text-green-800';
-      case 'opportunity':
-        return 'bg-purple-100 text-purple-800';
-      case 'risk':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+    case 'market_trend':
+      return 'bg-blue-100 text-blue-800';
+    case 'pricing':
+      return 'bg-green-100 text-green-800';
+    case 'opportunity':
+      return 'bg-purple-100 text-purple-800';
+    case 'risk':
+      return 'bg-red-100 text-red-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -259,7 +259,7 @@ export default function AICopilot() {
                       )}
                       <div className="flex-1">
                         <div className="whitespace-pre-wrap">{message.content}</div>
-                        
+
                         {/* Business Insights */}
                         {message.businessInsights && message.businessInsights.length > 0 && (
                           <div className="mt-3 space-y-2">
@@ -281,7 +281,7 @@ export default function AICopilot() {
                             ))}
                           </div>
                         )}
-                        
+
                         {/* Suggested Actions */}
                         {message.suggestedActions && message.suggestedActions.length > 0 && (
                           <div className="mt-3 space-y-2">
@@ -301,7 +301,7 @@ export default function AICopilot() {
                             </div>
                           </div>
                         )}
-                        
+
                         {/* Quick Replies */}
                         {message.quickReplies && message.quickReplies.length > 0 && (
                           <div className="mt-3 space-y-2">
@@ -323,14 +323,14 @@ export default function AICopilot() {
                         )}
                       </div>
                     </div>
-                    
+
                     <div className="text-xs opacity-70 mt-2">
                       {new Date(message.timestamp).toLocaleTimeString()}
                     </div>
                   </div>
                 </div>
               ))}
-              
+
               {isLoading && (
                 <div className="flex justify-start">
                   <div className="bg-gray-100 p-3 rounded-lg">
@@ -338,8 +338,8 @@ export default function AICopilot() {
                       <Bot className="w-5 h-5" />
                       <div className="flex gap-1">
                         <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                       </div>
                     </div>
                   </div>
@@ -367,7 +367,7 @@ export default function AICopilot() {
                 <Send className="w-4 h-4" />
               </Button>
             </div>
-            
+
             <div className="mt-2 text-xs text-gray-500 text-center">
               AI-powered assistance for your business needs
             </div>

@@ -69,16 +69,16 @@ export const Modal: React.FC<ModalProps> = ({
   // Get variant icon
   const getVariantIcon = () => {
     switch (variant) {
-      case 'destructive':
-        return <AlertTriangle className="h-6 w-6 text-destructive" />;
-      case 'success':
-        return <CheckCircle2 className="h-6 w-6 text-success" />;
-      case 'warning':
-        return <AlertTriangle className="h-6 w-6 text-warning" />;
-      case 'info':
-        return <Info className="h-6 w-6 text-primary" />;
-      default:
-        return null;
+    case 'destructive':
+      return <AlertTriangle className="h-6 w-6 text-destructive" />;
+    case 'success':
+      return <CheckCircle2 className="h-6 w-6 text-success" />;
+    case 'warning':
+      return <AlertTriangle className="h-6 w-6 text-warning" />;
+    case 'info':
+      return <Info className="h-6 w-6 text-primary" />;
+    default:
+      return null;
     }
   };
 
@@ -101,7 +101,7 @@ export const Modal: React.FC<ModalProps> = ({
     if (isOpen && preventScroll) {
       const originalStyle = window.getComputedStyle(document.body).overflow;
       document.body.style.overflow = 'hidden';
-      
+
       return () => {
         document.body.style.overflow = originalStyle;
       };
@@ -113,7 +113,7 @@ export const Modal: React.FC<ModalProps> = ({
     if (isOpen) {
       // Store previously focused element
       previousActiveElement.current = document.activeElement as HTMLElement;
-      
+
       // Focus initial element or modal content
       setTimeout(() => {
         if (initialFocus?.current) {
@@ -121,7 +121,7 @@ export const Modal: React.FC<ModalProps> = ({
         } else if (contentRef.current) {
           // Find first focusable element
           const focusableElements = contentRef.current.querySelectorAll(
-            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
           );
           const firstFocusable = focusableElements[0] as HTMLElement;
           if (firstFocusable) {
@@ -173,9 +173,9 @@ export const Modal: React.FC<ModalProps> = ({
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
     if (event.key === 'Tab' && contentRef.current) {
       const focusableElements = contentRef.current.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
       );
-      
+
       const firstFocusable = focusableElements[0] as HTMLElement;
       const lastFocusable = focusableElements[focusableElements.length - 1] as HTMLElement;
 
@@ -193,7 +193,7 @@ export const Modal: React.FC<ModalProps> = ({
     }
   }, []);
 
-  if (!isOpen && !isAnimating) return null;
+  if (!isOpen && !isAnimating) {return null;}
 
   const modalContent = (
     <div
@@ -202,7 +202,7 @@ export const Modal: React.FC<ModalProps> = ({
         'fixed inset-0 z-50 flex items-center justify-center p-4',
         'bg-black/50 backdrop-blur-sm transition-opacity duration-150',
         isVisible ? 'opacity-100' : 'opacity-0',
-        overlayClassName
+        overlayClassName,
       )}
       onClick={handleOverlayClick}
       role="dialog"
@@ -216,11 +216,11 @@ export const Modal: React.FC<ModalProps> = ({
           'relative w-full rounded-lg bg-background border shadow-strong transition-all duration-150 focus:outline-none',
           sizeClasses[size],
           variantClasses[variant],
-          isVisible 
-            ? 'scale-100 opacity-100 translate-y-0' 
+          isVisible
+            ? 'scale-100 opacity-100 translate-y-0'
             : 'scale-95 opacity-0 translate-y-4',
           size === 'full' && 'rounded-none',
-          contentClassName
+          contentClassName,
         )}
         tabIndex={-1}
         onKeyDown={handleKeyDown}
@@ -232,7 +232,7 @@ export const Modal: React.FC<ModalProps> = ({
               {getVariantIcon()}
               <div className="flex-1 space-y-1">
                 {title && (
-                  <h2 
+                  <h2
                     id="modal-title"
                     className="text-lg font-semibold leading-none tracking-tight"
                   >
@@ -240,7 +240,7 @@ export const Modal: React.FC<ModalProps> = ({
                   </h2>
                 )}
                 {description && (
-                  <p 
+                  <p
                     id="modal-description"
                     className="text-sm text-muted-foreground leading-relaxed"
                   >
@@ -256,7 +256,7 @@ export const Modal: React.FC<ModalProps> = ({
                 className={cn(
                   'rounded-md p-1 text-muted-foreground hover:text-foreground transition-colors',
                   'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-                  'ml-4 flex-shrink-0'
+                  'ml-4 flex-shrink-0',
                 )}
                 aria-label="Close modal"
               >
@@ -270,7 +270,7 @@ export const Modal: React.FC<ModalProps> = ({
         {children && (
           <div className={cn(
             'px-6',
-            (title || description) ? 'pb-6' : 'py-6'
+            (title || description) ? 'pb-6' : 'py-6',
           )}>
             {children}
           </div>
@@ -314,12 +314,12 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
   const getConfirmButtonVariant = () => {
     switch (variant) {
-      case 'destructive':
-        return 'bg-destructive text-destructive-foreground hover:bg-destructive/90';
-      case 'warning':
-        return 'bg-warning text-warning-foreground hover:bg-warning/90';
-      default:
-        return 'bg-primary text-primary-foreground hover:bg-primary hover:opacity-90';
+    case 'destructive':
+      return 'bg-destructive text-destructive-foreground hover:bg-destructive/90';
+    case 'warning':
+      return 'bg-warning text-warning-foreground hover:bg-warning/90';
+    default:
+      return 'bg-primary text-primary-foreground hover:bg-primary hover:opacity-90';
     }
   };
 
@@ -344,12 +344,12 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
             'h-10 px-4 py-2',
             'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
-            'disabled:pointer-events-none disabled:opacity-50'
+            'disabled:pointer-events-none disabled:opacity-50',
           )}
         >
           {cancelText}
         </button>
-        
+
         <button
           ref={confirmButtonRef}
           onClick={handleConfirm}
@@ -359,7 +359,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
             'h-10 px-4 py-2',
             getConfirmButtonVariant(),
-            'disabled:pointer-events-none disabled:opacity-50'
+            'disabled:pointer-events-none disabled:opacity-50',
           )}
         >
           {loading && (
@@ -413,7 +413,7 @@ export const AlertModal: React.FC<AlertModalProps> = ({
             'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
             'h-10 px-4 py-2',
-            'bg-primary text-primary-foreground hover:bg-primary hover:opacity-90'
+            'bg-primary text-primary-foreground hover:bg-primary hover:opacity-90',
           )}
         >
           {buttonText}
@@ -446,13 +446,13 @@ export const useConfirmation = () => {
     description?: string;
     onConfirm: () => void;
     variant?: 'default' | 'destructive' | 'warning';
-  } | null>(null);
+      } | null>(null);
 
   const confirm = useCallback((
     title: string,
     description?: string,
     onConfirm?: () => void,
-    variant?: 'default' | 'destructive' | 'warning'
+    variant?: 'default' | 'destructive' | 'warning',
   ) => {
     return new Promise<boolean>((resolve) => {
       setConfig({

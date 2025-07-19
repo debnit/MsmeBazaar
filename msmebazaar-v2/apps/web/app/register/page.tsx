@@ -7,15 +7,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
-import { 
-  Phone, 
-  User, 
-  Mail, 
-  Building, 
-  Shield, 
+import {
+  Phone,
+  User,
+  Mail,
+  Building,
+  Shield,
   CheckCircle,
   ArrowRight,
-  ArrowLeft 
+  ArrowLeft,
 } from 'lucide-react';
 import OtpInput from 'react-otp-input';
 
@@ -97,7 +97,7 @@ export default function RegisterPage() {
       };
 
       const response = await authApi.register(formattedData);
-      
+
       if (response.success) {
         setRegistrationData(formattedData);
         setStep(RegistrationStep.OTP_VERIFICATION);
@@ -115,7 +115,7 @@ export default function RegisterPage() {
 
   // Handle OTP verification
   const handleOTPVerification = async () => {
-    if (!registrationData || otp.length !== 6) return;
+    if (!registrationData || otp.length !== 6) {return;}
 
     setIsLoading(true);
     try {
@@ -134,7 +134,7 @@ export default function RegisterPage() {
 
       setStep(RegistrationStep.SUCCESS);
       toast.success('Registration successful!');
-      
+
       // Redirect after success
       setTimeout(() => {
         router.push('/dashboard');
@@ -148,7 +148,7 @@ export default function RegisterPage() {
 
   // Handle OTP resend
   const handleResendOTP = async () => {
-    if (!registrationData || !canResend) return;
+    if (!registrationData || !canResend) {return;}
 
     setIsLoading(true);
     try {
@@ -174,7 +174,7 @@ export default function RegisterPage() {
   const startResendTimer = () => {
     setCanResend(false);
     setResendTimer(60);
-    
+
     const timer = setInterval(() => {
       setResendTimer((prev) => {
         if (prev <= 1) {

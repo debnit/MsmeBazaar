@@ -19,7 +19,7 @@ export async function createFastServer() {
         return false;
       }
       return compression.filter(req, res);
-    }
+    },
   }));
 
   // Essential middleware only
@@ -41,7 +41,7 @@ export async function createFastServer() {
   app.use('/static', express.static('dist/static', {
     maxAge: '1y',
     etag: true,
-    lastModified: true
+    lastModified: true,
   }));
 
   // Cache headers for API responses
@@ -56,14 +56,14 @@ export async function createFastServer() {
   // Performance monitoring with minimal overhead
   app.use((req, res, next) => {
     const start = process.hrtime.bigint();
-    
+
     res.on('finish', () => {
       const duration = Number(process.hrtime.bigint() - start) / 1000000;
       if (duration > 1000) { // Log only slow requests
         console.warn(`Slow request: ${req.method} ${req.path} - ${duration.toFixed(2)}ms`);
       }
     });
-    
+
     next();
   });
 
@@ -84,13 +84,13 @@ export async function createFastServer() {
 // Optimized startup sequence
 export async function startServer() {
   const startTime = Date.now();
-  
+
   try {
     console.log('🚀 Starting MSMESquare server...');
-    
+
     const server = await createFastServer();
     const PORT = process.env.PORT || 5000;
-    
+
     server.listen(PORT, '0.0.0.0', () => {
       const duration = Date.now() - startTime;
       console.log(`✅ Server running at http://0.0.0.0:${PORT} (startup: ${duration}ms)`);

@@ -2,15 +2,15 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Users, 
-  Clock, 
-  FileCheck, 
-  TrendingUp, 
-  CheckCircle, 
+import {
+  Users,
+  Clock,
+  FileCheck,
+  TrendingUp,
+  CheckCircle,
   AlertCircle,
   DollarSign,
-  Timer
+  Timer,
 } from 'lucide-react';
 import { DashboardStats } from '@/lib/api/admin';
 import { formatCurrency } from '@/lib/utils';

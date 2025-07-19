@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React from "react";
+import React from 'react';
 
 interface Props {
   base64String: string;
@@ -8,9 +8,9 @@ interface Props {
 
 const DownloadAgreementButton: React.FC<Props> = ({ base64String }) => {
   const handleDownload = () => {
-    const link = document.createElement("a");
+    const link = document.createElement('a');
     link.href = `data:application/pdf;base64,${base64String}`;
-    link.download = "MSME-Agreement.pdf";
+    link.download = 'MSME-Agreement.pdf';
     link.click();
   };
 

@@ -20,55 +20,55 @@ const jobProcessors = {
   'valuation-calculation': async (job: Job) => {
     const { businessData } = job.data;
     console.log(`Processing valuation for business: ${businessData.name}`);
-    
+
     // Simulate ML processing
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
+
     const valuation = calculateValuation(businessData);
-    
+
     // Store result in cache
     await redis.setex(`valuation:${businessData.id}`, 3600, JSON.stringify(valuation));
-    
+
     return valuation;
   },
-  
+
   'matchmaking-analysis': async (job: Job) => {
     const { buyerId, preferences } = job.data;
     console.log(`Processing matchmaking for buyer: ${buyerId}`);
-    
+
     // Simulate ML-based matching
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
+
     const matches = performMatchmaking(buyerId, preferences);
-    
+
     // Store results
     await redis.setex(`matches:${buyerId}`, 1800, JSON.stringify(matches));
-    
+
     return matches;
   },
-  
+
   'email-notification': async (job: Job) => {
     const { to, subject, template, data } = job.data;
     console.log(`Sending email to: ${to}`);
-    
+
     // Simulate email sending
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     return { sent: true, messageId: `msg_${Date.now()}` };
   },
-  
+
   'data-analytics': async (job: Job) => {
     const { type, dateRange } = job.data;
     console.log(`Processing analytics: ${type}`);
-    
+
     // Simulate analytics processing
     await new Promise(resolve => setTimeout(resolve, 3000));
-    
+
     const analytics = generateAnalytics(type, dateRange);
-    
+
     // Cache results
     await redis.setex(`analytics:${type}:${dateRange}`, 7200, JSON.stringify(analytics));
-    
+
     return analytics;
   },
 };
@@ -84,15 +84,15 @@ const workers = Object.keys(jobProcessors).map(jobType => {
     removeOnComplete: 100,
     removeOnFail: 50,
   });
-  
+
   worker.on('completed', (job: Job) => {
     console.log(`Job ${job.id} completed: ${job.name}`);
   });
-  
+
   worker.on('failed', (job: Job | undefined, err: Error) => {
     console.error(`Job ${job?.id} failed: ${err.message}`);
   });
-  
+
   return worker;
 });
 
@@ -104,7 +104,7 @@ function calculateValuation(businessData: any) {
     assets = 0,
     employees = 0,
     industry = 'general',
-    location = 'unknown'
+    location = 'unknown',
   } = businessData;
 
   const industryMultipliers = {
@@ -114,7 +114,7 @@ function calculateValuation(businessData: any) {
     'manufacturing': 5.5,
     'retail': 4.2,
     'services': 4.8,
-    'general': 4.0
+    'general': 4.0,
   };
 
   const locationMultipliers = {
@@ -125,7 +125,7 @@ function calculateValuation(businessData: any) {
     'pune': 1.1,
     'chennai': 1.1,
     'kolkata': 1.05,
-    'unknown': 1.0
+    'unknown': 1.0,
   };
 
   const industryMultiplier = industryMultipliers[industry.toLowerCase()] || 4.0;
@@ -151,14 +151,14 @@ function calculateValuation(businessData: any) {
       revenueMultiple: Math.round(revenueMultiple),
       profitMultiple: Math.round(profitMultiple),
       assetValue: Math.round(assetValue),
-      employeeValue: Math.round(employeeValue)
+      employeeValue: Math.round(employeeValue),
     },
     multipliers: {
       industry: industryMultiplier,
-      location: locationMultiplier
+      location: locationMultiplier,
     },
     confidence: calculateConfidence(businessData),
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 }
 
@@ -200,21 +200,21 @@ function generateAnalytics(type: string, dateRange: string) {
 
 function calculateConfidence(data: any): number {
   let score = 0;
-  
-  if (data.revenue > 0) score += 25;
-  if (data.profit > 0) score += 25;
-  if (data.assets > 0) score += 20;
-  if (data.employees > 0) score += 15;
-  if (data.industry !== 'general') score += 10;
-  if (data.location !== 'unknown') score += 5;
-  
+
+  if (data.revenue > 0) {score += 25;}
+  if (data.profit > 0) {score += 25;}
+  if (data.assets > 0) {score += 20;}
+  if (data.employees > 0) {score += 15;}
+  if (data.industry !== 'general') {score += 10;}
+  if (data.location !== 'unknown') {score += 5;}
+
   return Math.min(score, 100);
 }
 
 // Graceful shutdown
 const gracefulShutdown = async (signal: string) => {
   console.log(`Worker received ${signal}, shutting down gracefully...`);
-  
+
   try {
     await Promise.all(workers.map(worker => worker.close()));
     await redis.quit();

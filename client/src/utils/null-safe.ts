@@ -4,18 +4,18 @@ export function safeGet<T>(obj: any, path: string, defaultValue: T): T {
   if (!obj || typeof obj !== 'object') {
     return defaultValue;
   }
-  
+
   try {
     const keys = path.split('.');
     let current = obj;
-    
+
     for (const key of keys) {
       if (current === null || current === undefined || typeof current !== 'object') {
         return defaultValue;
       }
       current = current[key];
     }
-    
+
     return current !== null && current !== undefined ? current : defaultValue;
   } catch (error) {
     console.warn(`Safe get failed for path: ${path}`, error);
@@ -68,14 +68,14 @@ export function safeBoolean(value: boolean | null | undefined): boolean {
 
 export function safeObjectMap<T, R>(
   obj: Record<string, T> | null | undefined,
-  mapper: (value: T, key: string) => R
+  mapper: (value: T, key: string) => R,
 ): Record<string, R> {
   if (!obj || typeof obj !== 'object') {
     return {};
   }
-  
+
   const result: Record<string, R> = {};
-  
+
   try {
     for (const [key, value] of Object.entries(obj)) {
       if (value !== null && value !== undefined) {
@@ -85,18 +85,18 @@ export function safeObjectMap<T, R>(
   } catch (error) {
     console.warn('Safe object map failed:', error);
   }
-  
+
   return result;
 }
 
 export function safePromise<T>(
   promise: Promise<T> | null | undefined,
-  defaultValue: T
+  defaultValue: T,
 ): Promise<T> {
   if (!promise || typeof promise.then !== 'function') {
     return Promise.resolve(defaultValue);
   }
-  
+
   return promise.catch((error) => {
     console.warn('Safe promise failed:', error);
     return defaultValue;
@@ -108,12 +108,12 @@ export function safeLocalStorage(key: string, defaultValue: any): any {
     if (typeof window === 'undefined' || !window.localStorage) {
       return defaultValue;
     }
-    
+
     const item = window.localStorage.getItem(key);
     if (item === null) {
       return defaultValue;
     }
-    
+
     return JSON.parse(item);
   } catch (error) {
     console.warn(`Safe localStorage get failed for key: ${key}`, error);
@@ -126,7 +126,7 @@ export function safeLocalStorageSet(key: string, value: any): boolean {
     if (typeof window === 'undefined' || !window.localStorage) {
       return false;
     }
-    
+
     window.localStorage.setItem(key, JSON.stringify(value));
     return true;
   } catch (error) {
@@ -140,12 +140,12 @@ export function safeSessionStorage(key: string, defaultValue: any): any {
     if (typeof window === 'undefined' || !window.sessionStorage) {
       return defaultValue;
     }
-    
+
     const item = window.sessionStorage.getItem(key);
     if (item === null) {
       return defaultValue;
     }
-    
+
     return JSON.parse(item);
   } catch (error) {
     console.warn(`Safe sessionStorage get failed for key: ${key}`, error);
@@ -155,13 +155,13 @@ export function safeSessionStorage(key: string, defaultValue: any): any {
 
 export function safeElement<T extends HTMLElement>(
   selector: string,
-  defaultValue: T | null = null
+  defaultValue: T | null = null,
 ): T | null {
   try {
     if (typeof document === 'undefined') {
       return defaultValue;
     }
-    
+
     const element = document.querySelector(selector) as T;
     return element || defaultValue;
   } catch (error) {
@@ -174,15 +174,15 @@ export function safeEventListener(
   element: EventTarget | null | undefined,
   event: string,
   handler: EventListener,
-  options?: boolean | AddEventListenerOptions
+  options?: boolean | AddEventListenerOptions,
 ): () => void {
   try {
     if (!element || typeof element.addEventListener !== 'function') {
       return () => {};
     }
-    
+
     element.addEventListener(event, handler, options);
-    
+
     return () => {
       try {
         if (element && typeof element.removeEventListener === 'function') {
@@ -201,13 +201,13 @@ export function safeEventListener(
 export function safeTimeout(
   callback: () => void,
   delay: number,
-  defaultValue: any = null
+  defaultValue: any = null,
 ): number {
   try {
     if (typeof callback !== 'function') {
       return 0;
     }
-    
+
     return setTimeout(() => {
       try {
         callback();
@@ -223,13 +223,13 @@ export function safeTimeout(
 
 export function safeInterval(
   callback: () => void,
-  delay: number
+  delay: number,
 ): number {
   try {
     if (typeof callback !== 'function') {
       return 0;
     }
-    
+
     return setInterval(() => {
       try {
         callback();
@@ -245,13 +245,13 @@ export function safeInterval(
 
 export function safeJSON<T>(
   jsonString: string | null | undefined,
-  defaultValue: T
+  defaultValue: T,
 ): T {
   try {
     if (!jsonString || typeof jsonString !== 'string') {
       return defaultValue;
     }
-    
+
     const parsed = JSON.parse(jsonString);
     return parsed !== null && parsed !== undefined ? parsed : defaultValue;
   } catch (error) {
@@ -262,7 +262,7 @@ export function safeJSON<T>(
 
 export function safeStringify(
   value: any,
-  defaultValue: string = '{}'
+  defaultValue: string = '{}',
 ): string {
   try {
     return JSON.stringify(value);

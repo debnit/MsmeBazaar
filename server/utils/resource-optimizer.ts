@@ -27,7 +27,7 @@ class ResourceOptimizer {
     // Set process priority if possible
     try {
       process.setMaxListeners(50);
-      
+
       // Optimize garbage collection
       if (process.env.NODE_ENV === 'production') {
         process.on('warning', (warning) => {
@@ -51,7 +51,7 @@ class ResourceOptimizer {
   private updateMetrics(): void {
     const memUsage = process.memoryUsage();
     const cpuUsage = process.cpuUsage();
-    
+
     this.performanceMetrics.memoryUsage = memUsage.heapUsed;
     this.performanceMetrics.cpuUsage = (cpuUsage.user + cpuUsage.system) / 1000000; // Convert to seconds
   }
@@ -71,7 +71,7 @@ class ResourceOptimizer {
   private optimizeMemory(): void {
     // Force garbage collection
     memoryManager.clearCache();
-    
+
     // Clear require cache for development (skip if not available)
     if (process.env.NODE_ENV === 'development') {
       try {
@@ -80,7 +80,7 @@ class ResourceOptimizer {
         // Silently continue if require cache clearing fails
       }
     }
-    
+
     // Optimize event listeners
     this.optimizeEventListeners();
   }
@@ -123,7 +123,7 @@ class ResourceOptimizer {
   private optimizeEventListeners(): void {
     // Remove excessive event listeners
     const eventEmitters = [process];
-    
+
     eventEmitters.forEach(emitter => {
       const listenerCount = emitter.listenerCount('error');
       if (listenerCount > 10) {
@@ -137,17 +137,17 @@ class ResourceOptimizer {
 
   public async optimizeRequest(req: any, res: any, next: any): Promise<void> {
     const start = Date.now();
-    
+
     // Add request tracking
     this.performanceMetrics.requestCount++;
-    
+
     // Optimize request handling
     req.startTime = start;
-    
+
     // Add response optimization
     res.on('finish', () => {
       const duration = Date.now() - start;
-      this.performanceMetrics.avgResponseTime = 
+      this.performanceMetrics.avgResponseTime =
         (this.performanceMetrics.avgResponseTime + duration) / 2;
     });
 

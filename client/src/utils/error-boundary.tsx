@@ -30,7 +30,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('Error Boundary caught an error:', error, errorInfo);
-    
+
     this.setState({
       error,
       errorInfo,
@@ -58,7 +58,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   render() {
     if (this.state.hasError) {
       const { fallback: Fallback } = this.props;
-      
+
       if (Fallback && this.state.error) {
         return <Fallback error={this.state.error} />;
       }
@@ -78,7 +78,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
                 </h3>
               </div>
             </div>
-            
+
             <div className="mb-4">
               <p className="text-sm text-gray-600">
                 We encountered an unexpected error. Please try refreshing the page or contact support if the problem persists.
@@ -129,7 +129,7 @@ export default ErrorBoundary;
 // Higher-order component for wrapping components with error boundary
 export function withErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
-  fallback?: React.ComponentType<{ error: Error }>
+  fallback?: React.ComponentType<{ error: Error }>,
 ) {
   return function WithErrorBoundaryComponent(props: P) {
     return (

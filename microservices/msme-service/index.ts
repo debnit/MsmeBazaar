@@ -23,9 +23,9 @@ app.get('/listings', async (req, res) => {
     const cachedListings = await serverMemoryManager.loadPage(
       'all-listings',
       () => Promise.resolve(Array.from(listings.values())),
-      'high'
+      'high',
     );
-    
+
     res.json(cachedListings);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch listings' });
@@ -52,9 +52,9 @@ app.post('/listings', async (req, res) => {
       id: Date.now().toString(),
       ...req.body,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
-    
+
     listings.set(listing.id, listing);
     res.status(201).json(listing);
   } catch (error) {
@@ -69,13 +69,13 @@ app.put('/listings/:id', async (req, res) => {
     if (!listing) {
       return res.status(404).json({ error: 'Listing not found' });
     }
-    
+
     const updatedListing = {
       ...listing,
       ...req.body,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
-    
+
     listings.set(req.params.id, updatedListing);
     res.json(updatedListing);
   } catch (error) {
@@ -90,7 +90,7 @@ app.delete('/listings/:id', async (req, res) => {
     if (!listing) {
       return res.status(404).json({ error: 'Listing not found' });
     }
-    
+
     listings.delete(req.params.id);
     res.status(204).send();
   } catch (error) {

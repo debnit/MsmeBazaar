@@ -39,11 +39,11 @@ class DemandPagingManager {
     this.pageConfigs.set('dashboard', { size: 10, ttl: 300000, priority: 10 });
     this.pageConfigs.set('listings', { size: 20, ttl: 180000, priority: 9 });
     this.pageConfigs.set('user-profile', { size: 5, ttl: 600000, priority: 8 });
-    
+
     // Medium priority pages
     this.pageConfigs.set('notifications', { size: 15, ttl: 120000, priority: 5 });
     this.pageConfigs.set('analytics', { size: 8, ttl: 240000, priority: 4 });
-    
+
     // Low priority pages
     this.pageConfigs.set('documentation', { size: 50, ttl: 3600000, priority: 1 });
     this.pageConfigs.set('settings', { size: 3, ttl: 900000, priority: 2 });
@@ -58,7 +58,7 @@ class DemandPagingManager {
 
   private cleanupExpiredEntries(): void {
     const now = Date.now();
-    
+
     for (const [key, entry] of this.cache) {
       if (now > entry.expiry) {
         this.removeFromCache(key);
@@ -75,7 +75,7 @@ class DemandPagingManager {
     const entries = Array.from(this.cache.entries())
       .sort((a, b) => {
         const priorityDiff = a[1].priority - b[1].priority;
-        if (priorityDiff !== 0) return priorityDiff;
+        if (priorityDiff !== 0) {return priorityDiff;}
         return a[1].timestamp - b[1].timestamp;
       });
 
@@ -103,7 +103,7 @@ class DemandPagingManager {
   public async loadPage(
     key: string,
     loader: () => Promise<any>,
-    config?: Partial<PageConfig>
+    config?: Partial<PageConfig>,
   ): Promise<any> {
     // Check cache first
     const cached = this.cache.get(key);
@@ -130,13 +130,13 @@ class DemandPagingManager {
   private async executeLoad(
     key: string,
     loader: () => Promise<any>,
-    config?: Partial<PageConfig>
+    config?: Partial<PageConfig>,
   ): Promise<any> {
     try {
       const data = await loader();
-      
+
       // Get configuration
-      const pageConfig = this.pageConfigs.get(key.split(':')[0]) || 
+      const pageConfig = this.pageConfigs.get(key.split(':')[0]) ||
         { size: 10, ttl: 300000, priority: 5 };
       const finalConfig = { ...pageConfig, ...config };
 
@@ -208,9 +208,9 @@ class DemandPagingManager {
     // Reduce cache size temporarily
     const originalMaxSize = this.maxCacheSize;
     this.maxCacheSize = originalMaxSize * 0.5;
-    
+
     this.enforceMemoryLimit();
-    
+
     // Restore original size after 5 minutes
     setTimeout(() => {
       this.maxCacheSize = originalMaxSize;
@@ -236,7 +236,7 @@ export const demandPagingManager = DemandPagingManager.getInstance();
 export function useDemandPaging<T>(
   key: string,
   loader: () => Promise<T>,
-  config?: Partial<PageConfig>
+  config?: Partial<PageConfig>,
 ) {
   const [data, setData] = React.useState<T | null>(null);
   const [loading, setLoading] = React.useState(false);
@@ -246,8 +246,8 @@ export function useDemandPaging<T>(
     let mounted = true;
 
     const loadData = async () => {
-      if (loading) return;
-      
+      if (loading) {return;}
+
       setLoading(true);
       setError(null);
 
@@ -284,7 +284,7 @@ export function useDemandPaging<T>(
 export async function loadComponentWithPaging<T>(
   componentName: string,
   loader: () => Promise<T>,
-  config?: Partial<PageConfig>
+  config?: Partial<PageConfig>,
 ): Promise<T> {
   return demandPagingManager.loadPage(componentName, loader, config);
 }
@@ -293,10 +293,10 @@ export async function loadComponentWithPaging<T>(
 export function initializeDemandPaging(): void {
   // Initialize demand paging system
   console.log('📄 Demand paging system initialized');
-  
+
   // Pre-configure for common user flows
   demandPagingManager.prefetchUserFlow('buyer');
-  
+
   // Set up global error handling
   window.addEventListener('error', (event) => {
     console.warn('Demand paging error:', event.error);

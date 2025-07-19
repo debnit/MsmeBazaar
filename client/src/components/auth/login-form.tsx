@@ -1,19 +1,19 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, LogIn, AlertCircle } from "lucide-react";
-import { login } from "@/lib/auth";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
+import { Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
+import { login } from '@/lib/auth';
 
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -26,8 +26,8 @@ export default function LoginForm() {
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: '',
+      password: '',
     },
   });
 
@@ -35,17 +35,17 @@ export default function LoginForm() {
     mutationFn: login,
     onSuccess: (data) => {
       toast({
-        title: "Login Successful",
+        title: 'Login Successful',
         description: `Welcome back, ${data.user.firstName || data.user.email}!`,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       // Navigation will be handled by the App component based on auth state
     },
     onError: (error) => {
       toast({
-        title: "Login Failed",
+        title: 'Login Failed',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     },
   });
@@ -63,7 +63,7 @@ export default function LoginForm() {
             id="email"
             type="email"
             placeholder="Enter your email"
-            {...form.register("email")}
+            {...form.register('email')}
             className="mt-1"
           />
           {form.formState.errors.email && (
@@ -78,9 +78,9 @@ export default function LoginForm() {
           <div className="relative mt-1">
             <Input
               id="password"
-              type={showPassword ? "text" : "password"}
+              type={showPassword ? 'text' : 'password'}
               placeholder="Enter your password"
-              {...form.register("password")}
+              {...form.register('password')}
               className="pr-10"
             />
             <Button
@@ -109,7 +109,7 @@ export default function LoginForm() {
         <Alert className="border-red-200 bg-red-50">
           <AlertCircle className="h-4 w-4 text-red-600" />
           <AlertDescription className="text-red-800">
-            {loginMutation.error?.message || "Login failed. Please try again."}
+            {loginMutation.error?.message || 'Login failed. Please try again.'}
           </AlertDescription>
         </Alert>
       )}

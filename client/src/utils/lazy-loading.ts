@@ -15,7 +15,7 @@ export const preloadComponents = () => {
         // Preload components during idle time with proper error handling
         await Promise.allSettled([
           loadComponentWithPaging('../pages/admin/dashboard', 'low'),
-          loadComponentWithPaging('../pages/analytics', 'low')
+          loadComponentWithPaging('../pages/analytics', 'low'),
         ]);
       } catch (error) {
         console.warn('Component preloading failed:', error);
@@ -27,7 +27,7 @@ export const preloadComponents = () => {
       try {
         await Promise.allSettled([
           loadComponentWithPaging('../pages/admin/dashboard', 'low'),
-          loadComponentWithPaging('../pages/analytics', 'low')
+          loadComponentWithPaging('../pages/analytics', 'low'),
         ]);
       } catch (error) {
         console.warn('Component preloading failed:', error);
@@ -40,6 +40,6 @@ export const preloadComponents = () => {
 export const initializeLazyLoading = () => {
   // Preload critical components after initial render
   setTimeout(preloadComponents, 1000);
-  
+
   console.log('Lazy loading initialized with demand paging - optimal memory management active');
 };

@@ -43,7 +43,7 @@ class PerformanceMonitor extends EventEmitter {
     try {
       // Use conditional polling for performance monitoring
       const { minimalPolling } = await import('./minimal-polling');
-      
+
       minimalPolling.startConditionalPolling(
         'performance-monitoring',
         async () => {
@@ -52,7 +52,7 @@ class PerformanceMonitor extends EventEmitter {
           return this.getCurrentMetrics();
         },
         () => this.activeRequests > 0 || this.totalErrors > 0,
-        120000 // 2 minutes when idle
+        120000, // 2 minutes when idle
       );
     } catch (error) {
       console.warn('Performance monitoring fallback to simple interval');
@@ -66,7 +66,7 @@ class PerformanceMonitor extends EventEmitter {
   private collectMetrics(): void {
     const memoryUsage = process.memoryUsage();
     const cpuUsage = process.cpuUsage();
-    
+
     const metrics: PerformanceMetrics = {
       timestamp: Date.now(),
       memoryUsage,
@@ -77,7 +77,7 @@ class PerformanceMonitor extends EventEmitter {
     };
 
     this.metrics.push(metrics);
-    
+
     // Keep only last 100 metrics
     if (this.metrics.length > 100) {
       this.metrics.shift();
@@ -89,7 +89,7 @@ class PerformanceMonitor extends EventEmitter {
 
   private checkAlerts(): void {
     const currentMetrics = this.metrics[this.metrics.length - 1];
-    if (!currentMetrics) return;
+    if (!currentMetrics) {return;}
 
     // Memory alert
     if (currentMetrics.memoryUsage.heapUsed > this.alertThresholds.memory) {
@@ -126,8 +126,8 @@ class PerformanceMonitor extends EventEmitter {
   }
 
   private getAverageResponseTime(): number {
-    if (this.responseTimes.length === 0) return 0;
-    
+    if (this.responseTimes.length === 0) {return 0;}
+
     const sum = this.responseTimes.reduce((a, b) => a + b, 0);
     return sum / this.responseTimes.length;
   }
@@ -140,9 +140,9 @@ class PerformanceMonitor extends EventEmitter {
     res.on('finish', () => {
       const duration = Date.now() - startTime;
       this.activeRequests--;
-      
+
       this.responseTimes.push(duration);
-      
+
       // Keep only last 100 response times
       if (this.responseTimes.length > 100) {
         this.responseTimes.shift();
@@ -167,10 +167,10 @@ class PerformanceMonitor extends EventEmitter {
 
   public getHealthStatus(): any {
     const current = this.getCurrentMetrics();
-    if (!current) return { status: 'unknown' };
+    if (!current) {return { status: 'unknown' };}
 
     const memoryPercent = (current.memoryUsage.heapUsed / current.memoryUsage.heapTotal) * 100;
-    const isHealthy = 
+    const isHealthy =
       current.memoryUsage.heapUsed < this.alertThresholds.memory &&
       current.errorRate < this.alertThresholds.errorRate &&
       current.responseTime < this.alertThresholds.responseTime;
@@ -202,7 +202,7 @@ class PerformanceMonitor extends EventEmitter {
 
   private getActiveAlerts(): any[] {
     const current = this.getCurrentMetrics();
-    if (!current) return [];
+    if (!current) {return [];}
 
     const alerts = [];
 
@@ -235,12 +235,12 @@ class PerformanceMonitor extends EventEmitter {
 
   public optimizePerformance(): void {
     const current = this.getCurrentMetrics();
-    if (!current) return;
+    if (!current) {return;}
 
     // Trigger memory cleanup if needed
     if (current.memoryUsage.heapUsed > this.alertThresholds.memory * 0.8) {
       memoryManager.clearCache();
-      
+
       if (global.gc) {
         global.gc();
       }

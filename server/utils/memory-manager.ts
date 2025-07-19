@@ -22,12 +22,12 @@ class MemoryManager {
     // Use event-driven memory management instead of polling
     try {
       const { minimalPolling } = await import('./minimal-polling');
-      
+
       minimalPolling.startEventDrivenPolling(
         'memory-management',
         async () => this.checkMemoryUsage(),
         ['SIGTERM', 'SIGINT', 'uncaughtException'],
-        180000 // 3 minutes when no events
+        180000, // 3 minutes when no events
       );
     } catch (error) {
       console.warn('Memory monitoring fallback to simple interval');
@@ -39,11 +39,11 @@ class MemoryManager {
 
   private checkMemoryUsage(): void {
     const memUsage = process.memoryUsage();
-    
+
     if (memUsage.heapUsed > this.memoryThreshold) {
       this.performGarbageCollection();
     }
-    
+
     if (this.cacheSize > this.maxCacheSize) {
       this.cleanupCache();
     }
@@ -53,10 +53,10 @@ class MemoryManager {
     if (global.gc) {
       global.gc();
     }
-    
+
     // Clear large objects
     this.cleanupLargeObjects();
-    
+
     console.log('Memory cleanup performed');
   }
 
@@ -65,19 +65,19 @@ class MemoryManager {
     if (global.tempStorage) {
       global.tempStorage.clear();
     }
-    
+
     // Clear only non-essential modules from cache
-    const nonEssentialModules = Object.keys(require.cache).filter(key => 
-      key.includes('node_modules') && !key.includes('express') && !key.includes('drizzle')
+    const nonEssentialModules = Object.keys(require.cache).filter(key =>
+      key.includes('node_modules') && !key.includes('express') && !key.includes('drizzle'),
     );
-    
+
     // Clear only if memory pressure is high
     if (this.getMemoryStats().heapUsed > this.memoryThreshold * 0.8) {
       nonEssentialModules.slice(0, 10).forEach(key => {
         delete require.cache[key];
       });
     }
-    
+
     // Clear cache if too large
     if (this.cacheSize > this.maxCacheSize * 0.8) {
       this.memoryCache.clear();
@@ -89,11 +89,11 @@ class MemoryManager {
     // Remove oldest cache entries
     const entries = Array.from(this.memoryCache.entries());
     const toDelete = Math.floor(entries.length * 0.3); // Delete 30% of entries
-    
+
     for (let i = 0; i < toDelete; i++) {
       this.memoryCache.delete(entries[i][0]);
     }
-    
+
     this.recalculateCacheSize();
   }
 
@@ -108,26 +108,26 @@ class MemoryManager {
     const item = {
       value,
       expiry: Date.now() + ttl,
-      size: JSON.stringify(value).length
+      size: JSON.stringify(value).length,
     };
-    
+
     this.memoryCache.set(key, item);
     this.cacheSize += item.size;
   }
 
   public getCache(key: string): any {
     const item = this.memoryCache.get(key);
-    
+
     if (!item) {
       return null;
     }
-    
+
     if (Date.now() > item.expiry) {
       this.memoryCache.delete(key);
       this.cacheSize -= item.size;
       return null;
     }
-    
+
     return item.value;
   }
 

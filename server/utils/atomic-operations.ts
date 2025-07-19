@@ -1,15 +1,15 @@
 // Atomic operations for better performance and consistency
 import { db } from '../db';
 import { eq, and } from 'drizzle-orm';
-import { 
-  users, 
-  msmeListings, 
-  buyerInterests, 
-  notifications, 
-  escrowAccounts, 
-  escrowTransactions, 
+import {
+  users,
+  msmeListings,
+  buyerInterests,
+  notifications,
+  escrowAccounts,
+  escrowTransactions,
   valuationRequests,
-  userProfiles 
+  userProfiles,
 } from '../../shared/schema';
 
 export class AtomicOperations {
@@ -31,9 +31,9 @@ export class AtomicOperations {
       const [user] = await tx.insert(users).values(userData).returning();
       const [profile] = await tx.insert(userProfiles).values({
         ...profileData,
-        userId: user.id
+        userId: user.id,
       }).returning();
-      
+
       return { user, profile };
     });
   }
@@ -44,9 +44,9 @@ export class AtomicOperations {
       const [msme] = await tx.insert(msmeListings).values(msmeData).returning();
       const [valuation] = await tx.insert(valuationRequests).values({
         ...valuationData,
-        msmeId: msme.id
+        msmeId: msme.id,
       }).returning();
-      
+
       return { msme, valuation };
     });
   }
@@ -57,9 +57,9 @@ export class AtomicOperations {
       const [interest] = await tx.insert(buyerInterests).values(interestData).returning();
       const [notification] = await tx.insert(notifications).values({
         ...notificationData,
-        relatedId: interest.id
+        relatedId: interest.id,
       }).returning();
-      
+
       return { interest, notification };
     });
   }
@@ -70,9 +70,9 @@ export class AtomicOperations {
       const [escrow] = await tx.insert(escrowAccounts).values(escrowData).returning();
       const [transaction] = await tx.insert(escrowTransactions).values({
         ...transactionData,
-        escrowId: escrow.id
+        escrowId: escrow.id,
       }).returning();
-      
+
       return { escrow, transaction };
     });
   }
@@ -95,20 +95,20 @@ export class AtomicOperations {
 
   // Atomic cache operations
   private cacheOperations = new Map<string, any>();
-  
+
   async atomicCacheUpdate(key: string, value: any, ttl: number = 300000) {
     // Prevent concurrent cache updates
     if (this.cacheOperations.has(key)) {
       return this.cacheOperations.get(key);
     }
-    
+
     const operation = Promise.resolve().then(() => {
       // Actual cache update logic
       return { key, value, ttl };
     }).finally(() => {
       this.cacheOperations.delete(key);
     });
-    
+
     this.cacheOperations.set(key, operation);
     return operation;
   }

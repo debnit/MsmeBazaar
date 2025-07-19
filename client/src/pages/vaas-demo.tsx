@@ -7,17 +7,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Calculator, 
-  Shield, 
-  TrendingUp, 
-  Users, 
-  Building, 
+import {
+  Calculator,
+  Shield,
+  TrendingUp,
+  Users,
+  Building,
   Lock,
   Sparkles,
   Crown,
   BarChart3,
-  Zap
+  Zap,
 } from 'lucide-react';
 import { apiRequest } from '@/lib/api-client';
 import { useToast } from '@/hooks/use-toast';
@@ -35,7 +35,7 @@ export function VaaSDemoPage() {
     city: 'Bangalore',
     state: 'Karnataka',
     isDistressed: false,
-    growthRate: 0.25
+    growthRate: 0.25,
   });
 
   const [quote, setQuote] = useState(null);
@@ -47,19 +47,19 @@ export function VaaSDemoPage() {
     try {
       const response = await apiRequest('/api/vaas/quote', {
         method: 'POST',
-        body: JSON.stringify({ msmeData, valuationType: 'standard' })
+        body: JSON.stringify({ msmeData, valuationType: 'standard' }),
       });
       setQuote(response.quote);
       toast({
         title: 'Quote Generated',
         description: 'Valuation quote calculated successfully',
-        variant: 'success'
+        variant: 'success',
       });
     } catch (error) {
       toast({
         title: 'Quote Failed',
         description: 'Unable to generate quote. Please try again.',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     } finally {
       setIsCalculating(false);
@@ -69,7 +69,7 @@ export function VaaSDemoPage() {
   const handleInputChange = (field: string, value: any) => {
     setMsmeData(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -187,7 +187,7 @@ export function VaaSDemoPage() {
                   </div>
                 </div>
 
-                <Button 
+                <Button
                   onClick={handleGetQuote}
                   disabled={isCalculating}
                   className="w-full"
@@ -292,7 +292,7 @@ export function VaaSDemoPage() {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start gap-3">
                     <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
                       <BarChart3 className="h-4 w-4 text-green-600" />
@@ -304,7 +304,7 @@ export function VaaSDemoPage() {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start gap-3">
                     <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
                       <TrendingUp className="h-4 w-4 text-purple-600" />
@@ -317,7 +317,7 @@ export function VaaSDemoPage() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
                     <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -330,7 +330,7 @@ export function VaaSDemoPage() {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start gap-3">
                     <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
                       <Lock className="h-4 w-4 text-red-600" />
@@ -342,7 +342,7 @@ export function VaaSDemoPage() {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start gap-3">
                     <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
                       <Users className="h-4 w-4 text-yellow-600" />

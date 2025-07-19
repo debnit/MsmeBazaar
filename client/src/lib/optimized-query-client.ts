@@ -26,7 +26,7 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: any,
-  options?: RequestInit
+  options?: RequestInit,
 ): Promise<Response> {
   const requestOptions: RequestInit = {
     method,
@@ -48,12 +48,12 @@ export async function apiRequest(
 
   // Regular fetch for non-GET requests
   const response = await fetch(url, requestOptions);
-  
+
   // Invalidate cache on successful mutations
   if (response.ok && method !== 'GET') {
     // Clear related cache entries
     queryClient.invalidateQueries({ queryKey: [url] });
-    
+
     // Clear specific cache patterns
     if (url.includes('auth')) {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });

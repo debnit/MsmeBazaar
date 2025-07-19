@@ -24,7 +24,7 @@ export class ObjectPool<T> implements IMemoryPool<T> {
   constructor(
     factory: () => T,
     resetFn: (item: T) => void,
-    maxSize: number = 100
+    maxSize: number = 100,
   ) {
     this.factory = factory;
     this.resetFn = resetFn;
@@ -35,12 +35,12 @@ export class ObjectPool<T> implements IMemoryPool<T> {
     if (this.pool.length > 0) {
       return this.pool.pop()!;
     }
-    
+
     if (this.created < this.maxSize) {
       this.created++;
       return this.factory();
     }
-    
+
     return null; // Pool exhausted
   }
 
@@ -74,7 +74,7 @@ export class StreamingProcessor<T> implements IStreamProcessor<T> {
 
   constructor(
     bufferSize: number,
-    processChunk: (chunk: T[]) => Promise<void>
+    processChunk: (chunk: T[]) => Promise<void>,
   ) {
     this.bufferSize = bufferSize;
     this.processChunk = processChunk;
@@ -82,7 +82,7 @@ export class StreamingProcessor<T> implements IStreamProcessor<T> {
 
   async process(item: T): Promise<void> {
     this.buffer.push(item);
-    
+
     if (this.buffer.length >= this.bufferSize) {
       await this.flush();
     }
@@ -140,18 +140,18 @@ export class LazyLoadingManager<T> {
     }
 
     this.loading.add(key);
-    
+
     try {
       const item = await loader();
-      
+
       // Evict old items if cache is full
       if (this.cache.size >= this.maxCacheSize) {
         this.evictLRU();
       }
-      
+
       this.cache.set(key, item);
       this.accessTimes.set(key, Date.now());
-      
+
       return item;
     } finally {
       this.loading.delete(key);
@@ -161,14 +161,14 @@ export class LazyLoadingManager<T> {
   private evictLRU(): void {
     let oldestKey: string | null = null;
     let oldestTime = Date.now();
-    
+
     for (const [key, time] of this.accessTimes) {
       if (time < oldestTime) {
         oldestTime = time;
         oldestKey = key;
       }
     }
-    
+
     if (oldestKey) {
       this.cache.delete(oldestKey);
       this.accessTimes.delete(oldestKey);
@@ -185,7 +185,7 @@ export class LazyLoadingManager<T> {
       cached: this.cache.size,
       loading: this.loading.size,
       registered: this.loaders.size,
-      maxSize: this.maxCacheSize
+      maxSize: this.maxCacheSize,
     };
   }
 }
@@ -218,13 +218,13 @@ export class CircularBuffer<T> {
   }
 
   pop(): T | null {
-    if (this.size === 0) return null;
-    
+    if (this.size === 0) {return null;}
+
     const item = this.buffer[this.head];
     this.buffer[this.head] = undefined as any; // Help GC
     this.head = (this.head + 1) % this.capacity;
     this.size--;
-    
+
     return item;
   }
 
@@ -265,7 +265,7 @@ export class MemoryAwareCache<T> {
 
   constructor(
     maxSize: number = 50 * 1024 * 1024, // 50MB default
-    sizeEstimator: (value: T) => number = (value) => JSON.stringify(value).length * 2
+    sizeEstimator: (value: T) => number = (value) => JSON.stringify(value).length * 2,
   ) {
     this.maxSize = maxSize;
     this.sizeEstimator = sizeEstimator;
@@ -273,32 +273,32 @@ export class MemoryAwareCache<T> {
 
   set(key: string, value: T): void {
     const size = this.sizeEstimator(value);
-    
+
     // Remove existing entry if present
     if (this.cache.has(key)) {
       const existing = this.cache.get(key)!;
       this.totalSize -= existing.size;
     }
-    
+
     // Evict items if necessary
     while (this.totalSize + size > this.maxSize && this.cache.size > 0) {
       this.evictLRU();
     }
-    
+
     // Add new entry
     this.cache.set(key, {
       value,
       size,
-      lastAccess: Date.now()
+      lastAccess: Date.now(),
     });
-    
+
     this.totalSize += size;
   }
 
   get(key: string): T | null {
     const entry = this.cache.get(key);
-    if (!entry) return null;
-    
+    if (!entry) {return null;}
+
     entry.lastAccess = Date.now();
     return entry.value;
   }
@@ -306,14 +306,14 @@ export class MemoryAwareCache<T> {
   private evictLRU(): void {
     let oldestKey: string | null = null;
     let oldestTime = Date.now();
-    
+
     for (const [key, entry] of this.cache) {
       if (entry.lastAccess < oldestTime) {
         oldestTime = entry.lastAccess;
         oldestKey = key;
       }
     }
-    
+
     if (oldestKey) {
       const entry = this.cache.get(oldestKey)!;
       this.totalSize -= entry.size;
@@ -331,7 +331,7 @@ export class MemoryAwareCache<T> {
       entries: this.cache.size,
       totalSize: this.totalSize,
       maxSize: this.maxSize,
-      utilization: (this.totalSize / this.maxSize) * 100
+      utilization: (this.totalSize / this.maxSize) * 100,
     };
   }
 }
@@ -347,14 +347,14 @@ export class WeakReferenceManager<T extends object> {
 
   get(key: string): T | null {
     const ref = this.weakRefs.get(key);
-    if (!ref) return null;
-    
+    if (!ref) {return null;}
+
     const value = ref.deref();
     if (!value) {
       this.cleanup.add(key);
       return null;
     }
-    
+
     return value;
   }
 
@@ -372,7 +372,7 @@ export class WeakReferenceManager<T extends object> {
       this.weakRefs.delete(key);
     }
     this.cleanup.clear();
-    
+
     // Check for any additional stale references
     for (const [key, ref] of this.weakRefs) {
       if (!ref.deref()) {
@@ -401,13 +401,13 @@ export class MSMEMemoryOptimizations {
     this.userPool = new ObjectPool(
       () => ({ id: '', name: '', email: '', role: '', data: null }),
       (user) => { user.id = ''; user.name = ''; user.email = ''; user.role = ''; user.data = null; },
-      50
+      50,
     );
 
     this.msmePool = new ObjectPool(
       () => ({ id: '', name: '', industry: '', location: '', valuation: 0, data: null }),
       (msme) => { msme.id = ''; msme.name = ''; msme.industry = ''; msme.location = ''; msme.valuation = 0; msme.data = null; },
-      100
+      100,
     );
 
     // Initialize streaming processor
@@ -416,7 +416,7 @@ export class MSMEMemoryOptimizations {
       async (chunk) => {
         // Process chunk and free memory immediately
         await this.processDataChunk(chunk);
-      }
+      },
     );
 
     // Initialize lazy loader
@@ -426,7 +426,7 @@ export class MSMEMemoryOptimizations {
     // Initialize memory-aware cache
     this.memoryCache = new MemoryAwareCache(
       20 * 1024 * 1024, // 20MB limit
-      (value) => JSON.stringify(value).length * 2
+      (value) => JSON.stringify(value).length * 2,
     );
 
     // Initialize weak references
@@ -478,13 +478,13 @@ export class MSMEMemoryOptimizations {
     try {
       // Set user data
       Object.assign(user, userData);
-      
+
       // Process user
       const result = { ...user, id: Date.now().toString() };
-      
+
       // Store in memory-aware cache
       this.memoryCache.set(`user:${result.id}`, result);
-      
+
       return result;
     } finally {
       // Return to pool
@@ -497,7 +497,7 @@ export class MSMEMemoryOptimizations {
     for (const msme of msmeData) {
       await this.dataStreamProcessor.process(msme);
     }
-    
+
     // Ensure all data is processed
     await this.dataStreamProcessor.flush();
   }
@@ -509,7 +509,7 @@ export class MSMEMemoryOptimizations {
   addMetric(metric: any): void {
     this.metricsBuffer.push({
       ...metric,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
@@ -517,7 +517,7 @@ export class MSMEMemoryOptimizations {
     const metrics = [];
     for (let i = 0; i < count && !this.metricsBuffer.isEmpty(); i++) {
       const metric = this.metricsBuffer.pop();
-      if (metric) metrics.push(metric);
+      if (metric) {metrics.push(metric);}
     }
     return metrics;
   }
@@ -525,12 +525,12 @@ export class MSMEMemoryOptimizations {
   private performCleanup(): void {
     // Clean up weak references
     this.weakRefs.cleanupStaleReferences();
-    
+
     // Force garbage collection if available
     if (global.gc) {
       global.gc();
     }
-    
+
     console.log('🧹 Memory cleanup completed');
   }
 
@@ -539,21 +539,21 @@ export class MSMEMemoryOptimizations {
       pools: {
         user: {
           size: this.userPool.size(),
-          available: this.userPool.available()
+          available: this.userPool.available(),
         },
         msme: {
           size: this.msmePool.size(),
-          available: this.msmePool.available()
-        }
+          available: this.msmePool.available(),
+        },
       },
       cache: this.memoryCache.getStats(),
       lazyLoader: this.lazyLoader.getStats(),
       weakRefs: this.weakRefs.size(),
       metricsBuffer: {
         size: this.metricsBuffer.getSize(),
-        capacity: this.metricsBuffer.getCapacity()
+        capacity: this.metricsBuffer.getCapacity(),
       },
-      processMemory: process.memoryUsage()
+      processMemory: process.memoryUsage(),
     };
   }
 

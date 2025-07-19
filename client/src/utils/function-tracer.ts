@@ -51,12 +51,12 @@ class FunctionTracer {
 
     const traceId = `${functionName}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const startTime = performance.now();
-    
+
     const trace: TraceEntry = {
       functionName,
       startTime,
       args: args ? this.sanitizeArgs(args) : undefined,
-      stackTrace: this.getStackTrace()
+      stackTrace: this.getStackTrace(),
     };
 
     this.activeTraces.set(traceId, trace);
@@ -82,7 +82,7 @@ class FunctionTracer {
 
     const trace = this.activeTraces.get(traceId)!;
     const endTime = performance.now();
-    
+
     trace.endTime = endTime;
     trace.duration = endTime - trace.startTime;
     trace.result = result ? this.sanitizeResult(result) : undefined;
@@ -149,7 +149,7 @@ class FunctionTracer {
         minDuration: 0,
         maxDuration: 0,
         errorRate: 0,
-        slowCalls: 0
+        slowCalls: 0,
       };
     }
 
@@ -163,7 +163,7 @@ class FunctionTracer {
       minDuration: Math.min(...durations),
       maxDuration: Math.max(...durations),
       errorRate: errors / traces.length,
-      slowCalls
+      slowCalls,
     };
   }
 
@@ -228,7 +228,7 @@ class FunctionTracer {
     const exportData = {
       timestamp: new Date().toISOString(),
       traces: Object.fromEntries(this.traces),
-      stats: {}
+      stats: {},
     };
 
     // Add performance stats for each function
@@ -247,10 +247,10 @@ export function trace(target: any, propertyKey: string, descriptor: PropertyDesc
 
   descriptor.value = function(...args: any[]) {
     const traceId = tracer.startTrace(`${target.constructor.name}.${propertyKey}`, args);
-    
+
     try {
       const result = originalMethod.apply(this, args);
-      
+
       // Handle async functions
       if (result && typeof result.then === 'function') {
         return result
@@ -263,7 +263,7 @@ export function trace(target: any, propertyKey: string, descriptor: PropertyDesc
             throw error;
           });
       }
-      
+
       tracer.endTrace(traceId, result);
       return result;
     } catch (error) {
@@ -278,16 +278,16 @@ export function trace(target: any, propertyKey: string, descriptor: PropertyDesc
 // Manual tracing wrapper function
 export function traceFunction<T extends (...args: any[]) => any>(
   fn: T,
-  functionName: string
+  functionName: string,
 ): T {
   const tracer = FunctionTracer.getInstance();
-  
+
   return ((...args: any[]) => {
     const traceId = tracer.startTrace(functionName, args);
-    
+
     try {
       const result = fn(...args);
-      
+
       // Handle async functions
       if (result && typeof result.then === 'function') {
         return result
@@ -300,7 +300,7 @@ export function traceFunction<T extends (...args: any[]) => any>(
             throw error;
           });
       }
-      
+
       tracer.endTrace(traceId, result);
       return result;
     } catch (error) {

@@ -74,68 +74,68 @@ export default function EscrowManagement() {
     mutationFn: (escrowId: number) => apiRequest('POST', `/api/escrow/${escrowId}/release`),
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Funds have been released to the seller",
+        title: 'Success',
+        description: 'Funds have been released to the seller',
       });
       queryClient.invalidateQueries({ queryKey: ['/api/escrow'] });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to release funds",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to release funds',
+        variant: 'destructive',
       });
     },
   });
 
   const refundFundsMutation = useMutation({
-    mutationFn: ({ escrowId, reason }: { escrowId: number; reason: string }) => 
+    mutationFn: ({ escrowId, reason }: { escrowId: number; reason: string }) =>
       apiRequest('POST', `/api/escrow/${escrowId}/refund`, { reason }),
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Funds have been refunded to the buyer",
+        title: 'Success',
+        description: 'Funds have been refunded to the buyer',
       });
       queryClient.invalidateQueries({ queryKey: ['/api/escrow'] });
       setRefundReason('');
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to refund funds",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to refund funds',
+        variant: 'destructive',
       });
     },
   });
 
   const completeMilestoneMutation = useMutation({
-    mutationFn: ({ milestoneId, evidence }: { milestoneId: number; evidence: string }) => 
+    mutationFn: ({ milestoneId, evidence }: { milestoneId: number; evidence: string }) =>
       apiRequest('POST', '/api/escrow/milestone/complete', { milestoneId, evidence }),
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Milestone completed successfully",
+        title: 'Success',
+        description: 'Milestone completed successfully',
       });
       queryClient.invalidateQueries({ queryKey: ['/api/escrow'] });
       setMilestoneEvidence('');
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to complete milestone",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to complete milestone',
+        variant: 'destructive',
       });
     },
   });
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'funded': return 'bg-blue-100 text-blue-800';
-      case 'released': return 'bg-green-100 text-green-800';
-      case 'refunded': return 'bg-gray-100 text-gray-800';
-      case 'disputed': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+    case 'pending': return 'bg-yellow-100 text-yellow-800';
+    case 'funded': return 'bg-blue-100 text-blue-800';
+    case 'released': return 'bg-green-100 text-green-800';
+    case 'refunded': return 'bg-gray-100 text-gray-800';
+    case 'disputed': return 'bg-red-100 text-red-800';
+    default: return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -277,7 +277,7 @@ export default function EscrowManagement() {
                                     </Badge>
                                   </div>
                                 </div>
-                                
+
                                 <div>
                                   <Label>Release Conditions</Label>
                                   <ul className="list-disc pl-5 mt-1">
@@ -299,7 +299,7 @@ export default function EscrowManagement() {
                                           </Badge>
                                         </div>
                                         <div className="text-sm text-gray-600 mt-1">
-                                          Amount: {formatCurrency(milestone.amount)} • 
+                                          Amount: {formatCurrency(milestone.amount)} •
                                           Due: {new Date(milestone.dueDate).toLocaleDateString()}
                                         </div>
                                         {milestone.status === 'pending' && (
@@ -310,11 +310,11 @@ export default function EscrowManagement() {
                                               onChange={(e) => setMilestoneEvidence(e.target.value)}
                                               className="flex-1"
                                             />
-                                            <Button 
+                                            <Button
                                               size="sm"
-                                              onClick={() => completeMilestoneMutation.mutate({ 
-                                                milestoneId: milestone.id, 
-                                                evidence: milestoneEvidence 
+                                              onClick={() => completeMilestoneMutation.mutate({
+                                                milestoneId: milestone.id,
+                                                evidence: milestoneEvidence,
                                               })}
                                               disabled={completeMilestoneMutation.isPending}
                                             >
@@ -329,7 +329,7 @@ export default function EscrowManagement() {
 
                                 {escrow.status === 'funded' && (
                                   <div className="flex space-x-2 pt-4">
-                                    <Button 
+                                    <Button
                                       onClick={() => releaseFundsMutation.mutate(escrow.id)}
                                       disabled={releaseFundsMutation.isPending}
                                       className="flex-1"
@@ -355,10 +355,10 @@ export default function EscrowManagement() {
                                               placeholder="Enter reason for refund..."
                                             />
                                           </div>
-                                          <Button 
-                                            onClick={() => refundFundsMutation.mutate({ 
-                                              escrowId: escrow.id, 
-                                              reason: refundReason 
+                                          <Button
+                                            onClick={() => refundFundsMutation.mutate({
+                                              escrowId: escrow.id,
+                                              reason: refundReason,
                                             })}
                                             disabled={refundFundsMutation.isPending || !refundReason}
                                             className="w-full"
@@ -409,7 +409,7 @@ export default function EscrowManagement() {
                       </div>
                       <div className="flex space-x-2">
                         {escrow.status === 'funded' && (
-                          <Button 
+                          <Button
                             size="sm"
                             onClick={() => releaseFundsMutation.mutate(escrow.id)}
                             disabled={releaseFundsMutation.isPending}

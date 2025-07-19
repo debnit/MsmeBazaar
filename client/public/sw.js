@@ -5,7 +5,7 @@ const urlsToCache = [
   '/dashboard',
   '/static/css/main.css',
   '/static/js/main.js',
-  '/manifest.json'
+  '/manifest.json',
 ];
 
 // Install event - cache resources
@@ -14,7 +14,7 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         return cache.addAll(urlsToCache);
-      })
+      }),
   );
 });
 
@@ -25,7 +25,7 @@ self.addEventListener('fetch', (event) => {
       .then((response) => {
         // Return cached version or fetch from network
         return response || fetch(event.request);
-      })
+      }),
   );
 });
 
@@ -38,8 +38,8 @@ self.addEventListener('activate', (event) => {
           if (cacheName !== CACHE_NAME) {
             return caches.delete(cacheName);
           }
-        })
+        }),
       );
-    })
+    }),
   );
 });

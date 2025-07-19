@@ -18,9 +18,9 @@ export function generateMockPDFBase64(
   buyer: Party,
   seller: Party,
   agent: Party,
-  msme: MSMEDetails
+  msme: MSMEDetails,
 ): string {
-  const today = msme.dealDate || new Date().toLocaleDateString("en-IN");
+  const today = msme.dealDate || new Date().toLocaleDateString('en-IN');
 
   const agreementText = `
 📄 MSME EXIT AGREEMENT (Mock)
@@ -35,7 +35,7 @@ Regarding:
 ▸ Business: ${msme.businessName}
 ▸ Industry: ${msme.industry}
 ▸ Location: ${msme.location}
-▸ Valuation: ₹${msme.valuation.toLocaleString("en-IN")}
+▸ Valuation: ₹${msme.valuation.toLocaleString('en-IN')}
 
 Terms:
 1. Preliminary document only
@@ -45,5 +45,5 @@ Terms:
 Signed: ${today}
 `;
 
-  return Buffer.from(agreementText, "utf-8").toString("base64");
+  return Buffer.from(agreementText, 'utf-8').toString('base64');
 }

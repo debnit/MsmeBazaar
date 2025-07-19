@@ -1,5 +1,5 @@
-import { eq, and, desc, sql } from "drizzle-orm";
-import { db } from "../db";
+import { eq, and, desc, sql } from 'drizzle-orm';
+import { db } from '../db';
 import {
   notificationTemplates,
   notificationHistory,
@@ -10,7 +10,7 @@ import {
   type InsertNotificationHistory,
   type NotificationPreference,
   type InsertNotificationPreference,
-} from "@shared/schema";
+} from '@shared/schema';
 
 // Database storage class for notifications
 export class NotificationStorage {
@@ -156,8 +156,8 @@ export class NotificationStorage {
       .where(
         and(
           eq(notificationPreferences.userId, userId),
-          eq(notificationPreferences.templateId, templateId)
-        )
+          eq(notificationPreferences.templateId, templateId),
+        ),
       );
     return preference || null;
   }
@@ -180,8 +180,8 @@ export class NotificationStorage {
       .where(
         and(
           eq(notificationPreferences.userId, userId),
-          eq(notificationPreferences.templateId, templateId)
-        )
+          eq(notificationPreferences.templateId, templateId),
+        ),
       )
       .returning();
     return preference;
@@ -193,8 +193,8 @@ export class NotificationStorage {
       .where(
         and(
           eq(notificationPreferences.userId, userId),
-          eq(notificationPreferences.templateId, templateId)
-        )
+          eq(notificationPreferences.templateId, templateId),
+        ),
       );
   }
 
@@ -209,7 +209,7 @@ export class NotificationStorage {
     const statusCounts = await db
       .select({
         status: notificationHistory.status,
-        count: sql<number>`count(*)`
+        count: sql<number>`count(*)`,
       })
       .from(notificationHistory)
       .groupBy(notificationHistory.status);
@@ -218,7 +218,7 @@ export class NotificationStorage {
     const typeCounts = await db
       .select({
         type: notificationHistory.type,
-        count: sql<number>`count(*)`
+        count: sql<number>`count(*)`,
       })
       .from(notificationHistory)
       .groupBy(notificationHistory.type);
@@ -234,7 +234,7 @@ export class NotificationStorage {
       .select({
         templateId: notificationHistory.templateId,
         count: sql<number>`count(*)`,
-        date: sql<string>`date(created_at)`
+        date: sql<string>`date(created_at)`,
       })
       .from(notificationHistory)
       .where(sql`created_at >= NOW() - INTERVAL '7 days'`)
@@ -275,8 +275,8 @@ export class NotificationStorage {
       .where(
         and(
           eq(notificationHistory.templateId, templateId),
-          eq(notificationHistory.status, 'delivered')
-        )
+          eq(notificationHistory.status, 'delivered'),
+        ),
       );
 
     const [failed] = await db
@@ -285,8 +285,8 @@ export class NotificationStorage {
       .where(
         and(
           eq(notificationHistory.templateId, templateId),
-          eq(notificationHistory.status, 'failed')
-        )
+          eq(notificationHistory.status, 'failed'),
+        ),
       );
 
     return {
@@ -318,7 +318,7 @@ export class NotificationStorage {
       .delete(notificationHistory)
       .where(sql`created_at < NOW() - INTERVAL '${days} days'`)
       .returning({ id: notificationHistory.id });
-    
+
     return result.length;
   }
 }

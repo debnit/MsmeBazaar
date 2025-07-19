@@ -9,39 +9,39 @@ class WorkflowAutomationService {
   constructor() {
     this.db = new Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === 'production'
+      ssl: process.env.NODE_ENV === 'production',
     });
-    
+
     this.redis = Redis.createClient({
-      url: process.env.REDIS_URL
+      url: process.env.REDIS_URL,
     });
-    
+
     this.redis.connect();
 
     // Initialize Bull queues for different workflows
     this.onboardingQueue = new Bull('MSME Onboarding', {
-      redis: { port: 6379, host: 'localhost' }
+      redis: { port: 6379, host: 'localhost' },
     });
-    
+
     this.valuationQueue = new Bull('Valuation Processing', {
-      redis: { port: 6379, host: 'localhost' }
+      redis: { port: 6379, host: 'localhost' },
     });
-    
+
     this.notificationQueue = new Bull('Notifications', {
-      redis: { port: 6379, host: 'localhost' }
+      redis: { port: 6379, host: 'localhost' },
     });
 
     this.emailTransporter = nodemailer.createTransporter({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
+        pass: process.env.EMAIL_PASS,
+      },
     });
 
     this.twilioClient = twilio(
       process.env.TWILIO_ACCOUNT_SID,
-      process.env.TWILIO_AUTH_TOKEN
+      process.env.TWILIO_AUTH_TOKEN,
     );
 
     this.setupQueueProcessors();
@@ -80,7 +80,7 @@ class WorkflowAutomationService {
     try {
       // Create workflow record
       const workflowId = await this.createWorkflowRecord('msme_onboarding', msmeData.id);
-      
+
       // Add to onboarding queue
       const job = await this.onboardingQueue.add('msme-onboarding', {
         workflowId,
@@ -93,19 +93,19 @@ class WorkflowAutomationService {
           'verify_business_details',
           'generate_profile',
           'activate_account',
-          'send_completion_notification'
-        ]
+          'send_completion_notification',
+        ],
       }, {
         attempts: 3,
         backoff: {
           type: 'exponential',
-          delay: 2000
-        }
+          delay: 2000,
+        },
       });
 
-      await this.logWorkflowEvent(msmeData.id, 'onboarding_started', { 
-        workflowId, 
-        jobId: job.id 
+      await this.logWorkflowEvent(msmeData.id, 'onboarding_started', {
+        workflowId,
+        jobId: job.id,
       });
 
       return { workflowId, jobId: job.id, status: 'started' };
@@ -123,13 +123,13 @@ class WorkflowAutomationService {
       await this.updateWorkflowStatus(workflowId, 'processing');
 
       for (const step of steps) {
-        await this.logWorkflowEvent(msmeId, `step_started`, { step });
-        
+        await this.logWorkflowEvent(msmeId, 'step_started', { step });
+
         const stepResult = await this.executeOnboardingStep(step, msmeData);
         results.push({ step, result: stepResult, timestamp: new Date() });
-        
-        await this.logWorkflowEvent(msmeId, `step_completed`, { step, result: stepResult });
-        
+
+        await this.logWorkflowEvent(msmeId, 'step_completed', { step, result: stepResult });
+
         // Add delay between steps
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
@@ -147,29 +147,29 @@ class WorkflowAutomationService {
 
   async executeOnboardingStep(step, msmeData) {
     switch (step) {
-      case 'send_welcome_email':
-        return await this.sendWelcomeEmail(msmeData);
-      
-      case 'send_otp_verification':
-        return await this.sendOTPVerification(msmeData);
-      
-      case 'verify_documents':
-        return await this.verifyDocuments(msmeData);
-      
-      case 'verify_business_details':
-        return await this.verifyBusinessDetails(msmeData);
-      
-      case 'generate_profile':
-        return await this.generateMSMEProfile(msmeData);
-      
-      case 'activate_account':
-        return await this.activateMSMEAccount(msmeData);
-      
-      case 'send_completion_notification':
-        return await this.sendCompletionNotification(msmeData);
-      
-      default:
-        throw new Error(`Unknown onboarding step: ${step}`);
+    case 'send_welcome_email':
+      return await this.sendWelcomeEmail(msmeData);
+
+    case 'send_otp_verification':
+      return await this.sendOTPVerification(msmeData);
+
+    case 'verify_documents':
+      return await this.verifyDocuments(msmeData);
+
+    case 'verify_business_details':
+      return await this.verifyBusinessDetails(msmeData);
+
+    case 'generate_profile':
+      return await this.generateMSMEProfile(msmeData);
+
+    case 'activate_account':
+      return await this.activateMSMEAccount(msmeData);
+
+    case 'send_completion_notification':
+      return await this.sendCompletionNotification(msmeData);
+
+    default:
+      throw new Error(`Unknown onboarding step: ${step}`);
     }
   }
 
@@ -181,13 +181,13 @@ class WorkflowAutomationService {
       template: 'welcome',
       data: {
         companyName: msmeData.companyName,
-        firstName: msmeData.firstName || 'Business Owner'
-      }
+        firstName: msmeData.firstName || 'Business Owner',
+      },
     };
 
     await this.notificationQueue.add('send-notification', {
       type: 'email',
-      ...emailContent
+      ...emailContent,
     });
 
     return { sent: true, type: 'welcome_email' };
@@ -195,7 +195,7 @@ class WorkflowAutomationService {
 
   async sendOTPVerification(msmeData) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    
+
     // Store OTP in Redis with expiration
     await this.redis.setEx(`otp:${msmeData.phone}`, 600, otp); // 10 minutes
 
@@ -204,7 +204,7 @@ class WorkflowAutomationService {
       await this.notificationQueue.add('send-notification', {
         type: 'sms',
         to: msmeData.phone,
-        message: `Your MSMEBazaar verification code is: ${otp}. Valid for 10 minutes.`
+        message: `Your MSMEBazaar verification code is: ${otp}. Valid for 10 minutes.`,
       });
     }
 
@@ -214,7 +214,7 @@ class WorkflowAutomationService {
       to: msmeData.email,
       subject: 'MSMEBazaar - Verification Code',
       template: 'otp',
-      data: { otp, companyName: msmeData.companyName }
+      data: { otp, companyName: msmeData.companyName },
     });
 
     return { sent: true, type: 'otp_verification', masked_phone: this.maskPhone(msmeData.phone) };
@@ -222,10 +222,10 @@ class WorkflowAutomationService {
 
   async verifyDocuments(msmeData) {
     const documentChecks = [];
-    
+
     // Check required documents
     const requiredDocs = ['gstCertificate', 'panCard', 'incorporationCertificate'];
-    
+
     for (const docType of requiredDocs) {
       if (msmeData.documents && msmeData.documents[docType]) {
         // Simulate document verification
@@ -233,12 +233,12 @@ class WorkflowAutomationService {
         documentChecks.push({
           document: docType,
           status: verificationResult.valid ? 'verified' : 'rejected',
-          confidence: verificationResult.confidence
+          confidence: verificationResult.confidence,
         });
       } else {
         documentChecks.push({
           document: docType,
-          status: 'missing'
+          status: 'missing',
         });
       }
     }
@@ -246,15 +246,15 @@ class WorkflowAutomationService {
     // Update database with verification results
     await this.db.query(
       'UPDATE msmes SET document_verification = $1, updated_at = NOW() WHERE id = $2',
-      [JSON.stringify(documentChecks), msmeData.id]
+      [JSON.stringify(documentChecks), msmeData.id],
     );
 
     const allVerified = documentChecks.every(check => check.status === 'verified');
-    
-    return { 
-      verified: allVerified, 
+
+    return {
+      verified: allVerified,
       checks: documentChecks,
-      next_action: allVerified ? 'proceed' : 'request_documents'
+      next_action: allVerified ? 'proceed' : 'request_documents',
     };
   }
 
@@ -267,7 +267,7 @@ class WorkflowAutomationService {
       verificationChecks.push({
         field: 'gstin',
         status: gstValid ? 'verified' : 'invalid',
-        value: this.maskSensitiveData(msmeData.gstin)
+        value: this.maskSensitiveData(msmeData.gstin),
       });
     }
 
@@ -277,43 +277,43 @@ class WorkflowAutomationService {
       verificationChecks.push({
         field: 'pan',
         status: panValid ? 'verified' : 'invalid',
-        value: this.maskSensitiveData(msmeData.pan)
+        value: this.maskSensitiveData(msmeData.pan),
       });
     }
 
     // Update verification status in database
     await this.db.query(
       'UPDATE msmes SET business_verification = $1, updated_at = NOW() WHERE id = $2',
-      [JSON.stringify(verificationChecks), msmeData.id]
+      [JSON.stringify(verificationChecks), msmeData.id],
     );
 
     const allVerified = verificationChecks.every(check => check.status === 'verified');
 
     return {
       verified: allVerified,
-      checks: verificationChecks
+      checks: verificationChecks,
     };
   }
 
   async generateMSMEProfile(msmeData) {
     // Generate business profile score
     const profileScore = this.calculateProfileScore(msmeData);
-    
+
     // Generate profile completeness
     const completeness = this.calculateProfileCompleteness(msmeData);
-    
+
     // Create profile summary
     const profileSummary = {
       score: profileScore,
       completeness: completeness,
       strengths: this.identifyStrengths(msmeData),
-      recommendations: this.generateRecommendations(msmeData)
+      recommendations: this.generateRecommendations(msmeData),
     };
 
     // Update profile in database
     await this.db.query(
       'UPDATE msmes SET profile_score = $1, profile_data = $2, updated_at = NOW() WHERE id = $3',
-      [profileScore, JSON.stringify(profileSummary), msmeData.id]
+      [profileScore, JSON.stringify(profileSummary), msmeData.id],
     );
 
     return profileSummary;
@@ -323,17 +323,17 @@ class WorkflowAutomationService {
     // Update account status to active
     await this.db.query(
       'UPDATE msmes SET status = $1, verified = $2, activated_at = NOW(), updated_at = NOW() WHERE id = $3',
-      ['active', true, msmeData.id]
+      ['active', true, msmeData.id],
     );
 
     // Create welcome bonus/rewards
     await this.createWelcomeRewards(msmeData.id);
 
-    return { 
-      activated: true, 
+    return {
+      activated: true,
       status: 'active',
       activated_at: new Date(),
-      welcome_bonus: 200 // points
+      welcome_bonus: 200, // points
     };
   }
 
@@ -347,8 +347,8 @@ class WorkflowAutomationService {
       data: {
         companyName: msmeData.companyName,
         loginUrl: `${process.env.CLIENT_URL}/dashboard`,
-        supportUrl: `${process.env.CLIENT_URL}/support`
-      }
+        supportUrl: `${process.env.CLIENT_URL}/support`,
+      },
     });
 
     // Send SMS notification
@@ -356,13 +356,13 @@ class WorkflowAutomationService {
       await this.notificationQueue.add('send-notification', {
         type: 'sms',
         to: msmeData.phone,
-        message: `Congratulations! Your MSMEBazaar account for ${msmeData.companyName} is now active. Start exploring opportunities at ${process.env.CLIENT_URL}`
+        message: `Congratulations! Your MSMEBazaar account for ${msmeData.companyName} is now active. Start exploring opportunities at ${process.env.CLIENT_URL}`,
       });
     }
 
-    return { 
+    return {
       notification_sent: true,
-      channels: ['email', 'sms']
+      channels: ['email', 'sms'],
     };
   }
 
@@ -370,16 +370,16 @@ class WorkflowAutomationService {
   async startValuationWorkflow(valuationData) {
     try {
       const workflowId = await this.createWorkflowRecord('valuation_processing', valuationData.id);
-      
+
       const job = await this.valuationQueue.add('valuation-processing', {
         workflowId,
         valuationId: valuationData.id,
         msmeId: valuationData.msmeId,
         valuationType: valuationData.type,
-        urgency: valuationData.urgency
+        urgency: valuationData.urgency,
       }, {
         priority: valuationData.urgency === 'high' ? 1 : valuationData.urgency === 'medium' ? 5 : 10,
-        attempts: 3
+        attempts: 3,
       });
 
       return { workflowId, jobId: job.id, status: 'started' };
@@ -397,10 +397,10 @@ class WorkflowAutomationService {
 
       // Step 1: Gather MSME data
       const msmeData = await this.gatherMSMEData(msmeId);
-      
+
       // Step 2: Validate data completeness
       const dataValidation = await this.validateValuationData(msmeData);
-      
+
       if (!dataValidation.complete) {
         await this.requestAdditionalData(valuationId, dataValidation.missing);
         return { status: 'pending_data', missing: dataValidation.missing };
@@ -408,22 +408,22 @@ class WorkflowAutomationService {
 
       // Step 3: Process valuation based on type
       const valuationResult = await this.calculateValuation(msmeData, valuationType);
-      
+
       // Step 4: Generate valuation report
       const reportUrl = await this.generateValuationReport(valuationResult, msmeData);
-      
+
       // Step 5: Update valuation record
       await this.updateValuationRecord(valuationId, valuationResult, reportUrl);
-      
+
       // Step 6: Send completion notification
       await this.sendValuationCompletionNotification(valuationId, msmeData, reportUrl);
 
       await this.updateWorkflowStatus(workflowId, 'completed');
 
-      return { 
-        status: 'completed', 
+      return {
+        status: 'completed',
         valuation: valuationResult,
-        reportUrl 
+        reportUrl,
       };
     } catch (error) {
       await this.updateWorkflowStatus(workflowId, 'failed');
@@ -437,7 +437,7 @@ class WorkflowAutomationService {
       'gst_filing_status',
       'document_expiry_check',
       'regulatory_compliance',
-      'tax_compliance'
+      'tax_compliance',
     ];
 
     const results = [];
@@ -460,14 +460,14 @@ class WorkflowAutomationService {
 
     try {
       switch (type) {
-        case 'email':
-          return await this.sendEmail(to, subject, template, data);
-        case 'sms':
-          return await this.sendSMS(to, message);
-        case 'push':
-          return await this.sendPushNotification(to, message, data);
-        default:
-          throw new Error(`Unknown notification type: ${type}`);
+      case 'email':
+        return await this.sendEmail(to, subject, template, data);
+      case 'sms':
+        return await this.sendSMS(to, message);
+      case 'push':
+        return await this.sendPushNotification(to, message, data);
+      default:
+        throw new Error(`Unknown notification type: ${type}`);
       }
     } catch (error) {
       console.error('Notification failed:', error);
@@ -477,12 +477,12 @@ class WorkflowAutomationService {
 
   async sendEmail(to, subject, template, data) {
     const htmlContent = await this.renderEmailTemplate(template, data);
-    
+
     const mailOptions = {
       from: process.env.EMAIL_FROM,
       to,
       subject,
-      html: htmlContent
+      html: htmlContent,
     };
 
     const result = await this.emailTransporter.sendMail(mailOptions);
@@ -493,7 +493,7 @@ class WorkflowAutomationService {
     const result = await this.twilioClient.messages.create({
       body: message,
       from: process.env.TWILIO_PHONE_NUMBER,
-      to
+      to,
     });
 
     return { sent: true, messageId: result.sid };
@@ -503,84 +503,84 @@ class WorkflowAutomationService {
   async createWorkflowRecord(type, entityId) {
     const result = await this.db.query(
       'INSERT INTO workflows (type, entity_id, status, created_at) VALUES ($1, $2, $3, NOW()) RETURNING id',
-      [type, entityId, 'created']
+      [type, entityId, 'created'],
     );
-    
+
     return result.rows[0].id;
   }
 
   async updateWorkflowStatus(workflowId, status) {
     await this.db.query(
       'UPDATE workflows SET status = $1, updated_at = NOW() WHERE id = $2',
-      [status, workflowId]
+      [status, workflowId],
     );
   }
 
   async logWorkflowEvent(entityId, event, data = {}) {
     await this.db.query(
       'INSERT INTO workflow_logs (entity_id, event, data, created_at) VALUES ($1, $2, $3, NOW())',
-      [entityId, event, JSON.stringify(data)]
+      [entityId, event, JSON.stringify(data)],
     );
   }
 
   calculateProfileScore(msmeData) {
     let score = 0;
-    
+
     // Basic information (30 points)
-    if (msmeData.companyName) score += 5;
-    if (msmeData.businessType) score += 5;
-    if (msmeData.industryCategory) score += 5;
-    if (msmeData.yearOfEstablishment) score += 5;
-    if (msmeData.employeeCount) score += 5;
-    if (msmeData.annualTurnover) score += 5;
+    if (msmeData.companyName) {score += 5;}
+    if (msmeData.businessType) {score += 5;}
+    if (msmeData.industryCategory) {score += 5;}
+    if (msmeData.yearOfEstablishment) {score += 5;}
+    if (msmeData.employeeCount) {score += 5;}
+    if (msmeData.annualTurnover) {score += 5;}
 
     // Contact information (20 points)
-    if (msmeData.email) score += 5;
-    if (msmeData.phone) score += 5;
-    if (msmeData.address) score += 5;
-    if (msmeData.website) score += 5;
+    if (msmeData.email) {score += 5;}
+    if (msmeData.phone) {score += 5;}
+    if (msmeData.address) {score += 5;}
+    if (msmeData.website) {score += 5;}
 
     // Legal compliance (30 points)
-    if (msmeData.gstin) score += 10;
-    if (msmeData.pan) score += 10;
-    if (msmeData.incorporationDate) score += 10;
+    if (msmeData.gstin) {score += 10;}
+    if (msmeData.pan) {score += 10;}
+    if (msmeData.incorporationDate) {score += 10;}
 
     // Additional information (20 points)
-    if (msmeData.businessDescription) score += 5;
-    if (msmeData.keyProducts && msmeData.keyProducts.length > 0) score += 5;
-    if (msmeData.bankName) score += 5;
-    if (msmeData.exportTurnover) score += 5;
+    if (msmeData.businessDescription) {score += 5;}
+    if (msmeData.keyProducts && msmeData.keyProducts.length > 0) {score += 5;}
+    if (msmeData.bankName) {score += 5;}
+    if (msmeData.exportTurnover) {score += 5;}
 
     return Math.min(score, 100);
   }
 
   calculateProfileCompleteness(msmeData) {
     const requiredFields = [
-      'companyName', 'businessType', 'industryCategory', 'email', 
-      'phone', 'address', 'gstin', 'pan', 'annualTurnover'
+      'companyName', 'businessType', 'industryCategory', 'email',
+      'phone', 'address', 'gstin', 'pan', 'annualTurnover',
     ];
-    
+
     const completedFields = requiredFields.filter(field => msmeData[field]);
     return Math.round((completedFields.length / requiredFields.length) * 100);
   }
 
   maskPhone(phone) {
-    if (!phone) return '';
+    if (!phone) {return '';}
     return phone.slice(0, 2) + '*'.repeat(6) + phone.slice(-2);
   }
 
   maskSensitiveData(data) {
-    if (!data) return '';
+    if (!data) {return '';}
     return data.slice(0, 3) + '*'.repeat(data.length - 6) + data.slice(-3);
   }
 
   async verifyDocument(docType, docData) {
     // Simulate document verification
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     return {
       valid: Math.random() > 0.1, // 90% success rate
-      confidence: Math.random() * 0.3 + 0.7 // 70-100% confidence
+      confidence: Math.random() * 0.3 + 0.7, // 70-100% confidence
     };
   }
 
@@ -612,9 +612,9 @@ class WorkflowAutomationService {
         <h1>Congratulations, ${data.companyName}!</h1>
         <p>Your account is now active and ready to use.</p>
         <a href="${data.loginUrl}">Access Your Dashboard</a>
-      `
+      `,
     };
-    
+
     return templates[template] || '<p>Email content</p>';
   }
 

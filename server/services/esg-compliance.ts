@@ -159,16 +159,16 @@ class ESGComplianceService {
 
     // Collect ESG metrics
     const metrics = await this.collectESGMetrics(businessId);
-    
+
     // Assess compliance status
     const compliance = await this.assessCompliance(businessId);
-    
+
     // Evaluate financial health
     const financialHealth = await this.evaluateFinancialHealth(businessId);
-    
+
     // Perform risk assessment
     const riskAssessment = await this.performRiskAssessment(businessId);
-    
+
     // Generate recommendations
     const recommendations = await this.generateRecommendations(businessId, metrics, compliance, riskAssessment);
 
@@ -191,10 +191,10 @@ class ESGComplianceService {
 
     // Store report
     this.complianceReports.set(report.id, report);
-    
+
     // Generate PDF document
     await this.generateCompliancePDF(report);
-    
+
     return report;
   }
 
@@ -209,11 +209,11 @@ class ESGComplianceService {
     const environmentalImpact = await this.assessEnvironmentalImpact(businessId);
     const socialImpact = await this.assessSocialImpact(businessId);
     const certifications = await this.getCertifications(businessId);
-    
+
     const score = await this.calculateSustainabilityScore(
       environmentalImpact,
       socialImpact,
-      sustainabilityGoals
+      sustainabilityGoals,
     );
 
     const report: SustainabilityReport = {
@@ -229,10 +229,10 @@ class ESGComplianceService {
     };
 
     this.sustainabilityReports.set(report.id, report);
-    
+
     // Generate PDF document
     await this.generateSustainabilityPDF(report);
-    
+
     return report;
   }
 
@@ -267,10 +267,10 @@ class ESGComplianceService {
     };
 
     this.creditworthinessReports.set(report.id, report);
-    
+
     // Generate PDF document
     await this.generateCreditworthinessPDF(report);
-    
+
     return report;
   }
 
@@ -302,7 +302,7 @@ class ESGComplianceService {
     for (const area of complianceAreas) {
       const areaCompliance = await this.checkComplianceArea(businessId, area);
       compliance.complianceAreas.push(areaCompliance);
-      
+
       if (areaCompliance.status === 'compliant') {
         compliantCount++;
         totalScore += 100;
@@ -312,7 +312,7 @@ class ESGComplianceService {
     }
 
     compliance.complianceScore = totalScore / complianceAreas.length;
-    
+
     if (compliantCount === complianceAreas.length) {
       compliance.overallStatus = 'compliant';
     } else if (compliantCount >= complianceAreas.length * 0.7) {
@@ -430,7 +430,7 @@ class ESGComplianceService {
 
   private async assessCompliance(businessId: string): Promise<ComplianceReport['compliance']> {
     const regulatoryCompliance = await this.checkRegulatoryCompliance(businessId);
-    
+
     return {
       rbiCompliance: regulatoryCompliance.complianceAreas.find(a => a.area === 'RBI Compliance')?.status === 'compliant',
       seiCompliance: true,
@@ -455,9 +455,9 @@ class ESGComplianceService {
     const financialRisk = 32.4;
     const regulatoryRisk = 18.9;
     const reputationalRisk = 21.3;
-    
+
     const overallRisk = Math.max(operationalRisk, financialRisk, regulatoryRisk, reputationalRisk);
-    
+
     return {
       operationalRisk,
       financialRisk,
@@ -471,30 +471,30 @@ class ESGComplianceService {
     businessId: string,
     metrics: ESGMetrics,
     compliance: ComplianceReport['compliance'],
-    riskAssessment: ComplianceReport['riskAssessment']
+    riskAssessment: ComplianceReport['riskAssessment'],
   ): Promise<string[]> {
     const recommendations = [];
-    
+
     if (metrics.environmental.carbonFootprint > 150) {
       recommendations.push('Implement carbon reduction strategies to meet sustainability targets');
     }
-    
+
     if (metrics.social.diversityIndex < 0.7) {
       recommendations.push('Improve diversity and inclusion programs');
     }
-    
+
     if (metrics.governance.complianceScore < 80) {
       recommendations.push('Strengthen compliance monitoring and training programs');
     }
-    
+
     if (riskAssessment.overallRisk === 'high') {
       recommendations.push('Implement comprehensive risk management framework');
     }
-    
+
     if (!compliance.rbiCompliance) {
       recommendations.push('Ensure RBI compliance requirements are met');
     }
-    
+
     return recommendations;
   }
 
@@ -502,7 +502,7 @@ class ESGComplianceService {
     // Simulate compliance check
     const statuses = ['compliant', 'non_compliant', 'pending'] as const;
     const status = statuses[Math.floor(Math.random() * statuses.length)];
-    
+
     return {
       area,
       status,
@@ -551,19 +551,19 @@ class ESGComplianceService {
   private async calculateSustainabilityScore(
     environmentalImpact: SustainabilityReport['environmentalImpact'],
     socialImpact: SustainabilityReport['socialImpact'],
-    goals: SustainabilityReport['sustainabilityGoals']
+    goals: SustainabilityReport['sustainabilityGoals'],
   ): Promise<number> {
     const environmentalScore = (environmentalImpact.energyEfficiency + environmentalImpact.wasteReduction) / 2;
     const socialScore = (socialImpact.jobsCreated + socialImpact.communityPrograms) * 5;
     const goalScore = goals.reduce((sum, goal) => sum + goal.progress, 0) / goals.length;
-    
+
     return Math.round((environmentalScore + socialScore + goalScore) / 3);
   }
 
   private getSustainabilityRating(score: number): 'A' | 'B' | 'C' | 'D' {
-    if (score >= 85) return 'A';
-    if (score >= 70) return 'B';
-    if (score >= 55) return 'C';
+    if (score >= 85) {return 'A';}
+    if (score >= 70) {return 'B';}
+    if (score >= 55) {return 'C';}
     return 'D';
   }
 
@@ -591,7 +591,7 @@ class ESGComplianceService {
   private async calculateCreditScore(factors: any, ratios: any): Promise<number> {
     const factorScore = Object.values(factors).reduce((sum: number, val: any) => sum + val, 0) / Object.keys(factors).length;
     const ratioScore = (ratios.currentRatio + ratios.returnOnAssets + ratios.returnOnEquity) * 10;
-    
+
     return Math.round((factorScore + ratioScore) / 2);
   }
 
@@ -630,41 +630,41 @@ class ESGComplianceService {
     const envScore = (metrics.environmental.renewableEnergyUsage + metrics.environmental.wasteReduction) / 2;
     const socialScore = (metrics.social.diversityIndex + metrics.social.customerSatisfaction) * 20;
     const govScore = (metrics.governance.complianceScore + metrics.governance.transparencyScore) / 2;
-    
+
     return Math.round((envScore + socialScore + govScore) / 3);
   }
 
   private getCreditRating(score: number): string {
-    if (score >= 800) return 'AAA';
-    if (score >= 750) return 'AA';
-    if (score >= 700) return 'A';
-    if (score >= 650) return 'BBB';
-    if (score >= 600) return 'BB';
-    if (score >= 550) return 'B';
+    if (score >= 800) {return 'AAA';}
+    if (score >= 750) {return 'AA';}
+    if (score >= 700) {return 'A';}
+    if (score >= 650) {return 'BBB';}
+    if (score >= 600) {return 'BB';}
+    if (score >= 550) {return 'B';}
     return 'CCC';
   }
 
   private getReportPeriodStart(reportType: string): string {
     const now = new Date();
     switch (reportType) {
-      case 'quarterly':
-        return new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1).toISOString();
-      case 'annual':
-        return new Date(now.getFullYear(), 0, 1).toISOString();
-      default:
-        return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    case 'quarterly':
+      return new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1).toISOString();
+    case 'annual':
+      return new Date(now.getFullYear(), 0, 1).toISOString();
+    default:
+      return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     }
   }
 
   private getReportValidityEnd(reportType: string): string {
     const now = new Date();
     switch (reportType) {
-      case 'quarterly':
-        return new Date(now.getFullYear(), now.getMonth() + 3, 1).toISOString();
-      case 'annual':
-        return new Date(now.getFullYear() + 1, 0, 1).toISOString();
-      default:
-        return new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
+    case 'quarterly':
+      return new Date(now.getFullYear(), now.getMonth() + 3, 1).toISOString();
+    case 'annual':
+      return new Date(now.getFullYear() + 1, 0, 1).toISOString();
+    default:
+      return new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
     }
   }
 

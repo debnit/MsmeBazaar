@@ -103,8 +103,8 @@ export class QueueManager {
         },
         removeOnComplete: 100,
         removeOnFail: 50,
-        ...options
-      }
+        ...options,
+      },
     });
 
     this.queues.set(name, queue);
@@ -115,7 +115,7 @@ export class QueueManager {
   async addJob<T extends keyof JobData>(
     queueName: T,
     data: JobData[T],
-    options: any = {}
+    options: any = {},
   ) {
     if (!this.isRedisAvailable) {
       // Memory fallback - process immediately
@@ -133,7 +133,7 @@ export class QueueManager {
   // Process jobs immediately when Redis is unavailable
   private async processJobInMemory<T extends keyof JobData>(
     queueName: T,
-    data: JobData[T]
+    data: JobData[T],
   ) {
     try {
       const result = await this.processJob(queueName, data);
@@ -149,59 +149,59 @@ export class QueueManager {
   // Job processing logic
   private async processJob<T extends keyof JobData>(
     jobType: T,
-    data: JobData[T]
+    data: JobData[T],
   ): Promise<any> {
     const timerName = `job_${jobType}_${Date.now()}`;
-    
+
     return PerformanceMonitor.measureAsync(timerName, async () => {
       switch (jobType) {
-        case 'matchmaking':
-          const matchData = data as JobData['matchmaking'];
-          const msme = await storage.getMsmeListing(matchData.msmeId);
-          if (!msme) throw new Error('MSME not found');
-          return await findMatches(msme, matchData.filters);
+      case 'matchmaking':
+        const matchData = data as JobData['matchmaking'];
+        const msme = await storage.getMsmeListing(matchData.msmeId);
+        if (!msme) {throw new Error('MSME not found');}
+        return await findMatches(msme, matchData.filters);
 
-        case 'valuation':
-          const valData = data as JobData['valuation'];
-          const valuationMsme = await storage.getMsmeListing(valData.msmeId);
-          if (!valuationMsme) throw new Error('MSME not found');
-          return await calculateValuation(valuationMsme);
+      case 'valuation':
+        const valData = data as JobData['valuation'];
+        const valuationMsme = await storage.getMsmeListing(valData.msmeId);
+        if (!valuationMsme) {throw new Error('MSME not found');}
+        return await calculateValuation(valuationMsme);
 
-        case 'document_generation':
-          const docData = data as JobData['document_generation'];
-          return await generateDocument(docData.templateType, docData.data);
+      case 'document_generation':
+        const docData = data as JobData['document_generation'];
+        return await generateDocument(docData.templateType, docData.data);
 
-        case 'compliance_check':
-          const complianceData = data as JobData['compliance_check'];
-          const kycCheck = await complianceService.performKYCCheck(
-            complianceData.userId,
-            complianceData.amount
-          );
-          const amlFlags = await complianceService.monitorTransaction(
-            complianceData.userId,
-            complianceData.amount
-          );
-          return { kycCheck, amlFlags };
+      case 'compliance_check':
+        const complianceData = data as JobData['compliance_check'];
+        const kycCheck = await complianceService.performKYCCheck(
+          complianceData.userId,
+          complianceData.amount,
+        );
+        const amlFlags = await complianceService.monitorTransaction(
+          complianceData.userId,
+          complianceData.amount,
+        );
+        return { kycCheck, amlFlags };
 
-        case 'ml_retrain':
-          const mlData = data as JobData['ml_retrain'];
-          // Simulate ML retraining (would call actual ML pipeline)
-          console.log(`🤖 Retraining ${mlData.modelType} model...`);
-          await new Promise(resolve => setTimeout(resolve, 5000));
-          return { modelType: mlData.modelType, status: 'completed' };
+      case 'ml_retrain':
+        const mlData = data as JobData['ml_retrain'];
+        // Simulate ML retraining (would call actual ML pipeline)
+        console.log(`🤖 Retraining ${mlData.modelType} model...`);
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        return { modelType: mlData.modelType, status: 'completed' };
 
-        case 'notification':
-          const notifData = data as JobData['notification'];
-          console.log(`📱 Sending notification to user ${notifData.userId}: ${notifData.message}`);
-          return { sent: true, timestamp: new Date() };
+      case 'notification':
+        const notifData = data as JobData['notification'];
+        console.log(`📱 Sending notification to user ${notifData.userId}: ${notifData.message}`);
+        return { sent: true, timestamp: new Date() };
 
-        case 'audit_cleanup':
-          const auditData = data as JobData['audit_cleanup'];
-          console.log(`🧹 Cleaning up audit logs older than ${auditData.retentionDays} days`);
-          return { cleaned: true, retentionDays: auditData.retentionDays };
+      case 'audit_cleanup':
+        const auditData = data as JobData['audit_cleanup'];
+        console.log(`🧹 Cleaning up audit logs older than ${auditData.retentionDays} days`);
+        return { cleaned: true, retentionDays: auditData.retentionDays };
 
-        default:
-          throw new Error(`Unknown job type: ${jobType}`);
+      default:
+        throw new Error(`Unknown job type: ${jobType}`);
       }
     });
   }
@@ -223,7 +223,7 @@ export class QueueManager {
         stalledInterval: 30000,
         removeOnComplete: 100,
         removeOnFail: 50,
-      }
+      },
     );
 
     // Error handling
@@ -260,36 +260,36 @@ export class QueueManager {
 
     // Create queues
     const queueConfigs = {
-      matchmaking: { 
-        attempts: 3, 
+      matchmaking: {
+        attempts: 3,
         backoff: { type: 'exponential', delay: 2000 },
-        delay: 1000 // Add small delay to batch requests
+        delay: 1000, // Add small delay to batch requests
       },
-      valuation: { 
-        attempts: 2, 
-        backoff: { type: 'exponential', delay: 1000 }
+      valuation: {
+        attempts: 2,
+        backoff: { type: 'exponential', delay: 1000 },
       },
-      document_generation: { 
-        attempts: 3, 
-        backoff: { type: 'exponential', delay: 5000 }
+      document_generation: {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
       },
-      compliance_check: { 
-        attempts: 2, 
-        priority: 10 // High priority for compliance
+      compliance_check: {
+        attempts: 2,
+        priority: 10, // High priority for compliance
       },
-      ml_retrain: { 
-        attempts: 1, 
+      ml_retrain: {
+        attempts: 1,
         delay: 0,
-        priority: 5
+        priority: 5,
       },
-      notification: { 
-        attempts: 5, 
-        backoff: { type: 'exponential', delay: 1000 }
+      notification: {
+        attempts: 5,
+        backoff: { type: 'exponential', delay: 1000 },
       },
-      audit_cleanup: { 
-        attempts: 2, 
-        delay: 0
-      }
+      audit_cleanup: {
+        attempts: 2,
+        delay: 0,
+      },
     };
 
     // Create queues and workers
@@ -308,7 +308,7 @@ export class QueueManager {
     }
 
     const queue = this.queues.get(queueName);
-    if (!queue) return null;
+    if (!queue) {return null;}
 
     const [waiting, active, completed, failed] = await Promise.all([
       queue.getWaiting(),
@@ -328,16 +328,16 @@ export class QueueManager {
   // Clean up queues
   async cleanup() {
     console.log('🧹 Cleaning up queue system...');
-    
+
     // Close all workers
     const workerClosures = Array.from(this.workers.values()).map(
-      worker => worker.close()
+      worker => worker.close(),
     );
     await Promise.all(workerClosures);
 
     // Close all queues
     const queueClosures = Array.from(this.queues.values()).map(
-      queue => queue.close()
+      queue => queue.close(),
     );
     await Promise.all(queueClosures);
 
@@ -384,5 +384,5 @@ export const queueUtils = {
   // Queue audit cleanup
   async queueAuditCleanup(retentionDays: number = 90) {
     return queueManager.addJob('audit_cleanup', { retentionDays });
-  }
+  },
 };

@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 
 export default function Landing() {
   const [currentLanguage, setCurrentLanguage] = useState<'en' | 'hi' | 'or'>('en');
-  
+
   useEffect(() => {
     // Initialize enhanced caching system
     initializeCaching();

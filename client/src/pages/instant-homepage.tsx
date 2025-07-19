@@ -8,10 +8,10 @@ import { Badge } from '@/components/ui/badge';
 export default function InstantHomepage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const stopTimer = usePerformanceTracker('Homepage Load');
-  
+
   // Get preloaded data instantly
   const homepageData = useInstantData('homepage');
-  
+
   useEffect(() => {
     // Mark as loaded immediately since data is preloaded
     setIsLoaded(true);
@@ -38,15 +38,15 @@ export default function InstantHomepage() {
           <Badge className="mb-4 bg-blue-100 text-blue-800 hover:bg-blue-200">
             ⚡ Instant Loading - 1ms Response Time
           </Badge>
-          
+
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
             {homepageData.hero.title}
           </h1>
-          
+
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
             {homepageData.hero.subtitle}
           </p>
-          
+
           <div className="flex flex-wrap justify-center gap-4 mb-12">
             <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
               Get Started Now
@@ -55,7 +55,7 @@ export default function InstantHomepage() {
               Watch Demo
             </Button>
           </div>
-          
+
           {/* Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
             <div className="bg-white p-6 rounded-lg shadow-md">
@@ -97,7 +97,7 @@ export default function InstantHomepage() {
               Complete ecosystem for MSME transactions and growth
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {homepageData.features.map((feature, index) => (
               <Card key={index} className="hover:shadow-lg transition-shadow">

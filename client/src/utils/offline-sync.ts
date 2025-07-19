@@ -40,32 +40,32 @@ class OfflineSyncManager {
   private async initializeDatabase(): Promise<void> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open('MSMESquareOffline', 1);
-      
+
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
         this.db = request.result;
         this.loadPendingActions();
         resolve();
       };
-      
+
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
-        
+
         // Create object stores
         if (!db.objectStoreNames.contains('actions')) {
           db.createObjectStore('actions', { keyPath: 'id' });
         }
-        
+
         if (!db.objectStoreNames.contains('cache')) {
           const cacheStore = db.createObjectStore('cache', { keyPath: 'key' });
           cacheStore.createIndex('timestamp', 'timestamp');
         }
-        
+
         if (!db.objectStoreNames.contains('listings')) {
           const listingsStore = db.createObjectStore('listings', { keyPath: 'id' });
           listingsStore.createIndex('lastModified', 'lastModified');
         }
-        
+
         if (!db.objectStoreNames.contains('profile')) {
           db.createObjectStore('profile', { keyPath: 'userId' });
         }
@@ -80,7 +80,7 @@ class OfflineSyncManager {
       this.emit('status-change', this.syncStatus);
       this.syncPendingActions();
     });
-    
+
     window.addEventListener('offline', () => {
       this.syncStatus.online = false;
       this.emit('status-change', this.syncStatus);
@@ -95,18 +95,18 @@ class OfflineSyncManager {
       timestamp: Date.now(),
       retryCount: 0,
     };
-    
+
     this.syncQueue.push(offlineAction);
     this.syncStatus.pendingActions = this.syncQueue.length;
-    
+
     // Store in IndexedDB
     await this.storeAction(offlineAction);
-    
+
     // Try immediate sync if online
     if (this.syncStatus.online) {
       this.syncPendingActions();
     }
-    
+
     this.emit('action-queued', offlineAction);
     return offlineAction.id;
   }
@@ -116,15 +116,15 @@ class OfflineSyncManager {
     if (this.syncStatus.syncing || !this.syncStatus.online || this.syncQueue.length === 0) {
       return;
     }
-    
+
     this.syncStatus.syncing = true;
     this.emit('sync-start');
-    
+
     const actionsToSync = [...this.syncQueue].sort((a, b) => {
       const priorityOrder = { high: 3, medium: 2, low: 1 };
       return priorityOrder[b.priority] - priorityOrder[a.priority];
     });
-    
+
     for (const action of actionsToSync) {
       try {
         await this.syncAction(action);
@@ -132,7 +132,7 @@ class OfflineSyncManager {
       } catch (error) {
         console.error('Sync failed for action:', action.id, error);
         action.retryCount++;
-        
+
         // Remove action if max retries reached
         if (action.retryCount >= 3) {
           this.removeAction(action.id);
@@ -142,7 +142,7 @@ class OfflineSyncManager {
         }
       }
     }
-    
+
     this.syncStatus.syncing = false;
     this.syncStatus.lastSync = Date.now();
     this.syncStatus.pendingActions = this.syncQueue.length;
@@ -153,7 +153,7 @@ class OfflineSyncManager {
   private async syncAction(action: OfflineAction): Promise<void> {
     const endpoint = this.getEndpointForResource(action.resource);
     const method = this.getMethodForAction(action.type);
-    
+
     const response = await fetch(endpoint, {
       method,
       headers: {
@@ -162,11 +162,11 @@ class OfflineSyncManager {
       },
       body: action.type !== 'delete' ? JSON.stringify(action.data) : undefined,
     });
-    
+
     if (!response.ok) {
       throw new Error(`Sync failed: ${response.status} ${response.statusText}`);
     }
-    
+
     // Handle conflict resolution
     if (response.status === 409) {
       await this.handleConflict(action, await response.json());
@@ -175,15 +175,15 @@ class OfflineSyncManager {
 
   // Cache data for offline access
   async cacheData(key: string, data: any, ttl: number = 3600000): Promise<void> {
-    if (!this.db) return;
-    
+    if (!this.db) {return;}
+
     const cacheItem = {
       key,
       data,
       timestamp: Date.now(),
       ttl,
     };
-    
+
     const transaction = this.db.transaction(['cache'], 'readwrite');
     const store = transaction.objectStore('cache');
     await store.put(cacheItem);
@@ -191,12 +191,12 @@ class OfflineSyncManager {
 
   // Get cached data
   async getCachedData(key: string): Promise<any> {
-    if (!this.db) return null;
-    
+    if (!this.db) {return null;}
+
     const transaction = this.db.transaction(['cache'], 'readonly');
     const store = transaction.objectStore('cache');
     const request = store.get(key);
-    
+
     return new Promise((resolve, reject) => {
       request.onsuccess = () => {
         const result = request.result;
@@ -204,13 +204,13 @@ class OfflineSyncManager {
           resolve(null);
           return;
         }
-        
+
         // Check if cache is expired
         if (Date.now() - result.timestamp > result.ttl) {
           resolve(null);
           return;
         }
-        
+
         resolve(result.data);
       };
       request.onerror = () => reject(request.error);
@@ -219,8 +219,8 @@ class OfflineSyncManager {
 
   // Store MSME listing for offline access
   async storeListingOffline(listing: any): Promise<void> {
-    if (!this.db) return;
-    
+    if (!this.db) {return;}
+
     const transaction = this.db.transaction(['listings'], 'readwrite');
     const store = transaction.objectStore('listings');
     await store.put({
@@ -231,12 +231,12 @@ class OfflineSyncManager {
 
   // Get offline listings
   async getOfflineListings(): Promise<any[]> {
-    if (!this.db) return [];
-    
+    if (!this.db) {return [];}
+
     const transaction = this.db.transaction(['listings'], 'readonly');
     const store = transaction.objectStore('listings');
     const request = store.getAll();
-    
+
     return new Promise((resolve, reject) => {
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
@@ -245,8 +245,8 @@ class OfflineSyncManager {
 
   // Store user profile offline
   async storeProfileOffline(profile: any): Promise<void> {
-    if (!this.db) return;
-    
+    if (!this.db) {return;}
+
     const transaction = this.db.transaction(['profile'], 'readwrite');
     const store = transaction.objectStore('profile');
     await store.put(profile);
@@ -254,12 +254,12 @@ class OfflineSyncManager {
 
   // Get offline profile
   async getOfflineProfile(userId: string): Promise<any> {
-    if (!this.db) return null;
-    
+    if (!this.db) {return null;}
+
     const transaction = this.db.transaction(['profile'], 'readonly');
     const store = transaction.objectStore('profile');
     const request = store.get(userId);
-    
+
     return new Promise((resolve, reject) => {
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
@@ -280,17 +280,17 @@ class OfflineSyncManager {
 
   // Clear all offline data
   async clearOfflineData(): Promise<void> {
-    if (!this.db) return;
-    
+    if (!this.db) {return;}
+
     const transaction = this.db.transaction(['actions', 'cache', 'listings', 'profile'], 'readwrite');
-    
+
     await Promise.all([
       transaction.objectStore('actions').clear(),
       transaction.objectStore('cache').clear(),
       transaction.objectStore('listings').clear(),
       transaction.objectStore('profile').clear(),
     ]);
-    
+
     this.syncQueue = [];
     this.syncStatus.pendingActions = 0;
     this.emit('data-cleared');
@@ -322,8 +322,8 @@ class OfflineSyncManager {
   }
 
   private async storeAction(action: OfflineAction): Promise<void> {
-    if (!this.db) return;
-    
+    if (!this.db) {return;}
+
     const transaction = this.db.transaction(['actions'], 'readwrite');
     const store = transaction.objectStore('actions');
     await store.put(action);
@@ -339,7 +339,7 @@ class OfflineSyncManager {
 
   private async removeAction(actionId: string): Promise<void> {
     this.syncQueue = this.syncQueue.filter(a => a.id !== actionId);
-    
+
     if (this.db) {
       const transaction = this.db.transaction(['actions'], 'readwrite');
       const store = transaction.objectStore('actions');
@@ -348,12 +348,12 @@ class OfflineSyncManager {
   }
 
   private async loadPendingActions(): Promise<void> {
-    if (!this.db) return;
-    
+    if (!this.db) {return;}
+
     const transaction = this.db.transaction(['actions'], 'readonly');
     const store = transaction.objectStore('actions');
     const request = store.getAll();
-    
+
     request.onsuccess = () => {
       this.syncQueue = request.result;
       this.syncStatus.pendingActions = this.syncQueue.length;
@@ -369,7 +369,7 @@ class OfflineSyncManager {
       'messages': '/api/messages',
       'valuations': '/api/valuations',
     };
-    
+
     return endpoints[resource] || '/api/sync';
   }
 
@@ -388,7 +388,7 @@ class OfflineSyncManager {
   private async handleConflict(action: OfflineAction, conflictData: any): Promise<void> {
     this.syncStatus.conflictCount++;
     this.emit('conflict-detected', { action, conflictData });
-    
+
     // For now, server wins - in production, implement proper conflict resolution
     console.warn('Conflict detected for action:', action.id, 'Server data:', conflictData);
   }
@@ -406,7 +406,7 @@ class OfflineSyncManager {
     if (this.syncInterval) {
       clearInterval(this.syncInterval);
     }
-    
+
     if (this.db) {
       this.db.close();
     }

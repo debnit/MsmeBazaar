@@ -19,8 +19,8 @@ const valuationEngine = new MSMEValuationEngine();
 router.get('/pricing', authenticateToken, async (req, res) => {
   try {
     const user = (req as AuthenticatedRequest).user;
-    const relevantTiers = PRICING_TIERS.filter(tier => 
-      tier.targetUser === user.role || tier.targetUser === 'msme'
+    const relevantTiers = PRICING_TIERS.filter(tier =>
+      tier.targetUser === user.role || tier.targetUser === 'msme',
     );
 
     // Calculate network effect bonus for user
@@ -30,7 +30,7 @@ router.get('/pricing', authenticateToken, async (req, res) => {
       tiers: relevantTiers,
       userRole: user.role,
       networkBonus,
-      message: 'More MSMEs on platform = Better pricing models = Higher trust'
+      message: 'More MSMEs on platform = Better pricing models = Higher trust',
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to get pricing' });
@@ -43,11 +43,11 @@ router.get('/pricing', authenticateToken, async (req, res) => {
 router.post('/quote', authenticateToken, async (req, res) => {
   try {
     const { msmeData, valuationType = 'standard' } = req.body;
-    
+
     const pricing = await vaaSPricing.calculatePricing(
       (req as AuthenticatedRequest).user.userId,
       valuationType,
-      msmeData
+      msmeData,
     );
 
     res.json({
@@ -58,13 +58,13 @@ router.post('/quote', authenticateToken, async (req, res) => {
         discounts: pricing.discounts,
         networkBonus: pricing.networkEffectBonus,
         features: pricing.tier.features,
-        reportFormat: pricing.tier.reportFormat
+        reportFormat: pricing.tier.reportFormat,
       },
       msmePreview: {
         companyName: msmeData.companyName,
         industry: msmeData.industry,
-        estimatedRange: `₹${(msmeData.annualTurnover * 2).toLocaleString()} - ₹${(msmeData.annualTurnover * 5).toLocaleString()}`
-      }
+        estimatedRange: `₹${(msmeData.annualTurnover * 2).toLocaleString()} - ₹${(msmeData.annualTurnover * 5).toLocaleString()}`,
+      },
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to generate quote' });
@@ -77,17 +77,17 @@ router.post('/quote', authenticateToken, async (req, res) => {
 router.post('/create', authenticateToken, async (req, res) => {
   try {
     const { msmeData, tierId, paymentMethod } = req.body;
-    
+
     // Get pricing
     const pricing = await vaaSPricing.calculatePricing(
       (req as AuthenticatedRequest).user.userId,
       'standard',
-      msmeData
+      msmeData,
     );
 
     // Create valuation request
     const valuationId = `val_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     const [valuationRequest] = await db.insert(valuationRequests).values({
       id: valuationId,
       userId: (req as AuthenticatedRequest).user.userId,
@@ -96,7 +96,7 @@ router.post('/create', authenticateToken, async (req, res) => {
       status: 'pending_payment',
       tier: pricing.tier.id,
       amount: pricing.finalPrice,
-      createdAt: new Date()
+      createdAt: new Date(),
     }).returning();
 
     // In production, integrate with payment gateway here
@@ -105,7 +105,7 @@ router.post('/create', authenticateToken, async (req, res) => {
       success: true,
       transactionId: `txn_${Date.now()}`,
       amount: pricing.finalPrice,
-      method: paymentMethod
+      method: paymentMethod,
     };
 
     if (paymentResult.success) {
@@ -119,7 +119,7 @@ router.post('/create', authenticateToken, async (req, res) => {
         valuationId,
         payment: paymentResult,
         nextStep: 'processing',
-        estimatedCompletion: '5-10 minutes'
+        estimatedCompletion: '5-10 minutes',
       });
     } else {
       res.status(400).json({ error: 'Payment failed' });
@@ -135,9 +135,9 @@ router.post('/create', authenticateToken, async (req, res) => {
 router.post('/process/:valuationId', authenticateToken, async (req, res) => {
   try {
     const { valuationId } = req.params;
-    
+
     const valuationRequest = await db.query.valuationRequests.findFirst({
-      where: eq(valuationRequests.id, valuationId)
+      where: eq(valuationRequests.id, valuationId),
     });
 
     if (!valuationRequest || valuationRequest.status !== 'paid') {
@@ -145,24 +145,24 @@ router.post('/process/:valuationId', authenticateToken, async (req, res) => {
     }
 
     const msmeData = JSON.parse(valuationRequest.requestData);
-    
+
     // Run IP-defensible valuation
     const valuation = await valuationEngine.calculateValuation(msmeData);
-    
+
     // Track IP for defensibility
     await vaaSPricing.trackValuationIP(
       (req as AuthenticatedRequest).user.userId,
       valuationId,
       { version: '2.1.0', algorithm: 'XGBoost+CatBoost' },
-      valuation
+      valuation,
     );
 
     // Update status
     await db.update(valuationRequests)
-      .set({ 
+      .set({
         status: 'completed',
         result: JSON.stringify(valuation),
-        completedAt: new Date()
+        completedAt: new Date(),
       })
       .where(eq(valuationRequests.id, valuationId));
 
@@ -172,8 +172,8 @@ router.post('/process/:valuationId', authenticateToken, async (req, res) => {
         ...valuation,
         ipFingerprint: 'Protected proprietary algorithm',
         confidence: valuation.confidence,
-        methodology: 'XGBoost + CatBoost + Market Intelligence'
-      }
+        methodology: 'XGBoost + CatBoost + Market Intelligence',
+      },
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to process valuation' });
@@ -186,9 +186,9 @@ router.post('/process/:valuationId', authenticateToken, async (req, res) => {
 router.get('/report/:valuationId', authenticateToken, async (req, res) => {
   try {
     const { valuationId } = req.params;
-    
+
     const valuationRequest = await db.query.valuationRequests.findFirst({
-      where: eq(valuationRequests.id, valuationId)
+      where: eq(valuationRequests.id, valuationId),
     });
 
     if (!valuationRequest || valuationRequest.status !== 'completed') {
@@ -206,7 +206,7 @@ router.get('/report/:valuationId', authenticateToken, async (req, res) => {
       generatedAt: new Date().toISOString(),
       watermark: 'MSMESquare Valuation Report - Confidential',
       disclaimer: 'This valuation is proprietary and confidential. Distribution restricted.',
-      ipNotice: 'Protected by MSMESquare IP - Unauthorized reproduction prohibited'
+      ipNotice: 'Protected by MSMESquare IP - Unauthorized reproduction prohibited',
     };
 
     res.json({
@@ -214,7 +214,7 @@ router.get('/report/:valuationId', authenticateToken, async (req, res) => {
       downloadUrl: `/api/vaas/download/${valuationId}`,
       format: 'PDF',
       pages: 12,
-      size: '2.3 MB'
+      size: '2.3 MB',
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to generate report' });
@@ -227,26 +227,26 @@ router.get('/report/:valuationId', authenticateToken, async (req, res) => {
 router.post('/api/valuate', authenticateToken, async (req, res) => {
   try {
     const user = (req as AuthenticatedRequest).user;
-    
+
     // Check if user has API access
     if (user.role !== 'nbfc') {
       return res.status(403).json({ error: 'API access requires NBFC subscription' });
     }
 
     const { msmeData, options = {} } = req.body;
-    
+
     // Charge per API call
     const apiCost = 10; // ₹10 per call
-    
+
     // Run valuation
     const valuation = await valuationEngine.calculateValuation(msmeData);
-    
+
     // Track API usage for billing
     await vaaSPricing.trackValuationIP(
       user.userId,
       `api_${Date.now()}`,
       { version: '2.1.0', type: 'API' },
-      valuation
+      valuation,
     );
 
     res.json({
@@ -255,7 +255,7 @@ router.post('/api/valuate', authenticateToken, async (req, res) => {
       cost: apiCost,
       credits_remaining: 990, // Mock credit balance
       rate_limit: '100 calls/hour',
-      next_billing: '2025-08-15'
+      next_billing: '2025-08-15',
     });
   } catch (error) {
     res.status(500).json({ error: 'API valuation failed' });
@@ -268,7 +268,7 @@ router.post('/api/valuate', authenticateToken, async (req, res) => {
 router.get('/analytics', authenticateToken, async (req, res) => {
   try {
     const analytics = await vaaSPricing.getPricingAnalytics();
-    
+
     res.json({
       networkEffect: {
         totalMSMEs: analytics.totalValuations,
@@ -279,14 +279,14 @@ router.get('/analytics', authenticateToken, async (req, res) => {
       revenue: {
         byTier: analytics.revenueByTier,
         totalMonthly: analytics.revenueByTier.reduce((sum, tier) => sum + tier.revenue, 0),
-        growth: '+34% MoM'
+        growth: '+34% MoM',
       },
       moat: {
         dataPoints: analytics.totalValuations,
         modelAccuracy: '94.2%',
         customerRetention: '87%',
-        apiAdoption: '156 NBFCs using API'
-      }
+        apiAdoption: '156 NBFCs using API',
+      },
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to get analytics' });

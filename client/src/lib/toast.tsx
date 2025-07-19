@@ -60,11 +60,11 @@ const ToastComponent: React.FC<{ toast: Toast }> = ({ toast }) => {
   }, []);
 
   const handleDismiss = useCallback(() => {
-    if (isLeaving) return;
-    
+    if (isLeaving) {return;}
+
     setIsLeaving(true);
     setIsVisible(false);
-    
+
     setTimeout(() => {
       dismiss(toast.id);
       toast.onDismiss?.();
@@ -78,35 +78,35 @@ const ToastComponent: React.FC<{ toast: Toast }> = ({ toast }) => {
 
   const getIcon = () => {
     switch (toast.type) {
-      case 'success':
-        return <CheckCircle2 className="h-5 w-5 text-success" />;
-      case 'error':
-        return <AlertCircle className="h-5 w-5 text-destructive" />;
-      case 'warning':
-        return <AlertTriangle className="h-5 w-5 text-warning" />;
-      case 'info':
-        return <Info className="h-5 w-5 text-primary" />;
-      case 'loading':
-        return <Loader2 className="h-5 w-5 animate-spin text-primary" />;
-      default:
-        return null;
+    case 'success':
+      return <CheckCircle2 className="h-5 w-5 text-success" />;
+    case 'error':
+      return <AlertCircle className="h-5 w-5 text-destructive" />;
+    case 'warning':
+      return <AlertTriangle className="h-5 w-5 text-warning" />;
+    case 'info':
+      return <Info className="h-5 w-5 text-primary" />;
+    case 'loading':
+      return <Loader2 className="h-5 w-5 animate-spin text-primary" />;
+    default:
+      return null;
     }
   };
 
   const getBackgroundColor = () => {
     switch (toast.type) {
-      case 'success':
-        return 'bg-success/10 border-success/20';
-      case 'error':
-        return 'bg-destructive/10 border-destructive/20';
-      case 'warning':
-        return 'bg-warning/10 border-warning/20';
-      case 'info':
-        return 'bg-primary/10 border-primary/20';
-      case 'loading':
-        return 'bg-muted border-border';
-      default:
-        return 'bg-background border-border';
+    case 'success':
+      return 'bg-success/10 border-success/20';
+    case 'error':
+      return 'bg-destructive/10 border-destructive/20';
+    case 'warning':
+      return 'bg-warning/10 border-warning/20';
+    case 'info':
+      return 'bg-primary/10 border-primary/20';
+    case 'loading':
+      return 'bg-muted border-border';
+    default:
+      return 'bg-background border-border';
     }
   };
 
@@ -120,7 +120,7 @@ const ToastComponent: React.FC<{ toast: Toast }> = ({ toast }) => {
         'animate-slide-up',
         isVisible && 'translate-y-0 opacity-100',
         !isVisible && 'translate-y-2 opacity-0',
-        isLeaving && 'animate-slide-down'
+        isLeaving && 'animate-slide-down',
       )}
     >
       {/* Icon */}
@@ -149,7 +149,7 @@ const ToastComponent: React.FC<{ toast: Toast }> = ({ toast }) => {
               'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
               'h-8 px-3 mt-2',
-              'bg-primary text-primary-foreground hover:bg-primary hover:opacity-90'
+              'bg-primary text-primary-foreground hover:bg-primary hover:opacity-90',
             )}
           >
             {toast.action.label}
@@ -164,7 +164,7 @@ const ToastComponent: React.FC<{ toast: Toast }> = ({ toast }) => {
           className={cn(
             'absolute right-2 top-2 rounded-md p-1 text-muted-foreground/70 transition-colors',
             'hover:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-            'group-hover:opacity-100 opacity-70'
+            'group-hover:opacity-100 opacity-70',
           )}
           aria-label="Dismiss notification"
         >
@@ -181,16 +181,16 @@ const ToastContainer: React.FC<{ toasts: Toast[] }> = ({ toasts }) => {
 
   useEffect(() => {
     let toastContainer = document.getElementById('toast-container');
-    
+
     if (!toastContainer) {
       toastContainer = document.createElement('div');
       toastContainer.id = 'toast-container';
       toastContainer.className = cn(
-        'fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]'
+        'fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]',
       );
       document.body.appendChild(toastContainer);
     }
-    
+
     setContainer(toastContainer);
 
     return () => {
@@ -200,7 +200,7 @@ const ToastContainer: React.FC<{ toasts: Toast[] }> = ({ toasts }) => {
     };
   }, []);
 
-  if (!container) return null;
+  if (!container) {return null;}
 
   return createPortal(
     <div className="flex flex-col-reverse space-y-reverse space-y-2 sm:flex-col sm:space-y-2 sm:space-y-reverse-0">
@@ -208,7 +208,7 @@ const ToastContainer: React.FC<{ toasts: Toast[] }> = ({ toasts }) => {
         <ToastComponent key={toast.id} toast={toast} />
       ))}
     </div>,
-    container
+    container,
   );
 };
 
@@ -259,19 +259,19 @@ export const useToastHelpers = () => {
   return {
     success: (title: string, description?: string) =>
       toast({ type: 'success', title, description }),
-    
+
     error: (title: string, description?: string) =>
       toast({ type: 'error', title, description, duration: 8000 }),
-    
+
     warning: (title: string, description?: string) =>
       toast({ type: 'warning', title, description }),
-    
+
     info: (title: string, description?: string) =>
       toast({ type: 'info', title, description }),
-    
+
     loading: (title: string, description?: string) =>
       toast({ type: 'loading', title, description, duration: 0, dismissible: false }),
-    
+
     promise: async <T,>(
       promise: Promise<T>,
       {
@@ -282,7 +282,7 @@ export const useToastHelpers = () => {
         loading?: string;
         success?: string | ((data: T) => string);
         error?: string | ((error: any) => string);
-      } = {}
+      } = {},
     ) => {
       const loadingId = toast({
         type: 'loading',
@@ -293,27 +293,27 @@ export const useToastHelpers = () => {
 
       try {
         const result = await promise;
-        
+
         // Dismiss loading toast
         toast.dismiss?.(loadingId);
-        
+
         // Show success toast
-        const successMsg = typeof successMessage === 'function' 
-          ? successMessage(result) 
+        const successMsg = typeof successMessage === 'function'
+          ? successMessage(result)
           : successMessage;
         toast({ type: 'success', title: successMsg });
-        
+
         return result;
       } catch (error) {
         // Dismiss loading toast
         toast.dismiss?.(loadingId);
-        
+
         // Show error toast
-        const errorMsg = typeof errorMessage === 'function' 
-          ? errorMessage(error) 
+        const errorMsg = typeof errorMessage === 'function'
+          ? errorMessage(error)
           : errorMessage;
         toast({ type: 'error', title: errorMsg, duration: 8000 });
-        
+
         throw error;
       }
     },
@@ -329,27 +329,27 @@ export const setGlobalToast = (toastFn: (toast: Omit<Toast, 'id'>) => string) =>
 
 export const globalToast = {
   success: (title: string, description?: string) => {
-    if (!globalToastFn) throw new Error('Toast provider not initialized');
+    if (!globalToastFn) {throw new Error('Toast provider not initialized');}
     return globalToastFn({ type: 'success', title, description });
   },
-  
+
   error: (title: string, description?: string) => {
-    if (!globalToastFn) throw new Error('Toast provider not initialized');
+    if (!globalToastFn) {throw new Error('Toast provider not initialized');}
     return globalToastFn({ type: 'error', title, description, duration: 8000 });
   },
-  
+
   warning: (title: string, description?: string) => {
-    if (!globalToastFn) throw new Error('Toast provider not initialized');
+    if (!globalToastFn) {throw new Error('Toast provider not initialized');}
     return globalToastFn({ type: 'warning', title, description });
   },
-  
+
   info: (title: string, description?: string) => {
-    if (!globalToastFn) throw new Error('Toast provider not initialized');
+    if (!globalToastFn) {throw new Error('Toast provider not initialized');}
     return globalToastFn({ type: 'info', title, description });
   },
-  
+
   loading: (title: string, description?: string) => {
-    if (!globalToastFn) throw new Error('Toast provider not initialized');
+    if (!globalToastFn) {throw new Error('Toast provider not initialized');}
     return globalToastFn({ type: 'loading', title, description, duration: 0, dismissible: false });
   },
 };
@@ -357,7 +357,7 @@ export const globalToast = {
 // Hook to initialize global toast
 export const useInitializeGlobalToast = () => {
   const { toast } = useToast();
-  
+
   useEffect(() => {
     setGlobalToast(toast);
     return () => setGlobalToast(null as any);

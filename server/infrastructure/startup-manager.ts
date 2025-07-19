@@ -27,7 +27,7 @@ export class StartupManager {
       'database',
       'authentication',
       'basic-routing',
-      'health-check'
+      'health-check',
     ];
   }
 
@@ -44,14 +44,14 @@ export class StartupManager {
       'notifications',
       'escrow',
       'compliance',
-      'document-generation'
+      'document-generation',
     ];
   }
 
   // Initialize core services only
   async initializeCoreServices() {
     console.log('🚀 Starting core services...');
-    
+
     for (const service of this.coreServices) {
       try {
         await this.initializeService(service);
@@ -62,23 +62,23 @@ export class StartupManager {
         throw error; // Core services are critical
       }
     }
-    
+
     console.log('✅ All core services initialized');
   }
 
   // Initialize secondary services gradually
   async initializeSecondaryServices() {
     console.log('🔄 Starting secondary services...');
-    
+
     // Initialize secondary services with delays to prevent resource spikes
     for (let i = 0; i < this.secondaryServices.length; i++) {
       const service = this.secondaryServices[i];
-      
+
       try {
         await this.initializeService(service);
         this.initializedServices.add(service);
         console.log(`✅ Secondary service initialized: ${service}`);
-        
+
         // Add delay between service initializations
         if (i < this.secondaryServices.length - 1) {
           await this.delay(500); // 500ms delay
@@ -88,7 +88,7 @@ export class StartupManager {
         // Continue with other services
       }
     }
-    
+
     console.log('✅ Secondary services initialization complete');
   }
 
@@ -98,63 +98,63 @@ export class StartupManager {
     if (this.coreServices.includes(serviceName)) {
       this.createCriticalThread(serviceName);
     }
-    
+
     switch (serviceName) {
-      case 'database':
-        // Database connection in dedicated thread
-        console.log('🧵 Database service running in critical thread');
-        break;
-      case 'authentication':
-        // Authentication service in dedicated thread
-        console.log('🧵 Authentication service running in critical thread');
-        break;
-      case 'basic-routing':
-        // Core routing in dedicated thread
-        console.log('🧵 Core routing running in critical thread');
-        break;
-      case 'health-check':
-        // Health endpoint in dedicated thread
-        console.log('🧵 Health check running in critical thread');
-        break;
-      case 'cache-management':
-        const { cacheManager } = await import('./cache-management');
-        // Already initialized in constructor
-        break;
-      case 'cpu-optimization':
-        const { cpuOptimizer } = await import('./cpu-optimization');
-        // Already initialized in constructor
-        break;
-      case 'process-priority':
-        const { processPriorityManager } = await import('./process-priority');
-        processPriorityManager.setupMonitoring();
-        break;
-      case 'monitoring':
-        const { monitoringService } = await import('../services/monitoring');
-        // Service available but not actively monitoring yet
-        break;
-      case 'performance-tracking':
-        // Performance tracking can be enabled later
-        break;
-      case 'ml-engines':
-        // ML engines loaded on-demand
-        break;
-      case 'queue-system':
-        // BullMQ initialization
-        break;
-      case 'notifications':
-        // Notification service
-        break;
-      case 'escrow':
-        // Escrow service
-        break;
-      case 'compliance':
-        // Compliance service
-        break;
-      case 'document-generation':
-        // Document generation service
-        break;
-      default:
-        console.warn(`Unknown service: ${serviceName}`);
+    case 'database':
+      // Database connection in dedicated thread
+      console.log('🧵 Database service running in critical thread');
+      break;
+    case 'authentication':
+      // Authentication service in dedicated thread
+      console.log('🧵 Authentication service running in critical thread');
+      break;
+    case 'basic-routing':
+      // Core routing in dedicated thread
+      console.log('🧵 Core routing running in critical thread');
+      break;
+    case 'health-check':
+      // Health endpoint in dedicated thread
+      console.log('🧵 Health check running in critical thread');
+      break;
+    case 'cache-management':
+      const { cacheManager } = await import('./cache-management');
+      // Already initialized in constructor
+      break;
+    case 'cpu-optimization':
+      const { cpuOptimizer } = await import('./cpu-optimization');
+      // Already initialized in constructor
+      break;
+    case 'process-priority':
+      const { processPriorityManager } = await import('./process-priority');
+      processPriorityManager.setupMonitoring();
+      break;
+    case 'monitoring':
+      const { monitoringService } = await import('../services/monitoring');
+      // Service available but not actively monitoring yet
+      break;
+    case 'performance-tracking':
+      // Performance tracking can be enabled later
+      break;
+    case 'ml-engines':
+      // ML engines loaded on-demand
+      break;
+    case 'queue-system':
+      // BullMQ initialization
+      break;
+    case 'notifications':
+      // Notification service
+      break;
+    case 'escrow':
+      // Escrow service
+      break;
+    case 'compliance':
+      // Compliance service
+      break;
+    case 'document-generation':
+      // Document generation service
+      break;
+    default:
+      console.warn(`Unknown service: ${serviceName}`);
     }
   }
 
@@ -163,14 +163,14 @@ export class StartupManager {
     return {
       coreServices: this.coreServices.map(service => ({
         name: service,
-        initialized: this.initializedServices.has(service)
+        initialized: this.initializedServices.has(service),
       })),
       secondaryServices: this.secondaryServices.map(service => ({
         name: service,
-        initialized: this.initializedServices.has(service)
+        initialized: this.initializedServices.has(service),
       })),
       totalInitialized: this.initializedServices.size,
-      totalServices: this.coreServices.length + this.secondaryServices.length
+      totalServices: this.coreServices.length + this.secondaryServices.length,
     };
   }
 
@@ -186,7 +186,7 @@ export class StartupManager {
       this.criticalThreads.set(serviceName, {
         threadId: Math.random().toString(36).substr(2, 9),
         created: Date.now(),
-        priority: 'high'
+        priority: 'high',
       });
       console.log(`🧵 Critical thread created for ${serviceName}`);
     } catch (error) {
@@ -202,8 +202,8 @@ export class StartupManager {
         service,
         threadId: info.threadId,
         priority: info.priority,
-        uptime: Date.now() - info.created
-      }))
+        uptime: Date.now() - info.created,
+      })),
     };
   }
 

@@ -122,7 +122,7 @@ class BNPLFinancingService {
 
     // Calculate credit score based on multiple factors
     const score = await this.calculateCreditScore(user, business);
-    
+
     const creditData: CreditScoreData = {
       userId,
       businessId,
@@ -144,14 +144,14 @@ class BNPLFinancingService {
     businessId: string,
     amount: number,
     purpose: BNPLApplication['purpose'],
-    requestedTerms: BNPLApplication['requestedTerms']
+    requestedTerms: BNPLApplication['requestedTerms'],
   ): Promise<BNPLApplication> {
     // Get instant credit score
     const creditScore = await this.getInstantCreditScore(userId, businessId);
-    
+
     // Perform risk assessment
     const riskAssessment = await this.performRiskAssessment(userId, businessId, amount, creditScore);
-    
+
     const application: BNPLApplication = {
       id: `bnpl_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       userId,
@@ -170,7 +170,7 @@ class BNPLFinancingService {
     if (await this.shouldAutoApprove(application)) {
       application.status = 'approved';
       application.nbfcPartnerId = await this.findBestLendingPartner(application);
-      
+
       // Queue for immediate disbursement
       await queueManager.addPayment({
         type: 'bnpl_disbursement',
@@ -198,18 +198,18 @@ class BNPLFinancingService {
     sellerId: string,
     buyerId: string,
     invoiceAmount: number,
-    invoiceDocument: File
+    invoiceDocument: File,
   ): Promise<InvoiceFinancing> {
     const seller = await storage.getUserById(sellerId);
     const buyer = await storage.getUserById(buyerId);
-    
+
     if (!seller || !buyer) {
       throw new Error('Invalid seller or buyer');
     }
 
     // Verify invoice document
     const documentUrl = await this.uploadAndVerifyInvoice(invoiceDocument);
-    
+
     // Calculate advance amount (typically 80-90% of invoice)
     const advancePercentage = await this.calculateAdvancePercentage(sellerId, buyerId, invoiceAmount);
     const advanceAmount = Math.floor(invoiceAmount * (advancePercentage / 100));
@@ -245,7 +245,7 @@ class BNPLFinancingService {
     const buyerCreditScore = await this.getInstantCreditScore(buyerId);
     if (buyerCreditScore.score >= 700 && invoiceAmount <= 500000) {
       financing.status = 'approved';
-      
+
       // Queue for immediate disbursement
       await queueManager.addPayment({
         type: 'invoice_advance',
@@ -267,15 +267,15 @@ class BNPLFinancingService {
     const offers = [];
 
     for (const partner of this.lendingPartners.values()) {
-      if (!partner.active) continue;
-      
+      if (!partner.active) {continue;}
+
       // Check if user meets criteria
-      if (creditScore.score < partner.lendingCriteria.minCreditScore) continue;
-      if (amount < partner.lendingCriteria.minAmount || amount > partner.lendingCriteria.maxAmount) continue;
+      if (creditScore.score < partner.lendingCriteria.minCreditScore) {continue;}
+      if (amount < partner.lendingCriteria.minAmount || amount > partner.lendingCriteria.maxAmount) {continue;}
 
       // Calculate personalized interest rate
       const interestRate = await this.calculatePersonalizedRate(partner, creditScore);
-      
+
       offers.push({
         partnerId: partner.id,
         partnerName: partner.name,
@@ -405,7 +405,7 @@ class BNPLFinancingService {
       factors.creditUtilization * 0.30 +
       factors.accountAge * 0.15 +
       factors.businessPerformance * 0.15 +
-      factors.industryRisk * 0.05
+      factors.industryRisk * 0.05,
     );
 
     return { totalScore: Math.max(300, Math.min(900, totalScore)), factors };
@@ -415,7 +415,7 @@ class BNPLFinancingService {
     userId: string,
     businessId: string,
     amount: number,
-    creditScore: CreditScoreData
+    creditScore: CreditScoreData,
   ): Promise<RiskAssessment> {
     const factors = {
       creditHistory: creditScore.factors.paymentHistory,
@@ -426,10 +426,10 @@ class BNPLFinancingService {
     };
 
     const score = Math.round(Object.values(factors).reduce((sum, val) => sum + val, 0) / 5);
-    
+
     let riskLevel: 'low' | 'medium' | 'high' = 'medium';
-    if (score >= 80) riskLevel = 'low';
-    if (score <= 50) riskLevel = 'high';
+    if (score >= 80) {riskLevel = 'low';}
+    if (score <= 50) {riskLevel = 'high';}
 
     return {
       score,
@@ -459,8 +459,8 @@ class BNPLFinancingService {
     });
 
     // Return partner with best terms
-    return suitablePartners.sort((a, b) => 
-      a.terms.interestRateRange.min - b.terms.interestRateRange.min
+    return suitablePartners.sort((a, b) =>
+      a.terms.interestRateRange.min - b.terms.interestRateRange.min,
     )[0]?.id || '';
   }
 
@@ -518,7 +518,7 @@ class BNPLFinancingService {
 
   private calculateEMI(principal: number, rate: number, tenure: number): number {
     const monthlyRate = rate / (12 * 100);
-    const emi = (principal * monthlyRate * Math.pow(1 + monthlyRate, tenure)) / 
+    const emi = (principal * monthlyRate * Math.pow(1 + monthlyRate, tenure)) /
                 (Math.pow(1 + monthlyRate, tenure) - 1);
     return Math.round(emi);
   }

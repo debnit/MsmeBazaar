@@ -34,7 +34,7 @@ import {
   Divider,
   SpeedDial,
   SpeedDialAction,
-  SpeedDialIcon
+  SpeedDialIcon,
 } from '@mui/material';
 import {
   ThumbUp,
@@ -61,7 +61,7 @@ import {
   Cancel,
   Settings,
   History,
-  Analytics
+  Analytics,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 
@@ -76,9 +76,9 @@ const StyledRecommendationCard = styled(Card)(({ theme }) => ({
     transform: 'translateY(-4px)',
     boxShadow: theme.shadows[12],
     '& .recommendation-actions': {
-      opacity: 1
-    }
-  }
+      opacity: 1,
+    },
+  },
 }));
 
 const RecommendationActions = styled(Box)(({ theme }) => ({
@@ -93,9 +93,9 @@ const RecommendationActions = styled(Box)(({ theme }) => ({
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     backdropFilter: 'blur(4px)',
     '&:hover': {
-      backgroundColor: 'rgba(255, 255, 255, 1)'
-    }
-  }
+      backgroundColor: 'rgba(255, 255, 255, 1)',
+    },
+  },
 }));
 
 const ScoreBar = styled(Box)(({ theme }) => ({
@@ -103,19 +103,19 @@ const ScoreBar = styled(Box)(({ theme }) => ({
   height: 6,
   backgroundColor: theme.palette.grey[200],
   borderRadius: 3,
-  overflow: 'hidden'
+  overflow: 'hidden',
 }));
 
 const ScoreFill = styled(Box)<{ score: number }>(({ theme, score }) => ({
   height: '100%',
   borderRadius: 3,
-  background: score >= 0.8 
+  background: score >= 0.8
     ? 'linear-gradient(45deg, #4caf50, #66bb6a)'
-    : score >= 0.6 
-    ? 'linear-gradient(45deg, #ff9800, #ffb74d)'
-    : 'linear-gradient(45deg, #f44336, #ef5350)',
+    : score >= 0.6
+      ? 'linear-gradient(45deg, #ff9800, #ffb74d)'
+      : 'linear-gradient(45deg, #f44336, #ef5350)',
   width: `${score * 100}%`,
-  transition: 'width 0.5s ease-in-out'
+  transition: 'width 0.5s ease-in-out',
 }));
 
 const AlgorithmChip = styled(Chip)(({ theme }) => ({
@@ -123,7 +123,7 @@ const AlgorithmChip = styled(Chip)(({ theme }) => ({
   top: theme.spacing(1),
   left: theme.spacing(1),
   fontSize: '0.7rem',
-  height: 20
+  height: 20,
 }));
 
 interface RecommendationItem {
@@ -165,7 +165,7 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
   limit = 12,
   showFilters = true,
   showFeedback = true,
-  compact = false
+  compact = false,
 }) => {
   const [recommendations, setRecommendations] = useState<RecommendationItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -189,29 +189,29 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
     collaborative: {
       label: 'Collaborative Filtering',
       description: 'Based on users with similar preferences',
-      icon: <Group />
+      icon: <Group />,
     },
     content_based: {
       label: 'Content-Based',
       description: 'Based on item characteristics you liked',
-      icon: <Psychology />
+      icon: <Psychology />,
     },
     hybrid: {
       label: 'Hybrid (Smart)',
       description: 'Combines multiple algorithms for best results',
-      icon: <TrendingUp />
+      icon: <TrendingUp />,
     },
     similar_users: {
       label: 'Similar Users',
       description: 'Based on advanced user behavior patterns',
-      icon: <Analytics />
-    }
+      icon: <Analytics />,
+    },
   };
 
   const fetchRecommendations = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const requestBody = {
         user_id: userId,
@@ -221,16 +221,16 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
         filters: {},
         context: {
           timestamp: new Date().toISOString(),
-          personalized: personalizedMode
-        }
+          personalized: personalizedMode,
+        },
       };
 
       const response = await fetch('/api/recommendations', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -243,7 +243,7 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
         algorithm_used: data.algorithm_used,
         personalization_score: data.personalization_score,
         diversity_score: data.diversity_score,
-        novelty_score: data.novelty_score
+        novelty_score: data.novelty_score,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -285,16 +285,16 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
         context: {
           recommendation_algorithm: algorithmMetrics?.algorithm_used,
           recommendation_rank: item.rank,
-          recommendation_score: item.score
-        }
+          recommendation_score: item.score,
+        },
       };
 
       const response = await fetch('/api/feedback', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(feedbackData)
+        body: JSON.stringify(feedbackData),
       });
 
       if (!response.ok) {
@@ -330,22 +330,22 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
 
       setSnackbar({
         open: true,
-        message: `Feedback recorded! This helps improve your recommendations.`,
-        severity: 'success'
+        message: 'Feedback recorded! This helps improve your recommendations.',
+        severity: 'success',
       });
 
     } catch (err) {
       setSnackbar({
         open: true,
         message: 'Failed to record feedback',
-        severity: 'error'
+        severity: 'error',
       });
     }
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 0.8) return '#4caf50';
-    if (score >= 0.6) return '#ff9800';
+    if (score >= 0.8) {return '#4caf50';}
+    if (score >= 0.6) {return '#ff9800';}
     return '#f44336';
   };
 
@@ -358,7 +358,7 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
       textiles: '🧵',
       food_processing: '🍽️',
       consulting: '💼',
-      logistics: '🚚'
+      logistics: '🚚',
     };
     return icons[industry] || '🏢';
   };
@@ -367,7 +367,7 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
-      notation: 'compact'
+      notation: 'compact',
     }).format(amount);
   };
 
@@ -380,9 +380,9 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
           color="primary"
           variant="outlined"
         />
-        
+
         <RecommendationActions className="recommendation-actions">
-          <Tooltip title={savedItems.has(item.item_id) ? "Remove bookmark" : "Bookmark"}>
+          <Tooltip title={savedItems.has(item.item_id) ? 'Remove bookmark' : 'Bookmark'}>
             <IconButton
               size="small"
               onClick={(e) => {
@@ -394,7 +394,7 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
               {savedItems.has(item.item_id) ? <Bookmark /> : <BookmarkBorder />}
             </IconButton>
           </Tooltip>
-          
+
           <Tooltip title="Like">
             <IconButton
               size="small"
@@ -407,7 +407,7 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
               <ThumbUp />
             </IconButton>
           </Tooltip>
-          
+
           <Tooltip title="Dislike">
             <IconButton
               size="small"
@@ -444,8 +444,8 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
               <Typography variant="body2" color="text.secondary">
                 Match Score
               </Typography>
-              <Typography 
-                variant="body2" 
+              <Typography
+                variant="body2"
                 fontWeight="bold"
                 color={getScoreColor(item.score)}
               >
@@ -466,14 +466,14 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
                   <Typography variant="body2">{item.metadata.industry}</Typography>
                 </Box>
               )}
-              
+
               {item.metadata.location && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <LocationOn fontSize="small" color="action" />
                   <Typography variant="body2">{item.metadata.location}</Typography>
                 </Box>
               )}
-              
+
               {item.metadata.annual_turnover && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <AttachMoney fontSize="small" color="action" />
@@ -482,7 +482,7 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
                   </Typography>
                 </Box>
               )}
-              
+
               {item.metadata.employee_count && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <Group fontSize="small" color="action" />
@@ -495,15 +495,15 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
           )}
 
           {/* Description */}
-          <Typography 
-            variant="body2" 
-            color="text.secondary" 
-            sx={{ 
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{
               mb: 2,
               display: '-webkit-box',
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical',
-              overflow: 'hidden'
+              overflow: 'hidden',
             }}
           >
             {item.description}
@@ -603,7 +603,7 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
               ))}
             </Tabs>
           </Grid>
-          
+
           <Grid item xs={12} md={6}>
             <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', alignItems: 'center' }}>
               <FormControlLabel
@@ -616,7 +616,7 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
                 label="Personalized"
                 sx={{ mr: 1 }}
               />
-              
+
               <FormControlLabel
                 control={
                   <Switch
@@ -627,7 +627,7 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
                 label="Auto-refresh"
                 sx={{ mr: 1 }}
               />
-              
+
               <Tooltip title="Refresh recommendations">
                 <IconButton
                   onClick={fetchRecommendations}
@@ -667,7 +667,7 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
                   </Typography>
                 </Box>
               </Grid>
-              
+
               <Grid item xs={12} md={4}>
                 <Box>
                   <Typography variant="body2" color="text.secondary">
@@ -684,7 +684,7 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
                   </Typography>
                 </Box>
               </Grid>
-              
+
               <Grid item xs={12} md={4}>
                 <Box>
                   <Typography variant="body2" color="text.secondary">
@@ -774,18 +774,18 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
                 <Box>
                   <Typography variant="h6">{detailsDialog.title}</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Match Score: {(detailsDialog.score * 100).toFixed(0)}% • 
+                    Match Score: {(detailsDialog.score * 100).toFixed(0)}% •
                     Confidence: {(detailsDialog.confidence * 100).toFixed(0)}%
                   </Typography>
                 </Box>
               </Box>
             </DialogTitle>
-            
+
             <DialogContent>
               <Typography variant="body1" paragraph>
                 {detailsDialog.description}
               </Typography>
-              
+
               <Typography variant="h6" gutterBottom>
                 Why This Was Recommended
               </Typography>
@@ -796,7 +796,7 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
                   </Grid>
                 ))}
               </Grid>
-              
+
               {detailsDialog.metadata && (
                 <>
                   <Typography variant="h6" gutterBottom>
@@ -817,7 +817,7 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
                 </>
               )}
             </DialogContent>
-            
+
             <DialogActions>
               <Button onClick={() => setDetailsDialog(null)}>Close</Button>
               <Button
@@ -854,7 +854,7 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
                   Your rating helps us improve recommendations for you
                 </Typography>
               </Box>
-              
+
               <Box sx={{ textAlign: 'center' }}>
                 <Typography component="legend" gutterBottom>
                   How relevant is this recommendation?
@@ -866,7 +866,7 @@ const RecommendationEngine: React.FC<RecommendationEngineProps> = ({
                 />
               </Box>
             </DialogContent>
-            
+
             <DialogActions>
               <Button onClick={() => setFeedbackDialog(null)}>Cancel</Button>
               <Button

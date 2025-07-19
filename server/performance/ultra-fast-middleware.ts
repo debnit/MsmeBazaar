@@ -11,38 +11,38 @@ export class UltraFastMiddleware {
     '/api/user-roles',
     '/api/industries',
     '/api/regions',
-    '/api/dashboard/stats'
+    '/api/dashboard/stats',
   ]);
 
   static createInstantMiddleware() {
     return (req: Request, res: Response, next: NextFunction) => {
       const startTime = process.hrtime.bigint();
-      
+
       // Check if route can be served instantly
       if (UltraFastMiddleware.bypasableRoutes.has(req.path)) {
         const instantResponse = instantResponseSystem.getInstantResponse(req.path);
-        
+
         if (instantResponse) {
           const endTime = process.hrtime.bigint();
           const responseTime = Number(endTime - startTime) / 1000000; // Convert to ms
-          
+
           // Set ultra-fast headers
           res.set({
             'X-Response-Time': `${responseTime.toFixed(3)}ms`,
             'X-Cache-Status': 'HIT-INSTANT',
             'Cache-Control': 'public, max-age=30',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
           });
-          
+
           return res.json({
             success: true,
             data: instantResponse,
             responseTime: `${responseTime.toFixed(3)}ms`,
-            cached: true
+            cached: true,
           });
         }
       }
-      
+
       // Continue to normal middleware chain
       next();
     };
@@ -54,7 +54,7 @@ export class UltraFastMiddleware {
       if (UltraFastMiddleware.bypasableRoutes.has(req.path)) {
         return next();
       }
-      
+
       // Apply compression for other routes
       const compression = require('compression');
       return compression()(req, res, next);
@@ -68,18 +68,18 @@ export class UltraFastMiddleware {
         res.set({
           'Cache-Control': 'public, max-age=31536000, immutable',
           'ETag': `"${Date.now()}"`,
-          'Last-Modified': new Date().toUTCString()
+          'Last-Modified': new Date().toUTCString(),
         });
       }
-      
+
       // Set short cache for API responses
       if (req.path.startsWith('/api/')) {
         res.set({
           'Cache-Control': 'public, max-age=30',
-          'X-Cache-Strategy': 'api-short'
+          'X-Cache-Strategy': 'api-short',
         });
       }
-      
+
       next();
     };
   }
@@ -87,17 +87,17 @@ export class UltraFastMiddleware {
   static createResponseTimeLogger() {
     return (req: Request, res: Response, next: NextFunction) => {
       const startTime = process.hrtime.bigint();
-      
+
       res.on('finish', () => {
         const endTime = process.hrtime.bigint();
         const responseTime = Number(endTime - startTime) / 1000000;
-        
+
         // Log slow requests only
         if (responseTime > 10) {
           console.log(`SLOW: ${req.method} ${req.path} ${res.statusCode} in ${responseTime.toFixed(3)}ms`);
         }
       });
-      
+
       next();
     };
   }
@@ -118,7 +118,7 @@ export class MemoryEfficientHandler {
       const firstKey = MemoryEfficientHandler.requestPool.keys().next().value;
       MemoryEfficientHandler.requestPool.delete(firstKey);
     }
-    
+
     MemoryEfficientHandler.requestPool.set(path, data);
   }
 
@@ -130,7 +130,7 @@ export class MemoryEfficientHandler {
   static getPoolStats(): any {
     return {
       requestPool: MemoryEfficientHandler.requestPool.size,
-      responsePool: MemoryEfficientHandler.responsePool.size
+      responsePool: MemoryEfficientHandler.responsePool.size,
     };
   }
 }
@@ -142,7 +142,7 @@ export class StaticAssetOptimizer {
 
   static cacheStaticAsset(path: string, content: Buffer): void {
     StaticAssetOptimizer.assetCache.set(path, content);
-    
+
     // Pre-compress for faster serving
     const zlib = require('zlib');
     const compressed = zlib.gzipSync(content);
@@ -161,12 +161,12 @@ export class StaticAssetOptimizer {
     const criticalAssets = [
       '/index.html',
       '/src/main.tsx',
-      '/src/index.css'
+      '/src/index.css',
     ];
-    
+
     const fs = require('fs');
     const path = require('path');
-    
+
     for (const asset of criticalAssets) {
       try {
         const fullPath = path.join(process.cwd(), asset);
@@ -185,7 +185,7 @@ export class StaticAssetOptimizer {
       cachedAssets: StaticAssetOptimizer.assetCache.size,
       compressedAssets: StaticAssetOptimizer.compressionCache.size,
       totalSize: Array.from(StaticAssetOptimizer.assetCache.values())
-        .reduce((sum, buffer) => sum + buffer.length, 0)
+        .reduce((sum, buffer) => sum + buffer.length, 0),
     };
   }
 }

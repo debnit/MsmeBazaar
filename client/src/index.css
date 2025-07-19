@@ -196,7 +196,7 @@ body {
   }
 
   .btn-primary {
-    @apply btn-base bg-primary text-primary-foreground hover:bg-primary hover:opacity-90 h-10 px-4 py-2;
+    @apply btn-base bg-blue-600 text-white hover:bg-blue-700 h-10 px-4 py-2;
   }
 
   .btn-secondary {
@@ -338,19 +338,19 @@ body {
 
   /* Status Indicators */
   .status-success {
-    @apply bg-success/10 text-success border-success/20;
+    @apply bg-green-50 text-green-600 border-green-200;
   }
 
   .status-warning {
-    @apply bg-warning/10 text-warning border-warning/20;
+    @apply bg-yellow-50 text-yellow-600 border-yellow-200;
   }
 
   .status-error {
-    @apply bg-destructive/10 text-destructive border-destructive/20;
+    @apply bg-red-50 text-red-600 border-red-200;
   }
 
   .status-info {
-    @apply bg-primary/10 text-primary border-primary/20;
+    @apply bg-blue-50 text-blue-600 border-blue-200;
   }
 }
 

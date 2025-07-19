@@ -120,7 +120,7 @@ class EaaSService {
       type: 'sale_deed',
       template: this.getSaleAgreementTemplate(),
       requiredFields: ['buyerDetails', 'sellerDetails', 'msmeDetails', 'paymentTerms', 'legalClauses'],
-      legalCompliance: ['Companies Act 2013', 'MSME Development Act 2006', 'Contract Act 1872']
+      legalCompliance: ['Companies Act 2013', 'MSME Development Act 2006', 'Contract Act 1872'],
     };
 
     // NDA Template
@@ -130,7 +130,7 @@ class EaaSService {
       type: 'nda',
       template: this.getNDATemplate(),
       requiredFields: ['disclosingParty', 'receivingParty', 'confidentialInfo', 'purpose', 'duration'],
-      legalCompliance: ['Contract Act 1872', 'Information Technology Act 2000']
+      legalCompliance: ['Contract Act 1872', 'Information Technology Act 2000'],
     };
 
     // Exit Agreement Template
@@ -140,7 +140,7 @@ class EaaSService {
       type: 'exit_agreement',
       template: this.getExitAgreementTemplate(),
       requiredFields: ['exitingParty', 'remainingParties', 'exitTerms', 'valuation'],
-      legalCompliance: ['Companies Act 2013', 'Partnership Act 1932']
+      legalCompliance: ['Companies Act 2013', 'Partnership Act 1932'],
     };
 
     this.templates.set(saleTemplate.id, saleTemplate);
@@ -284,10 +284,10 @@ All financial obligations will be settled as per the payment schedule outlined i
 
   private replaceTemplateVariables(template: string, data: any): string {
     let result = template;
-    
+
     // Simple template replacement (in production, use a proper template engine)
     const flatten = (obj: any, prefix = ''): any => {
-      let flattened: any = {};
+      const flattened: any = {};
       for (const key in obj) {
         if (obj.hasOwnProperty(key)) {
           const newKey = prefix ? `${prefix}.${key}` : key;
@@ -302,17 +302,17 @@ All financial obligations will be settled as per the payment schedule outlined i
     };
 
     const flatData = flatten(data);
-    
+
     // Replace variables
     for (const [key, value] of Object.entries(flatData)) {
       const regex = new RegExp(`{{${key}}}`, 'g');
       result = result.replace(regex, String(value));
     }
-    
+
     // Add current date
     result = result.replace(/{{agreementDate}}/g, new Date().toLocaleDateString('en-IN'));
     result = result.replace(/{{jurisdiction}}/g, 'Mumbai');
-    
+
     return result;
   }
 
@@ -331,10 +331,10 @@ All financial obligations will be settled as per the payment schedule outlined i
 
     const documentId = `doc_${this.nextId++}`;
     const content = this.replaceTemplateVariables(template.template, data);
-    
+
     // Generate PDF
     const pdfPath = await this.generatePDF(content, documentId);
-    
+
     const document: GeneratedDocument = {
       id: documentId,
       templateId,
@@ -345,7 +345,7 @@ All financial obligations will be settled as per the payment schedule outlined i
       parties,
       createdAt: new Date(),
       updatedAt: new Date(),
-      metadata: { ...data, template: template.name }
+      metadata: { ...data, template: template.name },
     };
 
     this.documents.set(documentId, document);
@@ -355,18 +355,18 @@ All financial obligations will be settled as per the payment schedule outlined i
   private async generatePDF(content: string, documentId: string): Promise<string> {
     const doc = new PDFDocument();
     const pdfPath = path.join(process.cwd(), 'generated_docs', `${documentId}.pdf`);
-    
+
     // Ensure directory exists
     await fs.mkdir(path.dirname(pdfPath), { recursive: true });
-    
+
     // Create PDF stream
     const stream = doc.pipe(require('fs').createWriteStream(pdfPath));
-    
+
     // Add content to PDF
     doc.fontSize(16).text('MSMESquare - Legal Document', { align: 'center' });
     doc.moveDown();
     doc.fontSize(12);
-    
+
     const lines = content.split('\n');
     lines.forEach((line: string) => {
       if (line.startsWith('# ')) {
@@ -383,9 +383,9 @@ All financial obligations will be settled as per the payment schedule outlined i
         doc.moveDown(0.2);
       }
     });
-    
+
     doc.end();
-    
+
     return new Promise((resolve, reject) => {
       stream.on('finish', () => resolve(pdfPath));
       stream.on('error', reject);
@@ -405,7 +405,7 @@ All financial obligations will be settled as per the payment schedule outlined i
       status: 'sent',
       documentsUri: `/documents/${documentId}`,
       recipientsUri: `/recipients/${documentId}`,
-      statusDateTime: new Date().toISOString()
+      statusDateTime: new Date().toISOString(),
     };
 
     // Update document status
@@ -426,8 +426,8 @@ All financial obligations will be settled as per the payment schedule outlined i
   }
 
   async getDocumentsByParty(email: string): Promise<GeneratedDocument[]> {
-    return Array.from(this.documents.values()).filter(doc => 
-      doc.parties.some(party => party.email === email)
+    return Array.from(this.documents.values()).filter(doc =>
+      doc.parties.some(party => party.email === email),
     );
   }
 
@@ -477,7 +477,7 @@ All financial obligations will be settled as per the payment schedule outlined i
     return {
       compliant: issues.length === 0,
       issues,
-      recommendations
+      recommendations,
     };
   }
 }

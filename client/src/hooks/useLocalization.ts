@@ -29,7 +29,7 @@ export function useLocalization() {
     language,
     changeLanguage,
     t,
-    isLoading
+    isLoading,
   };
 }
 
@@ -43,40 +43,40 @@ export function useTextToSpeech() {
   }, []);
 
   const speak = (text: string, language: SupportedLanguage = 'en') => {
-    if (!isSupported) return;
+    if (!isSupported) {return;}
 
     // Cancel any ongoing speech
     speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    
+
     // Configure voice based on language
     const voices = speechSynthesis.getVoices();
     let voice = null;
-    
+
     switch (language) {
-      case 'hi':
-        voice = voices.find(v => v.lang.includes('hi')) || voices.find(v => v.lang.includes('IN'));
-        break;
-      case 'or':
-        voice = voices.find(v => v.lang.includes('or')) || voices.find(v => v.lang.includes('IN'));
-        break;
-      default:
-        voice = voices.find(v => v.lang.includes('en-IN')) || voices.find(v => v.lang.includes('en'));
+    case 'hi':
+      voice = voices.find(v => v.lang.includes('hi')) || voices.find(v => v.lang.includes('IN'));
+      break;
+    case 'or':
+      voice = voices.find(v => v.lang.includes('or')) || voices.find(v => v.lang.includes('IN'));
+      break;
+    default:
+      voice = voices.find(v => v.lang.includes('en-IN')) || voices.find(v => v.lang.includes('en'));
     }
-    
+
     if (voice) {
       utterance.voice = voice;
     }
-    
+
     utterance.rate = 0.8;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
-    
+
     utterance.onstart = () => setIsPlaying(true);
     utterance.onend = () => setIsPlaying(false);
     utterance.onerror = () => setIsPlaying(false);
-    
+
     speechSynthesis.speak(utterance);
   };
 
@@ -89,6 +89,6 @@ export function useTextToSpeech() {
     speak,
     stop,
     isPlaying,
-    isSupported
+    isSupported,
   };
 }

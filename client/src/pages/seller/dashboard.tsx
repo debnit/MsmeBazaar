@@ -1,80 +1,80 @@
-import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/components/auth/auth-provider";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Building, Plus, TrendingUp, Eye, DollarSign, FileText } from "lucide-react";
-import { Link } from "wouter";
-import Navbar from "@/components/layout/navbar";
-import { dashboardApi, msmeApi } from "@/lib/api";
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/components/auth/auth-provider';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Building, Plus, TrendingUp, Eye, DollarSign, FileText } from 'lucide-react';
+import { Link } from 'wouter';
+import Navbar from '@/components/layout/navbar';
+import { dashboardApi, msmeApi } from '@/lib/api';
 
 export default function SellerDashboard() {
   const { user } = useAuth();
-  
+
   // Mock data for development
   const stats = {
     totalListings: 3,
     activeListings: 2,
     totalViews: 450,
-    totalInquiries: 25
+    totalInquiries: 25,
   };
   const statsLoading = false;
 
   const listings = [
     {
       id: 1,
-      companyName: "Mumbai Textiles Pvt Ltd",
-      industry: "Textiles",
-      askingPrice: "2.5",
-      status: "active",
+      companyName: 'Mumbai Textiles Pvt Ltd',
+      industry: 'Textiles',
+      askingPrice: '2.5',
+      status: 'active',
       views: 125,
       inquiries: 8,
-      location: "Mumbai, Maharashtra"
+      location: 'Mumbai, Maharashtra',
     },
     {
       id: 2,
-      companyName: "Pune Food Processing Ltd",
-      industry: "Food Processing",
-      askingPrice: "1.8",
-      status: "under_review",
+      companyName: 'Pune Food Processing Ltd',
+      industry: 'Food Processing',
+      askingPrice: '1.8',
+      status: 'under_review',
       views: 89,
       inquiries: 5,
-      location: "Pune, Maharashtra"
+      location: 'Pune, Maharashtra',
     },
     {
       id: 3,
-      companyName: "Chennai Auto Parts Ltd",
-      industry: "Automotive",
-      askingPrice: "3.2",
-      status: "draft",
+      companyName: 'Chennai Auto Parts Ltd',
+      industry: 'Automotive',
+      askingPrice: '3.2',
+      status: 'draft',
       views: 0,
       inquiries: 0,
-      location: "Chennai, Tamil Nadu"
-    }
+      location: 'Chennai, Tamil Nadu',
+    },
   ];
   const listingsLoading = false;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "active":
-        return <Badge className="bg-green-100 text-green-800">Active</Badge>;
-      case "draft":
-        return <Badge className="bg-gray-100 text-gray-800">Draft</Badge>;
-      case "under_review":
-        return <Badge className="bg-yellow-100 text-yellow-800">Under Review</Badge>;
-      case "sold":
-        return <Badge className="bg-blue-100 text-blue-800">Sold</Badge>;
-      case "suspended":
-        return <Badge className="bg-red-100 text-red-800">Suspended</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
+    case 'active':
+      return <Badge className="bg-green-100 text-green-800">Active</Badge>;
+    case 'draft':
+      return <Badge className="bg-gray-100 text-gray-800">Draft</Badge>;
+    case 'under_review':
+      return <Badge className="bg-yellow-100 text-yellow-800">Under Review</Badge>;
+    case 'sold':
+      return <Badge className="bg-blue-100 text-blue-800">Sold</Badge>;
+    case 'suspended':
+      return <Badge className="bg-red-100 text-red-800">Suspended</Badge>;
+    default:
+      return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -102,7 +102,7 @@ export default function SellerDashboard() {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500">Total Listings</p>
                   <p className="text-2xl font-semibold text-gray-900">
-                    {statsLoading ? "..." : stats?.totalListings || 0}
+                    {statsLoading ? '...' : stats?.totalListings || 0}
                   </p>
                 </div>
               </div>
@@ -118,7 +118,7 @@ export default function SellerDashboard() {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500">Active Listings</p>
                   <p className="text-2xl font-semibold text-gray-900">
-                    {statsLoading ? "..." : stats?.activeListings || 0}
+                    {statsLoading ? '...' : stats?.activeListings || 0}
                   </p>
                 </div>
               </div>
@@ -134,7 +134,7 @@ export default function SellerDashboard() {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500">Sold Listings</p>
                   <p className="text-2xl font-semibold text-gray-900">
-                    {statsLoading ? "..." : stats?.soldListings || 0}
+                    {statsLoading ? '...' : stats?.soldListings || 0}
                   </p>
                 </div>
               </div>
@@ -150,7 +150,7 @@ export default function SellerDashboard() {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500">Total Views</p>
                   <p className="text-2xl font-semibold text-gray-900">
-                    {statsLoading ? "..." : "2,847"}
+                    {statsLoading ? '...' : '2,847'}
                   </p>
                 </div>
               </div>

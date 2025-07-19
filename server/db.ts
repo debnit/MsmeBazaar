@@ -1,24 +1,24 @@
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
-import * as schema from "@shared/schema";
+import ws from 'ws';
+import * as schema from '@shared/schema';
 
 neonConfig.webSocketConstructor = ws;
 
 // Database configuration with environment variables
 const DATABASE_URL = process.env.DATABASE_URL;
-const DB_POOL_SIZE = parseInt(process.env.DB_POOL_SIZE || "10");
-const DB_CONNECTION_TIMEOUT = parseInt(process.env.DB_CONNECTION_TIMEOUT || "30000");
-const DB_IDLE_TIMEOUT = parseInt(process.env.DB_IDLE_TIMEOUT || "30000");
+const DB_POOL_SIZE = parseInt(process.env.DB_POOL_SIZE || '10');
+const DB_CONNECTION_TIMEOUT = parseInt(process.env.DB_CONNECTION_TIMEOUT || '30000');
+const DB_IDLE_TIMEOUT = parseInt(process.env.DB_IDLE_TIMEOUT || '30000');
 
 if (!DATABASE_URL) {
   throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
+    'DATABASE_URL must be set. Did you forget to provision a database?',
   );
 }
 
 // Enhanced connection pool configuration
-export const pool = new Pool({ 
+export const pool = new Pool({
   connectionString: DATABASE_URL,
   max: DB_POOL_SIZE,
   connectionTimeoutMillis: DB_CONNECTION_TIMEOUT,
@@ -31,20 +31,20 @@ export const db = drizzle({ client: pool, schema });
 // Connection health check
 export async function checkDatabaseHealth(): Promise<{ healthy: boolean; latency?: number; error?: string }> {
   const startTime = Date.now();
-  
+
   try {
     await pool.query('SELECT 1 as health_check');
     const latency = Date.now() - startTime;
-    
+
     return {
       healthy: true,
-      latency
+      latency,
     };
   } catch (error) {
     console.error('Database health check failed:', error);
     return {
       healthy: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }
@@ -53,42 +53,42 @@ export async function checkDatabaseHealth(): Promise<{ healthy: boolean; latency
 export async function withRetry<T>(
   operation: () => Promise<T>,
   maxRetries: number = 3,
-  delay: number = 1000
+  delay: number = 1000,
 ): Promise<T> {
   let lastError: Error;
-  
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       return await operation();
     } catch (error) {
       lastError = error instanceof Error ? error : new Error('Unknown error');
-      
+
       if (attempt === maxRetries) {
         throw lastError;
       }
-      
+
       console.warn(`Database operation failed (attempt ${attempt}/${maxRetries}):`, lastError.message);
-      
+
       // Exponential backoff
       const waitTime = delay * Math.pow(2, attempt - 1);
       await new Promise(resolve => setTimeout(resolve, waitTime));
     }
   }
-  
+
   throw lastError!;
 }
 
 // Database query wrapper with logging and retry
 export async function executeQuery<T>(
   queryFn: () => Promise<T>,
-  queryName: string = 'unknown'
+  queryName: string = 'unknown',
 ): Promise<T> {
   const startTime = Date.now();
-  
+
   try {
     const result = await withRetry(queryFn);
     const duration = Date.now() - startTime;
-    
+
     console.log(`DB Query [${queryName}] completed in ${duration}ms`);
     return result;
   } catch (error) {

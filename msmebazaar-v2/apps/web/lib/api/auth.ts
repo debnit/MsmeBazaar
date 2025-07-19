@@ -133,7 +133,7 @@ authClient.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor to handle token refresh
@@ -147,14 +147,14 @@ authClient.interceptors.response.use(
 
       if (typeof window !== 'undefined') {
         const refreshToken = localStorage.getItem('refresh_token');
-        
+
         if (refreshToken) {
           try {
             const response = await authApi.refreshToken({ refresh_token: refreshToken });
-            
+
             localStorage.setItem('access_token', response.access_token);
             localStorage.setItem('refresh_token', response.refresh_token);
-            
+
             originalRequest.headers.Authorization = `Bearer ${response.access_token}`;
             return authClient(originalRequest);
           } catch (refreshError) {
@@ -162,7 +162,7 @@ authClient.interceptors.response.use(
             localStorage.removeItem('access_token');
             localStorage.removeItem('refresh_token');
             localStorage.removeItem('user');
-            
+
             if (window.location.pathname !== '/login') {
               window.location.href = '/login';
             }
@@ -177,7 +177,7 @@ authClient.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default authClient;

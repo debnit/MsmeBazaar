@@ -1,19 +1,19 @@
-import { motion } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Trophy, 
-  User, 
-  FileText, 
-  Handshake, 
-  Users, 
-  Shield, 
-  Zap, 
+import { motion } from 'framer-motion';
+import { Badge } from '@/components/ui/badge';
+import {
+  Trophy,
+  User,
+  FileText,
+  Handshake,
+  Users,
+  Shield,
+  Zap,
   Share2,
   Lightbulb,
   Heart,
   MessageCircle,
-  Network
-} from "lucide-react";
+  Network,
+} from 'lucide-react';
 
 interface AchievementBadgeProps {
   type: 'welcome' | 'profile' | 'listing' | 'deal' | 'mentor' | 'verified' | 'streak' | 'referral' | 'innovation' | 'collaboration' | 'feedback' | 'network';
@@ -35,19 +35,19 @@ const badgeConfig = {
   innovation: { icon: Lightbulb, color: 'bg-cyan-500', name: 'Innovator' },
   collaboration: { icon: Heart, color: 'bg-red-500', name: 'Collaborator' },
   feedback: { icon: MessageCircle, color: 'bg-violet-500', name: 'Feedback Hero' },
-  network: { icon: Network, color: 'bg-teal-500', name: 'Networker' }
+  network: { icon: Network, color: 'bg-teal-500', name: 'Networker' },
 };
 
-export function AchievementBadge({ 
-  type, 
-  earned, 
-  progress, 
-  showAnimation = false, 
-  onClick 
+export function AchievementBadge({
+  type,
+  earned,
+  progress,
+  showAnimation = false,
+  onClick,
 }: AchievementBadgeProps) {
   const config = badgeConfig[type];
   const Icon = config.icon;
-  
+
   return (
     <motion.div
       className={`relative cursor-pointer transition-all duration-200 ${
@@ -64,7 +64,7 @@ export function AchievementBadge({
         ${earned ? 'shadow-lg' : 'shadow-sm'}
       `}>
         <Icon className="w-8 h-8" />
-        
+
         {/* Progress ring for unearned badges */}
         {!earned && progress > 0 && (
           <svg className="absolute inset-0 w-16 h-16 transform -rotate-90">
@@ -89,7 +89,7 @@ export function AchievementBadge({
             />
           </svg>
         )}
-        
+
         {/* Earned badge glow effect */}
         {earned && showAnimation && (
           <motion.div
@@ -100,7 +100,7 @@ export function AchievementBadge({
           />
         )}
       </div>
-      
+
       {/* Badge name */}
       <div className="text-center mt-2">
         <p className="text-xs font-medium text-gray-700 truncate">
@@ -112,7 +112,7 @@ export function AchievementBadge({
           </p>
         )}
       </div>
-      
+
       {/* New badge indicator */}
       {earned && showAnimation && (
         <motion.div

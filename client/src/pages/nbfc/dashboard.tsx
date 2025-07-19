@@ -1,21 +1,21 @@
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { FileText, DollarSign, TrendingUp, Shield, Plus, Eye, Download } from "lucide-react";
-import { Link } from "wouter";
-import Navbar from "@/components/layout/navbar";
-import ComplianceStatusWidget from "@/components/compliance/status-widget";
-import { dashboardApi, nbfcApi } from "@/lib/api";
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { FileText, DollarSign, TrendingUp, Shield, Plus, Eye, Download } from 'lucide-react';
+import { Link } from 'wouter';
+import Navbar from '@/components/layout/navbar';
+import ComplianceStatusWidget from '@/components/compliance/status-widget';
+import { dashboardApi, nbfcApi } from '@/lib/api';
 
 export default function NbfcDashboard() {
   const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ["/api/dashboard/stats"],
+    queryKey: ['/api/dashboard/stats'],
     queryFn: dashboardApi.getStats,
   });
 
   const { data: recentApplications, isLoading: applicationsLoading } = useQuery({
-    queryKey: ["/api/nbfc/loan-applications"],
+    queryKey: ['/api/nbfc/loan-applications'],
     queryFn: nbfcApi.getLoanApplications,
     select: (data) => data?.slice(0, 5) || [],
   });
@@ -23,58 +23,58 @@ export default function NbfcDashboard() {
   const mockFeaturedListings = [
     {
       id: 1,
-      companyName: "Bangalore Pharma Ltd",
-      industry: "Pharmaceutical Manufacturing",
-      askingPrice: "15.5",
-      annualRevenue: "25",
+      companyName: 'Bangalore Pharma Ltd',
+      industry: 'Pharmaceutical Manufacturing',
+      askingPrice: '15.5',
+      annualRevenue: '25',
       employeeCount: 150,
-      city: "Bangalore",
+      city: 'Bangalore',
       isDistressed: true,
-      status: "active"
+      status: 'active',
     },
     {
       id: 2,
-      companyName: "Hyderabad Electronics",
-      industry: "Electronics Manufacturing",
-      askingPrice: "8.2",
-      annualRevenue: "12",
+      companyName: 'Hyderabad Electronics',
+      industry: 'Electronics Manufacturing',
+      askingPrice: '8.2',
+      annualRevenue: '12',
       employeeCount: 85,
-      city: "Hyderabad",
+      city: 'Hyderabad',
       isDistressed: false,
-      status: "active"
+      status: 'active',
     },
     {
       id: 3,
-      companyName: "Gujarat Chemicals Ltd",
-      industry: "Chemical Processing",
-      askingPrice: "22.8",
-      annualRevenue: "35",
+      companyName: 'Gujarat Chemicals Ltd',
+      industry: 'Chemical Processing',
+      askingPrice: '22.8',
+      annualRevenue: '35',
       employeeCount: 220,
-      city: "Ahmedabad",
+      city: 'Ahmedabad',
       isDistressed: false,
-      status: "active"
-    }
+      status: 'active',
+    },
   ];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "pending":
-        return <Badge className="bg-yellow-100 text-yellow-800">Under Review</Badge>;
-      case "approved":
-        return <Badge className="bg-green-100 text-green-800">Approved</Badge>;
-      case "rejected":
-        return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
-      case "disbursed":
-        return <Badge className="bg-blue-100 text-blue-800">Disbursed</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
+    case 'pending':
+      return <Badge className="bg-yellow-100 text-yellow-800">Under Review</Badge>;
+    case 'approved':
+      return <Badge className="bg-green-100 text-green-800">Approved</Badge>;
+    case 'rejected':
+      return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
+    case 'disbursed':
+      return <Badge className="bg-blue-100 text-blue-800">Disbursed</Badge>;
+    default:
+      return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -100,7 +100,7 @@ export default function NbfcDashboard() {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500">Loan Applications</p>
                   <p className="text-2xl font-semibold text-gray-900">
-                    {statsLoading ? "..." : stats?.loanApplications || 0}
+                    {statsLoading ? '...' : stats?.loanApplications || 0}
                   </p>
                   <p className="text-sm text-success">+12% from last month</p>
                 </div>
@@ -117,7 +117,7 @@ export default function NbfcDashboard() {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500">Disbursed Amount</p>
                   <p className="text-2xl font-semibold text-gray-900">
-                    ₹{statsLoading ? "..." : Math.round((stats?.disbursedAmount || 0) / 10000000) || 45}.2 Cr
+                    ₹{statsLoading ? '...' : Math.round((stats?.disbursedAmount || 0) / 10000000) || 45}.2 Cr
                   </p>
                   <p className="text-sm text-success">+8% from last month</p>
                 </div>
@@ -219,7 +219,7 @@ export default function NbfcDashboard() {
                                     Application #{application.id}
                                   </div>
                                   <div className="text-sm text-gray-500">
-                                    {application.msme?.industry || "Industry"}
+                                    {application.msme?.industry || 'Industry'}
                                   </div>
                                 </div>
                               </div>
@@ -237,7 +237,7 @@ export default function NbfcDashboard() {
                                 Buyer #{application.buyerId}
                               </div>
                               <div className="text-sm text-gray-500">
-                                {application.creditScore ? `${application.creditScore} Credit Score` : "AAA Rating"}
+                                {application.creditScore ? `${application.creditScore} Credit Score` : 'AAA Rating'}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -338,11 +338,11 @@ export default function NbfcDashboard() {
                 <div key={listing.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between mb-3">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      listing.isDistressed 
-                        ? "bg-red-100 text-red-800" 
-                        : "bg-green-100 text-green-800"
+                      listing.isDistressed
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-green-100 text-green-800'
                     }`}>
-                      {listing.isDistressed ? "Distressed" : "Healthy"}
+                      {listing.isDistressed ? 'Distressed' : 'Healthy'}
                     </span>
                     <span className="text-sm font-medium text-gray-900">₹{listing.askingPrice} Cr</span>
                   </div>

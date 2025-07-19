@@ -67,7 +67,7 @@ class BuyerScoringService {
       'action', interaction.action,
       'businessId', interaction.businessId,
       'timestamp', interaction.timestamp,
-      'metadata', JSON.stringify(interaction.metadata || {})
+      'metadata', JSON.stringify(interaction.metadata || {}),
     );
 
     // Update buyer score asynchronously
@@ -158,10 +158,10 @@ class BuyerScoringService {
   // Real-time preference learning
   private async updateBusinessPreferences(interaction: BuyerInteraction): Promise<void> {
     const business = await storage.getBusinessById(interaction.businessId);
-    if (!business) return;
+    if (!business) {return;}
 
     const existingPreferences = await this.getBuyerPreferences(interaction.buyerId);
-    
+
     // Update industry preference
     await this.updateIndustryPreference(interaction.buyerId, business.industry, interaction.action);
 
@@ -177,10 +177,10 @@ class BuyerScoringService {
 
   // Calculate engagement score based on interaction patterns
   private calculateEngagementScore(interactions: BuyerInteraction[]): number {
-    if (interactions.length === 0) return 0;
+    if (interactions.length === 0) {return 0;}
 
-    const recentInteractions = interactions.filter(i => 
-      new Date(i.timestamp) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    const recentInteractions = interactions.filter(i =>
+      new Date(i.timestamp) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
     );
 
     // Scoring weights for different actions
@@ -203,7 +203,7 @@ class BuyerScoringService {
 
   // Calculate preference clarity score
   private calculatePreferencesScore(preferences: BusinessPreference[]): number {
-    if (preferences.length === 0) return 0;
+    if (preferences.length === 0) {return 0;}
 
     const totalConfidence = preferences.reduce((sum, pref) => sum + pref.confidence, 0);
     const avgConfidence = totalConfidence / preferences.length;
@@ -220,21 +220,21 @@ class BuyerScoringService {
     const viewedBusinesses = interactions.filter(i => i.action === 'view');
     const inquiredBusinesses = interactions.filter(i => i.action === 'inquiry');
 
-    if (viewedBusinesses.length === 0) return 50; // Neutral score
+    if (viewedBusinesses.length === 0) {return 50;} // Neutral score
 
     // Calculate budget consistency
     const priceConsistency = this.calculatePriceConsistency(viewedBusinesses, inquiredBusinesses);
-    
+
     return Math.min(100, priceConsistency * 100);
   }
 
   // Calculate timeline urgency score
   private calculateTimelineScore(interactions: BuyerInteraction[]): number {
-    if (interactions.length === 0) return 0;
+    if (interactions.length === 0) {return 0;}
 
     const now = new Date();
-    const recentInteractions = interactions.filter(i => 
-      new Date(i.timestamp) > new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const recentInteractions = interactions.filter(i =>
+      new Date(i.timestamp) > new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
     );
 
     const frequency = recentInteractions.length / 7; // Interactions per day
@@ -249,7 +249,7 @@ class BuyerScoringService {
   // Calculate conversion probability
   private calculateConversionScore(conversionHistory: any[], interactions: BuyerInteraction[]): number {
     // Historical conversion rate
-    const historicalRate = conversionHistory.length > 0 ? 
+    const historicalRate = conversionHistory.length > 0 ?
       conversionHistory.filter(h => h.converted).length / conversionHistory.length : 0.5;
 
     // Current session behavior
@@ -294,7 +294,7 @@ class BuyerScoringService {
   private async shouldRetrain(buyerId: string): Promise<boolean> {
     const feedbackCount = await this.getFeedbackCount(buyerId);
     const lastRetrainTime = await this.getLastRetrainTime(buyerId);
-    
+
     const timeSinceLastRetrain = Date.now() - new Date(lastRetrainTime).getTime();
     const daysSinceRetrain = timeSinceLastRetrain / (24 * 60 * 60 * 1000);
 
@@ -307,10 +307,10 @@ class BuyerScoringService {
     if (variant === 'experimental') {
       // Use experimental scoring algorithm
       return await this.calculateExperimentalScore(buyerId);
-    } else {
-      // Use standard scoring algorithm
-      return await this.calculateBuyerScore(buyerId);
     }
+    // Use standard scoring algorithm
+    return await this.calculateBuyerScore(buyerId);
+
   }
 
   // Performance analytics for scoring system

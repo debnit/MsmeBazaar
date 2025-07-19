@@ -20,13 +20,13 @@ class ClientCache {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
-      ttl
+      ttl,
     });
   }
 
   get(key: string): any | null {
     const item = this.cache.get(key);
-    if (!item) return null;
+    if (!item) {return null;}
 
     // Check if item has expired
     if (Date.now() - item.timestamp > item.ttl) {
@@ -52,7 +52,7 @@ export const clientCache = new ClientCache();
 export const cacheApiCall = async <T>(
   key: string,
   apiCall: () => Promise<T>,
-  ttl: number = 300000
+  ttl: number = 300000,
 ): Promise<T> => {
   // Check cache first
   const cached = clientCache.get(key);
@@ -72,7 +72,7 @@ export const localStorageCache = {
     const item = {
       data,
       timestamp: Date.now(),
-      ttl
+      ttl,
     };
     localStorage.setItem(key, JSON.stringify(item));
   },
@@ -80,7 +80,7 @@ export const localStorageCache = {
   get(key: string): any | null {
     try {
       const item = localStorage.getItem(key);
-      if (!item) return null;
+      if (!item) {return null;}
 
       const parsed = JSON.parse(item);
       if (Date.now() - parsed.timestamp > parsed.ttl) {
@@ -97,7 +97,7 @@ export const localStorageCache = {
 
   clear() {
     localStorage.clear();
-  }
+  },
 };
 
 // Session storage cache
@@ -118,5 +118,5 @@ export const sessionStorageCache = {
 
   clear() {
     sessionStorage.clear();
-  }
+  },
 };

@@ -47,7 +47,7 @@ export class MSMEMetabaseIntegration {
       siteUrl: process.env.METABASE_SITE_URL || 'http://localhost:3000',
       secretKey: process.env.METABASE_SECRET_KEY || '',
       username: process.env.METABASE_USERNAME || 'admin@msmesquare.com',
-      password: process.env.METABASE_PASSWORD || ''
+      password: process.env.METABASE_PASSWORD || '',
     };
   }
 
@@ -56,7 +56,7 @@ export class MSMEMetabaseIntegration {
     try {
       const response = await axios.post(`${this.config.siteUrl}/api/session`, {
         username: this.config.username,
-        password: this.config.password
+        password: this.config.password,
       });
 
       this.sessionToken = response.data.id;
@@ -72,7 +72,7 @@ export class MSMEMetabaseIntegration {
     const payload = {
       resource: params.resource,
       params: params.params,
-      exp: Math.round(Date.now() / 1000) + (10 * 60) // 10 minutes
+      exp: Math.round(Date.now() / 1000) + (10 * 60), // 10 minutes
     };
 
     return jwt.sign(payload, this.config.secretKey);
@@ -82,14 +82,14 @@ export class MSMEMetabaseIntegration {
   getEmbeddedDashboardUrl(
     dashboardId: number,
     params: Record<string, any> = {},
-    theme: 'light' | 'dark' = 'light'
+    theme: 'light' | 'dark' = 'light',
   ): string {
     const token = this.generateEmbeddingToken({
       resource: { dashboard: dashboardId },
       params,
       theme,
       bordered: true,
-      titled: true
+      titled: true,
     });
 
     return `${this.config.siteUrl}/embed/dashboard/${token}#bordered=true&titled=true&theme=${theme}`;
@@ -99,14 +99,14 @@ export class MSMEMetabaseIntegration {
   getEmbeddedQuestionUrl(
     questionId: number,
     params: Record<string, any> = {},
-    theme: 'light' | 'dark' = 'light'
+    theme: 'light' | 'dark' = 'light',
   ): string {
     const token = this.generateEmbeddingToken({
       resource: { question: questionId },
       params,
       theme,
       bordered: true,
-      titled: true
+      titled: true,
     });
 
     return `${this.config.siteUrl}/embed/question/${token}#bordered=true&titled=true&theme=${theme}`;
@@ -133,7 +133,7 @@ export class MSMEMetabaseIntegration {
           total: count(),
           approved: sum(sql<number>`case when status = 'approved' then 1 else 0 end`),
           avgAmount: avg(loanApplications.loanAmount),
-          totalDisbursed: sum(sql<number>`case when status = 'disbursed' then ${loanApplications.loanAmount} else 0 end`)
+          totalDisbursed: sum(sql<number>`case when status = 'disbursed' then ${loanApplications.loanAmount} else 0 end`),
         })
         .from(loanApplications)
         .where(eq(loanApplications.nbfcId, nbfcId));
@@ -151,20 +151,20 @@ export class MSMEMetabaseIntegration {
           approvalRate: metrics.total > 0 ? (Number(metrics.approved) / metrics.total) * 100 : 0,
           totalDisbursed: Number(metrics.totalDisbursed) || 0,
           avgLoanAmount: Number(metrics.avgAmount) || 0,
-          avgProcessingTime: 3.5 // This would be calculated from actual data
+          avgProcessingTime: 3.5, // This would be calculated from actual data
         },
         industryBreakdown: [
           { industry: 'Manufacturing', applications: 45, approved: 38 },
           { industry: 'Technology', applications: 32, approved: 28 },
           { industry: 'Retail', applications: 28, approved: 22 },
-          { industry: 'Healthcare', applications: 18, approved: 15 }
+          { industry: 'Healthcare', applications: 18, approved: 15 },
         ],
         monthlyTrend: [
           { month: 'Jan', applications: 45, disbursed: 38000000 },
           { month: 'Feb', applications: 52, disbursed: 42000000 },
           { month: 'Mar', applications: 48, disbursed: 39000000 },
-          { month: 'Apr', applications: 61, disbursed: 51000000 }
-        ]
+          { month: 'Apr', applications: 61, disbursed: 51000000 },
+        ],
       };
     } catch (error) {
       console.error('Failed to get NBFC analytics:', error);
@@ -209,23 +209,23 @@ export class MSMEMetabaseIntegration {
           avgDealSize: agent.avgDealSize || 0,
           conversionRate: agent.conversionRate || 0,
           rank: agent.rank || 0,
-          rating: agent.rating || 0
+          rating: agent.rating || 0,
         },
         monthlyPerformance: [
           { month: 'Jan', deals: 3, commission: 150000 },
           { month: 'Feb', deals: 5, commission: 280000 },
           { month: 'Mar', deals: 4, commission: 220000 },
-          { month: 'Apr', deals: 6, commission: 340000 }
+          { month: 'Apr', deals: 6, commission: 340000 },
         ],
         clientBreakdown: [
           { type: 'buyer', count: 12, revenue: 180000 },
-          { type: 'seller', count: 18, revenue: 320000 }
+          { type: 'seller', count: 18, revenue: 320000 },
         ],
         topListings: [
           { listingId: 1, companyName: 'ABC Manufacturing', status: 'completed', value: 25000000 },
           { listingId: 2, companyName: 'XYZ Tech Solutions', status: 'in_progress', value: 18000000 },
-          { listingId: 3, companyName: 'PQR Retail Chain', status: 'completed', value: 32000000 }
-        ]
+          { listingId: 3, companyName: 'PQR Retail Chain', status: 'completed', value: 32000000 },
+        ],
       };
     } catch (error) {
       console.error('Failed to get agent analytics:', error);
@@ -264,31 +264,31 @@ export class MSMEMetabaseIntegration {
           { month: 'Jan', users: 1200, activeUsers: 850 },
           { month: 'Feb', users: 1350, activeUsers: 920 },
           { month: 'Mar', users: 1480, activeUsers: 1050 },
-          { month: 'Apr', users: 1650, activeUsers: 1180 }
+          { month: 'Apr', users: 1650, activeUsers: 1180 },
         ],
         revenueMetrics: {
           totalRevenue: 8500000,
           monthlyRecurring: 250000,
           transactionFees: 450000,
-          commissionsPaid: 1200000
+          commissionsPaid: 1200000,
         },
         topPerformers: {
           agents: [
             { id: 1, name: 'Rajesh Kumar', deals: 18, commission: 850000 },
             { id: 2, name: 'Priya Sharma', deals: 15, commission: 720000 },
-            { id: 3, name: 'Amit Patel', deals: 12, commission: 650000 }
+            { id: 3, name: 'Amit Patel', deals: 12, commission: 650000 },
           ],
           nbfcs: [
             { id: 1, name: 'ABC Finance', applications: 145, disbursed: 85000000 },
             { id: 2, name: 'XYZ Capital', applications: 128, disbursed: 72000000 },
-            { id: 3, name: 'PQR Lending', applications: 98, disbursed: 55000000 }
+            { id: 3, name: 'PQR Lending', applications: 98, disbursed: 55000000 },
           ],
           listings: [
             { id: 1, company: 'Tech Innovations Pvt Ltd', industry: 'Technology', value: 45000000 },
             { id: 2, company: 'Green Energy Solutions', industry: 'Renewable Energy', value: 38000000 },
-            { id: 3, company: 'Healthcare Plus', industry: 'Healthcare', value: 32000000 }
-          ]
-        }
+            { id: 3, company: 'Healthcare Plus', industry: 'Healthcare', value: 32000000 },
+          ],
+        },
       };
     } catch (error) {
       console.error('Failed to get admin analytics:', error);
@@ -303,7 +303,7 @@ export class MSMEMetabaseIntegration {
       const transactionData = await db
         .select({
           totalTransactions: count(),
-          totalValue: sum(msmeListings.askingPrice)
+          totalValue: sum(msmeListings.askingPrice),
         })
         .from(msmeListings)
         .where(eq(msmeListings.status, 'sold'));
@@ -312,7 +312,7 @@ export class MSMEMetabaseIntegration {
       const userMetrics = await db
         .select({
           totalUsers: count(),
-          newUsers: sum(sql<number>`case when created_at >= current_date - interval '30 days' then 1 else 0 end`)
+          newUsers: sum(sql<number>`case when created_at >= current_date - interval '30 days' then 1 else 0 end`),
         })
         .from(users);
 
@@ -321,7 +321,7 @@ export class MSMEMetabaseIntegration {
         .select({
           industry: msmeListings.industry,
           count: count(),
-          value: sum(msmeListings.askingPrice)
+          value: sum(msmeListings.askingPrice),
         })
         .from(msmeListings)
         .groupBy(msmeListings.industry)
@@ -334,25 +334,25 @@ export class MSMEMetabaseIntegration {
       return {
         totalTransactions: transactions.totalTransactions,
         totalValue: Number(transactions.totalValue) || 0,
-        avgDealSize: transactions.totalTransactions > 0 ? 
+        avgDealSize: transactions.totalTransactions > 0 ?
           (Number(transactions.totalValue) / transactions.totalTransactions) : 0,
         conversionRate: 15.8, // This would be calculated from actual data
         topIndustries: industryBreakdown.map(item => ({
           industry: item.industry,
           count: item.count,
-          value: Number(item.value) || 0
+          value: Number(item.value) || 0,
         })),
         monthlyTrend: [
           { month: 'Jan', transactions: 45, value: 180000000 },
           { month: 'Feb', transactions: 52, value: 210000000 },
           { month: 'Mar', transactions: 48, value: 195000000 },
-          { month: 'Apr', transactions: 61, value: 245000000 }
+          { month: 'Apr', transactions: 61, value: 245000000 },
         ],
         userMetrics: {
           totalUsers: users.totalUsers,
           activeUsers: Math.floor(users.totalUsers * 0.65), // Estimated active users
-          newUsers: Number(users.newUsers) || 0
-        }
+          newUsers: Number(users.newUsers) || 0,
+        },
       };
     } catch (error) {
       console.error('Failed to get platform metrics:', error);
@@ -364,7 +364,7 @@ export class MSMEMetabaseIntegration {
   async createCustomDashboard(
     name: string,
     description: string,
-    questions: number[]
+    questions: number[],
   ): Promise<{ id: number; url: string }> {
     try {
       if (!this.sessionToken) {
@@ -376,14 +376,14 @@ export class MSMEMetabaseIntegration {
         {
           name,
           description,
-          parameters: []
+          parameters: [],
         },
         {
           headers: {
             'X-Metabase-Session': this.sessionToken,
-            'Content-Type': 'application/json'
-          }
-        }
+            'Content-Type': 'application/json',
+          },
+        },
       );
 
       const dashboardId = response.data.id;
@@ -397,20 +397,20 @@ export class MSMEMetabaseIntegration {
             row: 0,
             col: 0,
             sizeX: 4,
-            sizeY: 4
+            sizeY: 4,
           },
           {
             headers: {
               'X-Metabase-Session': this.sessionToken,
-              'Content-Type': 'application/json'
-            }
-          }
+              'Content-Type': 'application/json',
+            },
+          },
         );
       }
 
       return {
         id: dashboardId,
-        url: this.getEmbeddedDashboardUrl(dashboardId)
+        url: this.getEmbeddedDashboardUrl(dashboardId),
       };
     } catch (error) {
       console.error('Failed to create custom dashboard:', error);
@@ -434,16 +434,16 @@ export class MSMEMetabaseIntegration {
         `${this.config.siteUrl}/api/card`,
         {
           headers: {
-            'X-Metabase-Session': this.sessionToken
-          }
-        }
+            'X-Metabase-Session': this.sessionToken,
+          },
+        },
       );
 
       return response.data.map((card: any) => ({
         id: card.id,
         name: card.name,
         description: card.description || '',
-        collection: card.collection?.name || 'Default'
+        collection: card.collection?.name || 'Default',
       }));
     } catch (error) {
       console.error('Failed to get available questions:', error);
@@ -464,15 +464,15 @@ export class MSMEMetabaseIntegration {
           database: 1, // Assuming database ID 1
           type: 'native',
           native: {
-            query
-          }
+            query,
+          },
         },
         {
           headers: {
             'X-Metabase-Session': this.sessionToken,
-            'Content-Type': 'application/json'
-          }
-        }
+            'Content-Type': 'application/json',
+          },
+        },
       );
 
       return response.data;
@@ -493,28 +493,28 @@ export class MSMEMetabaseIntegration {
     }>;
   }> {
     const dashboardId = this.getDashboardIdByRole(userRole);
-    
+
     return {
       dashboardUrl: this.getEmbeddedDashboardUrl(dashboardId, { user_id: userId }),
-      widgets: this.getWidgetsByRole(userRole)
+      widgets: this.getWidgetsByRole(userRole),
     };
   }
 
   // Get dashboard ID by user role
   private getDashboardIdByRole(role: string): number {
     switch (role) {
-      case 'nbfc':
-        return 1; // NBFC Dashboard
-      case 'agent':
-        return 2; // Agent Dashboard
-      case 'admin':
-        return 3; // Admin Dashboard
-      case 'seller':
-        return 4; // Seller Dashboard
-      case 'buyer':
-        return 5; // Buyer Dashboard
-      default:
-        return 6; // Default Dashboard
+    case 'nbfc':
+      return 1; // NBFC Dashboard
+    case 'agent':
+      return 2; // Agent Dashboard
+    case 'admin':
+      return 3; // Admin Dashboard
+    case 'seller':
+      return 4; // Seller Dashboard
+    case 'buyer':
+      return 5; // Buyer Dashboard
+    default:
+      return 6; // Default Dashboard
     }
   }
 
@@ -530,45 +530,45 @@ export class MSMEMetabaseIntegration {
         id: 'overview',
         type: 'stats',
         title: 'Overview',
-        config: { showTrends: true }
-      }
+        config: { showTrends: true },
+      },
     ];
 
     switch (role) {
-      case 'nbfc':
-        return [
-          ...commonWidgets,
-          {
-            id: 'applications',
-            type: 'chart',
-            title: 'Loan Applications',
-            config: { chartType: 'bar', period: 'monthly' }
-          },
-          {
-            id: 'disbursements',
-            type: 'chart',
-            title: 'Disbursements',
-            config: { chartType: 'line', period: 'monthly' }
-          }
-        ];
-      case 'agent':
-        return [
-          ...commonWidgets,
-          {
-            id: 'commissions',
-            type: 'chart',
-            title: 'Commission Earnings',
-            config: { chartType: 'area', period: 'monthly' }
-          },
-          {
-            id: 'deals',
-            type: 'table',
-            title: 'Recent Deals',
-            config: { limit: 10 }
-          }
-        ];
-      default:
-        return commonWidgets;
+    case 'nbfc':
+      return [
+        ...commonWidgets,
+        {
+          id: 'applications',
+          type: 'chart',
+          title: 'Loan Applications',
+          config: { chartType: 'bar', period: 'monthly' },
+        },
+        {
+          id: 'disbursements',
+          type: 'chart',
+          title: 'Disbursements',
+          config: { chartType: 'line', period: 'monthly' },
+        },
+      ];
+    case 'agent':
+      return [
+        ...commonWidgets,
+        {
+          id: 'commissions',
+          type: 'chart',
+          title: 'Commission Earnings',
+          config: { chartType: 'area', period: 'monthly' },
+        },
+        {
+          id: 'deals',
+          type: 'table',
+          title: 'Recent Deals',
+          config: { limit: 10 },
+        },
+      ];
+    default:
+      return commonWidgets;
     }
   }
 
@@ -592,13 +592,13 @@ export class MSMEMetabaseIntegration {
   }> {
     try {
       const response = await axios.get(`${this.config.siteUrl}/api/health`);
-      
+
       return {
         status: 'healthy',
         version: response.data.version || '0.47.0',
         uptime: response.data.uptime || 0,
         activeUsers: 45,
-        totalDashboards: 12
+        totalDashboards: 12,
       };
     } catch (error) {
       return {
@@ -606,7 +606,7 @@ export class MSMEMetabaseIntegration {
         version: 'unknown',
         uptime: 0,
         activeUsers: 0,
-        totalDashboards: 0
+        totalDashboards: 0,
       };
     }
   }

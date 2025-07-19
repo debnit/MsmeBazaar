@@ -1,30 +1,30 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { FileText, ArrowLeft, Eye, CheckCircle, XCircle, Clock, DollarSign } from "lucide-react";
-import { Link } from "wouter";
-import Navbar from "@/components/layout/navbar";
-import { nbfcApi, loanApi } from "@/lib/api";
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
+import { FileText, ArrowLeft, Eye, CheckCircle, XCircle, Clock, DollarSign } from 'lucide-react';
+import { Link } from 'wouter';
+import Navbar from '@/components/layout/navbar';
+import { nbfcApi, loanApi } from '@/lib/api';
 
 export default function LoanApplications() {
   const [selectedApplication, setSelectedApplication] = useState<any>(null);
   const [filters, setFilters] = useState({
-    status: "",
-    search: "",
+    status: '',
+    search: '',
   });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: applications, isLoading } = useQuery({
-    queryKey: ["/api/nbfc/loan-applications", filters],
+    queryKey: ['/api/nbfc/loan-applications', filters],
     queryFn: () => nbfcApi.getLoanApplications(),
   });
 
@@ -32,17 +32,17 @@ export default function LoanApplications() {
     mutationFn: ({ id, data }: { id: number; data: any }) => loanApi.updateApplication(id, data),
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Application updated successfully",
+        title: 'Success',
+        description: 'Application updated successfully',
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/nbfc/loan-applications"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/nbfc/loan-applications'] });
       setSelectedApplication(null);
     },
     onError: (error) => {
       toast({
-        title: "Error",
+        title: 'Error',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     },
   });
@@ -50,40 +50,40 @@ export default function LoanApplications() {
   const handleStatusUpdate = (applicationId: number, status: string, notes?: string) => {
     updateApplicationMutation.mutate({
       id: applicationId,
-      data: { status, internalNotes: notes }
+      data: { status, internalNotes: notes },
     });
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "pending":
-        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
-      case "under_review":
-        return <Badge className="bg-blue-100 text-blue-800">Under Review</Badge>;
-      case "approved":
-        return <Badge className="bg-green-100 text-green-800">Approved</Badge>;
-      case "rejected":
-        return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
-      case "disbursed":
-        return <Badge className="bg-purple-100 text-purple-800">Disbursed</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
+    case 'pending':
+      return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+    case 'under_review':
+      return <Badge className="bg-blue-100 text-blue-800">Under Review</Badge>;
+    case 'approved':
+      return <Badge className="bg-green-100 text-green-800">Approved</Badge>;
+    case 'rejected':
+      return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
+    case 'disbursed':
+      return <Badge className="bg-purple-100 text-purple-800">Disbursed</Badge>;
+    default:
+      return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
     }
   };
 
   const filteredApplications = applications?.filter((app: any) => {
     const matchesStatus = !filters.status || app.status === filters.status;
-    const matchesSearch = !filters.search || 
+    const matchesSearch = !filters.search ||
       app.id.toString().includes(filters.search) ||
       app.loanAmount.toString().includes(filters.search);
-    
+
     return matchesStatus && matchesSearch;
   }) || [];
 
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <Link href="/nbfc/dashboard">
@@ -112,7 +112,7 @@ export default function LoanApplications() {
                   onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="status">Status</Label>
                 <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
@@ -129,11 +129,11 @@ export default function LoanApplications() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="flex items-end">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setFilters({ status: "", search: "" })}
+                <Button
+                  variant="outline"
+                  onClick={() => setFilters({ status: '', search: '' })}
                 >
                   Clear Filters
                 </Button>
@@ -210,7 +210,7 @@ export default function LoanApplications() {
                             Buyer #{application.buyerId}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {application.creditScore ? `Credit Score: ${application.creditScore}` : "Assessment pending"}
+                            {application.creditScore ? `Credit Score: ${application.creditScore}` : 'Assessment pending'}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -218,7 +218,7 @@ export default function LoanApplications() {
                             MSME #{application.msmeId}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {application.loanPurpose || "Acquisition"}
+                            {application.loanPurpose || 'Acquisition'}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -230,8 +230,8 @@ export default function LoanApplications() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                           <Dialog>
                             <DialogTrigger asChild>
-                              <Button 
-                                variant="ghost" 
+                              <Button
+                                variant="ghost"
                                 size="sm"
                                 onClick={() => setSelectedApplication(application)}
                               >
@@ -262,40 +262,40 @@ export default function LoanApplications() {
                                     <div className="mt-1">{getStatusBadge(application.status)}</div>
                                   </div>
                                 </div>
-                                
+
                                 <div>
                                   <Label className="text-sm font-medium text-gray-500">Purpose</Label>
-                                  <p className="mt-1">{application.loanPurpose || "MSME Acquisition"}</p>
+                                  <p className="mt-1">{application.loanPurpose || 'MSME Acquisition'}</p>
                                 </div>
-                                
+
                                 {application.collateral && (
                                   <div>
                                     <Label className="text-sm font-medium text-gray-500">Collateral</Label>
                                     <p className="mt-1">{application.collateral}</p>
                                   </div>
                                 )}
-                                
+
                                 <div className="flex space-x-2">
-                                  {application.status === "pending" && (
+                                  {application.status === 'pending' && (
                                     <>
-                                      <Button 
-                                        onClick={() => handleStatusUpdate(application.id, "under_review")}
+                                      <Button
+                                        onClick={() => handleStatusUpdate(application.id, 'under_review')}
                                         disabled={updateApplicationMutation.isPending}
                                         className="bg-blue-600 hover:bg-blue-700"
                                       >
                                         <Clock className="h-4 w-4 mr-2" />
                                         Review
                                       </Button>
-                                      <Button 
-                                        onClick={() => handleStatusUpdate(application.id, "approved")}
+                                      <Button
+                                        onClick={() => handleStatusUpdate(application.id, 'approved')}
                                         disabled={updateApplicationMutation.isPending}
                                         className="bg-green-600 hover:bg-green-700"
                                       >
                                         <CheckCircle className="h-4 w-4 mr-2" />
                                         Approve
                                       </Button>
-                                      <Button 
-                                        onClick={() => handleStatusUpdate(application.id, "rejected")}
+                                      <Button
+                                        onClick={() => handleStatusUpdate(application.id, 'rejected')}
                                         disabled={updateApplicationMutation.isPending}
                                         variant="destructive"
                                       >
@@ -304,9 +304,9 @@ export default function LoanApplications() {
                                       </Button>
                                     </>
                                   )}
-                                  {application.status === "approved" && (
-                                    <Button 
-                                      onClick={() => handleStatusUpdate(application.id, "disbursed")}
+                                  {application.status === 'approved' && (
+                                    <Button
+                                      onClick={() => handleStatusUpdate(application.id, 'disbursed')}
                                       disabled={updateApplicationMutation.isPending}
                                       className="bg-purple-600 hover:bg-purple-700"
                                     >

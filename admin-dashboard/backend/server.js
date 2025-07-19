@@ -20,7 +20,7 @@ class AdminDashboardServer {
     this.rbacService = new RBACService();
     this.analyticsService = new AnalyticsService();
     this.workflowService = new WorkflowAutomationService();
-    
+
     this.setupMiddleware();
     this.setupRoutes();
     this.setupErrorHandling();
@@ -32,23 +32,23 @@ class AdminDashboardServer {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-          fontSrc: ["'self'", "https://fonts.gstatic.com"],
+          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+          fontSrc: ["'self'", 'https://fonts.gstatic.com'],
           scriptSrc: ["'self'"],
-          imgSrc: ["'self'", "data:", "https:"],
-          connectSrc: ["'self'", "ws:", "wss:"]
-        }
-      }
+          imgSrc: ["'self'", 'data:', 'https:'],
+          connectSrc: ["'self'", 'ws:', 'wss:'],
+        },
+      },
     }));
 
     // CORS configuration
     this.app.use(cors({
-      origin: process.env.NODE_ENV === 'production' 
+      origin: process.env.NODE_ENV === 'production'
         ? [process.env.CLIENT_URL, process.env.ADMIN_CLIENT_URL]
         : ['http://localhost:3000', 'http://localhost:3001'],
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     }));
 
     // Rate limiting
@@ -57,14 +57,14 @@ class AdminDashboardServer {
       max: process.env.NODE_ENV === 'production' ? 100 : 1000, // limit each IP to 100 requests per windowMs in production
       message: {
         error: 'Too many requests from this IP, please try again later.',
-        retryAfter: '15 minutes'
+        retryAfter: '15 minutes',
       },
       standardHeaders: true,
       legacyHeaders: false,
       skip: (req) => {
         // Skip rate limiting for health checks
         return req.path === '/api/admin/system/health';
-      }
+      },
     });
 
     // Apply rate limiting to admin routes
@@ -110,11 +110,11 @@ class AdminDashboardServer {
   setupRoutes() {
     // Health check endpoint (public)
     this.app.get('/health', (req, res) => {
-      res.json({ 
-        status: 'healthy', 
+      res.json({
+        status: 'healthy',
         timestamp: new Date().toISOString(),
         service: 'admin-dashboard',
-        version: process.env.npm_package_version || '1.0.0'
+        version: process.env.npm_package_version || '1.0.0',
       });
     });
 
@@ -125,30 +125,30 @@ class AdminDashboardServer {
     this.app.post('/api/admin/auth/login', async (req, res) => {
       try {
         const { email, password } = req.body;
-        
+
         if (!email || !password) {
           return res.status(400).json({
             success: false,
-            error: 'Email and password are required'
+            error: 'Email and password are required',
           });
         }
 
         const result = await this.rbacService.authenticateUser(
-          email, 
-          password, 
-          req.ip, 
-          req.get('User-Agent')
+          email,
+          password,
+          req.ip,
+          req.get('User-Agent'),
         );
-        
+
         res.json({
           success: true,
-          data: result
+          data: result,
         });
       } catch (error) {
         console.error('Login error:', error);
         res.status(401).json({
           success: false,
-          error: error.message
+          error: error.message,
         });
       }
     });
@@ -159,19 +159,19 @@ class AdminDashboardServer {
         if (process.env.NODE_ENV === 'production') {
           return res.status(403).json({
             success: false,
-            error: 'Initialization not allowed in production'
+            error: 'Initialization not allowed in production',
           });
         }
 
         await this.rbacService.initializeRBAC();
-        
+
         // Create default super admin user
         const defaultAdmin = {
           email: 'admin@msmebazaar.com',
           password: 'Admin123!',
           firstName: 'System',
           lastName: 'Administrator',
-          roleName: 'super_admin'
+          roleName: 'super_admin',
         };
 
         await this.rbacService.createAdminUser(defaultAdmin, null);
@@ -181,14 +181,14 @@ class AdminDashboardServer {
           message: 'RBAC system initialized successfully',
           defaultAdmin: {
             email: defaultAdmin.email,
-            password: defaultAdmin.password
-          }
+            password: defaultAdmin.password,
+          },
         });
       } catch (error) {
         console.error('Initialization error:', error);
         res.status(500).json({
           success: false,
-          error: error.message
+          error: error.message,
         });
       }
     });
@@ -197,19 +197,19 @@ class AdminDashboardServer {
     this.app.post('/api/admin/workflows/msme-onboarding', async (req, res) => {
       try {
         const msmeData = req.body;
-        
+
         // Example MSME onboarding automation
         const result = await this.automateMSMEOnboarding(msmeData);
-        
+
         res.json({
           success: true,
-          data: result
+          data: result,
         });
       } catch (error) {
         console.error('MSME onboarding error:', error);
         res.status(500).json({
           success: false,
-          error: error.message
+          error: error.message,
         });
       }
     });
@@ -227,7 +227,7 @@ class AdminDashboardServer {
         success: false,
         error: 'API endpoint not found',
         path: req.path,
-        method: req.method
+        method: req.method,
       });
     });
   }
@@ -242,18 +242,18 @@ class AdminDashboardServer {
         path: req.path,
         method: req.method,
         body: req.body,
-        user: req.user
+        user: req.user,
       });
 
       // Don't leak error details in production
       const isDevelopment = process.env.NODE_ENV !== 'production';
-      
+
       res.status(error.status || 500).json({
         success: false,
         error: isDevelopment ? error.message : 'Internal server error',
         ...(isDevelopment && { stack: error.stack }),
         requestId: req.id,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     });
 
@@ -290,23 +290,23 @@ class AdminDashboardServer {
 
       // Step 2: Verify MSME details
       const isVerified = await this.verifyMSMEData(msmeData);
-      
+
       // Step 3: Auto-generate invoices for MSME
       if (isVerified) {
         const invoice = await this.generateInvoice(msmeData);
-        
+
         // Log successful onboarding
         console.log('MSME onboarding completed successfully for:', msmeData.email);
-        
+
         return {
           status: 'completed',
           msmeId: msmeData.id,
           invoice,
-          message: 'MSME onboarding completed successfully'
+          message: 'MSME onboarding completed successfully',
         };
-      } else {
-        throw new Error('MSME verification failed!');
       }
+      throw new Error('MSME verification failed!');
+
     } catch (error) {
       console.error('MSME onboarding failed:', error);
       throw error;
@@ -317,20 +317,20 @@ class AdminDashboardServer {
   async sendOTP(email) {
     // Implementation for sending OTP
     console.log(`Sending OTP to ${email}`);
-    
+
     // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    
+
     // Store OTP in Redis with expiration
     await this.workflowService.redis.setEx(`otp:${email}`, 600, otp); // 10 minutes
-    
+
     // Send email via workflow service
     await this.workflowService.notificationQueue.add('send-notification', {
       type: 'email',
       to: email,
       subject: 'MSMEBazaar - Verification Code',
       template: 'otp',
-      data: { otp }
+      data: { otp },
     });
 
     return { sent: true, email };
@@ -339,11 +339,11 @@ class AdminDashboardServer {
   async verifyMSMEData(msmeData) {
     // Implementation for MSME data verification
     console.log(`Verifying MSME data for ${msmeData.companyName}`);
-    
+
     // Basic validation
     const requiredFields = ['companyName', 'email', 'gstin', 'pan', 'businessType'];
     const missingFields = requiredFields.filter(field => !msmeData[field]);
-    
+
     if (missingFields.length > 0) {
       console.log('Missing required fields:', missingFields);
       return false;
@@ -369,7 +369,7 @@ class AdminDashboardServer {
   async generateInvoice(msmeData) {
     // Implementation for invoice generation
     console.log(`Generating invoice for ${msmeData.companyName}`);
-    
+
     const invoice = {
       id: `INV-${Date.now()}`,
       msmeId: msmeData.id,
@@ -382,14 +382,14 @@ class AdminDashboardServer {
         {
           description: 'Platform Setup and Onboarding',
           amount: 0,
-          type: 'setup'
-        }
-      ]
+          type: 'setup',
+        },
+      ],
     };
 
     // Store invoice in database (mock implementation)
     console.log('Invoice generated:', invoice.id);
-    
+
     return invoice;
   }
 
@@ -397,14 +397,14 @@ class AdminDashboardServer {
   async processOnboarding(msmeId) {
     try {
       const msme = await this.getMSMEById(msmeId);
-      
+
       // Automate data processing and verification
       await this.automateMSMEOnboarding(msme);
-      
-      return { 
-        taskId: msmeId, 
+
+      return {
+        taskId: msmeId,
         status: 'Completed',
-        completedAt: new Date()
+        completedAt: new Date(),
       };
     } catch (error) {
       console.error('Background onboarding processing failed:', error);
@@ -412,7 +412,7 @@ class AdminDashboardServer {
         taskId: msmeId,
         status: 'Failed',
         error: error.message,
-        failedAt: new Date()
+        failedAt: new Date(),
       };
     }
   }
@@ -425,7 +425,7 @@ class AdminDashboardServer {
       email: 'sample@msme.com',
       gstin: '123456789012345',
       pan: 'ABCDE1234F',
-      businessType: 'Manufacturing'
+      businessType: 'Manufacturing',
     };
   }
 
@@ -433,15 +433,15 @@ class AdminDashboardServer {
     try {
       // Test database connections
       await this.testConnections();
-      
+
       this.server = this.app.listen(this.port, () => {
         console.log(`🚀 Admin Dashboard Server running on port ${this.port}`);
         console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
         console.log(`🔗 API URL: http://localhost:${this.port}/api/admin`);
-        
+
         if (process.env.NODE_ENV !== 'production') {
           console.log(`⚙️  Initialize RBAC: POST http://localhost:${this.port}/api/admin/initialize`);
-          console.log(`🔐 Default Admin: admin@msmebazaar.com / Admin123!`);
+          console.log('🔐 Default Admin: admin@msmebazaar.com / Admin123!');
         }
       });
 
@@ -470,7 +470,7 @@ class AdminDashboardServer {
 
   async shutdown() {
     console.log('Shutting down server...');
-    
+
     try {
       // Close server
       if (this.server) {

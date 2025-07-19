@@ -1,23 +1,23 @@
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { 
-  Building, 
-  MapPin, 
-  Users, 
-  TrendingUp, 
-  Heart, 
-  Eye, 
+import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Building,
+  MapPin,
+  Users,
+  TrendingUp,
+  Heart,
+  Eye,
   DollarSign,
   AlertTriangle,
-  Star
-} from "lucide-react";
-import { useAuth } from "@/components/auth/auth-provider";
-import { buyerApi } from "@/lib/api";
-import { MsmeListing } from "@shared/schema";
+  Star,
+} from 'lucide-react';
+import { useAuth } from '@/components/auth/auth-provider';
+import { buyerApi } from '@/lib/api';
+import { MsmeListing } from '@shared/schema';
 
 interface ListingCardProps {
   listing: MsmeListing;
@@ -39,42 +39,42 @@ export default function ListingCard({ listing, showActions = true }: ListingCard
     },
     onSuccess: () => {
       toast({
-        title: "Interest Expressed",
-        description: "Your interest has been recorded. The seller will be notified.",
+        title: 'Interest Expressed',
+        description: 'Your interest has been recorded. The seller will be notified.',
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/buyer/interests"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/buyer/interests'] });
     },
     onError: (error) => {
       toast({
-        title: "Error",
+        title: 'Error',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     },
   });
 
   const handleExpressInterest = () => {
-    if (!user) return;
-    
+    if (!user) {return;}
+
     expressInterestMutation.mutate({
       msmeId: listing.id,
-      interestType: "inquiry",
+      interestType: 'inquiry',
       message: `I'm interested in acquiring ${listing.companyName}. Please share more details.`,
     });
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "active":
-        return <Badge className="bg-green-100 text-green-800">Active</Badge>;
-      case "under_review":
-        return <Badge className="bg-yellow-100 text-yellow-800">Under Review</Badge>;
-      case "sold":
-        return <Badge className="bg-blue-100 text-blue-800">Sold</Badge>;
-      case "suspended":
-        return <Badge className="bg-red-100 text-red-800">Suspended</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
+    case 'active':
+      return <Badge className="bg-green-100 text-green-800">Active</Badge>;
+    case 'under_review':
+      return <Badge className="bg-yellow-100 text-yellow-800">Under Review</Badge>;
+    case 'sold':
+      return <Badge className="bg-blue-100 text-blue-800">Sold</Badge>;
+    case 'suspended':
+      return <Badge className="bg-red-100 text-red-800">Suspended</Badge>;
+    default:
+      return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
     }
   };
 
@@ -148,7 +148,7 @@ export default function ListingCard({ listing, showActions = true }: ListingCard
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="text-primary hover:text-primary/80 p-0 h-auto"
               >
-                {isExpanded ? "Show less" : "Show more"}
+                {isExpanded ? 'Show less' : 'Show more'}
               </Button>
             )}
           </div>
@@ -190,7 +190,7 @@ export default function ListingCard({ listing, showActions = true }: ListingCard
         )}
 
         {/* Actions */}
-        {showActions && user?.role === "buyer" && (
+        {showActions && user?.role === 'buyer' && (
           <div className="flex space-x-2 pt-2">
             <Button
               onClick={handleExpressInterest}
@@ -211,7 +211,7 @@ export default function ListingCard({ listing, showActions = true }: ListingCard
           </div>
         )}
 
-        {showActions && user?.role === "nbfc" && (
+        {showActions && user?.role === 'nbfc' && (
           <div className="flex space-x-2 pt-2">
             <Button className="flex-1 bg-secondary hover:bg-secondary/90">
               <DollarSign className="h-4 w-4 mr-2" />

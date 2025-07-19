@@ -23,7 +23,7 @@ app.get('/health', (req, res) => {
 app.post('/register', async (req, res) => {
   try {
     const { email, password, firstName, lastName, role } = req.body;
-    
+
     if (users.has(email)) {
       return res.status(400).json({ error: 'User already exists' });
     }
@@ -36,20 +36,20 @@ app.post('/register', async (req, res) => {
       firstName,
       lastName,
       role,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     users.set(email, user);
-    
+
     const token = jwt.sign(
       { userId: user.id, email, role },
       process.env.JWT_SECRET || 'fallback-secret',
-      { expiresIn: '24h' }
+      { expiresIn: '24h' },
     );
 
-    res.json({ 
-      user: { ...user, password: undefined }, 
-      token 
+    res.json({
+      user: { ...user, password: undefined },
+      token,
     });
   } catch (error) {
     res.status(500).json({ error: 'Registration failed' });
@@ -69,12 +69,12 @@ app.post('/login', async (req, res) => {
     const token = jwt.sign(
       { userId: user.id, email, role: user.role },
       process.env.JWT_SECRET || 'fallback-secret',
-      { expiresIn: '24h' }
+      { expiresIn: '24h' },
     );
 
-    res.json({ 
-      user: { ...user, password: undefined }, 
-      token 
+    res.json({
+      user: { ...user, password: undefined },
+      token,
     });
   } catch (error) {
     res.status(500).json({ error: 'Login failed' });
@@ -84,7 +84,7 @@ app.post('/login', async (req, res) => {
 // Get user profile
 app.get('/me', (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
-  
+
   if (!token) {
     return res.status(401).json({ error: 'No token provided' });
   }
@@ -92,7 +92,7 @@ app.get('/me', (req, res) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
     const user = Array.from(users.values()).find(u => u.id === decoded.userId);
-    
+
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }

@@ -24,7 +24,7 @@ class StartupOptimizer {
   private detectOptimizationLevel(): void {
     const memUsage = process.memoryUsage();
     const availableMemory = memUsage.heapTotal;
-    
+
     // Determine optimization level based on available resources
     if (availableMemory < 100 * 1024 * 1024) { // Less than 100MB
       this.optimizationLevel = 'aggressive';
@@ -39,69 +39,69 @@ class StartupOptimizer {
 
   private applyOptimizations(): void {
     switch (this.optimizationLevel) {
-      case 'aggressive':
-        this.applyAggressiveOptimizations();
-        break;
-      case 'standard':
-        this.applyStandardOptimizations();
-        break;
-      case 'minimal':
-        this.applyMinimalOptimizations();
-        break;
+    case 'aggressive':
+      this.applyAggressiveOptimizations();
+      break;
+    case 'standard':
+      this.applyStandardOptimizations();
+      break;
+    case 'minimal':
+      this.applyMinimalOptimizations();
+      break;
     }
   }
 
   private applyAggressiveOptimizations(): void {
     // Aggressive memory management
     memoryManager.clearCache();
-    
+
     // Reduce monitoring frequency
     this.optimizations.set('reducedMonitoring', true);
-    
+
     // Disable non-essential features
     this.optimizations.set('disableNonEssential', true);
-    
+
     // Force garbage collection more frequently
     if (global.gc) {
       setInterval(() => {
         global.gc();
       }, 30000); // Every 30 seconds
     }
-    
+
     // Limit concurrent requests
     process.env.MAX_CONCURRENT_REQUESTS = '10';
-    
+
     console.log('✅ Aggressive optimizations applied');
   }
 
   private applyStandardOptimizations(): void {
     // Standard memory management
     this.optimizations.set('standardMemory', true);
-    
+
     // Regular garbage collection
     if (global.gc) {
       setInterval(() => {
         global.gc();
       }, 60000); // Every minute
     }
-    
+
     // Moderate monitoring
     this.optimizations.set('moderateMonitoring', true);
-    
+
     console.log('✅ Standard optimizations applied');
   }
 
   private applyMinimalOptimizations(): void {
     // Light optimizations
     this.optimizations.set('lightOptimizations', true);
-    
+
     // Occasional garbage collection
     if (global.gc) {
       setInterval(() => {
         global.gc();
       }, 120000); // Every 2 minutes
     }
-    
+
     console.log('✅ Minimal optimizations applied');
   }
 
@@ -117,21 +117,21 @@ class StartupOptimizer {
 
   public enableOptimization(name: string): void {
     this.optimizations.set(name, true);
-    
+
     switch (name) {
-      case 'aggressiveMemory':
-        this.applyAggressiveOptimizations();
-        break;
-      case 'reducedFeatures':
-        this.optimizations.set('disableNonEssential', true);
-        break;
-      case 'fastGC':
-        if (global.gc) {
-          setInterval(() => {
-            global.gc();
-          }, 15000); // Every 15 seconds
-        }
-        break;
+    case 'aggressiveMemory':
+      this.applyAggressiveOptimizations();
+      break;
+    case 'reducedFeatures':
+      this.optimizations.set('disableNonEssential', true);
+      break;
+    case 'fastGC':
+      if (global.gc) {
+        setInterval(() => {
+          global.gc();
+        }, 15000); // Every 15 seconds
+      }
+      break;
     }
   }
 
@@ -145,33 +145,33 @@ class StartupOptimizer {
 
   public optimizeForMemory(): void {
     console.log('🔧 Optimizing for memory...');
-    
+
     // Clear all caches
     memoryManager.clearCache();
-    
+
     // Force garbage collection
     if (global.gc) {
       global.gc();
     }
-    
+
     // Reduce monitoring frequency
     performanceMonitor.optimizePerformance();
-    
+
     // Set memory optimization flags
     this.optimizations.set('memoryOptimized', true);
-    
+
     console.log('✅ Memory optimization completed');
   }
 
   public optimizeForSpeed(): void {
     console.log('🔧 Optimizing for speed...');
-    
+
     // Preload critical modules
     this.preloadCriticalModules();
-    
+
     // Increase monitoring frequency for faster response
     this.optimizations.set('speedOptimized', true);
-    
+
     console.log('✅ Speed optimization completed');
   }
 
@@ -183,7 +183,7 @@ class StartupOptimizer {
       './services/valuation',
       './services/matchmaking',
     ];
-    
+
     criticalModules.forEach(module => {
       try {
         require(module);
@@ -197,28 +197,28 @@ class StartupOptimizer {
     const recommendations = [];
     const memUsage = process.memoryUsage();
     const perfMetrics = performanceMonitor.getCurrentMetrics();
-    
+
     // Memory recommendations
     if (memUsage.heapUsed > 100 * 1024 * 1024) {
       recommendations.push('Consider enabling aggressive memory optimization');
     }
-    
+
     // Performance recommendations
     if (perfMetrics && perfMetrics.responseTime > 1000) {
       recommendations.push('Enable speed optimization to reduce response times');
     }
-    
+
     // Error rate recommendations
     if (perfMetrics && perfMetrics.errorRate > 0.02) {
       recommendations.push('Enable error handling optimization');
     }
-    
+
     return recommendations;
   }
 
   public applyRecommendations(): void {
     const recommendations = this.getRecommendations();
-    
+
     recommendations.forEach(recommendation => {
       if (recommendation.includes('memory')) {
         this.optimizeForMemory();

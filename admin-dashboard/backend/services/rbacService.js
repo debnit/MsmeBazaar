@@ -7,13 +7,13 @@ class RBACService {
   constructor() {
     this.db = new Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === 'production'
+      ssl: process.env.NODE_ENV === 'production',
     });
-    
+
     this.redis = Redis.createClient({
-      url: process.env.REDIS_URL
+      url: process.env.REDIS_URL,
     });
-    
+
     this.redis.connect();
 
     // Define comprehensive role hierarchy and permissions
@@ -21,7 +21,7 @@ class RBACService {
       super_admin: {
         level: 100,
         inherits: [],
-        permissions: ['*'] // All permissions
+        permissions: ['*'], // All permissions
       },
       admin: {
         level: 90,
@@ -36,8 +36,8 @@ class RBACService {
           'workflows:create', 'workflows:read', 'workflows:update', 'workflows:delete',
           'reports:create', 'reports:read', 'reports:export',
           'settings:read', 'settings:update',
-          'audit:read'
-        ]
+          'audit:read',
+        ],
       },
       manager: {
         level: 70,
@@ -49,8 +49,8 @@ class RBACService {
           'analytics:read',
           'workflows:read', 'workflows:update',
           'reports:read',
-          'users:read', 'users:update:own_team'
-        ]
+          'users:read', 'users:update:own_team',
+        ],
       },
       senior_agent: {
         level: 50,
@@ -60,8 +60,8 @@ class RBACService {
           'valuations:read', 'valuations:update:assigned',
           'analytics:read:limited',
           'workflows:read:assigned',
-          'reports:read:own'
-        ]
+          'reports:read:own',
+        ],
       },
       agent: {
         level: 30,
@@ -69,17 +69,17 @@ class RBACService {
         permissions: [
           'msmes:read:assigned',
           'valuations:read:assigned',
-          'workflows:read:assigned'
-        ]
+          'workflows:read:assigned',
+        ],
       },
       viewer: {
         level: 10,
         inherits: [],
         permissions: [
           'dashboard:read',
-          'profile:read', 'profile:update:own'
-        ]
-      }
+          'profile:read', 'profile:update:own',
+        ],
+      },
     };
 
     // Resource-specific permissions
@@ -95,7 +95,7 @@ class RBACService {
       audit: ['read', 'export'],
       team: ['manage', 'assign', 'review'],
       dashboard: ['read', 'customize'],
-      profile: ['read', 'update']
+      profile: ['read', 'update'],
     };
   }
 
@@ -104,11 +104,11 @@ class RBACService {
     try {
       // Create RBAC tables
       await this.createRBACTables();
-      
+
       // Insert default roles and permissions
       await this.insertDefaultRoles();
       await this.insertDefaultPermissions();
-      
+
       console.log('RBAC system initialized successfully');
     } catch (error) {
       console.error('Failed to initialize RBAC system:', error);
@@ -199,7 +199,7 @@ class RBACService {
         manager_id INTEGER REFERENCES admin_users(id),
         is_active BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT NOW()
-      )`
+      )`,
     ];
 
     for (const query of queries) {
@@ -214,21 +214,21 @@ class RBACService {
       { name: 'manager', display_name: 'Manager', level: 70, description: 'Team management access' },
       { name: 'senior_agent', display_name: 'Senior Agent', level: 50, description: 'Advanced agent access' },
       { name: 'agent', display_name: 'Agent', level: 30, description: 'Standard agent access' },
-      { name: 'viewer', display_name: 'Viewer', level: 10, description: 'Read-only access' }
+      { name: 'viewer', display_name: 'Viewer', level: 10, description: 'Read-only access' },
     ];
 
     for (const role of roles) {
       await this.db.query(
         `INSERT INTO admin_roles (name, display_name, level, description) 
          VALUES ($1, $2, $3, $4) ON CONFLICT (name) DO NOTHING`,
-        [role.name, role.display_name, role.level, role.description]
+        [role.name, role.display_name, role.level, role.description],
       );
     }
   }
 
   async insertDefaultPermissions() {
     const permissions = [];
-    
+
     // Generate permissions for each resource
     for (const [resource, actions] of Object.entries(this.resourcePermissions)) {
       for (const action of actions) {
@@ -236,7 +236,7 @@ class RBACService {
           name: `${resource}:${action}`,
           resource,
           action,
-          description: `${action.charAt(0).toUpperCase() + action.slice(1)} ${resource}`
+          description: `${action.charAt(0).toUpperCase() + action.slice(1)} ${resource}`,
         });
       }
     }
@@ -246,14 +246,14 @@ class RBACService {
       name: '*',
       resource: '*',
       action: '*',
-      description: 'All permissions'
+      description: 'All permissions',
     });
 
     for (const permission of permissions) {
       await this.db.query(
         `INSERT INTO admin_permissions (name, resource, action, description) 
          VALUES ($1, $2, $3, $4) ON CONFLICT (name) DO NOTHING`,
-        [permission.name, permission.resource, permission.action, permission.description]
+        [permission.name, permission.resource, permission.action, permission.description],
       );
     }
 
@@ -265,29 +265,29 @@ class RBACService {
     for (const [roleName, roleConfig] of Object.entries(this.roleHierarchy)) {
       const roleResult = await this.db.query(
         'SELECT id FROM admin_roles WHERE name = $1',
-        [roleName]
+        [roleName],
       );
 
-      if (roleResult.rows.length === 0) continue;
-      
+      if (roleResult.rows.length === 0) {continue;}
+
       const roleId = roleResult.rows[0].id;
-      
+
       // Get all permissions for this role (including inherited)
       const allPermissions = this.getAllRolePermissions(roleName);
-      
+
       for (const permissionName of allPermissions) {
         const permissionResult = await this.db.query(
           'SELECT id FROM admin_permissions WHERE name = $1',
-          [permissionName]
+          [permissionName],
         );
 
         if (permissionResult.rows.length > 0) {
           const permissionId = permissionResult.rows[0].id;
-          
+
           await this.db.query(
             `INSERT INTO admin_role_permissions (role_id, permission_id) 
              VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-            [roleId, permissionId]
+            [roleId, permissionId],
           );
         }
       }
@@ -296,7 +296,7 @@ class RBACService {
 
   getAllRolePermissions(roleName) {
     const role = this.roleHierarchy[roleName];
-    if (!role) return [];
+    if (!role) {return [];}
 
     let permissions = [...role.permissions];
 
@@ -316,7 +316,7 @@ class RBACService {
       // Check if user already exists
       const existingUser = await this.db.query(
         'SELECT id FROM admin_users WHERE email = $1',
-        [email]
+        [email],
       );
 
       if (existingUser.rows.length > 0) {
@@ -326,7 +326,7 @@ class RBACService {
       // Get role ID
       const roleResult = await this.db.query(
         'SELECT id FROM admin_roles WHERE name = $1 AND is_active = true',
-        [roleName]
+        [roleName],
       );
 
       if (roleResult.rows.length === 0) {
@@ -342,7 +342,7 @@ class RBACService {
       const userResult = await this.db.query(
         `INSERT INTO admin_users (email, password_hash, first_name, last_name, role_id, team_id)
          VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-        [email, passwordHash, firstName, lastName, roleId, teamId]
+        [email, passwordHash, firstName, lastName, roleId, teamId],
       );
 
       const userId = userResult.rows[0].id;
@@ -367,7 +367,7 @@ class RBACService {
          FROM admin_users u
          JOIN admin_roles r ON u.role_id = r.id
          WHERE u.email = $1`,
-        [email]
+        [email],
       );
 
       if (userResult.rows.length === 0) {
@@ -391,7 +391,7 @@ class RBACService {
 
       // Verify password
       const isValidPassword = await bcrypt.compare(password, user.password_hash);
-      
+
       if (!isValidPassword) {
         // Increment failed login attempts
         const failedAttempts = user.failed_login_attempts + 1;
@@ -404,7 +404,7 @@ class RBACService {
 
         await this.db.query(
           'UPDATE admin_users SET failed_login_attempts = $1, locked_until = $2 WHERE id = $3',
-          [failedAttempts, lockUntil, user.id]
+          [failedAttempts, lockUntil, user.id],
         );
 
         await this.logAccess(user.id, 'auth', 'login', null, ipAddress, userAgent, false, { reason: 'invalid_password', failed_attempts: failedAttempts });
@@ -414,7 +414,7 @@ class RBACService {
       // Reset failed login attempts on successful login
       await this.db.query(
         'UPDATE admin_users SET failed_login_attempts = 0, locked_until = NULL, last_login = NOW() WHERE id = $1',
-        [user.id]
+        [user.id],
       );
 
       // Create session
@@ -423,7 +423,7 @@ class RBACService {
 
       await this.db.query(
         'INSERT INTO admin_sessions (id, user_id, ip_address, user_agent, expires_at) VALUES ($1, $2, $3, $4, $5)',
-        [sessionId, user.id, ipAddress, userAgent, expiresAt]
+        [sessionId, user.id, ipAddress, userAgent, expiresAt],
       );
 
       // Generate JWT token
@@ -432,10 +432,10 @@ class RBACService {
           userId: user.id,
           email: user.email,
           role: user.role_name,
-          sessionId
+          sessionId,
         },
         process.env.JWT_SECRET,
-        { expiresIn: '8h' }
+        { expiresIn: '8h' },
       );
 
       // Cache user permissions
@@ -451,9 +451,9 @@ class RBACService {
           firstName: user.first_name,
           lastName: user.last_name,
           role: user.role_name,
-          roleLevel: user.role_level
+          roleLevel: user.role_level,
         },
-        expiresAt
+        expiresAt,
       };
     } catch (error) {
       console.error('Authentication failed:', error);
@@ -481,14 +481,14 @@ class RBACService {
          JOIN admin_role_permissions rp ON r.id = rp.role_id
          JOIN admin_permissions p ON rp.permission_id = p.id
          WHERE u.id = $1 AND u.is_active = true AND r.is_active = true AND p.is_active = true`,
-        [userId]
+        [userId],
       );
 
       const permissions = result.rows.map(row => row.name);
-      
+
       // Cache the result
       await this.redis.setEx(`user_permissions:${userId}`, 3600, JSON.stringify(permissions));
-      
+
       return permissions;
     } catch (error) {
       console.error('Failed to get user permissions:', error);
@@ -500,7 +500,7 @@ class RBACService {
   async hasPermission(userId, permission, resourceId = null) {
     try {
       const permissions = await this.getUserPermissions(userId);
-      
+
       // Check for wildcard permission
       if (permissions.includes('*')) {
         return true;
@@ -541,7 +541,7 @@ class RBACService {
         // Verify session is still active
         const sessionResult = await this.db.query(
           'SELECT id FROM admin_sessions WHERE id = $1 AND user_id = $2 AND expires_at > NOW()',
-          [decoded.sessionId, decoded.userId]
+          [decoded.sessionId, decoded.userId],
         );
 
         if (sessionResult.rows.length === 0) {
@@ -553,7 +553,7 @@ class RBACService {
           id: decoded.userId,
           email: decoded.email,
           role: decoded.role,
-          sessionId: decoded.sessionId
+          sessionId: decoded.sessionId,
         };
 
         next();
@@ -568,22 +568,22 @@ class RBACService {
     return async (req, res, next) => {
       try {
         const hasAccess = await this.hasPermission(req.user.id, permission, req.params.id);
-        
+
         if (!hasAccess) {
           await this.logAccess(
-            req.user.id, 
-            permission.split(':')[0], 
-            permission.split(':')[1], 
+            req.user.id,
+            permission.split(':')[0],
+            permission.split(':')[1],
             req.params.id,
             req.ip,
             req.get('User-Agent'),
             false,
-            { reason: 'insufficient_permissions', required_permission: permission }
+            { reason: 'insufficient_permissions', required_permission: permission },
           );
-          
-          return res.status(403).json({ 
-            error: 'Access denied', 
-            required_permission: permission 
+
+          return res.status(403).json({
+            error: 'Access denied',
+            required_permission: permission,
           });
         }
 
@@ -595,7 +595,7 @@ class RBACService {
           req.params.id,
           req.ip,
           req.get('User-Agent'),
-          true
+          true,
         );
 
         next();
@@ -609,10 +609,10 @@ class RBACService {
   requireRole(roleName) {
     return (req, res, next) => {
       if (req.user.role !== roleName) {
-        return res.status(403).json({ 
-          error: 'Access denied', 
+        return res.status(403).json({
+          error: 'Access denied',
           required_role: roleName,
-          user_role: req.user.role 
+          user_role: req.user.role,
         });
       }
       next();
@@ -624,13 +624,13 @@ class RBACService {
       try {
         const roleResult = await this.db.query(
           'SELECT level FROM admin_roles WHERE name = $1',
-          [req.user.role]
+          [req.user.role],
         );
 
         if (roleResult.rows.length === 0 || roleResult.rows[0].level < level) {
-          return res.status(403).json({ 
+          return res.status(403).json({
             error: 'Insufficient role level',
-            required_level: level 
+            required_level: level,
           });
         }
 
@@ -648,7 +648,7 @@ class RBACService {
       await this.db.query(
         `INSERT INTO admin_access_logs (user_id, resource, action, resource_id, ip_address, user_agent, success, details)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-        [userId, resource, action, resourceId, ipAddress, userAgent, success, JSON.stringify(details)]
+        [userId, resource, action, resourceId, ipAddress, userAgent, success, JSON.stringify(details)],
       );
     } catch (error) {
       console.error('Failed to log access:', error);
@@ -664,7 +664,7 @@ class RBACService {
     try {
       await this.db.query(
         'DELETE FROM admin_sessions WHERE id = $1',
-        [sessionId]
+        [sessionId],
       );
       return true;
     } catch (error) {
@@ -675,14 +675,14 @@ class RBACService {
 
   async getAccessLogs(filters = {}) {
     const { userId, resource, action, startDate, endDate, success, limit = 100, offset = 0 } = filters;
-    
+
     let query = `
       SELECT al.*, u.email, u.first_name, u.last_name
       FROM admin_access_logs al
       LEFT JOIN admin_users u ON al.user_id = u.id
       WHERE 1=1
     `;
-    
+
     const params = [];
     let paramIndex = 1;
 

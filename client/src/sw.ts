@@ -21,7 +21,7 @@ const DYNAMIC_RESOURCES = [
 // Install event - cache static resources
 self.addEventListener('install', (event: ExtendableEvent) => {
   console.log('Service Worker installing...');
-  
+
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then((cache) => {
@@ -30,14 +30,14 @@ self.addEventListener('install', (event: ExtendableEvent) => {
       })
       .then(() => {
         return (self as any).skipWaiting();
-      })
+      }),
   );
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event: ExtendableEvent) => {
   console.log('Service Worker activating...');
-  
+
   event.waitUntil(
     caches.keys()
       .then((cacheNames) => {
@@ -47,12 +47,12 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
               console.log('Deleting old cache:', cacheName);
               return caches.delete(cacheName);
             }
-          })
+          }),
         );
       })
       .then(() => {
         return (self as any).clients.claim();
-      })
+      }),
   );
 });
 
@@ -60,7 +60,7 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
 self.addEventListener('fetch', (event: FetchEvent) => {
   const { request } = event;
   const url = new URL(request.url);
-  
+
   // Handle different types of requests
   if (request.method === 'GET') {
     if (isStaticResource(url.pathname)) {
@@ -79,7 +79,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
 // Background sync for offline actions
 self.addEventListener('sync', (event: any) => {
   console.log('Background sync triggered:', event.tag);
-  
+
   if (event.tag === 'sync-offline-actions') {
     event.waitUntil(syncOfflineActions());
   }
@@ -88,7 +88,7 @@ self.addEventListener('sync', (event: any) => {
 // Push notifications
 self.addEventListener('push', (event: any) => {
   console.log('Push notification received');
-  
+
   const options = {
     body: event.data ? event.data.text() : 'New update available',
     icon: '/icon-192x192.png',
@@ -98,20 +98,20 @@ self.addEventListener('push', (event: any) => {
       url: '/',
     },
   };
-  
+
   event.waitUntil(
-    (self as any).registration.showNotification('MSMESquare', options)
+    (self as any).registration.showNotification('MSMESquare', options),
   );
 });
 
 // Handle notification clicks
 self.addEventListener('notificationclick', (event: any) => {
   console.log('Notification clicked');
-  
+
   event.notification.close();
-  
+
   event.waitUntil(
-    (self as any).clients.openWindow(event.notification.data.url || '/')
+    (self as any).clients.openWindow(event.notification.data.url || '/'),
   );
 });
 
@@ -119,19 +119,19 @@ self.addEventListener('notificationclick', (event: any) => {
 async function handleStaticResource(request: Request): Promise<Response> {
   // Cache First strategy for static resources
   const cachedResponse = await caches.match(request);
-  
+
   if (cachedResponse) {
     return cachedResponse;
   }
-  
+
   try {
     const networkResponse = await fetch(request);
-    
+
     if (networkResponse.ok) {
       const cache = await caches.open(STATIC_CACHE);
       cache.put(request, networkResponse.clone());
     }
-    
+
     return networkResponse;
   } catch (error) {
     console.error('Static resource fetch failed:', error);
@@ -143,22 +143,22 @@ async function handleAPIRequest(request: Request): Promise<Response> {
   // Network First strategy for API requests
   try {
     const networkResponse = await fetch(request);
-    
+
     if (networkResponse.ok) {
       const cache = await caches.open(DYNAMIC_CACHE);
       cache.put(request, networkResponse.clone());
     }
-    
+
     return networkResponse;
   } catch (error) {
     console.log('Network failed, trying cache for:', request.url);
-    
+
     const cachedResponse = await caches.match(request);
-    
+
     if (cachedResponse) {
       return cachedResponse;
     }
-    
+
     // Return offline response for API requests
     return new Response(
       JSON.stringify({
@@ -171,7 +171,7 @@ async function handleAPIRequest(request: Request): Promise<Response> {
         headers: {
           'Content-Type': 'application/json',
         },
-      }
+      },
     );
   }
 }
@@ -179,7 +179,7 @@ async function handleAPIRequest(request: Request): Promise<Response> {
 async function handleDynamicResource(request: Request): Promise<Response> {
   // Stale While Revalidate strategy
   const cachedResponse = await caches.match(request);
-  
+
   const fetchPromise = fetch(request)
     .then((networkResponse) => {
       if (networkResponse.ok) {
@@ -195,7 +195,7 @@ async function handleDynamicResource(request: Request): Promise<Response> {
       }
       throw new Error('Network failed');
     });
-  
+
   return cachedResponse || fetchPromise;
 }
 
@@ -204,13 +204,13 @@ async function handleMutationRequest(request: Request): Promise<Response> {
     return await fetch(request);
   } catch (error) {
     console.log('Mutation request failed, storing for later sync');
-    
+
     // Store mutation for background sync
     await storeOfflineAction(request);
-    
+
     // Register background sync
     await (self as any).registration.sync.register('sync-offline-actions');
-    
+
     return new Response(
       JSON.stringify({
         success: false,
@@ -222,7 +222,7 @@ async function handleMutationRequest(request: Request): Promise<Response> {
         headers: {
           'Content-Type': 'application/json',
         },
-      }
+      },
     );
   }
 }
@@ -236,7 +236,7 @@ async function storeOfflineAction(request: Request): Promise<void> {
     body: await request.text(),
     timestamp: Date.now(),
   };
-  
+
   const db = await openDB();
   const transaction = db.transaction(['offline_actions'], 'readwrite');
   const store = transaction.objectStore('offline_actions');
@@ -248,7 +248,7 @@ async function syncOfflineActions(): Promise<void> {
   const transaction = db.transaction(['offline_actions'], 'readonly');
   const store = transaction.objectStore('offline_actions');
   const actions = await store.getAll();
-  
+
   for (const action of actions) {
     try {
       const response = await fetch(action.url, {
@@ -256,7 +256,7 @@ async function syncOfflineActions(): Promise<void> {
         headers: action.headers,
         body: action.body,
       });
-      
+
       if (response.ok) {
         // Remove successfully synced action
         const deleteTransaction = db.transaction(['offline_actions'], 'readwrite');
@@ -272,13 +272,13 @@ async function syncOfflineActions(): Promise<void> {
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('MSMESquareOffline', 1);
-    
+
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve(request.result);
-    
+
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
-      
+
       if (!db.objectStoreNames.contains('offline_actions')) {
         db.createObjectStore('offline_actions', { keyPath: 'id' });
       }
@@ -305,19 +305,19 @@ function isAPIRequest(pathname: string): boolean {
 // Message handling for communication with main thread
 self.addEventListener('message', (event: MessageEvent) => {
   const { type, data } = event.data;
-  
+
   switch (type) {
-    case 'SKIP_WAITING':
-      (self as any).skipWaiting();
-      break;
-    case 'CACHE_URLS':
-      cacheUrls(data.urls);
-      break;
-    case 'CLEAR_CACHE':
-      clearCache();
-      break;
-    default:
-      console.log('Unknown message type:', type);
+  case 'SKIP_WAITING':
+    (self as any).skipWaiting();
+    break;
+  case 'CACHE_URLS':
+    cacheUrls(data.urls);
+    break;
+  case 'CLEAR_CACHE':
+    clearCache();
+    break;
+  default:
+    console.log('Unknown message type:', type);
   }
 });
 

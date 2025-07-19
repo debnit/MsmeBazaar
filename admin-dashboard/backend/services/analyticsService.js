@@ -6,13 +6,13 @@ class AnalyticsService {
   constructor() {
     this.db = new Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === 'production'
+      ssl: process.env.NODE_ENV === 'production',
     });
-    
+
     this.redis = Redis.createClient({
-      url: process.env.REDIS_URL
+      url: process.env.REDIS_URL,
     });
-    
+
     this.redis.connect();
   }
 
@@ -23,7 +23,7 @@ class AnalyticsService {
       if (cached) {
         return JSON.parse(cached);
       }
-      
+
       const data = await queryFn();
       await this.redis.setEx(key, ttl, JSON.stringify(data));
       return data;
@@ -36,7 +36,7 @@ class AnalyticsService {
   // 1. Transaction Analytics
   async getTransactionData(period = '30d') {
     const cacheKey = `transactions:${period}`;
-    
+
     return this.getCachedData(cacheKey, async () => {
       const query = `
         SELECT 
@@ -52,7 +52,7 @@ class AnalyticsService {
         GROUP BY DATE(created_at)
         ORDER BY date ASC
       `;
-      
+
       const result = await this.db.query(query);
       return result.rows;
     });
@@ -61,7 +61,7 @@ class AnalyticsService {
   // 2. MSME Analytics
   async getActiveMSMEData() {
     const cacheKey = 'msmes:active_by_location';
-    
+
     return this.getCachedData(cacheKey, async () => {
       const query = `
         SELECT 
@@ -76,7 +76,7 @@ class AnalyticsService {
         GROUP BY state, city
         ORDER BY active_count DESC
       `;
-      
+
       const result = await this.db.query(query);
       return result.rows;
     });
@@ -85,7 +85,7 @@ class AnalyticsService {
   // 3. Valuation Analytics
   async getValuationSummary(period = '30d') {
     const cacheKey = `valuations:summary:${period}`;
-    
+
     return this.getCachedData(cacheKey, async () => {
       const query = `
         SELECT 
@@ -99,7 +99,7 @@ class AnalyticsService {
         WHERE created_at >= NOW() - INTERVAL '${period.replace('d', ' days')}'
         GROUP BY status
       `;
-      
+
       const result = await this.db.query(query);
       return result.rows;
     });
@@ -108,7 +108,7 @@ class AnalyticsService {
   // 4. User Analytics
   async getUserAnalytics() {
     const cacheKey = 'users:analytics';
-    
+
     return this.getCachedData(cacheKey, async () => {
       const query = `
         SELECT 
@@ -121,7 +121,7 @@ class AnalyticsService {
         FROM users 
         GROUP BY role
       `;
-      
+
       const result = await this.db.query(query);
       return result.rows;
     });
@@ -130,7 +130,7 @@ class AnalyticsService {
   // 5. Revenue Analytics
   async getRevenueAnalytics(period = '12m') {
     const cacheKey = `revenue:${period}`;
-    
+
     return this.getCachedData(cacheKey, async () => {
       const query = `
         SELECT 
@@ -145,7 +145,7 @@ class AnalyticsService {
         GROUP BY DATE_TRUNC('month', created_at)
         ORDER BY month ASC
       `;
-      
+
       const result = await this.db.query(query);
       return result.rows;
     });
@@ -154,7 +154,7 @@ class AnalyticsService {
   // 6. Performance Metrics
   async getPerformanceMetrics() {
     const cacheKey = 'performance:metrics';
-    
+
     return this.getCachedData(cacheKey, async () => {
       const queries = await Promise.all([
         // Conversion rates
@@ -164,7 +164,7 @@ class AnalyticsService {
           FROM transactions
           WHERE created_at >= NOW() - INTERVAL '30 days'
         `),
-        
+
         // Average response time
         this.db.query(`
           SELECT 
@@ -173,7 +173,7 @@ class AnalyticsService {
           WHERE status = 'completed'
             AND created_at >= NOW() - INTERVAL '30 days'
         `),
-        
+
         // User satisfaction
         this.db.query(`
           SELECT 
@@ -182,7 +182,7 @@ class AnalyticsService {
           FROM reviews
           WHERE created_at >= NOW() - INTERVAL '30 days'
         `),
-        
+
         // System health
         this.db.query(`
           SELECT 
@@ -190,7 +190,7 @@ class AnalyticsService {
             COUNT(*) as total_operations
           FROM system_logs
           WHERE created_at >= NOW() - INTERVAL '24 hours'
-        `)
+        `),
       ]);
 
       return {
@@ -200,7 +200,7 @@ class AnalyticsService {
         total_reviews: queries[2].rows[0]?.total_reviews || 0,
         failed_operations: queries[3].rows[0]?.failed_operations || 0,
         total_operations: queries[3].rows[0]?.total_operations || 0,
-        system_health: (1 - (queries[3].rows[0]?.failed_operations || 0) / Math.max(queries[3].rows[0]?.total_operations || 1, 1)) * 100
+        system_health: (1 - (queries[3].rows[0]?.failed_operations || 0) / Math.max(queries[3].rows[0]?.total_operations || 1, 1)) * 100,
       };
     });
   }
@@ -208,7 +208,7 @@ class AnalyticsService {
   // 7. Growth Analytics
   async getGrowthAnalytics() {
     const cacheKey = 'growth:analytics';
-    
+
     return this.getCachedData(cacheKey, async () => {
       const query = `
         WITH monthly_stats AS (
@@ -240,15 +240,15 @@ class AnalyticsService {
         LEFT JOIN revenue_stats r ON m.month = r.month
         ORDER BY m.month ASC
       `;
-      
+
       const result = await this.db.query(query);
-      
+
       return result.rows.map(row => ({
         ...row,
-        msme_growth_rate: row.prev_month_msmes ? 
+        msme_growth_rate: row.prev_month_msmes ?
           ((row.new_msmes - row.prev_month_msmes) / row.prev_month_msmes * 100) : 0,
-        revenue_growth_rate: row.prev_month_revenue ? 
-          ((row.monthly_revenue - row.prev_month_revenue) / row.prev_month_revenue * 100) : 0
+        revenue_growth_rate: row.prev_month_revenue ?
+          ((row.monthly_revenue - row.prev_month_revenue) / row.prev_month_revenue * 100) : 0,
       }));
     });
   }
@@ -256,7 +256,7 @@ class AnalyticsService {
   // 8. Industry Analytics
   async getIndustryAnalytics() {
     const cacheKey = 'industry:analytics';
-    
+
     return this.getCachedData(cacheKey, async () => {
       const query = `
         SELECT 
@@ -271,7 +271,7 @@ class AnalyticsService {
         GROUP BY industry_category
         ORDER BY msme_count DESC
       `;
-      
+
       const result = await this.db.query(query);
       return result.rows;
     });
@@ -280,7 +280,7 @@ class AnalyticsService {
   // 9. Geographic Analytics
   async getGeographicAnalytics() {
     const cacheKey = 'geographic:analytics';
-    
+
     return this.getCachedData(cacheKey, async () => {
       const query = `
         SELECT 
@@ -295,7 +295,7 @@ class AnalyticsService {
         GROUP BY state
         ORDER BY msme_count DESC
       `;
-      
+
       const result = await this.db.query(query);
       return result.rows;
     });
@@ -304,14 +304,14 @@ class AnalyticsService {
   // 10. Real-time Dashboard Data
   async getDashboardData() {
     const cacheKey = 'dashboard:realtime';
-    
+
     return this.getCachedData(cacheKey, async () => {
       const queries = await Promise.all([
         this.getTransactionData('7d'),
         this.getActiveMSMEData(),
         this.getValuationSummary('7d'),
         this.getUserAnalytics(),
-        this.getPerformanceMetrics()
+        this.getPerformanceMetrics(),
       ]);
 
       const [transactions, msmes, valuations, users, performance] = queries;
@@ -330,15 +330,15 @@ class AnalyticsService {
           total_users: totalUsers,
           conversion_rate: performance.conversion_rate,
           avg_rating: performance.avg_rating,
-          system_health: performance.system_health
+          system_health: performance.system_health,
         },
         charts: {
           transactions,
           msmes,
           valuations,
-          users
+          users,
         },
-        performance
+        performance,
       };
     }, 60); // Cache for 1 minute for real-time data
   }
@@ -346,47 +346,47 @@ class AnalyticsService {
   // Export data for reporting
   async exportAnalyticsData(type, period, format = 'json') {
     let data;
-    
+
     switch (type) {
-      case 'transactions':
-        data = await this.getTransactionData(period);
-        break;
-      case 'msmes':
-        data = await this.getActiveMSMEData();
-        break;
-      case 'valuations':
-        data = await this.getValuationSummary(period);
-        break;
-      case 'revenue':
-        data = await this.getRevenueAnalytics(period);
-        break;
-      case 'growth':
-        data = await this.getGrowthAnalytics();
-        break;
-      default:
-        data = await this.getDashboardData();
+    case 'transactions':
+      data = await this.getTransactionData(period);
+      break;
+    case 'msmes':
+      data = await this.getActiveMSMEData();
+      break;
+    case 'valuations':
+      data = await this.getValuationSummary(period);
+      break;
+    case 'revenue':
+      data = await this.getRevenueAnalytics(period);
+      break;
+    case 'growth':
+      data = await this.getGrowthAnalytics();
+      break;
+    default:
+      data = await this.getDashboardData();
     }
 
     if (format === 'csv') {
       return this.convertToCSV(data);
     }
-    
+
     return data;
   }
 
   convertToCSV(data) {
-    if (!data || data.length === 0) return '';
-    
+    if (!data || data.length === 0) {return '';}
+
     const headers = Object.keys(data[0]);
     const csvContent = [
       headers.join(','),
-      ...data.map(row => 
-        headers.map(header => 
-          typeof row[header] === 'string' ? `"${row[header]}"` : row[header]
-        ).join(',')
-      )
+      ...data.map(row =>
+        headers.map(header =>
+          typeof row[header] === 'string' ? `"${row[header]}"` : row[header],
+        ).join(','),
+      ),
     ].join('\n');
-    
+
     return csvContent;
   }
 

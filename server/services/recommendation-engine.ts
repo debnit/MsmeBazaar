@@ -117,37 +117,37 @@ class RecommendationEngine {
 
     // Content-based filtering
     const contentBasedRecs = await this.getContentBasedRecommendations(userProfile, request);
-    
+
     // Collaborative filtering
     const collaborativeRecs = await this.getCollaborativeRecommendations(userProfile, request);
-    
+
     // Hybrid approach - combine both methods
     const hybridRecs = await this.combineRecommendations(contentBasedRecs, collaborativeRecs);
-    
+
     // Apply business rules and filters
     const filteredRecs = await this.applyBusinessRules(hybridRecs, request);
-    
+
     // Rank and limit results
     const rankedRecs = await this.rankRecommendations(filteredRecs, userProfile);
-    
+
     return rankedRecs.slice(0, request.limit || 10);
   }
 
   // Content-based recommendations using business features
   private async getContentBasedRecommendations(
     userProfile: UserProfile,
-    request: RecommendationRequest
+    request: RecommendationRequest,
   ): Promise<Recommendation[]> {
     const businesses = await this.getBusinessCandidates(request);
     const recommendations: Recommendation[] = [];
 
     for (const business of businesses) {
       const businessEmbedding = await this.getBusinessEmbedding(business.id);
-      
+
       // Calculate similarity between user preferences and business features
       const similarity = this.calculateCosineSimilarity(
         userProfile.embedding,
-        businessEmbedding.combinedEmbedding
+        businessEmbedding.combinedEmbedding,
       );
 
       if (similarity > 0.3) { // Threshold for relevance
@@ -178,17 +178,17 @@ class RecommendationEngine {
   // Collaborative filtering based on user similarities
   private async getCollaborativeRecommendations(
     userProfile: UserProfile,
-    request: RecommendationRequest
+    request: RecommendationRequest,
   ): Promise<Recommendation[]> {
     const similarUsers = await this.findSimilarUsers(userProfile.userId);
     const recommendations: Recommendation[] = [];
 
     for (const [similarUserId, similarity] of similarUsers.entries()) {
       const similarUserProfile = await this.getUserProfile(similarUserId);
-      
+
       // Get businesses liked by similar users
       const likedBusinesses = await this.getUserLikedBusinesses(similarUserId);
-      
+
       for (const business of likedBusinesses) {
         // Skip if current user already interacted with this business
         if (await this.hasUserInteracted(userProfile.userId, business.id)) {
@@ -201,7 +201,7 @@ class RecommendationEngine {
           score: similarity * 80, // Slightly lower base score for collaborative
           confidence: similarity * 0.9,
           reasoning: [
-            `Users with similar preferences also liked this business`,
+            'Users with similar preferences also liked this business',
             `Based on ${Math.round(similarity * 100)}% similarity with other users`,
           ],
           metadata: {
@@ -229,7 +229,7 @@ class RecommendationEngine {
 
     for (const business of trendingBusinesses) {
       const trendingScore = await this.calculateTrendingScore(business);
-      
+
       const recommendation: Recommendation = {
         id: business.id,
         type: 'business',
@@ -269,12 +269,12 @@ class RecommendationEngine {
     const similarities: Array<{ business: any; similarity: number }> = [];
 
     for (const business of allBusinesses) {
-      if (business.id === businessId) continue;
+      if (business.id === businessId) {continue;}
 
       const businessEmbedding = await this.getBusinessEmbedding(business.id);
       const similarity = this.calculateCosineSimilarity(
         targetEmbedding.combinedEmbedding,
-        businessEmbedding.combinedEmbedding
+        businessEmbedding.combinedEmbedding,
       );
 
       similarities.push({ business, similarity });
@@ -310,19 +310,19 @@ class RecommendationEngine {
   // Update user profile based on interactions
   async updateUserProfile(userId: string, interaction: InteractionEvent): Promise<void> {
     const profile = await this.getUserProfile(userId);
-    
+
     // Add interaction to history
     profile.behavior.interactionHistory.push(interaction);
-    
+
     // Update preferences based on interaction
     await this.updatePreferencesFromInteraction(profile, interaction);
-    
+
     // Recalculate user embedding
     profile.embedding = await this.calculateUserEmbedding(profile);
-    
+
     // Update collaborative filtering data
     await this.updateCollaborativeData(userId, interaction);
-    
+
     // Store updated profile
     this.userProfiles.set(userId, profile);
   }
@@ -330,15 +330,15 @@ class RecommendationEngine {
   // A/B testing for recommendation algorithms
   async getExperimentalRecommendations(
     request: RecommendationRequest,
-    experimentVariant: 'control' | 'experimental'
+    experimentVariant: 'control' | 'experimental',
   ): Promise<Recommendation[]> {
     if (experimentVariant === 'experimental') {
       // Use experimental algorithm (e.g., deep learning based)
       return await this.getDeepLearningRecommendations(request);
-    } else {
-      // Use standard algorithm
-      return await this.getRecommendations(request);
     }
+    // Use standard algorithm
+    return await this.getRecommendations(request);
+
   }
 
   // Performance analytics
@@ -403,7 +403,7 @@ class RecommendationEngine {
 
     const business = await storage.getBusinessById(businessId);
     const embedding = await this.calculateBusinessEmbedding(business);
-    
+
     this.businessEmbeddings.set(businessId, embedding);
     return embedding;
   }
@@ -442,7 +442,7 @@ class RecommendationEngine {
   private async calculateUserEmbedding(profile: any): Promise<number[]> {
     // Create user vector based on preferences and behavior
     const embedding = new Array(100).fill(0); // 100-dimensional vector
-    
+
     // Industry preferences
     if (profile.preferences?.industries) {
       profile.preferences.industries.forEach((industry: string, index: number) => {
@@ -478,46 +478,46 @@ class RecommendationEngine {
     const dotProduct = vec1.reduce((sum, val, i) => sum + val * vec2[i], 0);
     const magnitude1 = Math.sqrt(vec1.reduce((sum, val) => sum + val * val, 0));
     const magnitude2 = Math.sqrt(vec2.reduce((sum, val) => sum + val * val, 0));
-    
+
     return dotProduct / (magnitude1 * magnitude2);
   }
 
   private calculateConfidence(similarity: number, userProfile: UserProfile, business: any): number {
     let confidence = similarity;
-    
+
     // Increase confidence if user has interacted with similar businesses
     const similarInteractions = userProfile.behavior.interactionHistory.filter(
-      interaction => interaction.businessId === business.id
+      interaction => interaction.businessId === business.id,
     );
     confidence += similarInteractions.length * 0.1;
-    
+
     // Increase confidence based on data quality
-    if (business.verified) confidence += 0.1;
-    if (business.imageUrl) confidence += 0.05;
-    
+    if (business.verified) {confidence += 0.1;}
+    if (business.imageUrl) {confidence += 0.05;}
+
     return Math.min(1, confidence);
   }
 
   private generateReasoningForBusiness(userProfile: UserProfile, business: any, similarity: number): string[] {
     const reasons = [];
-    
+
     if (userProfile.preferences.industries.includes(business.industry)) {
       reasons.push(`Matches your interest in ${business.industry}`);
     }
-    
+
     if (userProfile.preferences.locations.includes(business.location)) {
       reasons.push(`Located in your preferred area: ${business.location}`);
     }
-    
-    if (business.askingPrice >= userProfile.preferences.budgetRange.min && 
+
+    if (business.askingPrice >= userProfile.preferences.budgetRange.min &&
         business.askingPrice <= userProfile.preferences.budgetRange.max) {
       reasons.push('Within your budget range');
     }
-    
+
     if (similarity > 0.7) {
       reasons.push('High similarity to your preferences');
     }
-    
+
     return reasons;
   }
 

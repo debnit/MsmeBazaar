@@ -1,261 +1,441 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useLocalization } from "@/hooks/useLocalization";
-import { AccessibilityToolbar } from "@/components/AccessibilityToolbar";
-import { GamificationDashboard } from "@/components/gamification/GamificationDashboard";
-import { Building, Users, MapPin, TrendingUp, FileText, AlertCircle, Trophy, Star, Crown, Zap } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
-import { useState } from "react";
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { DashboardLayout } from '@/components/layouts/dashboard-layout';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useToast } from '@/hooks/use-toast';
+import {
+  TrendingUp,
+  TrendingDown,
+  Building2,
+  Users,
+  DollarSign,
+  Eye,
+  Plus,
+  ArrowUpRight,
+  Activity,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  Star,
+  Target,
+  BarChart3,
+  PieChart,
+  LineChart,
+} from 'lucide-react';
+
+interface DashboardStats {
+  totalRevenue: number;
+  revenueChange: number;
+  totalListings: number;
+  listingsChange: number;
+  totalViews: number;
+  viewsChange: number;
+  totalInquiries: number;
+  inquiriesChange: number;
+}
+
+interface Activity {
+  id: string;
+  type: 'listing' | 'inquiry' | 'valuation' | 'payment' | 'achievement';
+  title: string;
+  description: string;
+  timestamp: string;
+  status?: 'pending' | 'completed' | 'failed';
+  amount?: number;
+}
+
+const QUICK_ACTIONS = [
+  {
+    id: 'add-listing',
+    title: 'Add New Listing',
+    description: 'Showcase your products or services',
+    icon: Plus,
+    href: '/seller/listing-form',
+    color: 'blue',
+  },
+  {
+    id: 'view-analytics',
+    title: 'View Analytics',
+    description: 'Track your business performance',
+    icon: BarChart3,
+    href: '/analytics',
+    color: 'green',
+  },
+  {
+    id: 'get-valuation',
+    title: 'Get Valuation',
+    description: 'Know your business worth',
+    icon: Target,
+    href: '/valuation',
+    color: 'purple',
+  },
+  {
+    id: 'explore-financing',
+    title: 'Explore Financing',
+    description: 'Access loans and credit',
+    icon: DollarSign,
+    href: '/financing',
+    color: 'orange',
+  },
+];
 
 export default function Dashboard() {
-  const { t } = useLocalization();
-  
-  // Mock user progress for gamification
-  const [userProgress, setUserProgress] = useState({
-    level: 3,
-    currentXP: 750,
-    requiredXP: 1000,
-    totalPoints: 2400,
-    streak: 5,
-    rank: 127,
-    badges: ['welcome', 'profile', 'verified'],
-    completedTasks: 8,
-    totalTasks: 12
-  });
+  const { toast } = useToast();
 
-  const handleProgressUpdate = (newProgress: any) => {
-    setUserProgress(prev => ({ ...prev, ...newProgress }));
-  };
-
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: ['/api/dashboard/stats'],
     retry: false,
   });
 
-  const { data: nearbyListings } = useQuery({
-    queryKey: ['/api/buyer/matches'],
+  const { data: activities, isLoading: activitiesLoading } = useQuery<Activity[]>({
+    queryKey: ['/api/dashboard/activities'],
     retry: false,
   });
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Building className="h-8 w-8 text-blue-600 mr-2" />
-              <h1 className="text-xl font-bold text-gray-900">MSMESquare</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" asChild>
-                <a href="/seller/dashboard">Seller Dashboard</a>
-              </Button>
-              <Button variant="outline" asChild>
-                <a href="/buyer/dashboard">Buyer Dashboard</a>
-              </Button>
-              <Button variant="outline" asChild>
-                <a href="/agent/dashboard">Agent Dashboard</a>
-              </Button>
-              <Button variant="outline" onClick={() => window.location.href = '/api/auth/logout'}>
-                {t('nav.logout')}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+  const { data: recommendations } = useQuery({
+    queryKey: ['/api/dashboard/recommendations'],
+    retry: false,
+  });
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <motion.div 
-          className="mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">{t('dashboard.welcome')}</h2>
-              <p className="text-gray-600">{t('dashboard.subtitle')}</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-full">
-                <Trophy className="w-4 h-4" />
-                <span className="text-sm font-semibold">Level {userProgress.level}</span>
-              </div>
-              <div className="flex items-center space-x-2 bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-4 py-2 rounded-full">
-                <Star className="w-4 h-4" />
-                <span className="text-sm font-semibold">{userProgress.totalPoints} pts</span>
-              </div>
-            </div>
+  const getStatChangeIcon = (change: number) => {
+    return change >= 0 ? TrendingUp : TrendingDown;
+  };
+
+  const getStatChangeColor = (change: number) => {
+    return change >= 0 ? 'text-green-600' : 'text-red-600';
+  };
+
+  const getActivityIcon = (type: Activity['type']) => {
+    switch (type) {
+    case 'listing': return Building2;
+    case 'inquiry': return Users;
+    case 'valuation': return Target;
+    case 'payment': return DollarSign;
+    case 'achievement': return Star;
+    default: return Activity;
+    }
+  };
+
+  const getActivityColor = (type: Activity['type']) => {
+    switch (type) {
+    case 'listing': return 'text-blue-600 bg-blue-50';
+    case 'inquiry': return 'text-green-600 bg-green-50';
+    case 'valuation': return 'text-purple-600 bg-purple-50';
+    case 'payment': return 'text-orange-600 bg-orange-50';
+    case 'achievement': return 'text-yellow-600 bg-yellow-50';
+    default: return 'text-gray-600 bg-gray-50';
+    }
+  };
+
+  const getStatusIcon = (status: Activity['status']) => {
+    switch (status) {
+    case 'completed': return CheckCircle2;
+    case 'pending': return Clock;
+    case 'failed': return AlertCircle;
+    default: return Activity;
+    }
+  };
+
+  const getStatusColor = (status: Activity['status']) => {
+    switch (status) {
+    case 'completed': return 'text-green-600';
+    case 'pending': return 'text-yellow-600';
+    case 'failed': return 'text-red-600';
+    default: return 'text-gray-600';
+    }
+  };
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-gray-600 mt-1">
+              Welcome back! Here's what's happening with your business.
+            </p>
           </div>
-        </motion.div>
-        
-        {/* Gamification Dashboard */}
+          <Button>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Listing
+          </Button>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            {
+              title: 'Total Revenue',
+              value: stats?.totalRevenue || 0,
+              change: stats?.revenueChange || 0,
+              icon: DollarSign,
+              format: (val: number) => `₹${val.toLocaleString()}`,
+            },
+            {
+              title: 'Active Listings',
+              value: stats?.totalListings || 0,
+              change: stats?.listingsChange || 0,
+              icon: Building2,
+              format: (val: number) => val.toString(),
+            },
+            {
+              title: 'Profile Views',
+              value: stats?.totalViews || 0,
+              change: stats?.viewsChange || 0,
+              icon: Eye,
+              format: (val: number) => val.toLocaleString(),
+            },
+            {
+              title: 'Inquiries',
+              value: stats?.totalInquiries || 0,
+              change: stats?.inquiriesChange || 0,
+              icon: Users,
+              format: (val: number) => val.toString(),
+            },
+          ].map((stat, index) => {
+            const Icon = stat.icon;
+            const ChangeIcon = getStatChangeIcon(stat.change);
+            const changeColor = getStatChangeColor(stat.change);
+
+            return (
+              <motion.div
+                key={stat.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {statsLoading ? '...' : stat.format(stat.value)}
+                        </p>
+                      </div>
+                      <div className="p-3 bg-blue-50 rounded-full">
+                        <Icon className="w-6 h-6 text-blue-600" />
+                      </div>
+                    </div>
+                    <div className={`flex items-center mt-4 text-sm ${changeColor}`}>
+                      <ChangeIcon className="w-4 h-4 mr-1" />
+                      <span className="font-medium">
+                        {Math.abs(stat.change)}%
+                      </span>
+                      <span className="text-gray-600 ml-1">vs last month</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Quick Actions */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+            className="lg:col-span-2"
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+                <CardDescription>
+                  Common tasks to grow your business
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {QUICK_ACTIONS.map((action, index) => {
+                    const Icon = action.icon;
+                    return (
+                      <motion.div
+                        key={action.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.5 + index * 0.1 }}
+                      >
+                        <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer group">
+                          <div className="flex items-start space-x-4">
+                            <div className={`
+                              p-2 rounded-lg
+                              ${action.color === 'blue' ? 'bg-blue-50 text-blue-600' : ''}
+                              ${action.color === 'green' ? 'bg-green-50 text-green-600' : ''}
+                              ${action.color === 'purple' ? 'bg-purple-50 text-purple-600' : ''}
+                              ${action.color === 'orange' ? 'bg-orange-50 text-orange-600' : ''}
+                            `}>
+                              <Icon className="w-5 h-5" />
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                                {action.title}
+                              </h3>
+                              <p className="text-sm text-gray-600 mt-1">
+                                {action.description}
+                              </p>
+                            </div>
+                            <ArrowUpRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                          </div>
+                        </Card>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Performance Overview */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>Performance</CardTitle>
+                <CardDescription>Your business metrics at a glance</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600">Profile Completion</span>
+                    <span className="text-sm font-bold text-gray-900">85%</span>
+                  </div>
+                  <Progress value={85} className="h-2" />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600">Listing Quality</span>
+                    <span className="text-sm font-bold text-gray-900">92%</span>
+                  </div>
+                  <Progress value={92} className="h-2" />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600">Response Rate</span>
+                    <span className="text-sm font-bold text-gray-900">78%</span>
+                  </div>
+                  <Progress value={78} className="h-2" />
+                </div>
+
+                <div className="pt-4 border-t">
+                  <Button variant="outline" className="w-full">
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    View Detailed Analytics
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+
+        {/* Recent Activity */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          transition={{ delay: 0.8 }}
         >
-          <GamificationDashboard
-            userProgress={userProgress}
-            onUpdateProgress={handleProgressUpdate}
-          />
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Recent Activity</CardTitle>
+                  <CardDescription>
+                    Latest updates on your business
+                  </CardDescription>
+                </div>
+                <Button variant="outline" size="sm">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  View All
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {activitiesLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center space-x-4 animate-pulse">
+                      <div className="w-10 h-10 bg-gray-200 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-3/4" />
+                        <div className="h-3 bg-gray-200 rounded w-1/2" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : activities && activities.length > 0 ? (
+                <div className="space-y-4">
+                  {activities.slice(0, 5).map((activity, index) => {
+                    const Icon = getActivityIcon(activity.type);
+                    const StatusIcon = getStatusIcon(activity.status);
+                    const activityColor = getActivityColor(activity.type);
+                    const statusColor = getStatusColor(activity.status);
+
+                    return (
+                      <motion.div
+                        key={activity.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="flex items-start space-x-4 p-4 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <div className={`p-2 rounded-full ${activityColor}`}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {activity.title}
+                            </p>
+                            {activity.status && (
+                              <div className="flex items-center ml-2">
+                                <StatusIcon className={`w-4 h-4 ${statusColor}`} />
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {activity.description}
+                          </p>
+                          <div className="flex items-center justify-between mt-2">
+                            <p className="text-xs text-gray-500">
+                              {activity.timestamp}
+                            </p>
+                            {activity.amount && (
+                              <p className="text-sm font-semibold text-green-600">
+                                +₹{activity.amount.toLocaleString()}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">No recent activity</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Start by adding your first listing
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </motion.div>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('dashboard.stats.total.listings')}</CardTitle>
-              <Building className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{statsLoading ? '...' : stats?.totalListings || 0}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('dashboard.stats.nearby.businesses')}</CardTitle>
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{nearbyListings?.length || 0}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('dashboard.stats.loan.applications')}</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{statsLoading ? '...' : stats?.loanApplications || 0}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('dashboard.stats.active.interests')}</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{statsLoading ? '...' : stats?.activeInterests || 0}</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Nearby Businesses */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-blue-600" />
-                {t('dashboard.nearby.title')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {nearbyListings?.slice(0, 3).map((match: any) => (
-                  <div key={match.msme.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h4 className="font-semibold">{match.msme.businessName}</h4>
-                      <p className="text-sm text-gray-600">{match.msme.industry}</p>
-                      <p className="text-sm text-gray-500">
-                        {match.msme.city} • {match.distance ? `${Math.round(match.distance)} km` : ''}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <Badge variant="secondary">
-                        {t('dashboard.match.score')}: {Math.round(match.score * 100)}%
-                      </Badge>
-                      <p className="text-sm text-green-600 mt-1">
-                        ₹{match.msme.askingPrice ? Number(match.msme.askingPrice).toLocaleString() : 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-                {(!nearbyListings || nearbyListings.length === 0) && (
-                  <div className="text-center py-8 text-gray-500">
-                    <MapPin className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>{t('dashboard.nearby.empty')}</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recent Activity */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-green-600" />
-                {t('dashboard.activity.title')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                  <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{t('dashboard.activity.new.match')}</p>
-                    <p className="text-xs text-gray-500">2 {t('dashboard.activity.hours.ago')}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{t('dashboard.activity.loan.approved')}</p>
-                    <p className="text-xs text-gray-500">1 {t('dashboard.activity.day.ago')}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
-                  <div className="w-2 h-2 bg-yellow-600 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{t('dashboard.activity.valuation.updated')}</p>
-                    <p className="text-xs text-gray-500">3 {t('dashboard.activity.days.ago')}</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="mt-8">
-          <h3 className="text-lg font-semibold mb-4">{t('dashboard.quick.actions')}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardContent className="p-6 text-center">
-                <Building className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                <h4 className="font-semibold mb-2">{t('nav.sell')}</h4>
-                <p className="text-sm text-gray-600">{t('dashboard.actions.sell.description')}</p>
-              </CardContent>
-            </Card>
-
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardContent className="p-6 text-center">
-                <Users className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                <h4 className="font-semibold mb-2">{t('nav.buy')}</h4>
-                <p className="text-sm text-gray-600">{t('dashboard.actions.buy.description')}</p>
-              </CardContent>
-            </Card>
-
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardContent className="p-6 text-center">
-                <FileText className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                <h4 className="font-semibold mb-2">{t('nav.loan')}</h4>
-                <p className="text-sm text-gray-600">{t('dashboard.actions.loan.description')}</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
       </div>
-
-      <AccessibilityToolbar />
-    </div>
+    </DashboardLayout>
   );
 }

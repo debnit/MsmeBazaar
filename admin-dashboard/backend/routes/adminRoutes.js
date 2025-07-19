@@ -21,20 +21,20 @@ router.post('/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     const result = await rbacService.authenticateUser(
-      email, 
-      password, 
-      req.ip, 
-      req.get('User-Agent')
+      email,
+      password,
+      req.ip,
+      req.get('User-Agent'),
     );
-    
+
     res.json({
       success: true,
-      data: result
+      data: result,
     });
   } catch (error) {
     res.status(401).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -57,8 +57,8 @@ router.get('/auth/me', async (req, res) => {
       success: true,
       data: {
         user: req.user,
-        permissions
-      }
+        permissions,
+      },
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -75,12 +75,12 @@ router.get('/dashboard', rbacService.requirePermission('dashboard:read'), async 
     const dashboardData = await analyticsService.getDashboardData();
     res.json({
       success: true,
-      data: dashboardData
+      data: dashboardData,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -90,15 +90,15 @@ router.get('/analytics/transactions', rbacService.requirePermission('analytics:r
   try {
     const { period = '30d' } = req.query;
     const transactionData = await analyticsService.getTransactionData(period);
-    
+
     res.json({
       success: true,
-      data: transactionData
+      data: transactionData,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -109,12 +109,12 @@ router.get('/analytics/msmes', rbacService.requirePermission('analytics:read'), 
     const msmeData = await analyticsService.getActiveMSMEData();
     res.json({
       success: true,
-      data: msmeData
+      data: msmeData,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -124,15 +124,15 @@ router.get('/analytics/valuations', rbacService.requirePermission('analytics:rea
   try {
     const { period = '30d' } = req.query;
     const valuationData = await analyticsService.getValuationSummary(period);
-    
+
     res.json({
       success: true,
-      data: valuationData
+      data: valuationData,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -143,12 +143,12 @@ router.get('/analytics/users', rbacService.requirePermission('analytics:read'), 
     const userData = await analyticsService.getUserAnalytics();
     res.json({
       success: true,
-      data: userData
+      data: userData,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -158,15 +158,15 @@ router.get('/analytics/revenue', rbacService.requirePermission('analytics:read')
   try {
     const { period = '12m' } = req.query;
     const revenueData = await analyticsService.getRevenueAnalytics(period);
-    
+
     res.json({
       success: true,
-      data: revenueData
+      data: revenueData,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -177,12 +177,12 @@ router.get('/analytics/performance', rbacService.requirePermission('analytics:re
     const performanceData = await analyticsService.getPerformanceMetrics();
     res.json({
       success: true,
-      data: performanceData
+      data: performanceData,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -193,12 +193,12 @@ router.get('/analytics/growth', rbacService.requirePermission('analytics:read'),
     const growthData = await analyticsService.getGrowthAnalytics();
     res.json({
       success: true,
-      data: growthData
+      data: growthData,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -209,12 +209,12 @@ router.get('/analytics/industry', rbacService.requirePermission('analytics:read'
     const industryData = await analyticsService.getIndustryAnalytics();
     res.json({
       success: true,
-      data: industryData
+      data: industryData,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -225,12 +225,12 @@ router.get('/analytics/geographic', rbacService.requirePermission('analytics:rea
     const geoData = await analyticsService.getGeographicAnalytics();
     res.json({
       success: true,
-      data: geoData
+      data: geoData,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -240,9 +240,9 @@ router.get('/analytics/export/:type', rbacService.requirePermission('analytics:e
   try {
     const { type } = req.params;
     const { period, format = 'json' } = req.query;
-    
+
     const data = await analyticsService.exportAnalyticsData(type, period, format);
-    
+
     if (format === 'csv') {
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', `attachment; filename="${type}-analytics.csv"`);
@@ -250,13 +250,13 @@ router.get('/analytics/export/:type', rbacService.requirePermission('analytics:e
     } else {
       res.json({
         success: true,
-        data
+        data,
       });
     }
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -269,18 +269,18 @@ router.get('/analytics/export/:type', rbacService.requirePermission('analytics:e
 router.post('/workflows/onboarding', rbacService.requirePermission('workflows:create'), async (req, res) => {
   try {
     const { msmeData } = req.body;
-    
+
     const workflow = await workflowService.startMSMEOnboarding(msmeData);
-    
+
     res.json({
       success: true,
       data: workflow,
-      message: 'MSME onboarding workflow started successfully'
+      message: 'MSME onboarding workflow started successfully',
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -289,18 +289,18 @@ router.post('/workflows/onboarding', rbacService.requirePermission('workflows:cr
 router.post('/workflows/valuation', rbacService.requirePermission('workflows:create'), async (req, res) => {
   try {
     const { valuationData } = req.body;
-    
+
     const workflow = await workflowService.startValuationWorkflow(valuationData);
-    
+
     res.json({
       success: true,
       data: workflow,
-      message: 'Valuation workflow started successfully'
+      message: 'Valuation workflow started successfully',
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -309,39 +309,39 @@ router.post('/workflows/valuation', rbacService.requirePermission('workflows:cre
 router.get('/workflows/:workflowId/status', rbacService.requirePermission('workflows:read'), async (req, res) => {
   try {
     const { workflowId } = req.params;
-    
+
     // Get workflow status from database
     const statusResult = await workflowService.db.query(
       'SELECT * FROM workflows WHERE id = $1',
-      [workflowId]
+      [workflowId],
     );
-    
+
     if (statusResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        error: 'Workflow not found'
+        error: 'Workflow not found',
       });
     }
-    
+
     const workflow = statusResult.rows[0];
-    
+
     // Get workflow logs
     const logsResult = await workflowService.db.query(
       'SELECT * FROM workflow_logs WHERE entity_id = $1 ORDER BY created_at DESC',
-      [workflow.entity_id]
+      [workflow.entity_id],
     );
-    
+
     res.json({
       success: true,
       data: {
         workflow,
-        logs: logsResult.rows
-      }
+        logs: logsResult.rows,
+      },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -350,18 +350,18 @@ router.get('/workflows/:workflowId/status', rbacService.requirePermission('workf
 router.post('/workflows/compliance/:msmeId', rbacService.requirePermission('workflows:create'), async (req, res) => {
   try {
     const { msmeId } = req.params;
-    
+
     const complianceResults = await workflowService.startComplianceMonitoring(msmeId);
-    
+
     res.json({
       success: true,
       data: complianceResults,
-      message: 'Compliance monitoring completed'
+      message: 'Compliance monitoring completed',
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -374,18 +374,18 @@ router.post('/workflows/compliance/:msmeId', rbacService.requirePermission('work
 router.post('/users', rbacService.requirePermission('users:create'), async (req, res) => {
   try {
     const userData = req.body;
-    
+
     const user = await rbacService.createAdminUser(userData, req.user.id);
-    
+
     res.status(201).json({
       success: true,
       data: user,
-      message: 'Admin user created successfully'
+      message: 'Admin user created successfully',
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -395,7 +395,7 @@ router.get('/users', rbacService.requirePermission('users:read'), async (req, re
   try {
     const { page = 1, limit = 20, role, team, search } = req.query;
     const offset = (page - 1) * limit;
-    
+
     let query = `
       SELECT u.id, u.email, u.first_name, u.last_name, u.is_active, 
              u.last_login, u.created_at, r.name as role_name, r.display_name as role_display,
@@ -405,7 +405,7 @@ router.get('/users', rbacService.requirePermission('users:read'), async (req, re
       LEFT JOIN admin_teams t ON u.team_id = t.id
       WHERE 1=1
     `;
-    
+
     const params = [];
     let paramIndex = 1;
 
@@ -431,20 +431,20 @@ router.get('/users', rbacService.requirePermission('users:read'), async (req, re
     params.push(limit, offset);
 
     const result = await rbacService.db.query(query, params);
-    
+
     res.json({
       success: true,
       data: result.rows,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
-        total: result.rows.length
-      }
+        total: result.rows.length,
+      },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -453,34 +453,34 @@ router.get('/users', rbacService.requirePermission('users:read'), async (req, re
 router.get('/users/:id', rbacService.requirePermission('users:read'), async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const result = await rbacService.db.query(
       `SELECT u.*, r.name as role_name, r.display_name as role_display, t.name as team_name
        FROM admin_users u
        JOIN admin_roles r ON u.role_id = r.id
        LEFT JOIN admin_teams t ON u.team_id = t.id
        WHERE u.id = $1`,
-      [id]
+      [id],
     );
-    
+
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        error: 'User not found'
+        error: 'User not found',
       });
     }
-    
+
     const user = result.rows[0];
     delete user.password_hash; // Remove password hash from response
-    
+
     res.json({
       success: true,
-      data: user
+      data: user,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -490,7 +490,7 @@ router.put('/users/:id', rbacService.requirePermission('users:update'), async (r
   try {
     const { id } = req.params;
     const updateData = req.body;
-    
+
     // Build update query dynamically
     const allowedFields = ['first_name', 'last_name', 'role_id', 'team_id', 'is_active'];
     const updates = [];
@@ -508,11 +508,11 @@ router.put('/users/:id', rbacService.requirePermission('users:update'), async (r
     if (updates.length === 0) {
       return res.status(400).json({
         success: false,
-        error: 'No valid fields to update'
+        error: 'No valid fields to update',
       });
     }
 
-    updates.push(`updated_at = NOW()`);
+    updates.push('updated_at = NOW()');
     values.push(id);
 
     const query = `UPDATE admin_users SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`;
@@ -521,7 +521,7 @@ router.put('/users/:id', rbacService.requirePermission('users:update'), async (r
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        error: 'User not found'
+        error: 'User not found',
       });
     }
 
@@ -534,7 +534,7 @@ router.put('/users/:id', rbacService.requirePermission('users:update'), async (r
       req.ip,
       req.get('User-Agent'),
       true,
-      { updated_fields: Object.keys(updateData) }
+      { updated_fields: Object.keys(updateData) },
     );
 
     const user = result.rows[0];
@@ -543,12 +543,12 @@ router.put('/users/:id', rbacService.requirePermission('users:update'), async (r
     res.json({
       success: true,
       data: user,
-      message: 'User updated successfully'
+      message: 'User updated successfully',
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -560,20 +560,20 @@ router.put('/users/:id', rbacService.requirePermission('users:update'), async (r
 // Get all MSMEs with filtering
 router.get('/msmes', rbacService.requirePermission('msmes:read'), async (req, res) => {
   try {
-    const { 
-      page = 1, 
-      limit = 20, 
-      status, 
-      industry, 
-      state, 
-      verified, 
+    const {
+      page = 1,
+      limit = 20,
+      status,
+      industry,
+      state,
+      verified,
       search,
       sort = 'created_at',
-      order = 'DESC'
+      order = 'DESC',
     } = req.query;
-    
+
     const offset = (page - 1) * limit;
-    
+
     let query = `
       SELECT id, company_name, business_type, industry_category, 
              annual_turnover, employee_count, state, city, status, 
@@ -581,7 +581,7 @@ router.get('/msmes', rbacService.requirePermission('msmes:read'), async (req, re
       FROM msmes
       WHERE 1=1
     `;
-    
+
     const params = [];
     let paramIndex = 1;
 
@@ -618,7 +618,7 @@ router.get('/msmes', rbacService.requirePermission('msmes:read'), async (req, re
     // Validate sort and order parameters
     const allowedSortFields = ['created_at', 'company_name', 'annual_turnover', 'employee_count'];
     const allowedOrderValues = ['ASC', 'DESC'];
-    
+
     const sortField = allowedSortFields.includes(sort) ? sort : 'created_at';
     const orderValue = allowedOrderValues.includes(order.toUpperCase()) ? order.toUpperCase() : 'DESC';
 
@@ -626,15 +626,15 @@ router.get('/msmes', rbacService.requirePermission('msmes:read'), async (req, re
     params.push(limit, offset);
 
     const result = await analyticsService.db.query(query, params);
-    
+
     // Get total count for pagination
     let countQuery = 'SELECT COUNT(*) FROM msmes WHERE 1=1';
     const countParams = params.slice(0, -2); // Remove limit and offset
-    
-    if (status) countQuery += ` AND status = $1`;
-    if (industry) countQuery += ` AND industry_category = $${status ? 2 : 1}`;
+
+    if (status) {countQuery += ' AND status = $1';}
+    if (industry) {countQuery += ` AND industry_category = $${status ? 2 : 1}`;}
     // ... add other filters for count query
-    
+
     const countResult = await analyticsService.db.query(countQuery, countParams);
     const totalCount = parseInt(countResult.rows[0].count);
 
@@ -645,13 +645,13 @@ router.get('/msmes', rbacService.requirePermission('msmes:read'), async (req, re
         page: parseInt(page),
         limit: parseInt(limit),
         total: totalCount,
-        totalPages: Math.ceil(totalCount / limit)
-      }
+        totalPages: Math.ceil(totalCount / limit),
+      },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -660,27 +660,27 @@ router.get('/msmes', rbacService.requirePermission('msmes:read'), async (req, re
 router.get('/msmes/:id', rbacService.requirePermission('msmes:read'), async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const result = await analyticsService.db.query(
       'SELECT * FROM msmes WHERE id = $1',
-      [id]
+      [id],
     );
-    
+
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        error: 'MSME not found'
+        error: 'MSME not found',
       });
     }
-    
+
     res.json({
       success: true,
-      data: result.rows[0]
+      data: result.rows[0],
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -690,19 +690,19 @@ router.post('/msmes/:id/approve', rbacService.requirePermission('msmes:approve')
   try {
     const { id } = req.params;
     const { comments } = req.body;
-    
+
     const result = await analyticsService.db.query(
       'UPDATE msmes SET verified = true, status = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
-      ['active', id]
+      ['active', id],
     );
-    
+
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        error: 'MSME not found'
+        error: 'MSME not found',
       });
     }
-    
+
     // Log the approval
     await rbacService.logAccess(
       req.user.id,
@@ -712,18 +712,18 @@ router.post('/msmes/:id/approve', rbacService.requirePermission('msmes:approve')
       req.ip,
       req.get('User-Agent'),
       true,
-      { comments }
+      { comments },
     );
-    
+
     res.json({
       success: true,
       data: result.rows[0],
-      message: 'MSME approved successfully'
+      message: 'MSME approved successfully',
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -737,15 +737,15 @@ router.get('/audit/logs', rbacService.requirePermission('audit:read'), async (re
   try {
     const filters = req.query;
     const logs = await rbacService.getAccessLogs(filters);
-    
+
     res.json({
       success: true,
-      data: logs
+      data: logs,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -755,7 +755,7 @@ router.get('/audit/export', rbacService.requirePermission('audit:export'), async
   try {
     const { format = 'json', ...filters } = req.query;
     const logs = await rbacService.getAccessLogs(filters);
-    
+
     if (format === 'csv') {
       const csvData = analyticsService.convertToCSV(logs);
       res.setHeader('Content-Type', 'text/csv');
@@ -764,13 +764,13 @@ router.get('/audit/export', rbacService.requirePermission('audit:export'), async
     } else {
       res.json({
         success: true,
-        data: logs
+        data: logs,
       });
     }
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -788,13 +788,13 @@ router.get('/system/health', rbacService.requirePermission('system:manage'), asy
       services: {
         database: 'healthy',
         redis: 'healthy',
-        queue: 'healthy'
+        queue: 'healthy',
       },
       uptime: process.uptime(),
       memory: process.memoryUsage(),
-      version: process.env.npm_package_version || '1.0.0'
+      version: process.env.npm_package_version || '1.0.0',
     };
-    
+
     // Test database connection
     try {
       await analyticsService.db.query('SELECT 1');
@@ -802,7 +802,7 @@ router.get('/system/health', rbacService.requirePermission('system:manage'), asy
       health.services.database = 'unhealthy';
       health.status = 'degraded';
     }
-    
+
     // Test Redis connection
     try {
       await analyticsService.redis.ping();
@@ -810,15 +810,15 @@ router.get('/system/health', rbacService.requirePermission('system:manage'), asy
       health.services.redis = 'unhealthy';
       health.status = 'degraded';
     }
-    
+
     res.json({
       success: true,
-      data: health
+      data: health,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });

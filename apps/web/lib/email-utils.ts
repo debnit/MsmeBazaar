@@ -7,6 +7,6 @@ export const sendPDFEmail = async (pdfBlob: Blob) => {
     from: 'alerts@msmebazaar.in',
     to: ['admin@msmebazaar.in'],
     subject: 'Admin Report',
-    attachments: [{ filename: file.name, content: await file.arrayBuffer() }]
+    attachments: [{ filename: file.name, content: await file.arrayBuffer() }],
   });
 };

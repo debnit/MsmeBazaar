@@ -40,16 +40,16 @@ class MLScheduler {
   private async retrainModels() {
     try {
       console.log('📊 Collecting training data...');
-      
+
       // Collect historical data for retraining
       const historicalListings = await db.select().from(msmeListings);
-      
+
       // Retrain valuation model
       await this.retrainValuationModel(historicalListings);
-      
+
       // Retrain matchmaking model
       await this.retrainMatchmakingModel(historicalListings);
-      
+
       console.log('✅ ML model retraining completed successfully');
     } catch (error) {
       console.error('❌ ML model retraining failed:', error);
@@ -59,15 +59,15 @@ class MLScheduler {
   private async retrainValuationModel(historicalData: any[]) {
     try {
       console.log('🏭 Retraining valuation model...');
-      
+
       // Calculate industry benchmarks from historical data
       const industryMetrics = this.calculateIndustryMetrics(historicalData);
-      
+
       // Update valuation engine with new metrics
       for (const [industry, metrics] of Object.entries(industryMetrics)) {
         await valuationEngine.updateIndustryMetrics(industry, metrics);
       }
-      
+
       console.log('✅ Valuation model retrained with', Object.keys(industryMetrics).length, 'industries');
     } catch (error) {
       console.error('❌ Valuation model retraining failed:', error);
@@ -77,13 +77,13 @@ class MLScheduler {
   private async retrainMatchmakingModel(historicalData: any[]) {
     try {
       console.log('🎯 Retraining matchmaking model...');
-      
+
       // Analyze successful matches to improve algorithm
       const successfulMatches = await this.analyzeSuccessfulMatches();
-      
+
       // Update matchmaking weights based on success patterns
       await this.updateMatchmakingWeights(successfulMatches);
-      
+
       console.log('✅ Matchmaking model retrained');
     } catch (error) {
       console.error('❌ Matchmaking model retraining failed:', error);
@@ -93,33 +93,33 @@ class MLScheduler {
   private async refreshValuations() {
     try {
       console.log('💰 Refreshing MSME valuations...');
-      
+
       // Get all active listings
       const activeListings = await db.select()
         .from(msmeListings)
         .where(eq(msmeListings.status, 'active'));
-      
+
       let refreshedCount = 0;
-      
+
       // Refresh valuation for each listing
       for (const listing of activeListings) {
         try {
           const newValuation = await valuationEngine.calculateValuation(listing);
-          
+
           // Update listing with new valuation
           await db.update(msmeListings)
             .set({
               estimatedValue: newValuation.estimatedValue,
-              updatedAt: new Date()
+              updatedAt: new Date(),
             })
             .where(eq(msmeListings.id, listing.id));
-          
+
           refreshedCount++;
         } catch (error) {
           console.error(`❌ Failed to refresh valuation for listing ${listing.id}:`, error);
         }
       }
-      
+
       console.log(`✅ Refreshed ${refreshedCount} valuations`);
     } catch (error) {
       console.error('❌ Valuation refresh failed:', error);
@@ -129,19 +129,19 @@ class MLScheduler {
   private async cleanup() {
     try {
       console.log('🧹 Running cleanup tasks...');
-      
+
       // Cleanup old notification history (older than 90 days)
       await db.execute(`
         DELETE FROM notification_history 
         WHERE created_at < NOW() - INTERVAL '90 days'
       `);
-      
+
       // Cleanup expired OTP records
       await db.execute(`
         DELETE FROM otp_store 
         WHERE expires_at < NOW()
       `);
-      
+
       // Archive old completed loan applications
       await db.execute(`
         UPDATE loan_applications 
@@ -149,7 +149,7 @@ class MLScheduler {
         WHERE status IN ('approved', 'rejected') 
         AND updated_at < NOW() - INTERVAL '180 days'
       `);
-      
+
       console.log('✅ Cleanup completed');
     } catch (error) {
       console.error('❌ Cleanup failed:', error);
@@ -158,23 +158,23 @@ class MLScheduler {
 
   private calculateIndustryMetrics(historicalData: any[]) {
     const industryMetrics: Record<string, any> = {};
-    
+
     // Group by industry
     const industryGroups = historicalData.reduce((acc, listing) => {
       const industry = listing.industry;
-      if (!acc[industry]) acc[industry] = [];
+      if (!acc[industry]) {acc[industry] = [];}
       acc[industry].push(listing);
       return acc;
     }, {});
-    
+
     // Calculate metrics for each industry
     for (const [industry, listings] of Object.entries(industryGroups)) {
       const listingArray = listings as any[];
-      
+
       if (listingArray.length > 0) {
         const avgRevenue = listingArray.reduce((sum, l) => sum + (l.revenue || 0), 0) / listingArray.length;
         const avgValuation = listingArray.reduce((sum, l) => sum + (l.estimatedValue || 0), 0) / listingArray.length;
-        
+
         industryMetrics[industry] = {
           averageMultiple: avgValuation / (avgRevenue || 1),
           growthRate: this.calculateGrowthRate(listingArray),
@@ -184,7 +184,7 @@ class MLScheduler {
         };
       }
     }
-    
+
     return industryMetrics;
   }
 
@@ -193,9 +193,9 @@ class MLScheduler {
     const growthRates = listings
       .filter(l => l.growthRate)
       .map(l => l.growthRate);
-    
-    return growthRates.length > 0 
-      ? growthRates.reduce((sum, rate) => sum + rate, 0) / growthRates.length 
+
+    return growthRates.length > 0
+      ? growthRates.reduce((sum, rate) => sum + rate, 0) / growthRates.length
       : 0.05; // Default 5%
   }
 
@@ -203,9 +203,9 @@ class MLScheduler {
     const avgDebtToEquity = listings
       .filter(l => l.debtToEquity)
       .reduce((sum, l) => sum + l.debtToEquity, 0) / listings.length;
-    
-    if (avgDebtToEquity < 0.3) return 'low';
-    if (avgDebtToEquity < 0.7) return 'medium';
+
+    if (avgDebtToEquity < 0.3) {return 'low';}
+    if (avgDebtToEquity < 0.7) {return 'medium';}
     return 'high';
   }
 
@@ -214,25 +214,25 @@ class MLScheduler {
     const avgTimeToSell = listings
       .filter(l => l.timeToSell)
       .reduce((sum, l) => sum + l.timeToSell, 0) / listings.length;
-    
+
     return Math.max(0.1, Math.min(1.0, 1 - (avgTimeToSell / 365))); // Normalize to 0.1-1.0
   }
 
   private calculateCyclicality(listings: any[]): number {
     // Calculate cyclicality based on revenue volatility
     const revenueVariance = this.calculateVariance(
-      listings.map(l => l.revenue || 0)
+      listings.map(l => l.revenue || 0),
     );
-    
+
     return Math.min(1.0, revenueVariance / 1000000); // Normalize
   }
 
   private calculateVariance(values: number[]): number {
-    if (values.length < 2) return 0;
-    
+    if (values.length < 2) {return 0;}
+
     const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
     const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
-    
+
     return variance;
   }
 
@@ -253,14 +253,14 @@ class MLScheduler {
       WHERE bi.status = 'deal_closed'
       AND bi.updated_at > NOW() - INTERVAL '30 days'
     `);
-    
+
     return successfulMatches;
   }
 
   private async updateMatchmakingWeights(successfulMatches: any[]) {
     // Analyze patterns in successful matches to update algorithm weights
     console.log('📈 Analyzing', successfulMatches.length, 'successful matches');
-    
+
     // This would update the matchmaking algorithm weights
     // based on what factors led to successful deals
   }

@@ -4,18 +4,18 @@ export function safeGet<T>(obj: any, path: string, defaultValue: T): T {
   if (!obj || typeof obj !== 'object') {
     return defaultValue;
   }
-  
+
   try {
     const keys = path.split('.');
     let current = obj;
-    
+
     for (const key of keys) {
       if (current === null || current === undefined || typeof current !== 'object') {
         return defaultValue;
       }
       current = current[key];
     }
-    
+
     return current !== null && current !== undefined ? current : defaultValue;
   } catch (error) {
     console.warn(`Safe get failed for path: ${path}`, error);
@@ -90,14 +90,14 @@ export function safeObject<T>(value: T | null | undefined): T | {} {
 
 export function safeObjectMap<T, R>(
   obj: Record<string, T> | null | undefined,
-  mapper: (value: T, key: string) => R
+  mapper: (value: T, key: string) => R,
 ): Record<string, R> {
   if (!obj || typeof obj !== 'object') {
     return {};
   }
-  
+
   const result: Record<string, R> = {};
-  
+
   try {
     for (const [key, value] of Object.entries(obj)) {
       if (value !== null && value !== undefined) {
@@ -107,18 +107,18 @@ export function safeObjectMap<T, R>(
   } catch (error) {
     console.warn('Safe object map failed:', error);
   }
-  
+
   return result;
 }
 
 export function safePromise<T>(
   promise: Promise<T> | null | undefined,
-  defaultValue: T
+  defaultValue: T,
 ): Promise<T> {
   if (!promise || typeof promise.then !== 'function') {
     return Promise.resolve(defaultValue);
   }
-  
+
   return promise.catch((error) => {
     console.warn('Safe promise failed:', error);
     return defaultValue;
@@ -127,13 +127,13 @@ export function safePromise<T>(
 
 export function safeJSON<T>(
   jsonString: string | null | undefined,
-  defaultValue: T
+  defaultValue: T,
 ): T {
   try {
     if (!jsonString || typeof jsonString !== 'string') {
       return defaultValue;
     }
-    
+
     const parsed = JSON.parse(jsonString);
     return parsed !== null && parsed !== undefined ? parsed : defaultValue;
   } catch (error) {
@@ -144,7 +144,7 @@ export function safeJSON<T>(
 
 export function safeStringify(
   value: any,
-  defaultValue: string = '{}'
+  defaultValue: string = '{}',
 ): string {
   try {
     return JSON.stringify(value);
@@ -156,7 +156,7 @@ export function safeStringify(
 
 export function safeEnv(
   key: string,
-  defaultValue: string = ''
+  defaultValue: string = '',
 ): string {
   try {
     const value = process.env[key];
@@ -169,7 +169,7 @@ export function safeEnv(
 
 export function safeFileRead(
   path: string,
-  defaultValue: string = ''
+  defaultValue: string = '',
 ): string {
   try {
     const fs = require('fs');
@@ -185,7 +185,7 @@ export function safeFileRead(
 
 export function safeFileWrite(
   path: string,
-  content: string
+  content: string,
 ): boolean {
   try {
     const fs = require('fs');
@@ -199,13 +199,13 @@ export function safeFileWrite(
 
 export function safeDatabase<T>(
   query: () => Promise<T>,
-  defaultValue: T
+  defaultValue: T,
 ): Promise<T> {
   return safeAsyncExecute(query, defaultValue);
 }
 
 export function safeMiddleware(
-  middleware: (req: any, res: any, next: any) => void
+  middleware: (req: any, res: any, next: any) => void,
 ) {
   return (req: any, res: any, next: any) => {
     try {
@@ -222,7 +222,7 @@ export function safeMiddleware(
 }
 
 export function safeRouteHandler(
-  handler: (req: any, res: any) => void | Promise<void>
+  handler: (req: any, res: any) => void | Promise<void>,
 ) {
   return async (req: any, res: any) => {
     try {
@@ -242,20 +242,20 @@ export function safeRouteHandler(
 
 export function safeAPICall<T>(
   apiCall: () => Promise<T>,
-  defaultValue: T
+  defaultValue: T,
 ): Promise<T> {
   return safeAsyncExecute(apiCall, defaultValue);
 }
 
 export function safeTimeout(
   callback: () => void,
-  delay: number
+  delay: number,
 ): NodeJS.Timeout | null {
   try {
     if (typeof callback !== 'function') {
       return null;
     }
-    
+
     return setTimeout(() => {
       try {
         callback();
@@ -271,13 +271,13 @@ export function safeTimeout(
 
 export function safeInterval(
   callback: () => void,
-  delay: number
+  delay: number,
 ): NodeJS.Timeout | null {
   try {
     if (typeof callback !== 'function') {
       return null;
     }
-    
+
     return setInterval(() => {
       try {
         callback();
@@ -294,13 +294,13 @@ export function safeInterval(
 export function safeEventEmitter(
   emitter: any,
   event: string,
-  listener: (...args: any[]) => void
+  listener: (...args: any[]) => void,
 ): () => void {
   try {
     if (!emitter || typeof emitter.on !== 'function') {
       return () => {};
     }
-    
+
     const safeListener = (...args: any[]) => {
       try {
         listener(...args);
@@ -308,9 +308,9 @@ export function safeEventEmitter(
         console.warn('Safe event listener failed:', error);
       }
     };
-    
+
     emitter.on(event, safeListener);
-    
+
     return () => {
       try {
         if (emitter && typeof emitter.off === 'function') {

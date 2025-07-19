@@ -5,7 +5,7 @@ import { cacheApiCall, clientCache } from '../utils/cache';
 export const useFastQuery = <T>(
   queryKey: QueryKey,
   queryFn: () => Promise<T>,
-  options?: UseQueryOptions<T>
+  options?: UseQueryOptions<T>,
 ) => {
   return useQuery({
     queryKey,
@@ -23,7 +23,7 @@ export const useFastQuery = <T>(
 export const usePrefetchQuery = <T>(
   queryKey: QueryKey,
   queryFn: () => Promise<T>,
-  condition: boolean = true
+  condition: boolean = true,
 ) => {
   return useQuery({
     queryKey,

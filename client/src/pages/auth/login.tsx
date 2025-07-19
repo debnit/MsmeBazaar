@@ -19,7 +19,7 @@ import { motion } from 'framer-motion';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters')
+  password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
 const registerSchema = z.object({
@@ -27,7 +27,7 @@ const registerSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
-  role: z.enum(['seller', 'buyer', 'agent', 'nbfc'])
+  role: z.enum(['seller', 'buyer', 'agent', 'nbfc']),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -37,7 +37,7 @@ const roleIcons = {
   seller: Building,
   buyer: Users,
   agent: TrendingUp,
-  nbfc: Shield
+  nbfc: Shield,
 };
 
 export default function AuthPage() {
@@ -51,19 +51,19 @@ export default function AuthPage() {
 
   const loginForm = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' }
+    defaultValues: { email: '', password: '' },
   });
 
   const registerForm = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { email: '', password: '', firstName: '', lastName: '', role: 'seller' }
+    defaultValues: { email: '', password: '', firstName: '', lastName: '', role: 'seller' },
   });
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginForm) => {
       const response = await apiRequest('/api/auth/login', {
         method: 'POST',
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
       return response;
     },
@@ -71,7 +71,7 @@ export default function AuthPage() {
       toast({
         title: t('auth.login.success'),
         description: t('auth.login.welcome'),
-        variant: 'default'
+        variant: 'default',
       });
       setLocation('/dashboard');
     },
@@ -79,29 +79,29 @@ export default function AuthPage() {
       toast({
         title: t('auth.login.error'),
         description: error.message,
-        variant: 'destructive'
+        variant: 'destructive',
       });
-    }
+    },
   });
 
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterForm) => {
       const response = await apiRequest('/api/auth/register', {
         method: 'POST',
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
       return response;
     },
     onSuccess: () => {
       // Show welcome reward notification
       setShowWelcomeReward(true);
-      
+
       toast({
         title: t('auth.register.success'),
         description: t('auth.register.welcome'),
-        variant: 'default'
+        variant: 'default',
       });
-      
+
       // Delay navigation to show reward
       setTimeout(() => {
         setLocation('/dashboard');
@@ -111,9 +111,9 @@ export default function AuthPage() {
       toast({
         title: t('auth.register.error'),
         description: error.message,
-        variant: 'destructive'
+        variant: 'destructive',
       });
-    }
+    },
   });
 
   const getRoleDescription = (role: string) => {
@@ -121,7 +121,7 @@ export default function AuthPage() {
       seller: t('auth.roles.seller.description'),
       buyer: t('auth.roles.buyer.description'),
       agent: t('auth.roles.agent.description'),
-      nbfc: t('auth.roles.nbfc.description')
+      nbfc: t('auth.roles.nbfc.description'),
     };
     return descriptions[role as keyof typeof descriptions] || '';
   };
@@ -133,7 +133,7 @@ export default function AuthPage() {
       <div className="absolute top-4 right-4">
         <LanguageSelector />
       </div>
-      
+
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
@@ -221,11 +221,11 @@ export default function AuthPage() {
                             <FormItem>
                               <FormLabel>{t('auth.form.email')}</FormLabel>
                               <FormControl>
-                                <Input 
-                                  type="email" 
+                                <Input
+                                  type="email"
                                   placeholder={t('auth.form.emailPlaceholder')}
                                   className="h-12"
-                                  {...field} 
+                                  {...field}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -240,11 +240,11 @@ export default function AuthPage() {
                               <FormLabel>{t('auth.form.password')}</FormLabel>
                               <FormControl>
                                 <div className="relative">
-                                  <Input 
-                                    type={showPassword ? 'text' : 'password'} 
+                                  <Input
+                                    type={showPassword ? 'text' : 'password'}
                                     placeholder={t('auth.form.passwordPlaceholder')}
                                     className="h-12 pr-10"
-                                    {...field} 
+                                    {...field}
                                   />
                                   <button
                                     type="button"
@@ -259,8 +259,8 @@ export default function AuthPage() {
                             </FormItem>
                           )}
                         />
-                        <Button 
-                          type="submit" 
+                        <Button
+                          type="submit"
                           className="w-full h-12 bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
                           disabled={loginMutation.isPending}
                         >
@@ -280,10 +280,10 @@ export default function AuthPage() {
                               <FormItem>
                                 <FormLabel>{t('auth.form.firstName')}</FormLabel>
                                 <FormControl>
-                                  <Input 
+                                  <Input
                                     placeholder={t('auth.form.firstNamePlaceholder')}
                                     className="h-12"
-                                    {...field} 
+                                    {...field}
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -297,10 +297,10 @@ export default function AuthPage() {
                               <FormItem>
                                 <FormLabel>{t('auth.form.lastName')}</FormLabel>
                                 <FormControl>
-                                  <Input 
+                                  <Input
                                     placeholder={t('auth.form.lastNamePlaceholder')}
                                     className="h-12"
-                                    {...field} 
+                                    {...field}
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -315,11 +315,11 @@ export default function AuthPage() {
                             <FormItem>
                               <FormLabel>{t('auth.form.email')}</FormLabel>
                               <FormControl>
-                                <Input 
-                                  type="email" 
+                                <Input
+                                  type="email"
                                   placeholder={t('auth.form.emailPlaceholder')}
                                   className="h-12"
-                                  {...field} 
+                                  {...field}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -334,11 +334,11 @@ export default function AuthPage() {
                               <FormLabel>{t('auth.form.password')}</FormLabel>
                               <FormControl>
                                 <div className="relative">
-                                  <Input 
-                                    type={showPassword ? 'text' : 'password'} 
+                                  <Input
+                                    type={showPassword ? 'text' : 'password'}
                                     placeholder={t('auth.form.passwordPlaceholder')}
                                     className="h-12 pr-10"
-                                    {...field} 
+                                    {...field}
                                   />
                                   <button
                                     type="button"
@@ -386,8 +386,8 @@ export default function AuthPage() {
                             </FormItem>
                           )}
                         />
-                        <Button 
-                          type="submit" 
+                        <Button
+                          type="submit"
                           className="w-full h-12 bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
                           disabled={registerMutation.isPending}
                         >
@@ -417,7 +417,7 @@ export default function AuthPage() {
           </div>
         </div>
       </div>
-      
+
       {/* Welcome Reward Notification */}
       {showWelcomeReward && (
         <RewardNotification
@@ -428,7 +428,7 @@ export default function AuthPage() {
             title: t('gamification.welcome.title'),
             description: t('gamification.welcome.description'),
             value: 100,
-            special: true
+            special: true,
           }}
           onClaim={() => {
             setShowWelcomeReward(false);

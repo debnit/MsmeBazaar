@@ -1,7 +1,7 @@
 export async function apiRequest(url: string, options: RequestInit = {}) {
   // Improved token fallback strategy
   const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-  
+
   const defaultOptions: RequestInit = {
     headers: {
       'Content-Type': 'application/json',
@@ -22,20 +22,20 @@ export async function apiRequest(url: string, options: RequestInit = {}) {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Network error' }));
-    
+
     // Enhanced error handling for auth failures
     const enhancedError = {
       message: error.message || `HTTP ${response.status}`,
       status: response.status,
       statusText: response.statusText,
-      ...(response.status === 401 && { 
-        authError: 'Authentication required - token missing or invalid' 
+      ...(response.status === 401 && {
+        authError: 'Authentication required - token missing or invalid',
       }),
-      ...(response.status === 403 && { 
-        authError: 'Access denied - insufficient permissions' 
-      })
+      ...(response.status === 403 && {
+        authError: 'Access denied - insufficient permissions',
+      }),
     };
-    
+
     throw enhancedError;
   }
 

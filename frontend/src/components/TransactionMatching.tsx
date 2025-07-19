@@ -25,7 +25,7 @@ import {
   IconButton,
   Badge,
   LinearProgress,
-  Fab
+  Fab,
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
@@ -46,7 +46,7 @@ import {
   LocalShipping,
   Security,
   CheckCircle,
-  Info
+  Info,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 
@@ -56,8 +56,8 @@ const StyledCard = styled(Card)(({ theme }) => ({
   cursor: 'pointer',
   '&:hover': {
     transform: 'translateY(-4px)',
-    boxShadow: theme.shadows[8]
-  }
+    boxShadow: theme.shadows[8],
+  },
 }));
 
 const MatchScoreBar = styled(Box)(({ theme }) => ({
@@ -65,27 +65,27 @@ const MatchScoreBar = styled(Box)(({ theme }) => ({
   height: 8,
   backgroundColor: theme.palette.grey[200],
   borderRadius: 4,
-  overflow: 'hidden'
+  overflow: 'hidden',
 }));
 
 const MatchScoreFill = styled(Box)<{ score: number }>(({ theme, score }) => ({
   height: '100%',
   borderRadius: 4,
-  background: score >= 0.8 
+  background: score >= 0.8
     ? 'linear-gradient(45deg, #4caf50, #81c784)'
-    : score >= 0.6 
-    ? 'linear-gradient(45deg, #ff9800, #ffb74d)'
-    : 'linear-gradient(45deg, #f44336, #e57373)',
+    : score >= 0.6
+      ? 'linear-gradient(45deg, #ff9800, #ffb74d)'
+      : 'linear-gradient(45deg, #f44336, #e57373)',
   width: `${score * 100}%`,
-  transition: 'width 0.5s ease-in-out'
+  transition: 'width 0.5s ease-in-out',
 }));
 
 const FilterChip = styled(Chip)(({ theme }) => ({
   margin: theme.spacing(0.5),
   '&.active': {
     backgroundColor: theme.palette.primary.main,
-    color: theme.palette.primary.contrastText
-  }
+    color: theme.palette.primary.contrastText,
+  },
 }));
 
 interface MatchResult {
@@ -114,7 +114,7 @@ interface TransactionMatchingProps {
 const TransactionMatching: React.FC<TransactionMatchingProps> = ({
   entityId,
   entityType,
-  defaultMatchType = 'buyer'
+  defaultMatchType = 'buyer',
 }) => {
   const [matches, setMatches] = useState<MatchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -125,7 +125,7 @@ const TransactionMatching: React.FC<TransactionMatchingProps> = ({
     max_turnover: '',
     state: '',
     industry: '',
-    max_distance: 500
+    max_distance: 500,
   });
   const [expandedMatch, setExpandedMatch] = useState<number | null>(null);
   const [savedMatches, setSavedMatches] = useState<Set<number>>(new Set());
@@ -134,7 +134,7 @@ const TransactionMatching: React.FC<TransactionMatchingProps> = ({
   const fetchMatches = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const requestBody = {
         entity_id: entityId,
@@ -143,16 +143,16 @@ const TransactionMatching: React.FC<TransactionMatchingProps> = ({
         criteria: {},
         limit: 20,
         filters: Object.fromEntries(
-          Object.entries(filters).filter(([_, value]) => value !== '' && value !== null)
-        )
+          Object.entries(filters).filter(([_, value]) => value !== '' && value !== null),
+        ),
       };
 
       const response = await fetch('/api/transaction_match', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -175,7 +175,7 @@ const TransactionMatching: React.FC<TransactionMatchingProps> = ({
   const handleFilterChange = (field: string, value: any) => {
     setFilters(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -185,7 +185,7 @@ const TransactionMatching: React.FC<TransactionMatchingProps> = ({
       max_turnover: '',
       state: '',
       industry: '',
-      max_distance: 500
+      max_distance: 500,
     });
   };
 
@@ -204,14 +204,14 @@ const TransactionMatching: React.FC<TransactionMatchingProps> = ({
   const sortMatches = (matches: MatchResult[]) => {
     return [...matches].sort((a, b) => {
       switch (sortBy) {
-        case 'score':
-          return b.match_score - a.match_score;
-        case 'distance':
-          return (a.distance_km || 0) - (b.distance_km || 0);
-        case 'rank':
-          return a.recommendation_rank - b.recommendation_rank;
-        default:
-          return 0;
+      case 'score':
+        return b.match_score - a.match_score;
+      case 'distance':
+        return (a.distance_km || 0) - (b.distance_km || 0);
+      case 'rank':
+        return a.recommendation_rank - b.recommendation_rank;
+      default:
+        return 0;
       }
     });
   };
@@ -221,14 +221,14 @@ const TransactionMatching: React.FC<TransactionMatchingProps> = ({
       buyer: 'Potential Buyers',
       investor: 'Potential Investors',
       partner: 'Business Partners',
-      supplier: 'Suppliers'
+      supplier: 'Suppliers',
     };
     return labels[type as keyof typeof labels] || type;
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 0.8) return '#4caf50';
-    if (score >= 0.6) return '#ff9800';
+    if (score >= 0.8) {return '#4caf50';}
+    if (score >= 0.6) {return '#ff9800';}
     return '#f44336';
   };
 
@@ -241,7 +241,7 @@ const TransactionMatching: React.FC<TransactionMatchingProps> = ({
       textiles: '🧵',
       food_processing: '🍽️',
       consulting: '💼',
-      logistics: '🚚'
+      logistics: '🚚',
     };
     return icons[industry as keyof typeof icons] || '🏢';
   };
@@ -250,7 +250,7 @@ const TransactionMatching: React.FC<TransactionMatchingProps> = ({
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
-      notation: 'compact'
+      notation: 'compact',
     }).format(amount);
   };
 
@@ -303,7 +303,7 @@ const TransactionMatching: React.FC<TransactionMatchingProps> = ({
                 value={filters.min_turnover}
                 onChange={(e) => handleFilterChange('min_turnover', e.target.value)}
                 InputProps={{
-                  startAdornment: '₹'
+                  startAdornment: '₹',
                 }}
               />
             </Grid>
@@ -315,7 +315,7 @@ const TransactionMatching: React.FC<TransactionMatchingProps> = ({
                 value={filters.max_turnover}
                 onChange={(e) => handleFilterChange('max_turnover', e.target.value)}
                 InputProps={{
-                  startAdornment: '₹'
+                  startAdornment: '₹',
                 }}
               />
             </Grid>
@@ -367,7 +367,7 @@ const TransactionMatching: React.FC<TransactionMatchingProps> = ({
                   { value: 50, label: '50km' },
                   { value: 500, label: '500km' },
                   { value: 1000, label: '1000km' },
-                  { value: 2000, label: '2000km' }
+                  { value: 2000, label: '2000km' },
                 ]}
                 valueLabelDisplay="auto"
               />
@@ -436,7 +436,7 @@ const TransactionMatching: React.FC<TransactionMatchingProps> = ({
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
               {/* Entity Avatar */}
-              <Avatar 
+              <Avatar
                 sx={{ width: 60, height: 60, bgcolor: 'primary.main' }}
               >
                 {getIndustryIcon(match.matched_entity.industry_category)}
@@ -474,8 +474,8 @@ const TransactionMatching: React.FC<TransactionMatchingProps> = ({
                     <Typography variant="body2" color="text.secondary">
                       Match Score
                     </Typography>
-                    <Typography 
-                      variant="body2" 
+                    <Typography
+                      variant="body2"
                       fontWeight="bold"
                       color={getScoreColor(match.match_score)}
                     >
@@ -563,7 +563,7 @@ const TransactionMatching: React.FC<TransactionMatchingProps> = ({
                 <Typography variant="h6" gutterBottom>
                   Detailed Compatibility Analysis
                 </Typography>
-                
+
                 {/* Compatibility Factors */}
                 <Grid container spacing={2} sx={{ mb: 3 }}>
                   {Object.entries(match.compatibility_factors).map(([factor, score]) => (

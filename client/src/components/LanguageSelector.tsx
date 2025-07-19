@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Globe } from "lucide-react";
-import { useState } from "react";
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Globe } from 'lucide-react';
+import { useState } from 'react';
 
 interface LanguageSelectorProps {
   currentLanguage: 'en' | 'hi' | 'or';
@@ -15,7 +15,7 @@ export function LanguageSelector({ currentLanguage, onLanguageChange }: Language
   const languages = [
     { code: 'en', name: 'English', nativeName: 'English' },
     { code: 'hi', name: 'Hindi', nativeName: 'हिंदी' },
-    { code: 'or', name: 'Odia', nativeName: 'ଓଡ଼ିଆ' }
+    { code: 'or', name: 'Odia', nativeName: 'ଓଡ଼ିଆ' },
   ];
 
   const currentLang = languages.find(lang => lang.code === currentLanguage);
@@ -39,7 +39,7 @@ export function LanguageSelector({ currentLanguage, onLanguageChange }: Language
               {languages.map((lang) => (
                 <Button
                   key={lang.code}
-                  variant={currentLanguage === lang.code ? "default" : "ghost"}
+                  variant={currentLanguage === lang.code ? 'default' : 'ghost'}
                   size="sm"
                   className="w-full justify-start"
                   onClick={() => {

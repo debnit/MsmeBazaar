@@ -17,7 +17,7 @@ export default function MobileLogin() {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const { user, isLoading } = useAuth();
-  
+
   // Form states
   const [activeTab, setActiveTab] = useState<'otp' | 'email'>('otp');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -28,7 +28,7 @@ export default function MobileLogin() {
   const [lastName, setLastName] = useState('');
   const [role, setRole] = useState<string>('buyer');
   const [isRegister, setIsRegister] = useState(false);
-  
+
   // UI states
   const [otpSent, setOtpSent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,12 +44,12 @@ export default function MobileLogin() {
   const formatPhoneNumber = (value: string) => {
     // Remove all non-digits
     const digits = value.replace(/\D/g, '');
-    
+
     // Add country code if not present
     if (digits.length > 0 && !digits.startsWith('91')) {
       return `+91${digits}`;
     }
-    
+
     return digits.startsWith('91') ? `+${digits}` : digits;
   };
 
@@ -83,13 +83,13 @@ export default function MobileLogin() {
     try {
       const formattedPhone = formatPhoneNumber(phoneNumber);
       const response = await authService.sendOTP(formattedPhone);
-      
+
       if (response.success) {
         setOtpSent(true);
         startCountdown();
         toast({
-          title: "OTP Sent",
-          description: "Please check your phone for the verification code",
+          title: 'OTP Sent',
+          description: 'Please check your phone for the verification code',
         });
       } else {
         setError(response.message || 'Failed to send OTP');
@@ -113,12 +113,12 @@ export default function MobileLogin() {
     try {
       const formattedPhone = formatPhoneNumber(phoneNumber);
       const response = await authService.verifyOTP(formattedPhone, otp);
-      
+
       if (response.success && response.user && response.token) {
         authService.setToken(response.token);
         toast({
-          title: "Login Successful",
-          description: "Welcome to MSMESquare!",
+          title: 'Login Successful',
+          description: 'Welcome to MSMESquare!',
         });
         setLocation('/dashboard');
       } else {
@@ -142,13 +142,13 @@ export default function MobileLogin() {
 
     try {
       let response;
-      
+
       if (isRegister) {
         if (!firstName || !role) {
           setError('Please fill in all required fields');
           return;
         }
-        
+
         response = await authService.register({
           email,
           password,
@@ -159,12 +159,12 @@ export default function MobileLogin() {
       } else {
         response = await authService.login({ email, password });
       }
-      
+
       if (response.success && response.user && response.token) {
         authService.setToken(response.token);
         toast({
-          title: isRegister ? "Registration Successful" : "Login Successful",
-          description: "Welcome to MSMESquare!",
+          title: isRegister ? 'Registration Successful' : 'Login Successful',
+          description: 'Welcome to MSMESquare!',
         });
         setLocation('/dashboard');
       } else {
@@ -178,20 +178,20 @@ export default function MobileLogin() {
   };
 
   const handleResendOTP = async () => {
-    if (countdown > 0) return;
-    
+    if (countdown > 0) {return;}
+
     setIsSubmitting(true);
     setError('');
 
     try {
       const formattedPhone = formatPhoneNumber(phoneNumber);
       const response = await authService.resendOTP(formattedPhone);
-      
+
       if (response.success) {
         startCountdown();
         toast({
-          title: "OTP Resent",
-          description: "A new verification code has been sent to your phone",
+          title: 'OTP Resent',
+          description: 'A new verification code has been sent to your phone',
         });
       } else {
         setError(response.message || 'Failed to resend OTP');
@@ -261,9 +261,9 @@ export default function MobileLogin() {
                         We'll send a 6-digit verification code to this number
                       </p>
                     </div>
-                    
-                    <Button 
-                      onClick={handleSendOTP} 
+
+                    <Button
+                      onClick={handleSendOTP}
                       disabled={isSubmitting || !phoneNumber}
                       className="w-full"
                     >
@@ -287,25 +287,25 @@ export default function MobileLogin() {
                         Code sent to {phoneNumber}
                       </p>
                     </div>
-                    
-                    <Button 
-                      onClick={handleVerifyOTP} 
+
+                    <Button
+                      onClick={handleVerifyOTP}
                       disabled={isSubmitting || otp.length !== 6}
                       className="w-full"
                     >
                       {isSubmitting ? 'Verifying...' : 'Verify & Login'}
                     </Button>
-                    
+
                     <div className="flex items-center justify-between">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => setOtpSent(false)}
                       >
                         Change Number
                       </Button>
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="sm"
                         onClick={handleResendOTP}
                         disabled={countdown > 0 || isSubmitting}
@@ -328,14 +328,14 @@ export default function MobileLogin() {
               <TabsContent value="email" className="space-y-4">
                 <div className="flex items-center justify-center space-x-2 mb-4">
                   <Button
-                    variant={!isRegister ? "default" : "outline"}
+                    variant={!isRegister ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setIsRegister(false)}
                   >
                     Login
                   </Button>
                   <Button
-                    variant={isRegister ? "default" : "outline"}
+                    variant={isRegister ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setIsRegister(true)}
                   >
@@ -412,8 +412,8 @@ export default function MobileLogin() {
                     />
                   </div>
 
-                  <Button 
-                    onClick={handleEmailAuth} 
+                  <Button
+                    onClick={handleEmailAuth}
                     disabled={isSubmitting}
                     className="w-full"
                   >

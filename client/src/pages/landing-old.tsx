@@ -36,14 +36,14 @@ const t = (key: string) => {
     'footer.rights': 'All rights reserved.',
     'nav.sell': 'Sell Business',
     'nav.buy': 'Buy Business',
-    'nav.loan': 'Get Loan'
+    'nav.loan': 'Get Loan',
   };
   return translations[key] || key;
 };
 
 export default function Landing() {
   const [currentLanguage, setCurrentLanguage] = useState<'en' | 'hi' | 'or'>('en');
-  
+
   useEffect(() => {
     // Initialize enhanced caching system
     initializeCaching();

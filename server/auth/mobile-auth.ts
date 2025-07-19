@@ -41,7 +41,7 @@ export class MobileAuthService {
   async sendOTP(phoneNumber: string): Promise<{ success: boolean; message: string }> {
     try {
       const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
-      
+
       // Check if phone number is valid
       if (!normalizedPhone.match(/^\+91\d{10}$/)) {
         return { success: false, message: 'Invalid phone number format' };
@@ -60,17 +60,17 @@ export class MobileAuthService {
       otpStore.set(normalizedPhone, {
         otp,
         expires,
-        attempts: existing ? existing.attempts + 1 : 1
+        attempts: existing ? existing.attempts + 1 : 1,
       });
 
       // Send SMS
       const sent = await smsService.sendOTP(normalizedPhone, otp);
-      
+
       if (sent) {
         return { success: true, message: 'OTP sent successfully' };
-      } else {
-        return { success: false, message: 'Failed to send OTP' };
       }
+      return { success: false, message: 'Failed to send OTP' };
+
     } catch (error) {
       console.error('Error sending OTP:', error);
       return { success: false, message: 'Internal server error' };
@@ -100,7 +100,7 @@ export class MobileAuthService {
 
       // Check if user exists
       let user = await storage.getUserByPhone(normalizedPhone);
-      
+
       if (!user) {
         // Create new user
         user = await storage.createUser({
@@ -109,7 +109,7 @@ export class MobileAuthService {
           isVerified: true,
           name: '', // Will be filled during onboarding
           email: '',
-          password: '' // Not needed for mobile auth
+          password: '', // Not needed for mobile auth
         });
       }
 
@@ -117,7 +117,7 @@ export class MobileAuthService {
       const token = jwt.sign(
         { userId: user.id, phone: user.phone, role: user.role },
         process.env.JWT_SECRET || 'fallback-secret',
-        { expiresIn: '7d' }
+        { expiresIn: '7d' },
       );
 
       return { success: true, user, token };
@@ -129,10 +129,10 @@ export class MobileAuthService {
 
   async resendOTP(phoneNumber: string): Promise<{ success: boolean; message: string }> {
     const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
-    
+
     // Clear existing OTP to reset attempts
     otpStore.delete(normalizedPhone);
-    
+
     return this.sendOTP(phoneNumber);
   }
 }

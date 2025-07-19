@@ -25,9 +25,9 @@ export class LowDependencyManager {
       'validation',    // No dependencies
       'api-routes',    // Depends on auth, validation
       'monitoring',    // Minimal dependencies
-      'optimization'   // No dependencies
+      'optimization',   // No dependencies
     ];
-    
+
     this.initializationOrder = modules;
   }
 
@@ -39,29 +39,29 @@ export class LowDependencyManager {
 
     let module;
     switch (moduleName) {
-      case 'database':
-        module = await this.loadDatabaseModule();
-        break;
-      case 'auth':
-        module = await this.loadAuthModule();
-        break;
-      case 'cache':
-        module = await this.loadCacheModule();
-        break;
-      case 'validation':
-        module = await this.loadValidationModule();
-        break;
-      case 'api-routes':
-        module = await this.loadApiRoutesModule();
-        break;
-      case 'monitoring':
-        module = await this.loadMonitoringModule();
-        break;
-      case 'optimization':
-        module = await this.loadOptimizationModule();
-        break;
-      default:
-        throw new Error(`Unknown module: ${moduleName}`);
+    case 'database':
+      module = await this.loadDatabaseModule();
+      break;
+    case 'auth':
+      module = await this.loadAuthModule();
+      break;
+    case 'cache':
+      module = await this.loadCacheModule();
+      break;
+    case 'validation':
+      module = await this.loadValidationModule();
+      break;
+    case 'api-routes':
+      module = await this.loadApiRoutesModule();
+      break;
+    case 'monitoring':
+      module = await this.loadMonitoringModule();
+      break;
+    case 'optimization':
+      module = await this.loadOptimizationModule();
+      break;
+    default:
+      throw new Error(`Unknown module: ${moduleName}`);
     }
 
     this.moduleCache.set(moduleName, module);
@@ -79,7 +79,7 @@ export class LowDependencyManager {
       query: async (sql: string) => {
         // Direct query execution
         return { result: 'success' };
-      }
+      },
     };
   }
 
@@ -93,7 +93,7 @@ export class LowDependencyManager {
       generate: (payload: any) => {
         // Minimal token generation
         return 'token';
-      }
+      },
     };
   }
 
@@ -103,7 +103,7 @@ export class LowDependencyManager {
     return {
       get: (key: string) => cache.get(key),
       set: (key: string, value: any) => cache.set(key, value),
-      clear: () => cache.clear()
+      clear: () => cache.clear(),
     };
   }
 
@@ -112,7 +112,7 @@ export class LowDependencyManager {
     return {
       validate: (data: any, schema: any) => {
         return { valid: true, data };
-      }
+      },
     };
   }
 
@@ -122,7 +122,7 @@ export class LowDependencyManager {
       register: (app: any) => {
         // Register minimal routes
         return { status: 'registered' };
-      }
+      },
     };
   }
 
@@ -132,7 +132,7 @@ export class LowDependencyManager {
       track: (metric: string, value: number) => {
         // Minimal metric tracking
         return { tracked: true };
-      }
+      },
     };
   }
 
@@ -142,7 +142,7 @@ export class LowDependencyManager {
       optimize: () => {
         // Minimal optimization
         return { optimized: true };
-      }
+      },
     };
   }
 
@@ -161,7 +161,7 @@ export class LowDependencyManager {
     return {
       loaded: Array.from(this.moduleCache.keys()),
       total: this.initializationOrder.length,
-      memoryUsage: this.moduleCache.size
+      memoryUsage: this.moduleCache.size,
     };
   }
 }

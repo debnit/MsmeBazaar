@@ -17,10 +17,10 @@ class APIClient {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
-    
+
     // Default headers
     const defaultHeaders = {
       'Content-Type': 'application/json',
@@ -62,7 +62,7 @@ class APIClient {
       // Handle HTTP errors
       if (!response.ok) {
         const errorMessage = data?.message || data?.error || `HTTP ${response.status}: ${response.statusText}`;
-        
+
         // Handle specific error codes
         if (response.status === 401) {
           // Unauthorized - clear token and redirect to login
@@ -98,7 +98,7 @@ class APIClient {
   // HTTP Methods
   async get<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
     const url = new URL(`${this.baseURL}${endpoint}`);
-    
+
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
@@ -142,11 +142,11 @@ class APIClient {
   // File upload
   async upload<T>(endpoint: string, formData: FormData): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
-    
+
     // Get auth token
     const token = localStorage.getItem('auth_token');
     const headers: Record<string, string> = {};
-    
+
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -254,25 +254,25 @@ export const api = {
   auth: {
     login: (credentials: { email: string; password: string }) =>
       apiClient.post<APIResponse<{ user: User; token: string }>>('/auth/login', credentials),
-    
+
     register: (userData: any) =>
       apiClient.post<APIResponse<{ user: User; token: string }>>('/auth/register', userData),
-    
+
     logout: () =>
       apiClient.post<APIResponse<null>>('/auth/logout'),
-    
+
     refreshToken: () =>
       apiClient.post<APIResponse<{ token: string }>>('/auth/refresh'),
-    
+
     forgotPassword: (email: string) =>
       apiClient.post<APIResponse<null>>('/auth/forgot-password', { email }),
-    
+
     resetPassword: (token: string, password: string) =>
       apiClient.post<APIResponse<null>>('/auth/reset-password', { token, password }),
-    
+
     verifyOTP: (phone: string, otp: string) =>
       apiClient.post<APIResponse<null>>('/auth/verify-otp', { phone, otp }),
-    
+
     sendOTP: (phone: string) =>
       apiClient.post<APIResponse<null>>('/auth/send-otp', { phone }),
   },
@@ -281,13 +281,13 @@ export const api = {
   users: {
     getProfile: () =>
       apiClient.get<APIResponse<User>>('/users/profile'),
-    
+
     updateProfile: (data: Partial<User>) =>
       apiClient.put<APIResponse<User>>('/users/profile', data),
-    
+
     changePassword: (data: { currentPassword: string; newPassword: string }) =>
       apiClient.post<APIResponse<null>>('/users/change-password', data),
-    
+
     uploadAvatar: (file: File) => {
       const formData = new FormData();
       formData.append('avatar', file);
@@ -306,26 +306,26 @@ export const api = {
       verified?: boolean;
     }) =>
       apiClient.get<APIResponse<PaginatedResponse<MSME>>>('/msmes', params),
-    
+
     get: (id: string) =>
       apiClient.get<APIResponse<MSME>>(`/msmes/${id}`),
-    
+
     create: (data: any) =>
       apiClient.post<APIResponse<MSME>>('/msmes', data),
-    
+
     update: (id: string, data: Partial<MSME>) =>
       apiClient.put<APIResponse<MSME>>(`/msmes/${id}`, data),
-    
+
     delete: (id: string) =>
       apiClient.delete<APIResponse<null>>(`/msmes/${id}`),
-    
+
     uploadDocument: (id: string, file: File, category: string) => {
       const formData = new FormData();
       formData.append('document', file);
       formData.append('category', category);
       return apiClient.upload<APIResponse<{ url: string }>>(`/msmes/${id}/documents`, formData);
     },
-    
+
     getDocuments: (id: string) =>
       apiClient.get<APIResponse<Array<{ id: string; category: string; url: string; uploadedAt: string }>>>(`/msmes/${id}/documents`),
   },
@@ -339,19 +339,19 @@ export const api = {
       purpose?: string;
     }) =>
       apiClient.get<APIResponse<PaginatedResponse<ValuationRequest>>>('/valuations', params),
-    
+
     get: (id: string) =>
       apiClient.get<APIResponse<ValuationRequest>>(`/valuations/${id}`),
-    
+
     create: (data: any) =>
       apiClient.post<APIResponse<ValuationRequest>>('/valuations', data),
-    
+
     update: (id: string, data: Partial<ValuationRequest>) =>
       apiClient.put<APIResponse<ValuationRequest>>(`/valuations/${id}`, data),
-    
+
     cancel: (id: string) =>
       apiClient.post<APIResponse<null>>(`/valuations/${id}/cancel`),
-    
+
     getReport: (id: string) =>
       apiClient.get<Blob>(`/valuations/${id}/report`),
   },
@@ -365,7 +365,7 @@ export const api = {
         avgValuation: number;
         growthRate: number;
       }>>('/dashboard/stats'),
-    
+
     getChartData: (period: '7d' | '30d' | '90d' | '1y') =>
       apiClient.get<APIResponse<Array<{ date: string; value: number }>>>('/dashboard/chart', { period }),
   },
@@ -375,10 +375,10 @@ export const api = {
     upload: (file: File, category?: string) => {
       const formData = new FormData();
       formData.append('file', file);
-      if (category) formData.append('category', category);
+      if (category) {formData.append('category', category);}
       return apiClient.upload<APIResponse<{ url: string; id: string }>>('/files/upload', formData);
     },
-    
+
     delete: (id: string) =>
       apiClient.delete<APIResponse<null>>(`/files/${id}`),
   },
@@ -387,7 +387,7 @@ export const api = {
   search: {
     msmes: (query: string, filters?: Record<string, any>) =>
       apiClient.get<APIResponse<MSME[]>>('/search/msmes', { q: query, ...filters }),
-    
+
     suggestions: (query: string) =>
       apiClient.get<APIResponse<string[]>>('/search/suggestions', { q: query }),
   },
@@ -403,10 +403,10 @@ export const api = {
         read: boolean;
         createdAt: string;
       }>>>('/notifications', params),
-    
+
     markAsRead: (id: string) =>
       apiClient.post<APIResponse<null>>(`/notifications/${id}/read`),
-    
+
     markAllAsRead: () =>
       apiClient.post<APIResponse<null>>('/notifications/read-all'),
   },
@@ -415,10 +415,10 @@ export const api = {
   transactions: {
     list: (params?: { page?: number; limit?: number; status?: string }) =>
       apiClient.get<APIResponse<PaginatedResponse<any>>>('/transactions', params),
-    
+
     get: (id: string) =>
       apiClient.get<APIResponse<any>>(`/transactions/${id}`),
-    
+
     create: (data: any) =>
       apiClient.post<APIResponse<any>>('/transactions', data),
   },
@@ -427,10 +427,10 @@ export const api = {
   loans: {
     list: (params?: { page?: number; limit?: number; status?: string }) =>
       apiClient.get<APIResponse<PaginatedResponse<any>>>('/loans', params),
-    
+
     get: (id: string) =>
       apiClient.get<APIResponse<any>>(`/loans/${id}`),
-    
+
     apply: (data: any) =>
       apiClient.post<APIResponse<any>>('/loans/apply', data),
   },
@@ -439,7 +439,7 @@ export const api = {
   nbfcs: {
     list: (params?: { page?: number; limit?: number }) =>
       apiClient.get<APIResponse<PaginatedResponse<any>>>('/nbfcs', params),
-    
+
     get: (id: string) =>
       apiClient.get<APIResponse<any>>(`/nbfcs/${id}`),
   },
@@ -451,7 +451,7 @@ export const queryClient = new QueryClient({
     queries: {
       retry: (failureCount, error: any) => {
         // Don't retry on 4xx errors
-        if (error?.message?.includes('4')) return false;
+        if (error?.message?.includes('4')) {return false;}
         return failureCount < 3;
       },
       staleTime: 5 * 60 * 1000, // 5 minutes
@@ -474,27 +474,27 @@ export const queryClient = new QueryClient({
 // Query keys factory
 export const queryKeys = {
   all: ['api'] as const,
-  
+
   users: () => [...queryKeys.all, 'users'] as const,
   user: (id: string) => [...queryKeys.users(), id] as const,
   userProfile: () => [...queryKeys.users(), 'profile'] as const,
-  
+
   msmes: () => [...queryKeys.all, 'msmes'] as const,
   msme: (id: string) => [...queryKeys.msmes(), id] as const,
   msmesList: (params?: any) => [...queryKeys.msmes(), 'list', params] as const,
   msmeDocuments: (id: string) => [...queryKeys.msme(id), 'documents'] as const,
-  
+
   valuations: () => [...queryKeys.all, 'valuations'] as const,
   valuation: (id: string) => [...queryKeys.valuations(), id] as const,
   valuationsList: (params?: any) => [...queryKeys.valuations(), 'list', params] as const,
-  
+
   dashboard: () => [...queryKeys.all, 'dashboard'] as const,
   dashboardStats: () => [...queryKeys.dashboard(), 'stats'] as const,
   dashboardChart: (period: string) => [...queryKeys.dashboard(), 'chart', period] as const,
-  
+
   notifications: () => [...queryKeys.all, 'notifications'] as const,
   notificationsList: (params?: any) => [...queryKeys.notifications(), 'list', params] as const,
-  
+
   search: () => [...queryKeys.all, 'search'] as const,
   searchMsmes: (query: string, filters?: any) => [...queryKeys.search(), 'msmes', query, filters] as const,
   searchSuggestions: (query: string) => [...queryKeys.search(), 'suggestions', query] as const,
@@ -505,7 +505,7 @@ export class APIError extends Error {
   constructor(
     message: string,
     public status?: number,
-    public code?: string
+    public code?: string,
   ) {
     super(message);
     this.name = 'APIError';
@@ -517,16 +517,16 @@ export const downloadFile = async (url: string, filename: string) => {
   try {
     const response = await fetch(url);
     const blob = await response.blob();
-    
+
     const downloadUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = downloadUrl;
     link.download = filename;
-    
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     window.URL.revokeObjectURL(downloadUrl);
   } catch (error) {
     globalToast.error('Download failed', 'Please try again later');
@@ -535,12 +535,12 @@ export const downloadFile = async (url: string, filename: string) => {
 };
 
 export const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 Bytes';
-  
+  if (bytes === 0) {return '0 Bytes';}
+
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
+
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 

@@ -41,7 +41,7 @@ export const optimizeCSS = () => {
       to { transform: rotate(360deg); }
     }
   `;
-  
+
   const style = document.createElement('style');
   style.textContent = criticalCSS;
   document.head.appendChild(style);
@@ -53,9 +53,9 @@ export const optimizeBundles = () => {
   const heavyLibraries = [
     'recharts',
     'framer-motion',
-    'react-hook-form'
+    'react-hook-form',
   ];
-  
+
   // Preload only when needed
   heavyLibraries.forEach(lib => {
     const link = document.createElement('link');

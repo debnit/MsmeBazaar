@@ -44,7 +44,7 @@ const SecondaryContent = () => {
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>For Buyers</CardTitle>
@@ -55,7 +55,7 @@ const SecondaryContent = () => {
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>For NBFCs</CardTitle>

@@ -220,13 +220,13 @@ class SmartDashboardService {
 
     // Personal metrics
     const personalMetrics = await this.getAgentPersonalMetrics(agentId, period);
-    
+
     // Performance metrics
     const performance = await this.getAgentPerformance(agentId, period);
-    
+
     // Client data
     const clients = await this.getAgentClients(agentId);
-    
+
     // Analytics charts
     const analytics = await this.getAgentAnalytics(agentId, period);
 
@@ -248,13 +248,13 @@ class SmartDashboardService {
 
     // Lending metrics
     const lendingMetrics = await this.getNBFCLendingMetrics(nbfcId, period);
-    
+
     // Portfolio analysis
     const portfolio = await this.getNBFCPortfolio(nbfcId);
-    
+
     // Performance metrics
     const performance = await this.getNBFCPerformance(nbfcId, period);
-    
+
     // Compliance status
     const compliance = await this.getNBFCCompliance(nbfcId);
 
@@ -314,7 +314,7 @@ class SmartDashboardService {
 
   private async getRevenueMetrics(period: string): Promise<RevenueMetrics> {
     const revenueData = await razorpayService.getRevenueAnalytics(period);
-    
+
     return {
       totalRevenue: revenueData.totalRevenue,
       monthlyRevenue: revenueData.totalRevenue / 12,
@@ -333,7 +333,7 @@ class SmartDashboardService {
 
   private async getUserMetrics(period: string): Promise<UserMetrics> {
     const retentionData = await retentionSystem.getRetentionAnalytics(period);
-    
+
     return {
       totalUsers: retentionData.totalUsers,
       newUsers: 1234,

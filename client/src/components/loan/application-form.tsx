@@ -1,31 +1,31 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { z } from "zod";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
-import { FileText, DollarSign, Calculator, Send } from "lucide-react";
-import { loanApi } from "@/lib/api";
-import { MsmeListing } from "@shared/schema";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { z } from 'zod';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useToast } from '@/hooks/use-toast';
+import { FileText, DollarSign, Calculator, Send } from 'lucide-react';
+import { loanApi } from '@/lib/api';
+import { MsmeListing } from '@shared/schema';
 
 const loanApplicationSchema = z.object({
-  msmeId: z.number().min(1, "MSME selection is required"),
-  nbfcId: z.number().min(1, "NBFC selection is required"),
-  loanAmount: z.number().min(0.1, "Loan amount must be at least ₹0.1 Cr"),
-  interestRate: z.number().min(0.1, "Interest rate must be positive"),
-  tenure: z.number().min(6, "Minimum tenure is 6 months").max(240, "Maximum tenure is 240 months"),
-  loanPurpose: z.string().min(1, "Loan purpose is required"),
+  msmeId: z.number().min(1, 'MSME selection is required'),
+  nbfcId: z.number().min(1, 'NBFC selection is required'),
+  loanAmount: z.number().min(0.1, 'Loan amount must be at least ₹0.1 Cr'),
+  interestRate: z.number().min(0.1, 'Interest rate must be positive'),
+  tenure: z.number().min(6, 'Minimum tenure is 6 months').max(240, 'Maximum tenure is 240 months'),
+  loanPurpose: z.string().min(1, 'Loan purpose is required'),
   collateral: z.string().optional(),
-  monthlyIncome: z.number().min(0, "Monthly income must be positive"),
-  existingLoans: z.number().min(0, "Existing loans amount must be positive"),
-  businessExperience: z.number().min(0, "Business experience must be positive"),
+  monthlyIncome: z.number().min(0, 'Monthly income must be positive'),
+  existingLoans: z.number().min(0, 'Existing loans amount must be positive'),
+  businessExperience: z.number().min(0, 'Business experience must be positive'),
   additionalInfo: z.string().optional(),
 });
 
@@ -49,12 +49,12 @@ export default function LoanApplicationForm({ msme, onSuccess }: LoanApplication
       loanAmount: Number(msme.askingPrice) || 0,
       interestRate: 10.5,
       tenure: 60,
-      loanPurpose: "MSME Acquisition",
-      collateral: "",
+      loanPurpose: 'MSME Acquisition',
+      collateral: '',
       monthlyIncome: 0,
       existingLoans: 0,
       businessExperience: 0,
-      additionalInfo: "",
+      additionalInfo: '',
     },
   });
 
@@ -62,28 +62,28 @@ export default function LoanApplicationForm({ msme, onSuccess }: LoanApplication
     mutationFn: loanApi.createApplication,
     onSuccess: () => {
       toast({
-        title: "Application Submitted",
-        description: "Your loan application has been submitted successfully. You will receive updates via email.",
+        title: 'Application Submitted',
+        description: 'Your loan application has been submitted successfully. You will receive updates via email.',
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/loan/applications"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/loan/applications'] });
       onSuccess?.();
     },
     onError: (error) => {
       toast({
-        title: "Submission Failed",
+        title: 'Submission Failed',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     },
   });
 
   const calculateEmi = () => {
-    const principal = form.getValues("loanAmount") * 10000000; // Convert crores to rupees
-    const monthlyRate = form.getValues("interestRate") / 100 / 12;
-    const tenure = form.getValues("tenure");
+    const principal = form.getValues('loanAmount') * 10000000; // Convert crores to rupees
+    const monthlyRate = form.getValues('interestRate') / 100 / 12;
+    const tenure = form.getValues('tenure');
 
     if (principal > 0 && monthlyRate > 0 && tenure > 0) {
-      const emi = (principal * monthlyRate * Math.pow(1 + monthlyRate, tenure)) / 
+      const emi = (principal * monthlyRate * Math.pow(1 + monthlyRate, tenure)) /
                   (Math.pow(1 + monthlyRate, tenure) - 1);
       setCalculatedEmi(emi);
     }
@@ -95,9 +95,9 @@ export default function LoanApplicationForm({ msme, onSuccess }: LoanApplication
 
   // Mock NBFCs for selection
   const mockNbfcs = [
-    { id: 1, name: "ABC Finance Ltd", rate: "9.5-12.0%" },
-    { id: 2, name: "XYZ Capital", rate: "10.0-13.5%" },
-    { id: 3, name: "Quick Loan NBFC", rate: "11.0-14.0%" },
+    { id: 1, name: 'ABC Finance Ltd', rate: '9.5-12.0%' },
+    { id: 2, name: 'XYZ Capital', rate: '10.0-13.5%' },
+    { id: 3, name: 'Quick Loan NBFC', rate: '11.0-14.0%' },
   ];
 
   return (

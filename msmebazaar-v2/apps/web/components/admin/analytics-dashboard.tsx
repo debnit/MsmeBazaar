@@ -2,12 +2,12 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import {
   LineChart,
@@ -26,14 +26,14 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { 
-  TrendingUp, 
-  Download, 
+import {
+  TrendingUp,
+  Download,
   Calendar,
   Filter,
   BarChart3,
   PieChart as PieChartIcon,
-  Activity
+  Activity,
 } from 'lucide-react';
 import { ChartData } from '@/lib/api/admin';
 import { formatCurrency, formatDate } from '@/lib/utils';
@@ -48,11 +48,11 @@ interface AnalyticsDashboardProps {
 
 const COLORS = ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#f97316'];
 
-export function AnalyticsDashboard({ 
-  data, 
-  isLoading, 
-  onRefresh, 
-  onExport 
+export function AnalyticsDashboard({
+  data,
+  isLoading,
+  onRefresh,
+  onExport,
 }: AnalyticsDashboardProps) {
   const [dateRange, setDateRange] = useState('30d');
   const [exportFormat, setExportFormat] = useState('pdf');
@@ -102,7 +102,7 @@ export function AnalyticsDashboard({
                   <SelectItem value="1y">Last year</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               <Select value={exportFormat} onValueChange={setExportFormat}>
                 <SelectTrigger className="w-24">
                   <SelectValue />
@@ -113,19 +113,19 @@ export function AnalyticsDashboard({
                   <SelectItem value="excel">Excel</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               <Button onClick={handleExport} variant="outline" size="sm">
                 <Download className="h-4 w-4 mr-2" />
                 Export
               </Button>
-              
+
               <Button onClick={onRefresh} variant="outline" size="sm">
                 Refresh
               </Button>
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Registration Trends */}
@@ -140,21 +140,21 @@ export function AnalyticsDashboard({
                 <ResponsiveContainer width="100%" height={300}>
                   <AreaChart data={data.registrations}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="date" 
+                    <XAxis
+                      dataKey="date"
                       tick={{ fontSize: 12 }}
                       tickFormatter={(value) => formatDate(value)}
                     />
                     <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip 
+                    <Tooltip
                       labelFormatter={(value) => formatDate(value)}
                       formatter={(value) => [value, 'Registrations']}
                     />
-                    <Area 
-                      type="monotone" 
-                      dataKey="count" 
-                      stroke="#0ea5e9" 
-                      fill="#0ea5e9" 
+                    <Area
+                      type="monotone"
+                      dataKey="count"
+                      stroke="#0ea5e9"
+                      fill="#0ea5e9"
                       fillOpacity={0.1}
                     />
                   </AreaChart>
@@ -205,15 +205,15 @@ export function AnalyticsDashboard({
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={data.verification_levels}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="level" 
+                    <XAxis
+                      dataKey="level"
                       tick={{ fontSize: 12 }}
                       angle={-45}
                       textAnchor="end"
                       height={80}
                     />
                     <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value) => [value, 'Count']}
                     />
                     <Bar dataKey="count" fill="#10b981" />
@@ -234,32 +234,32 @@ export function AnalyticsDashboard({
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={data.monthly_revenue}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="month" 
+                    <XAxis
+                      dataKey="month"
                       tick={{ fontSize: 12 }}
                     />
-                    <YAxis 
+                    <YAxis
                       tick={{ fontSize: 12 }}
                       tickFormatter={(value) => formatCurrency(value)}
                     />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value, name) => [
                         name === 'revenue' ? formatCurrency(value as number) : value,
-                        name === 'revenue' ? 'Revenue' : 'Transactions'
+                        name === 'revenue' ? 'Revenue' : 'Transactions',
                       ]}
                     />
                     <Legend />
-                    <Line 
-                      type="monotone" 
-                      dataKey="revenue" 
-                      stroke="#0ea5e9" 
+                    <Line
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="#0ea5e9"
                       strokeWidth={2}
                       dot={{ fill: '#0ea5e9' }}
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="transactions" 
-                      stroke="#10b981" 
+                    <Line
+                      type="monotone"
+                      dataKey="transactions"
+                      stroke="#10b981"
                       strokeWidth={2}
                       dot={{ fill: '#10b981' }}
                       yAxisId="right"
@@ -284,7 +284,7 @@ export function AnalyticsDashboard({
               {data.industries.slice(0, 5).map((industry, index) => (
                 <div key={industry.name} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div 
+                    <div
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: COLORS[index % COLORS.length] }}
                     />
@@ -318,7 +318,7 @@ export function AnalyticsDashboard({
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
+                    <div
                       className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                       style={{ width: `${level.percentage}%` }}
                     />

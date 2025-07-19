@@ -23,17 +23,17 @@ export interface IValuationEngine {
 // 2. Open/Closed Principle - Open for extension, closed for modification
 export abstract class BaseRepository<T> {
   protected abstract tableName: string;
-  
+
   async findAll(): Promise<T[]> {
     // Base implementation
     return [];
   }
-  
+
   async findById(id: string): Promise<T | null> {
     // Base implementation
     return null;
   }
-  
+
   // Template method pattern
   protected abstract validate(data: any): boolean;
   protected abstract transform(data: any): T;
@@ -41,19 +41,19 @@ export abstract class BaseRepository<T> {
 
 export class UserRepository extends BaseRepository<any> implements IUserRepository {
   protected tableName = 'users';
-  
+
   protected validate(data: any): boolean {
     return data.email && data.password;
   }
-  
+
   protected transform(data: any): any {
     return {
       ...data,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
   }
-  
+
   async create(user: any): Promise<any> {
     if (!this.validate(user)) {
       throw new Error('Invalid user data');
@@ -62,17 +62,17 @@ export class UserRepository extends BaseRepository<any> implements IUserReposito
     // Database operation
     return transformedUser;
   }
-  
+
   async findByEmail(email: string): Promise<any> {
     // Implementation
     return null;
   }
-  
+
   async update(id: string, data: any): Promise<any> {
     // Implementation
     return null;
   }
-  
+
   async delete(id: string): Promise<void> {
     // Implementation
   }
@@ -81,7 +81,7 @@ export class UserRepository extends BaseRepository<any> implements IUserReposito
 // 3. Liskov Substitution Principle - Derived classes must be substitutable for base classes
 export abstract class NotificationProvider {
   abstract send(message: any): Promise<void>;
-  
+
   async validateMessage(message: any): Promise<boolean> {
     return message && message.recipient && message.content;
   }
@@ -130,39 +130,39 @@ export class UserService {
   constructor(
     private userRepository: IUserRepository,
     private notificationService: INotificationService,
-    private cacheService: ICacheRepository<any>
+    private cacheService: ICacheRepository<any>,
   ) {}
-  
+
   async createUser(userData: any): Promise<any> {
     // Business logic
     const user = await this.userRepository.create(userData);
-    
+
     // Cache the user
     await this.cacheService.set(`user:${user.id}`, user, 3600);
-    
+
     // Send welcome notification
     await this.notificationService.send({
       recipient: user.email,
       content: 'Welcome to MSMESquare!',
-      type: 'welcome'
+      type: 'welcome',
     });
-    
+
     return user;
   }
-  
+
   async getUserById(id: string): Promise<any> {
     // Try cache first
     const cachedUser = await this.cacheService.get(`user:${id}`);
     if (cachedUser) {
       return cachedUser;
     }
-    
+
     // Fallback to database
     const user = await this.userRepository.findById(id);
     if (user) {
       await this.cacheService.set(`user:${id}`, user, 3600);
     }
-    
+
     return user;
   }
 }
@@ -171,27 +171,27 @@ export class UserService {
 export class ServiceFactory {
   private static instance: ServiceFactory;
   private services = new Map<string, any>();
-  
+
   static getInstance(): ServiceFactory {
     if (!ServiceFactory.instance) {
       ServiceFactory.instance = new ServiceFactory();
     }
     return ServiceFactory.instance;
   }
-  
+
   createUserService(): UserService {
     if (!this.services.has('userService')) {
       const userRepository = new UserRepository();
       const notificationService = new CompositeNotificationService();
       const cacheService = new RedisCacheService();
-      
+
       this.services.set('userService', new UserService(
         userRepository,
         notificationService,
-        cacheService
+        cacheService,
       ));
     }
-    
+
     return this.services.get('userService');
   }
 }
@@ -199,16 +199,16 @@ export class ServiceFactory {
 // Composite pattern for notification service
 export class CompositeNotificationService implements INotificationService {
   private providers: NotificationProvider[] = [];
-  
+
   addProvider(provider: NotificationProvider): void {
     this.providers.push(provider);
   }
-  
+
   async send(message: any): Promise<void> {
     const promises = this.providers.map(provider => provider.send(message));
     await Promise.allSettled(promises);
   }
-  
+
   async sendBulk(messages: any[]): Promise<void> {
     const promises = messages.map(message => this.send(message));
     await Promise.allSettled(promises);
@@ -218,26 +218,26 @@ export class CompositeNotificationService implements INotificationService {
 // Cache service implementation
 export class RedisCacheService implements ICacheRepository<any> {
   private cache = new Map<string, { value: any; expires: number }>();
-  
+
   async get(key: string): Promise<any | null> {
     const item = this.cache.get(key);
-    if (!item) return null;
-    
+    if (!item) {return null;}
+
     if (Date.now() > item.expires) {
       this.cache.delete(key);
       return null;
     }
-    
+
     return item.value;
   }
-  
+
   async set(key: string, value: any, ttl: number = 3600): Promise<void> {
     this.cache.set(key, {
       value,
-      expires: Date.now() + (ttl * 1000)
+      expires: Date.now() + (ttl * 1000),
     });
   }
-  
+
   async invalidate(key: string): Promise<void> {
     this.cache.delete(key);
   }

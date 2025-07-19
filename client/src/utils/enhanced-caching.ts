@@ -14,12 +14,12 @@ export class EnhancedCache {
   set(key: string, data: any, ttl?: number): void {
     const now = Date.now();
     const expiresAt = now + (ttl || this.defaultTTL);
-    
+
     this.cache.set(key, {
       data,
       timestamp: now,
       expiresAt,
-      hits: 0
+      hits: 0,
     });
 
     // Cleanup if cache is too large
@@ -30,9 +30,9 @@ export class EnhancedCache {
 
   get(key: string): any | null {
     const entry = this.cache.get(key);
-    
-    if (!entry) return null;
-    
+
+    if (!entry) {return null;}
+
     const now = Date.now();
     if (now > entry.expiresAt) {
       this.cache.delete(key);
@@ -45,14 +45,14 @@ export class EnhancedCache {
 
   has(key: string): boolean {
     const entry = this.cache.get(key);
-    if (!entry) return false;
-    
+    if (!entry) {return false;}
+
     const now = Date.now();
     if (now > entry.expiresAt) {
       this.cache.delete(key);
       return false;
     }
-    
+
     return true;
   }
 
@@ -67,7 +67,7 @@ export class EnhancedCache {
   private cleanup(): void {
     const now = Date.now();
     const entries = Array.from(this.cache.entries());
-    
+
     // Remove expired entries
     entries.forEach(([key, entry]) => {
       if (now > entry.expiresAt) {
@@ -90,10 +90,10 @@ export class EnhancedCache {
     const entries = Array.from(this.cache.values());
     const totalHits = entries.reduce((sum, entry) => sum + entry.hits, 0);
     const hitRate = entries.length > 0 ? totalHits / entries.length : 0;
-    
+
     return {
       size: this.cache.size,
-      hitRate
+      hitRate,
     };
   }
 }
@@ -103,12 +103,12 @@ export const enhancedCache = new EnhancedCache();
 // Initialize enhanced caching system
 export function initializeCaching(): void {
   console.log('Enhanced caching initialized with aggressive preloading');
-  
+
   // Set up cache warming for critical resources
   const criticalResources = [
     '/api/dashboard/stats',
     '/api/buyer/matches',
-    '/api/msme-listings'
+    '/api/msme-listings',
   ];
 
   criticalResources.forEach(resource => {
@@ -132,17 +132,17 @@ export function initializeCaching(): void {
 // Cache-aware fetch function
 export async function cachedFetch(url: string, options?: RequestInit): Promise<Response> {
   const cacheKey = `${url}:${JSON.stringify(options)}`;
-  
+
   if (enhancedCache.has(cacheKey)) {
     const cachedData = enhancedCache.get(cacheKey);
     return new Response(JSON.stringify(cachedData), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
   const response = await fetch(url, options);
-  
+
   if (response.ok && response.headers.get('content-type')?.includes('application/json')) {
     const data = await response.clone().json();
     enhancedCache.set(cacheKey, data);

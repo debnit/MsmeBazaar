@@ -26,10 +26,10 @@ export const PRICING_TIERS: ValuationPricingTier[] = [
       'Basic valuation report',
       'Industry benchmarking',
       'Risk assessment',
-      'PDF download'
+      'PDF download',
     ],
     reportFormat: 'basic',
-    targetUser: 'msme'
+    targetUser: 'msme',
   },
   {
     id: 'msme-premium',
@@ -40,10 +40,10 @@ export const PRICING_TIERS: ValuationPricingTier[] = [
       'Market comparables',
       'Growth projections',
       'Investor-ready format',
-      'Branded PDF report'
+      'Branded PDF report',
     ],
     reportFormat: 'detailed',
-    targetUser: 'msme'
+    targetUser: 'msme',
   },
   {
     id: 'agent-commission',
@@ -53,10 +53,10 @@ export const PRICING_TIERS: ValuationPricingTier[] = [
       'Unlimited valuations',
       'Commission tracking',
       'Client reports',
-      'White-label branding'
+      'White-label branding',
     ],
     reportFormat: 'detailed',
-    targetUser: 'agent'
+    targetUser: 'agent',
   },
   {
     id: 'buyer-diligence',
@@ -67,10 +67,10 @@ export const PRICING_TIERS: ValuationPricingTier[] = [
       'Deep financial analysis',
       'Risk factor assessment',
       'Negotiation insights',
-      'Competitive analysis'
+      'Competitive analysis',
     ],
     reportFormat: 'premium',
-    targetUser: 'buyer'
+    targetUser: 'buyer',
   },
   {
     id: 'nbfc-saas',
@@ -81,11 +81,11 @@ export const PRICING_TIERS: ValuationPricingTier[] = [
       'Bulk valuations',
       'Credit assessment integration',
       'Custom scoring models',
-      'Analytics dashboard'
+      'Analytics dashboard',
     ],
     apiCallLimit: 1000,
     reportFormat: 'premium',
-    targetUser: 'nbfc'
+    targetUser: 'nbfc',
   },
   {
     id: 'api-per-call',
@@ -95,11 +95,11 @@ export const PRICING_TIERS: ValuationPricingTier[] = [
       'REST API access',
       'Custom branding',
       'Real-time valuations',
-      'Integration support'
+      'Integration support',
     ],
     reportFormat: 'basic',
-    targetUser: 'nbfc'
-  }
+    targetUser: 'nbfc',
+  },
 ];
 
 export class VaaSPricingEngine {
@@ -109,7 +109,7 @@ export class VaaSPricingEngine {
   async calculatePricing(
     userId: number,
     valuationType: string,
-    msmeData: any
+    msmeData: any,
   ): Promise<{
     tier: ValuationPricingTier;
     finalPrice: number;
@@ -117,7 +117,7 @@ export class VaaSPricingEngine {
     networkEffectBonus: number;
   }> {
     const user = await db.query.users.findFirst({
-      where: eq(users.id, userId)
+      where: eq(users.id, userId),
     });
 
     if (!user) {
@@ -126,20 +126,20 @@ export class VaaSPricingEngine {
 
     // Determine base tier
     const baseTier = this.getBaseTierForUser(user.role as any, valuationType);
-    
+
     // Calculate network effect bonus
     const networkBonus = await this.calculateNetworkEffectBonus(userId);
-    
+
     // Apply discounts
     const discounts = await this.calculateDiscounts(userId, baseTier);
-    
+
     const finalPrice = Math.max(0, baseTier.price - discounts.reduce((sum, d) => sum + d.amount, 0));
-    
+
     return {
       tier: baseTier,
       finalPrice,
       discounts,
-      networkEffectBonus: networkBonus
+      networkEffectBonus: networkBonus,
     };
   }
 
@@ -151,7 +151,7 @@ export class VaaSPricingEngine {
       'seller': 'msme-basic',
       'buyer': 'buyer-diligence',
       'agent': 'agent-commission',
-      'nbfc': 'nbfc-saas'
+      'nbfc': 'nbfc-saas',
     };
 
     const tierId = roleMapping[userRole as keyof typeof roleMapping] || 'msme-basic';
@@ -168,13 +168,13 @@ export class VaaSPricingEngine {
       .where(
         and(
           eq(valuationRequests.userId, userId),
-          eq(valuationRequests.status, 'completed')
-        )
+          eq(valuationRequests.status, 'completed'),
+        ),
       );
 
     // More valuations = higher trust = premium pricing capability
     const baseBonus = Math.min(completedValuations[0]?.count || 0, 50) * 10; // Max ₹500 bonus
-    
+
     return baseBonus;
   }
 
@@ -191,7 +191,7 @@ export class VaaSPricingEngine {
         discounts.push({
           type: 'volume',
           amount: tier.price * 0.2, // 20% discount
-          reason: 'High volume usage'
+          reason: 'High volume usage',
         });
       }
     }
@@ -202,7 +202,7 @@ export class VaaSPricingEngine {
       discounts.push({
         type: 'first-time',
         amount: 50,
-        reason: 'First-time user discount'
+        reason: 'First-time user discount',
       });
     }
 
@@ -221,8 +221,8 @@ export class VaaSPricingEngine {
       .where(
         and(
           eq(valuationRequests.userId, userId),
-          gte(valuationRequests.createdAt, lastMonth)
-        )
+          gte(valuationRequests.createdAt, lastMonth),
+        ),
       );
 
     return usage[0]?.count || 0;
@@ -246,7 +246,7 @@ export class VaaSPricingEngine {
     userId: number,
     valuationId: string,
     model: any,
-    factors: any
+    factors: any,
   ): Promise<void> {
     const ipRecord = {
       valuationId,
@@ -254,7 +254,7 @@ export class VaaSPricingEngine {
       modelVersion: model.version,
       factorScores: factors,
       timestamp: new Date(),
-      ipFingerprint: this.generateIPFingerprint(model, factors)
+      ipFingerprint: this.generateIPFingerprint(model, factors),
     };
 
     // Store in valuation ledger for IP retention
@@ -265,7 +265,7 @@ export class VaaSPricingEngine {
       estimatedValue: factors.finalValuation,
       confidence: factors.confidence,
       methodology: JSON.stringify(ipRecord),
-      createdAt: new Date()
+      createdAt: new Date(),
     });
   }
 
@@ -279,7 +279,7 @@ export class VaaSPricingEngine {
       factors.assetValue,
       factors.industryFactor,
       factors.distressScore,
-      factors.profitabilityIndex
+      factors.profitabilityIndex,
     ];
 
     return Buffer.from(JSON.stringify(components)).toString('base64');
@@ -305,14 +305,14 @@ export class VaaSPricingEngine {
       { tier: 'MSME', revenue: 45000, count: 200 },
       { tier: 'Buyer', revenue: 89000, count: 89 },
       { tier: 'NBFC', revenue: 125000, count: 25 },
-      { tier: 'API', revenue: 78000, count: 780 }
+      { tier: 'API', revenue: 78000, count: 780 },
     ];
 
     return {
       totalValuations: totalValuations[0]?.count || 0,
       avgConfidence: avgConfidence[0]?.avg || 0,
       revenueByTier,
-      networkGrowth: 0.23 // 23% month-over-month growth
+      networkGrowth: 0.23, // 23% month-over-month growth
     };
   }
 }

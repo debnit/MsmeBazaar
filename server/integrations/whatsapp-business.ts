@@ -51,8 +51,8 @@ export class WhatsAppBusinessService {
       const response = await axios.post(this.apiUrl, message, {
         headers: {
           'Authorization': `Bearer ${this.accessToken}`,
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       });
 
       // Log message to database
@@ -60,13 +60,13 @@ export class WhatsAppBusinessService {
 
       return {
         success: true,
-        messageId: response.data.messages[0].id
+        messageId: response.data.messages[0].id,
       };
     } catch (error: any) {
       console.error('WhatsApp send error:', error.response?.data || error.message);
       return {
         success: false,
-        error: error.response?.data?.error?.message || error.message
+        error: error.response?.data?.error?.message || error.message,
       };
     }
   }
@@ -85,23 +85,23 @@ export class WhatsAppBusinessService {
           {
             type: 'body',
             parameters: [
-              { type: 'text', text: userRole.charAt(0).toUpperCase() + userRole.slice(1) }
-            ]
+              { type: 'text', text: userRole.charAt(0).toUpperCase() + userRole.slice(1) },
+            ],
           },
           {
             type: 'button',
             sub_type: 'quick_reply',
             index: 0,
             parameters: [
-              { type: 'payload', payload: `start_${userRole}_journey` }
-            ]
-          }
-        ]
-      }
+              { type: 'payload', payload: `start_${userRole}_journey` },
+            ],
+          },
+        ],
+      },
     };
 
     await this.sendMessage(welcomeMessage);
-    
+
     // Schedule follow-up messages
     setTimeout(() => this.sendOnboardingStep2(phoneNumber, userRole), 24 * 60 * 60 * 1000); // 24 hours
   }
@@ -116,7 +116,7 @@ export class WhatsAppBusinessService {
       interactive: {
         type: 'button',
         body: {
-          text: `Complete your ${userRole} profile to unlock premium features:\n\n✅ Verified badge\n✅ Priority support\n✅ Advanced analytics\n\nTap below to continue:`
+          text: `Complete your ${userRole} profile to unlock premium features:\n\n✅ Verified badge\n✅ Priority support\n✅ Advanced analytics\n\nTap below to continue:`,
         },
         action: {
           buttons: [
@@ -124,19 +124,19 @@ export class WhatsAppBusinessService {
               type: 'reply',
               reply: {
                 id: 'complete_profile',
-                title: 'Complete Profile'
-              }
+                title: 'Complete Profile',
+              },
             },
             {
               type: 'reply',
               reply: {
                 id: 'remind_later',
-                title: 'Remind Later'
-              }
-            }
-          ]
-        }
-      }
+                title: 'Remind Later',
+              },
+            },
+          ],
+        },
+      },
     };
 
     await this.sendMessage(profileMessage);
@@ -147,10 +147,10 @@ export class WhatsAppBusinessService {
    */
   async startRetentionCampaign(userId: number): Promise<void> {
     const user = await db.query.users.findFirst({
-      where: eq(users.id, userId)
+      where: eq(users.id, userId),
     });
 
-    if (!user || !user.mobile) return;
+    if (!user || !user.mobile) {return;}
 
     const retentionMessage: WhatsAppMessage = {
       to: user.mobile,
@@ -162,11 +162,11 @@ export class WhatsAppBusinessService {
           {
             type: 'body',
             parameters: [
-              { type: 'text', text: user.name || 'User' }
-            ]
-          }
-        ]
-      }
+              { type: 'text', text: user.name || 'User' },
+            ],
+          },
+        ],
+      },
     };
 
     await this.sendMessage(retentionMessage);
@@ -193,11 +193,11 @@ export class WhatsAppBusinessService {
             parameters: [
               { type: 'text', text: dealDetails.buyerName },
               { type: 'text', text: dealDetails.businessName },
-              { type: 'currency', currency: 'INR', amount_1000: dealDetails.amount * 1000 }
-            ]
-          }
-        ]
-      }
+              { type: 'currency', currency: 'INR', amount_1000: dealDetails.amount * 1000 },
+            ],
+          },
+        ],
+      },
     };
 
     await this.sendMessage(dealMessage);
@@ -218,11 +218,11 @@ export class WhatsAppBusinessService {
             type: 'body',
             parameters: [
               { type: 'currency', currency: 'INR', amount_1000: amount * 1000 },
-              { type: 'text', text: dueDate }
-            ]
-          }
-        ]
-      }
+              { type: 'text', text: dueDate },
+            ],
+          },
+        ],
+      },
     };
 
     await this.sendMessage(paymentMessage);
@@ -255,7 +255,7 @@ export class WhatsAppBusinessService {
       interactive: {
         type: 'button',
         body: {
-          text: '🏢 *Sell Your Business on MSMESquare*\n\n✅ Get verified business valuation\n✅ Connect with serious buyers\n✅ Complete exit documentation\n✅ Secure escrow process\n\n*Join 10,000+ successful sellers*'
+          text: '🏢 *Sell Your Business on MSMESquare*\n\n✅ Get verified business valuation\n✅ Connect with serious buyers\n✅ Complete exit documentation\n✅ Secure escrow process\n\n*Join 10,000+ successful sellers*',
         },
         action: {
           buttons: [
@@ -263,19 +263,19 @@ export class WhatsAppBusinessService {
               type: 'reply',
               reply: {
                 id: 'register_seller',
-                title: 'Register as Seller'
-              }
+                title: 'Register as Seller',
+              },
             },
             {
               type: 'reply',
               reply: {
                 id: 'learn_more',
-                title: 'Learn More'
-              }
-            }
-          ]
-        }
-      }
+                title: 'Learn More',
+              },
+            },
+          ],
+        },
+      },
     };
 
     await this.sendMessage(sellerMessage);
@@ -291,7 +291,7 @@ export class WhatsAppBusinessService {
       interactive: {
         type: 'button',
         body: {
-          text: '💼 *Buy Verified Businesses*\n\n✅ Pre-verified business listings\n✅ Detailed financial analysis\n✅ Loan facilitation support\n✅ Legal documentation help\n\n*Find your perfect business match*'
+          text: '💼 *Buy Verified Businesses*\n\n✅ Pre-verified business listings\n✅ Detailed financial analysis\n✅ Loan facilitation support\n✅ Legal documentation help\n\n*Find your perfect business match*',
         },
         action: {
           buttons: [
@@ -299,19 +299,19 @@ export class WhatsAppBusinessService {
               type: 'reply',
               reply: {
                 id: 'register_buyer',
-                title: 'Register as Buyer'
-              }
+                title: 'Register as Buyer',
+              },
             },
             {
               type: 'reply',
               reply: {
                 id: 'browse_listings',
-                title: 'Browse Listings'
-              }
-            }
-          ]
-        }
-      }
+                title: 'Browse Listings',
+              },
+            },
+          ],
+        },
+      },
     };
 
     await this.sendMessage(buyerMessage);
@@ -327,7 +327,7 @@ export class WhatsAppBusinessService {
       interactive: {
         type: 'button',
         body: {
-          text: '🤝 *Become a Business Agent*\n\n💰 Earn ₹50,000+ per deal\n📊 Professional CRM dashboard\n🎯 Quality lead generation\n📈 Performance analytics\n\n*Join our agent network*'
+          text: '🤝 *Become a Business Agent*\n\n💰 Earn ₹50,000+ per deal\n📊 Professional CRM dashboard\n🎯 Quality lead generation\n📈 Performance analytics\n\n*Join our agent network*',
         },
         action: {
           buttons: [
@@ -335,19 +335,19 @@ export class WhatsAppBusinessService {
               type: 'reply',
               reply: {
                 id: 'register_agent',
-                title: 'Become Agent'
-              }
+                title: 'Become Agent',
+              },
             },
             {
               type: 'reply',
               reply: {
                 id: 'agent_benefits',
-                title: 'View Benefits'
-              }
-            }
-          ]
-        }
-      }
+                title: 'View Benefits',
+              },
+            },
+          ],
+        },
+      },
     };
 
     await this.sendMessage(agentMessage);
@@ -363,7 +363,7 @@ export class WhatsAppBusinessService {
       interactive: {
         type: 'list',
         body: {
-          text: '👋 *Welcome to MSMESquare*\n\nIndia\'s largest MSME marketplace for buying, selling, and financing businesses.\n\nHow can we help you today?'
+          text: '👋 *Welcome to MSMESquare*\n\nIndia\'s largest MSME marketplace for buying, selling, and financing businesses.\n\nHow can we help you today?',
         },
         action: {
           button: 'Select Option',
@@ -374,19 +374,19 @@ export class WhatsAppBusinessService {
                 {
                   id: 'sell_business',
                   title: 'Sell My Business',
-                  description: 'List and sell your business'
+                  description: 'List and sell your business',
                 },
                 {
                   id: 'buy_business',
                   title: 'Buy a Business',
-                  description: 'Find businesses to acquire'
+                  description: 'Find businesses to acquire',
                 },
                 {
                   id: 'become_agent',
                   title: 'Become an Agent',
-                  description: 'Earn by facilitating deals'
-                }
-              ]
+                  description: 'Earn by facilitating deals',
+                },
+              ],
             },
             {
               title: 'Services',
@@ -394,18 +394,18 @@ export class WhatsAppBusinessService {
                 {
                   id: 'business_valuation',
                   title: 'Business Valuation',
-                  description: 'Get professional valuation'
+                  description: 'Get professional valuation',
                 },
                 {
                   id: 'loan_assistance',
                   title: 'Loan Assistance',
-                  description: 'Financing support'
-                }
-              ]
-            }
-          ]
-        }
-      }
+                  description: 'Financing support',
+                },
+              ],
+            },
+          ],
+        },
+      },
     };
 
     await this.sendMessage(infoMessage);
@@ -422,7 +422,7 @@ export class WhatsAppBusinessService {
         subject: `WhatsApp ${type} message`,
         content,
         status: direction === 'sent' ? 'sent' : 'received',
-        sentAt: new Date()
+        sentAt: new Date(),
       });
     } catch (error) {
       console.error('Failed to log WhatsApp message:', error);
@@ -440,19 +440,19 @@ export class WhatsAppBusinessService {
         {
           headers: {
             'Authorization': `Bearer ${this.accessToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
+            'Content-Type': 'application/json',
+          },
+        },
       );
 
       return {
         success: true,
-        id: response.data.id
+        id: response.data.id,
       };
     } catch (error: any) {
       return {
         success: false,
-        error: error.response?.data?.error?.message || error.message
+        error: error.response?.data?.error?.message || error.message,
       };
     }
   }
@@ -466,9 +466,9 @@ export class WhatsAppBusinessService {
         `https://graph.facebook.com/v18.0/${this.businessAccountId}/message_templates`,
         {
           headers: {
-            'Authorization': `Bearer ${this.accessToken}`
-          }
-        }
+            'Authorization': `Bearer ${this.accessToken}`,
+          },
+        },
       );
 
       return response.data.data || [];
@@ -514,44 +514,44 @@ export class WhatsAppBusinessService {
 
     if (buttonReply) {
       const buttonId = buttonReply.id;
-      
+
       switch (buttonId) {
-        case 'register_seller':
-          await this.sendRegistrationLink(phoneNumber, 'seller');
-          break;
-        case 'register_buyer':
-          await this.sendRegistrationLink(phoneNumber, 'buyer');
-          break;
-        case 'register_agent':
-          await this.sendRegistrationLink(phoneNumber, 'agent');
-          break;
-        case 'complete_profile':
-          await this.sendProfileCompletionLink(phoneNumber);
-          break;
-        default:
-          await this.sendGeneralInfoMessage(phoneNumber);
+      case 'register_seller':
+        await this.sendRegistrationLink(phoneNumber, 'seller');
+        break;
+      case 'register_buyer':
+        await this.sendRegistrationLink(phoneNumber, 'buyer');
+        break;
+      case 'register_agent':
+        await this.sendRegistrationLink(phoneNumber, 'agent');
+        break;
+      case 'complete_profile':
+        await this.sendProfileCompletionLink(phoneNumber);
+        break;
+      default:
+        await this.sendGeneralInfoMessage(phoneNumber);
       }
     }
 
     if (listReply) {
       const listId = listReply.id;
-      
+
       switch (listId) {
-        case 'sell_business':
-          await this.sendSellerAcquisitionMessage(phoneNumber);
-          break;
-        case 'buy_business':
-          await this.sendBuyerAcquisitionMessage(phoneNumber);
-          break;
-        case 'become_agent':
-          await this.sendAgentAcquisitionMessage(phoneNumber);
-          break;
-        case 'business_valuation':
-          await this.sendValuationInfo(phoneNumber);
-          break;
-        case 'loan_assistance':
-          await this.sendLoanInfo(phoneNumber);
-          break;
+      case 'sell_business':
+        await this.sendSellerAcquisitionMessage(phoneNumber);
+        break;
+      case 'buy_business':
+        await this.sendBuyerAcquisitionMessage(phoneNumber);
+        break;
+      case 'become_agent':
+        await this.sendAgentAcquisitionMessage(phoneNumber);
+        break;
+      case 'business_valuation':
+        await this.sendValuationInfo(phoneNumber);
+        break;
+      case 'loan_assistance':
+        await this.sendLoanInfo(phoneNumber);
+        break;
       }
     }
   }
@@ -564,8 +564,8 @@ export class WhatsAppBusinessService {
       to: phoneNumber,
       type: 'text',
       text: {
-        body: `🎉 *Welcome to MSMESquare!*\n\nClick the link below to complete your ${role} registration:\n\n🔗 https://msmesquare.com/register?role=${role}&source=whatsapp\n\n*Need help?* Reply with "help" anytime.`
-      }
+        body: `🎉 *Welcome to MSMESquare!*\n\nClick the link below to complete your ${role} registration:\n\n🔗 https://msmesquare.com/register?role=${role}&source=whatsapp\n\n*Need help?* Reply with "help" anytime.`,
+      },
     };
 
     await this.sendMessage(registrationMessage);
@@ -579,8 +579,8 @@ export class WhatsAppBusinessService {
       to: phoneNumber,
       type: 'text',
       text: {
-        body: `📝 *Complete Your Profile*\n\nFinish setting up your profile to unlock all features:\n\n🔗 https://msmesquare.com/profile/complete\n\n*Get verified faster and access premium features!*`
-      }
+        body: '📝 *Complete Your Profile*\n\nFinish setting up your profile to unlock all features:\n\n🔗 https://msmesquare.com/profile/complete\n\n*Get verified faster and access premium features!*',
+      },
     };
 
     await this.sendMessage(profileMessage);
@@ -594,8 +594,8 @@ export class WhatsAppBusinessService {
       to: phoneNumber,
       type: 'text',
       text: {
-        body: `💰 *Business Valuation Service*\n\n✅ AI-powered valuation\n✅ Professional certificate\n✅ Detailed report\n\nPricing:\n• Basic: ₹999\n• Premium: ₹2,499\n\n🔗 Get started: https://msmesquare.com/valuation`
-      }
+        body: '💰 *Business Valuation Service*\n\n✅ AI-powered valuation\n✅ Professional certificate\n✅ Detailed report\n\nPricing:\n• Basic: ₹999\n• Premium: ₹2,499\n\n🔗 Get started: https://msmesquare.com/valuation',
+      },
     };
 
     await this.sendMessage(valuationMessage);
@@ -609,8 +609,8 @@ export class WhatsAppBusinessService {
       to: phoneNumber,
       type: 'text',
       text: {
-        body: `🏦 *Business Loan Assistance*\n\n✅ Pre-approved offers\n✅ Competitive rates\n✅ Quick processing\n✅ Minimal documentation\n\nPartner NBFCs:\n• Up to ₹10 crores\n• 10-15% interest rates\n\n🔗 Apply now: https://msmesquare.com/loans`
-      }
+        body: '🏦 *Business Loan Assistance*\n\n✅ Pre-approved offers\n✅ Competitive rates\n✅ Quick processing\n✅ Minimal documentation\n\nPartner NBFCs:\n• Up to ₹10 crores\n• 10-15% interest rates\n\n🔗 Apply now: https://msmesquare.com/loans',
+      },
     };
 
     await this.sendMessage(loanMessage);

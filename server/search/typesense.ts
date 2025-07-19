@@ -95,10 +95,10 @@ export class MSMETypesenseSearch {
     try {
       // Initialize MSME collection
       await this.createMSMECollection();
-      
+
       // Initialize Buyer collection
       await this.createBuyerCollection();
-      
+
       console.log('Typesense collections initialized successfully');
     } catch (error) {
       console.error('Failed to initialize Typesense collections:', error);
@@ -124,9 +124,9 @@ export class MSMETypesenseSearch {
         { name: 'tags', type: 'string[]', facet: true },
         { name: 'seller_id', type: 'int32' },
         { name: 'created_at', type: 'int64' },
-        { name: 'updated_at', type: 'int64' }
+        { name: 'updated_at', type: 'int64' },
       ],
-      default_sorting_field: 'created_at'
+      default_sorting_field: 'created_at',
     };
 
     try {
@@ -151,9 +151,9 @@ export class MSMETypesenseSearch {
         { name: 'preferred_locations', type: 'string[]', facet: true },
         { name: 'investment_timeline', type: 'string', facet: true },
         { name: 'experience_level', type: 'string', facet: true },
-        { name: 'created_at', type: 'int64' }
+        { name: 'created_at', type: 'int64' },
       ],
-      default_sorting_field: 'created_at'
+      default_sorting_field: 'created_at',
     };
 
     try {
@@ -194,7 +194,7 @@ export class MSMETypesenseSearch {
         tags: listing.tags || [],
         seller_id: listing.sellerId,
         created_at: Math.floor(listing.createdAt?.getTime() / 1000 || Date.now() / 1000),
-        updated_at: Math.floor(listing.updatedAt?.getTime() / 1000 || Date.now() / 1000)
+        updated_at: Math.floor(listing.updatedAt?.getTime() / 1000 || Date.now() / 1000),
       };
 
       await this.client.collections(this.msmeCollectionName).documents().upsert(document);
@@ -227,7 +227,7 @@ export class MSMETypesenseSearch {
         preferred_locations: buyer.preferredLocations || [],
         investment_timeline: buyer.investmentTimeline || '',
         experience_level: buyer.experienceLevel || '',
-        created_at: Math.floor(buyer.createdAt?.getTime() / 1000 || Date.now() / 1000)
+        created_at: Math.floor(buyer.createdAt?.getTime() / 1000 || Date.now() / 1000),
       };
 
       await this.client.collections(this.buyerCollectionName).documents().upsert(document);
@@ -242,7 +242,7 @@ export class MSMETypesenseSearch {
     query: string,
     filters: SearchFilters = {},
     page: number = 1,
-    perPage: number = 20
+    perPage: number = 20,
   ): Promise<SearchResult> {
     try {
       const searchParameters = {
@@ -258,7 +258,7 @@ export class MSMETypesenseSearch {
         num_typos: 2,
         prefix: true,
         drop_tokens_threshold: 2,
-        typo_tokens_threshold: 2
+        typo_tokens_threshold: 2,
       };
 
       const searchResult = await this.client
@@ -279,7 +279,7 @@ export class MSMETypesenseSearch {
     query: string,
     filters: SearchFilters = {},
     page: number = 1,
-    perPage: number = 20
+    perPage: number = 20,
   ): Promise<{
     results: SearchResult;
     recommendations: MSMEDocument[];
@@ -291,8 +291,8 @@ export class MSMETypesenseSearch {
       .from(users)
       .where(and(eq(users.id, buyerId), eq(users.role, 'buyer')));
 
-    let personalizedFilters = { ...filters };
-    
+    const personalizedFilters = { ...filters };
+
     if (buyer) {
       // Apply buyer preferences to filters
       if (buyer.preferredIndustries && buyer.preferredIndustries.length > 0) {
@@ -315,7 +315,7 @@ export class MSMETypesenseSearch {
     return {
       results,
       recommendations,
-      personalizedFilters
+      personalizedFilters,
     };
   }
 
@@ -332,12 +332,12 @@ export class MSMETypesenseSearch {
       }
 
       // Build recommendation query based on buyer profile
-      let filterConditions = [];
-      
+      const filterConditions = [];
+
       if (buyer.preferredIndustries && buyer.preferredIndustries.length > 0) {
         filterConditions.push(`industry:=[${buyer.preferredIndustries.join(',')}]`);
       }
-      
+
       if (buyer.budgetMin && buyer.budgetMax) {
         filterConditions.push(`asking_price:>=${buyer.budgetMin} && asking_price:<=${buyer.budgetMax}`);
       }
@@ -348,7 +348,7 @@ export class MSMETypesenseSearch {
         filter_by: filterConditions.length > 0 ? filterConditions.join(' && ') : '',
         sort_by: 'is_featured:desc,created_at:desc',
         per_page: limit,
-        page: 1
+        page: 1,
       };
 
       const searchResult = await this.client
@@ -376,12 +376,12 @@ export class MSMETypesenseSearch {
       }
 
       // Build query to find matching buyers
-      let filterConditions = [];
-      
+      const filterConditions = [];
+
       if (listing.industry) {
         filterConditions.push(`preferred_industries:=${listing.industry}`);
       }
-      
+
       if (listing.askingPrice) {
         filterConditions.push(`budget_min:<=${listing.askingPrice} && budget_max:>=${listing.askingPrice}`);
       }
@@ -396,7 +396,7 @@ export class MSMETypesenseSearch {
         filter_by: filterConditions.length > 0 ? filterConditions.join(' && ') : '',
         sort_by: 'created_at:desc',
         per_page: limit,
-        page: 1
+        page: 1,
       };
 
       const searchResult = await this.client
@@ -419,7 +419,7 @@ export class MSMETypesenseSearch {
         query_by: 'company_name,industry,location',
         per_page: limit,
         page: 1,
-        prefix: true
+        prefix: true,
       };
 
       const searchResult = await this.client
@@ -428,7 +428,7 @@ export class MSMETypesenseSearch {
         .search(searchParameters);
 
       const suggestions = new Set<string>();
-      
+
       searchResult.hits.forEach(hit => {
         const doc = hit.document;
         if (doc.company_name.toLowerCase().includes(query.toLowerCase())) {
@@ -463,7 +463,7 @@ export class MSMETypesenseSearch {
         totalSearches: 1250,
         topQueries: ['manufacturing', 'technology', 'retail', 'healthcare', 'food processing'],
         popularIndustries: ['Manufacturing', 'Technology', 'Retail', 'Healthcare', 'Food Processing'],
-        popularLocations: ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Hyderabad']
+        popularLocations: ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Hyderabad'],
       };
     } catch (error) {
       console.error('Failed to get search analytics:', error);
@@ -471,7 +471,7 @@ export class MSMETypesenseSearch {
         totalSearches: 0,
         topQueries: [],
         popularIndustries: [],
-        popularLocations: []
+        popularLocations: [],
       };
     }
   }
@@ -510,7 +510,7 @@ export class MSMETypesenseSearch {
         tags: listing.tags || [],
         seller_id: listing.sellerId,
         created_at: Math.floor(listing.createdAt?.getTime() / 1000 || Date.now() / 1000),
-        updated_at: Math.floor(listing.updatedAt?.getTime() / 1000 || Date.now() / 1000)
+        updated_at: Math.floor(listing.updatedAt?.getTime() / 1000 || Date.now() / 1000),
       }));
 
       await this.client.collections(this.msmeCollectionName).documents().import(documents);

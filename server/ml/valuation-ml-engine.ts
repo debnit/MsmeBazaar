@@ -56,7 +56,7 @@ class MLValuationEngine {
   async valuateBusiness(businessData: BusinessData): Promise<ValuationResult> {
     // Try ML prediction first
     const mlResult = await this.tryMLPrediction(businessData);
-    
+
     if (mlResult && mlResult.confidence >= this.fallbackThreshold) {
       return this.formatMLResult(businessData, mlResult);
     }
@@ -64,7 +64,7 @@ class MLValuationEngine {
     // Fallback to enhanced heuristic method
     console.log(`ML confidence ${mlResult?.confidence || 0} < ${this.fallbackThreshold}, using heuristic fallback`);
     const heuristicResult = await this.heuristicValuation(businessData);
-    
+
     // Hybrid approach: combine ML and heuristic if ML confidence is moderate
     if (mlResult && mlResult.confidence >= 0.3) {
       return this.hybridValuation(businessData, mlResult, heuristicResult);
@@ -76,7 +76,7 @@ class MLValuationEngine {
   private async tryMLPrediction(businessData: BusinessData): Promise<MLPrediction | null> {
     try {
       const features = this.extractFeatures(businessData);
-      
+
       const response = await axios.post(`${this.mlServiceUrl}/predict/valuation`, {
         features,
         model_version: this.modelVersion,
@@ -100,7 +100,7 @@ class MLValuationEngine {
   private extractFeatures(data: BusinessData): Record<string, number> {
     const currentYear = new Date().getFullYear();
     const businessAge = currentYear - data.yearEstablished;
-    
+
     return {
       revenue: data.revenue,
       profit: data.profit,
@@ -206,10 +206,10 @@ class MLValuationEngine {
       employeeValue * 0.10
     );
 
-    const adjustedValuation = baseValuation * 
-      locationMultiplier * 
-      growthAdjustment * 
-      debtAdjustment * 
+    const adjustedValuation = baseValuation *
+      locationMultiplier *
+      growthAdjustment *
+      debtAdjustment *
       liquidityAdjustment;
 
     const breakdown = {
@@ -236,7 +236,7 @@ class MLValuationEngine {
   private hybridValuation(
     businessData: BusinessData,
     mlResult: MLPrediction,
-    heuristicResult: ValuationResult
+    heuristicResult: ValuationResult,
   ): ValuationResult {
     const mlWeight = mlResult.confidence;
     const heuristicWeight = 1 - mlWeight;
@@ -283,19 +283,19 @@ class MLValuationEngine {
     let riskScore = 0;
 
     // Financial risk factors
-    if (businessData.debtToEquity > 2) riskScore += 15;
-    if (businessData.currentRatio < 1) riskScore += 10;
-    if (businessData.profit < 0) riskScore += 20;
-    if (businessData.growthRate < 0) riskScore += 15;
+    if (businessData.debtToEquity > 2) {riskScore += 15;}
+    if (businessData.currentRatio < 1) {riskScore += 10;}
+    if (businessData.profit < 0) {riskScore += 20;}
+    if (businessData.growthRate < 0) {riskScore += 15;}
 
     // Business risk factors
     const businessAge = new Date().getFullYear() - businessData.yearEstablished;
-    if (businessAge < 3) riskScore += 10;
-    if (businessData.marketShare < 5) riskScore += 8;
-    if (businessData.customerRetention < 70) riskScore += 12;
+    if (businessAge < 3) {riskScore += 10;}
+    if (businessData.marketShare < 5) {riskScore += 8;}
+    if (businessData.customerRetention < 70) {riskScore += 12;}
 
     // Industry and location risks
-    if (businessData.industry === 'general') riskScore += 5;
+    if (businessData.industry === 'general') {riskScore += 5;}
     if (!['mumbai', 'bangalore', 'delhi'].includes(businessData.location.toLowerCase())) {
       riskScore += 5;
     }

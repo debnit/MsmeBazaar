@@ -95,9 +95,9 @@ export class MSMERazorpayIntegration {
         type: 'msme_acquisition',
         buyer_id: buyerId.toString(),
         msme_id: msmeId.toString(),
-        ...notes
+        ...notes,
       },
-      partial_payment: false
+      partial_payment: false,
     });
 
     return order;
@@ -121,7 +121,7 @@ export class MSMERazorpayIntegration {
       status: 'pending',
       razorpayOrderId,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     }).returning();
 
     return escrow.id;
@@ -139,7 +139,7 @@ export class MSMERazorpayIntegration {
     const isValid = this.verifyPaymentSignature(
       razorpayOrderId,
       razorpayPaymentId,
-      razorpaySignature
+      razorpaySignature,
     );
 
     if (!isValid) {
@@ -148,7 +148,7 @@ export class MSMERazorpayIntegration {
 
     // Get payment details
     const payment = await this.razorpay.payments.fetch(razorpayPaymentId);
-    
+
     if (payment.status !== 'captured') {
       return { success: false, error: 'Payment not captured' };
     }
@@ -159,7 +159,7 @@ export class MSMERazorpayIntegration {
       .set({
         status: 'held',
         razorpayPaymentId,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(escrowTransactions.razorpayOrderId, razorpayOrderId))
       .returning();
@@ -178,7 +178,7 @@ export class MSMERazorpayIntegration {
       razorpayPaymentId,
       razorpayOrderId,
       paymentMethod: payment.method,
-      createdAt: new Date()
+      createdAt: new Date(),
     });
 
     return { success: true, escrowId: escrow.id };
@@ -227,11 +227,11 @@ export class MSMERazorpayIntegration {
           bank_account: {
             name: seller.bankAccount.accountHolderName,
             ifsc: seller.bankAccount.ifsc,
-            account_number: seller.bankAccount.accountNumber
-          }
+            account_number: seller.bankAccount.accountNumber,
+          },
         },
         reference_id: `seller_payout_${escrowId}_${Date.now()}`,
-        narration: `MSME acquisition payment for listing ${escrow.msmeId}`
+        narration: `MSME acquisition payment for listing ${escrow.msmeId}`,
       });
 
       // Update escrow status
@@ -239,7 +239,7 @@ export class MSMERazorpayIntegration {
         .update(escrowTransactions)
         .set({
           status: 'released',
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(eq(escrowTransactions.id, escrowId));
 
@@ -262,7 +262,7 @@ export class MSMERazorpayIntegration {
       .from(escrowTransactions)
       .where(eq(escrowTransactions.id, escrowId));
 
-    if (!escrow) return;
+    if (!escrow) {return;}
 
     // Get MSME listing to find the agent
     const [listing] = await db
@@ -270,7 +270,7 @@ export class MSMERazorpayIntegration {
       .from(msmeListings)
       .where(eq(msmeListings.id, escrow.msmeId));
 
-    if (!listing || !listing.agentId) return;
+    if (!listing || !listing.agentId) {return;}
 
     // Get agent details
     const [agent] = await db
@@ -278,7 +278,7 @@ export class MSMERazorpayIntegration {
       .from(users)
       .where(eq(users.id, listing.agentId));
 
-    if (!agent || !agent.bankAccount) return;
+    if (!agent || !agent.bankAccount) {return;}
 
     // Create payout to agent
     await this.createPayout({
@@ -292,11 +292,11 @@ export class MSMERazorpayIntegration {
         bank_account: {
           name: agent.bankAccount.accountHolderName,
           ifsc: agent.bankAccount.ifsc,
-          account_number: agent.bankAccount.accountNumber
-        }
+          account_number: agent.bankAccount.accountNumber,
+        },
       },
       reference_id: `agent_commission_${escrowId}_${Date.now()}`,
-      narration: `Agent commission for MSME listing ${escrow.msmeId}`
+      narration: `Agent commission for MSME listing ${escrow.msmeId}`,
     });
   }
 
@@ -326,8 +326,8 @@ export class MSMERazorpayIntegration {
         amount: escrow.amount * 100, // Convert to paise
         notes: {
           reason,
-          escrow_id: escrowId
-        }
+          escrow_id: escrowId,
+        },
       });
 
       // Update escrow status
@@ -335,7 +335,7 @@ export class MSMERazorpayIntegration {
         .update(escrowTransactions)
         .set({
           status: 'refunded',
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(eq(escrowTransactions.id, escrowId));
 
@@ -352,10 +352,10 @@ export class MSMERazorpayIntegration {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Basic ${Buffer.from(
-          `${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`
-        ).toString('base64')}`
+          `${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`,
+        ).toString('base64')}`,
       },
-      body: JSON.stringify(payoutData)
+      body: JSON.stringify(payoutData),
     });
 
     if (!response.ok) {
@@ -369,7 +369,7 @@ export class MSMERazorpayIntegration {
   private verifyPaymentSignature(
     orderId: string,
     paymentId: string,
-    signature: string
+    signature: string,
   ): boolean {
     const expectedSignature = crypto
       .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '')
@@ -399,23 +399,23 @@ export class MSMERazorpayIntegration {
 
     try {
       switch (event.event) {
-        case 'payment.captured':
-          await this.handlePaymentCaptured(event.payload.payment.entity);
-          break;
-        case 'payment.failed':
-          await this.handlePaymentFailed(event.payload.payment.entity);
-          break;
-        case 'payout.processed':
-          await this.handlePayoutProcessed(event.payload.payout.entity);
-          break;
-        case 'payout.failed':
-          await this.handlePayoutFailed(event.payload.payout.entity);
-          break;
-        case 'refund.processed':
-          await this.handleRefundProcessed(event.payload.refund.entity);
-          break;
-        default:
-          console.log(`Unhandled webhook event: ${event.event}`);
+      case 'payment.captured':
+        await this.handlePaymentCaptured(event.payload.payment.entity);
+        break;
+      case 'payment.failed':
+        await this.handlePaymentFailed(event.payload.payment.entity);
+        break;
+      case 'payout.processed':
+        await this.handlePayoutProcessed(event.payload.payout.entity);
+        break;
+      case 'payout.failed':
+        await this.handlePayoutFailed(event.payload.payout.entity);
+        break;
+      case 'refund.processed':
+        await this.handleRefundProcessed(event.payload.refund.entity);
+        break;
+      default:
+        console.log(`Unhandled webhook event: ${event.event}`);
       }
 
       res.status(200).json({ success: true });
@@ -432,7 +432,7 @@ export class MSMERazorpayIntegration {
       .update(paymentTransactions)
       .set({
         status: 'completed',
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(paymentTransactions.razorpayPaymentId, payment.id));
 
@@ -446,7 +446,7 @@ export class MSMERazorpayIntegration {
       .update(paymentTransactions)
       .set({
         status: 'failed',
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(paymentTransactions.razorpayPaymentId, payment.id));
 
@@ -505,10 +505,10 @@ export class MSMERazorpayIntegration {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Basic ${Buffer.from(
-          `${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`
-        ).toString('base64')}`
+          `${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`,
+        ).toString('base64')}`,
       },
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     });
 
     if (!response.ok) {

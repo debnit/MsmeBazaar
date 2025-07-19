@@ -49,65 +49,65 @@ export function AdminDashboard() {
   const runPermissionTests = async () => {
     setIsRunningTests(true);
     const results: TestResult[] = [];
-    
+
     const testEndpoints = [
       {
         name: 'List MSME Listings',
         endpoint: '/api/msme-listings',
-        permissions: ['listing:read']
+        permissions: ['listing:read'],
       },
       {
         name: 'Create MSME Listing',
         endpoint: '/api/msme-listings',
         method: 'POST',
-        permissions: ['listing:create']
+        permissions: ['listing:create'],
       },
       {
         name: 'Request Valuation',
         endpoint: '/api/valuation',
         method: 'POST',
-        permissions: ['valuation:create']
+        permissions: ['valuation:create'],
       },
       {
         name: 'View Valuation Report',
         endpoint: '/api/valuation/123',
-        permissions: ['valuation:read']
+        permissions: ['valuation:read'],
       },
       {
         name: 'Manage Users',
         endpoint: '/api/admin/users',
-        permissions: ['admin:users']
+        permissions: ['admin:users'],
       },
       {
         name: 'View Analytics',
         endpoint: '/api/analytics',
-        permissions: ['analytics:read']
+        permissions: ['analytics:read'],
       },
       {
         name: 'Process Transactions',
         endpoint: '/api/transactions',
-        permissions: ['transaction:process']
+        permissions: ['transaction:process'],
       },
       {
         name: 'Generate Documents',
         endpoint: '/api/documents/generate',
         method: 'POST',
-        permissions: ['document:create']
-      }
+        permissions: ['document:create'],
+      },
     ];
 
     for (const test of testEndpoints) {
       const startTime = Date.now();
       let result: TestResult;
-      
+
       try {
         const response = await apiRequest(test.endpoint, {
           method: test.method || 'GET',
           ...(test.method === 'POST' && {
-            body: JSON.stringify({ test: true })
-          })
+            body: JSON.stringify({ test: true }),
+          }),
         });
-        
+
         result = {
           id: `test_${Date.now()}_${Math.random()}`,
           name: test.name,
@@ -117,7 +117,7 @@ export function AdminDashboard() {
           timestamp: new Date().toISOString(),
           duration: Date.now() - startTime,
           endpoint: test.endpoint,
-          permissions: test.permissions
+          permissions: test.permissions,
         };
       } catch (error: any) {
         result = {
@@ -129,41 +129,41 @@ export function AdminDashboard() {
           timestamp: new Date().toISOString(),
           duration: Date.now() - startTime,
           endpoint: test.endpoint,
-          permissions: test.permissions
+          permissions: test.permissions,
         };
       }
-      
+
       results.push(result);
       setTestResults([...results]); // Update UI progressively
-      
+
       // Add a small delay to make the tests more visible
       await new Promise(resolve => setTimeout(resolve, 100));
     }
-    
+
     setIsRunningTests(false);
-    
+
     const passedTests = results.filter(r => r.success).length;
     const failedTests = results.filter(r => !r.success).length;
-    
+
     toast({
       title: 'Permission Tests Completed',
       description: `${passedTests} passed, ${failedTests} failed`,
-      variant: passedTests > failedTests ? 'success' : 'destructive'
+      variant: passedTests > failedTests ? 'success' : 'destructive',
     });
   };
 
   const retryTest = async (testId: string) => {
     const originalTest = testResults.find(t => t.id === testId);
-    if (!originalTest) return;
-    
+    if (!originalTest) {return;}
+
     const startTime = Date.now();
     let result: TestResult;
-    
+
     try {
       const response = await apiRequest(originalTest.endpoint!, {
-        method: originalTest.endpoint?.includes('POST') ? 'POST' : 'GET'
+        method: originalTest.endpoint?.includes('POST') ? 'POST' : 'GET',
       });
-      
+
       result = {
         ...originalTest,
         id: `retry_${Date.now()}_${Math.random()}`,
@@ -171,7 +171,7 @@ export function AdminDashboard() {
         success: true,
         message: 'Request successful',
         timestamp: new Date().toISOString(),
-        duration: Date.now() - startTime
+        duration: Date.now() - startTime,
       };
     } catch (error: any) {
       result = {
@@ -181,10 +181,10 @@ export function AdminDashboard() {
         success: false,
         message: error.message || 'Request failed',
         timestamp: new Date().toISOString(),
-        duration: Date.now() - startTime
+        duration: Date.now() - startTime,
       };
     }
-    
+
     setTestResults(prev => [result, ...prev]);
   };
 
@@ -217,7 +217,7 @@ export function AdminDashboard() {
         <TabsContent value="role-switcher" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <RoleSwitcher />
-            
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -244,7 +244,7 @@ export function AdminDashboard() {
                     <span className="text-sm">{user?.permissions?.length || 0}</span>
                   </div>
                 </div>
-                
+
                 <div className="pt-4 border-t">
                   <h4 className="text-sm font-medium mb-2">Quick Actions</h4>
                   <div className="space-y-2">
@@ -287,7 +287,7 @@ export function AdminDashboard() {
             </CardHeader>
             <CardContent>
               {testResults.length > 0 ? (
-                <TestResults 
+                <TestResults
                   results={testResults}
                   onRetryTest={retryTest}
                   onUpgrade={handleUpgrade}
@@ -314,7 +314,7 @@ export function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm">Active Users</CardTitle>
@@ -324,7 +324,7 @@ export function AdminDashboard() {
                 <div className="text-xs text-muted-foreground">+12% from last hour</div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm">API Requests</CardTitle>

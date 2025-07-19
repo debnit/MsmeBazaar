@@ -35,15 +35,15 @@ await fastify.register(helmet, {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "ws:", "wss:"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'", 'ws:', 'wss:'],
     },
   },
 });
 
 // CORS configuration
 await fastify.register(cors, {
-  origin: process.env.NODE_ENV === 'production' 
+  origin: process.env.NODE_ENV === 'production'
     ? ['https://yourdomain.com', 'https://www.yourdomain.com']
     : true,
   credentials: true,
@@ -149,7 +149,7 @@ fastify.get('/cluster/info', {
 });
 
 // API routes with enhanced performance
-fastify.register(async function (fastify) {
+fastify.register(async (fastify) => {
   // Authentication endpoints
   fastify.post('/api/auth/login', {
     schema: {
@@ -171,16 +171,16 @@ fastify.register(async function (fastify) {
   }, async (request, reply) => {
     // Mock authentication for demonstration
     const { email, password } = request.body;
-    
+
     // Simulate database lookup with caching
     const user = {
       id: '1',
       email,
       role: 'user',
     };
-    
+
     const token = 'mock-jwt-token';
-    
+
     return { token, user };
   });
 
@@ -203,7 +203,7 @@ fastify.register(async function (fastify) {
       { id: '1', name: 'Tech Startup', industry: 'technology', revenue: 1000000, location: 'Bangalore' },
       { id: '2', name: 'Manufacturing Co', industry: 'manufacturing', revenue: 2000000, location: 'Mumbai' },
     ];
-    
+
     // Add cache headers
     reply.header('Cache-Control', 'public, max-age=300'); // 5 minutes
     return listings;
@@ -228,11 +228,11 @@ fastify.register(async function (fastify) {
     },
   }, async (request, reply) => {
     const { revenue, profit, industry, location } = request.body;
-    
+
     // Simulate ML-based valuation
     const multiplier = industry === 'technology' ? 8.5 : 4.0;
     const valuation = revenue * multiplier;
-    
+
     return {
       valuation,
       confidence: 85,
@@ -252,7 +252,7 @@ if (process.env.NODE_ENV === 'development') {
 // Graceful shutdown
 const gracefulShutdown = async (signal: string) => {
   console.log(`Received ${signal}, shutting down gracefully...`);
-  
+
   try {
     await fastify.close();
     console.log('Server closed gracefully');
@@ -271,19 +271,19 @@ const start = async () => {
   try {
     const port = parseInt(process.env.PORT || '5000');
     const host = process.env.HOST || '0.0.0.0';
-    
+
     await fastify.listen({ port, host });
-    
+
     console.log(`🚀 Fastify server running on port ${port}`);
     console.log(`📊 Worker ${process.pid} started`);
     console.log(`📚 API documentation available at: http://${host}:${port}/api-docs`);
-    
+
     // Initialize secondary services after startup
     setTimeout(async () => {
       await startupManager.initializeSecondaryServices();
       console.log('🎉 All services initialized - monitoring enabled');
     }, 1000);
-    
+
   } catch (error) {
     console.error('Error starting server:', error);
     process.exit(1);

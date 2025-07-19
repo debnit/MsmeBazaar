@@ -1,5 +1,5 @@
-import { MsmeListing, User, BuyerInterest } from "@shared/schema";
-import { storage } from "../storage";
+import { MsmeListing, User, BuyerInterest } from '@shared/schema';
+import { storage } from '../storage';
 
 export interface MatchScore {
   buyerId: number;
@@ -14,16 +14,16 @@ export interface MatchScore {
     timelineMatch: number;
     strategicFit: number;
   };
-  recommendation: "excellent" | "good" | "fair" | "poor";
+  recommendation: 'excellent' | 'good' | 'fair' | 'poor';
   reasoning: string[];
 }
 
 export interface BuyerPreferences {
   preferredIndustries: string[];
   budgetRange: { min: number; max: number };
-  riskTolerance: "low" | "medium" | "high";
+  riskTolerance: 'low' | 'medium' | 'high';
   preferredLocations: string[];
-  timelinePreference: "immediate" | "short_term" | "medium_term" | "long_term";
+  timelinePreference: 'immediate' | 'short_term' | 'medium_term' | 'long_term';
   strategicObjectives: string[];
 }
 
@@ -148,7 +148,7 @@ export class MatchmakingEngine {
   async findMatches(msmeId: number, limit: number = 10): Promise<MatchScore[]> {
     const listing = await storage.getMsmeListing(msmeId);
     if (!listing) {
-      throw new Error("MSME listing not found");
+      throw new Error('MSME listing not found');
     }
 
     // Get all potential buyers (users with buyer role)
@@ -172,11 +172,11 @@ export class MatchmakingEngine {
   ): Promise<MatchScore[]> {
     const buyer = await storage.getUser(buyerId);
     if (!buyer) {
-      throw new Error("Buyer not found");
+      throw new Error('Buyer not found');
     }
 
     const buyerPreferences = await this.getBuyerPreferences(buyerId);
-    const listings = await storage.getMsmeListings({ status: "active" });
+    const listings = await storage.getMsmeListings({ status: 'active' });
 
     const matches: MatchScore[] = [];
 
@@ -200,12 +200,12 @@ export class MatchmakingEngine {
     // This would typically fetch from database
     // For now, return default preferences
     return {
-      preferredIndustries: ["Technology", "Manufacturing"],
+      preferredIndustries: ['Technology', 'Manufacturing'],
       budgetRange: { min: 1000000, max: 10000000 },
-      riskTolerance: "medium",
-      preferredLocations: ["Bhubaneswar", "Cuttack"],
-      timelinePreference: "medium_term",
-      strategicObjectives: ["market_expansion", "cost_reduction"],
+      riskTolerance: 'medium',
+      preferredLocations: ['Bhubaneswar', 'Cuttack'],
+      timelinePreference: 'medium_term',
+      strategicObjectives: ['market_expansion', 'cost_reduction'],
     };
   }
 
@@ -256,7 +256,7 @@ export class MatchmakingEngine {
     listing: MsmeListing,
     preferences: BuyerPreferences,
   ): number {
-    const listingIndustry = listing.industry || "Services";
+    const listingIndustry = listing.industry || 'Services';
 
     // Direct match
     if (preferences.preferredIndustries.includes(listingIndustry)) {
@@ -287,23 +287,23 @@ export class MatchmakingEngine {
     // Revenue-based scoring
     if (revenue > 0) {
       if (revenue < 1000000)
-        sizeScore += 0.3; // Micro
+      {sizeScore += 0.3;} // Micro
       else if (revenue < 10000000)
-        sizeScore += 0.6; // Small
+      {sizeScore += 0.6;} // Small
       else if (revenue < 100000000)
-        sizeScore += 0.9; // Medium
-      else sizeScore += 1.0; // Large
+      {sizeScore += 0.9;} // Medium
+      else {sizeScore += 1.0;} // Large
     }
 
     // Employee-based scoring
     if (employees > 0) {
       if (employees < 10)
-        sizeScore += 0.2; // Micro
+      {sizeScore += 0.2;} // Micro
       else if (employees < 50)
-        sizeScore += 0.4; // Small
+      {sizeScore += 0.4;} // Small
       else if (employees < 250)
-        sizeScore += 0.6; // Medium
-      else sizeScore += 0.8; // Large
+      {sizeScore += 0.6;} // Medium
+      else {sizeScore += 0.8;} // Large
     }
 
     return Math.min(sizeScore, 1.0);
@@ -315,7 +315,7 @@ export class MatchmakingEngine {
   ): number {
     const askingPrice = Number(listing.askingPrice) || 0;
 
-    if (askingPrice === 0) return 0.5; // Neutral if no price
+    if (askingPrice === 0) {return 0.5;} // Neutral if no price
 
     const { min, max } = preferences.budgetRange;
 
@@ -341,8 +341,8 @@ export class MatchmakingEngine {
     listing: MsmeListing,
     buyer: User,
   ): number {
-    const listingLocation = listing.city || "Bhubaneswar";
-    const buyerLocation = buyer.city || "Bhubaneswar";
+    const listingLocation = listing.city || 'Bhubaneswar';
+    const buyerLocation = buyer.city || 'Bhubaneswar';
 
     const listingCoords = odishaCoordinates[listingLocation];
     const buyerCoords = odishaCoordinates[buyerLocation];
@@ -351,15 +351,15 @@ export class MatchmakingEngine {
       return 0.5; // Neutral if coordinates not available
     }
 
-    import { haversineDistance } from "./utils/geoUtils";
+    import { haversineDistance } from './utils/geoUtils';
 
     const distance = haversineDistance(listingCoords, buyerCoords);
 
     // Scoring based on distance (km)
-    if (distance <= 50) return 1.0;
-    if (distance <= 100) return 0.8;
-    if (distance <= 200) return 0.6;
-    if (distance <= 300) return 0.4;
+    if (distance <= 50) {return 1.0;}
+    if (distance <= 100) {return 0.8;}
+    if (distance <= 200) {return 0.6;}
+    if (distance <= 300) {return 0.4;}
     return 0.2;
   }
 
@@ -404,30 +404,30 @@ export class MatchmakingEngine {
     let riskScore = 0.5;
 
     // Profitability
-    if (profitMargin > 0.1) riskScore += 0.2;
-    else if (profitMargin > 0.05) riskScore += 0.1;
-    else if (profitMargin < 0) riskScore -= 0.2;
+    if (profitMargin > 0.1) {riskScore += 0.2;}
+    else if (profitMargin > 0.05) {riskScore += 0.1;}
+    else if (profitMargin < 0) {riskScore -= 0.2;}
 
     // Leverage
-    if (debtRatio < 0.3) riskScore += 0.1;
-    else if (debtRatio > 0.7) riskScore -= 0.1;
+    if (debtRatio < 0.3) {riskScore += 0.1;}
+    else if (debtRatio > 0.7) {riskScore -= 0.1;}
 
     // Stability
-    if (yearsInBusiness > 5) riskScore += 0.1;
-    else if (yearsInBusiness < 2) riskScore -= 0.1;
+    if (yearsInBusiness > 5) {riskScore += 0.1;}
+    else if (yearsInBusiness < 2) {riskScore -= 0.1;}
 
     riskScore = Math.max(0, Math.min(1, riskScore));
 
     // Match with buyer's risk tolerance
     switch (preferences.riskTolerance) {
-      case "low":
-        return riskScore > 0.7 ? 1.0 : riskScore;
-      case "medium":
-        return riskScore > 0.4 ? 1.0 : riskScore * 1.5;
-      case "high":
-        return 1.0; // High risk tolerance accepts all
-      default:
-        return riskScore;
+    case 'low':
+      return riskScore > 0.7 ? 1.0 : riskScore;
+    case 'medium':
+      return riskScore > 0.4 ? 1.0 : riskScore * 1.5;
+    case 'high':
+      return 1.0; // High risk tolerance accepts all
+    default:
+      return riskScore;
     }
   }
 
@@ -435,39 +435,39 @@ export class MatchmakingEngine {
     listing: MsmeListing,
     preferences: BuyerPreferences,
   ): number {
-    const readiness = listing.readinessLevel || "medium";
+    const readiness = listing.readinessLevel || 'medium';
     const documentation = listing.documentationComplete || false;
 
     let timelineScore = 0;
 
     // Base score from readiness
     switch (readiness) {
-      case "high":
-        timelineScore = 0.9;
-        break;
-      case "medium":
-        timelineScore = 0.6;
-        break;
-      case "low":
-        timelineScore = 0.3;
-        break;
+    case 'high':
+      timelineScore = 0.9;
+      break;
+    case 'medium':
+      timelineScore = 0.6;
+      break;
+    case 'low':
+      timelineScore = 0.3;
+      break;
     }
 
     // Bonus for complete documentation
-    if (documentation) timelineScore += 0.1;
+    if (documentation) {timelineScore += 0.1;}
 
     // Match with buyer's timeline preference
     switch (preferences.timelinePreference) {
-      case "immediate":
-        return readiness === "high" ? 1.0 : timelineScore * 0.5;
-      case "short_term":
-        return readiness === "high" ? 1.0 : timelineScore * 0.8;
-      case "medium_term":
-        return timelineScore;
-      case "long_term":
-        return Math.min(timelineScore + 0.2, 1.0);
-      default:
-        return timelineScore;
+    case 'immediate':
+      return readiness === 'high' ? 1.0 : timelineScore * 0.5;
+    case 'short_term':
+      return readiness === 'high' ? 1.0 : timelineScore * 0.8;
+    case 'medium_term':
+      return timelineScore;
+    case 'long_term':
+      return Math.min(timelineScore + 0.2, 1.0);
+    default:
+      return timelineScore;
     }
   }
 
@@ -479,19 +479,19 @@ export class MatchmakingEngine {
     // In a real system, this would involve more complex analysis
 
     const competitiveAdvantages =
-      listing.competitiveAdvantage?.split(",") || [];
+      listing.competitiveAdvantage?.split(',') || [];
     const marketPosition = Number(listing.marketShare) || 0;
     const growth = Number(listing.revenueGrowth) || 0;
 
     let strategicScore = 0.5;
 
     // Market position
-    if (marketPosition > 0.1) strategicScore += 0.2;
-    else if (marketPosition > 0.05) strategicScore += 0.1;
+    if (marketPosition > 0.1) {strategicScore += 0.2;}
+    else if (marketPosition > 0.05) {strategicScore += 0.1;}
 
     // Growth
-    if (growth > 0.15) strategicScore += 0.2;
-    else if (growth > 0.05) strategicScore += 0.1;
+    if (growth > 0.15) {strategicScore += 0.2;}
+    else if (growth > 0.05) {strategicScore += 0.1;}
 
     // Competitive advantages
     strategicScore += Math.min(competitiveAdvantages.length * 0.05, 0.3);
@@ -501,11 +501,11 @@ export class MatchmakingEngine {
 
   private getRecommendation(
     score: number,
-  ): "excellent" | "good" | "fair" | "poor" {
-    if (score >= 0.8) return "excellent";
-    if (score >= 0.6) return "good";
-    if (score >= 0.4) return "fair";
-    return "poor";
+  ): 'excellent' | 'good' | 'fair' | 'poor' {
+    if (score >= 0.8) {return 'excellent';}
+    if (score >= 0.6) {return 'good';}
+    if (score >= 0.4) {return 'fair';}
+    return 'poor';
   }
 
   private generateReasoning(
@@ -520,23 +520,23 @@ export class MatchmakingEngine {
     }
 
     if (factors.budgetMatch > 0.8) {
-      reasoning.push("Asking price fits within budget range");
+      reasoning.push('Asking price fits within budget range');
     }
 
     if (factors.locationProximity > 0.8) {
-      reasoning.push("Located in preferred geographic area");
+      reasoning.push('Located in preferred geographic area');
     }
 
     if (factors.riskProfile > 0.7) {
-      reasoning.push("Risk profile matches tolerance level");
+      reasoning.push('Risk profile matches tolerance level');
     }
 
     if (factors.timelineMatch > 0.7) {
-      reasoning.push("Timeline aligns with acquisition schedule");
+      reasoning.push('Timeline aligns with acquisition schedule');
     }
 
     if (reasoning.length === 0) {
-      reasoning.push("Mixed alignment across evaluation criteria");
+      reasoning.push('Mixed alignment across evaluation criteria');
     }
 
     return reasoning;

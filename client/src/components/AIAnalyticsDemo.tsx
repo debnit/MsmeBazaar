@@ -5,11 +5,11 @@ import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { useToast } from '../hooks/use-toast';
-import { 
-  Brain, 
-  Search, 
-  TrendingUp, 
-  Settings, 
+import {
+  Brain,
+  Search,
+  TrendingUp,
+  Settings,
   MessageSquare,
   BarChart3,
   Users,
@@ -19,10 +19,8 @@ import {
   Zap,
   Database,
   Activity,
-  FileText
+  FileText,
 } from 'lucide-react';
-
-
 
 interface AssistantResponse {
   message: string;
@@ -69,7 +67,7 @@ export default function AIAnalyticsDemo() {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
       });
-      
+
       if (response.ok) {
         const stats = await response.json();
         setVectorStats(stats);
@@ -86,7 +84,7 @@ export default function AIAnalyticsDemo() {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
       });
-      
+
       if (response.ok) {
         const config = await response.json();
         setDashboardUrl(config.dashboardUrl);
@@ -103,7 +101,7 @@ export default function AIAnalyticsDemo() {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setAvailableTools(data.tools);
@@ -114,8 +112,8 @@ export default function AIAnalyticsDemo() {
   };
 
   const handleSemanticSearch = async () => {
-    if (!searchQuery.trim()) return;
-    
+    if (!searchQuery.trim()) {return;}
+
     setLoading(true);
     try {
       const response = await fetch('/api/ai-analytics/vector-search/semantic-search', {
@@ -126,7 +124,7 @@ export default function AIAnalyticsDemo() {
         },
         body: JSON.stringify({
           query: searchQuery,
-          limit: 10
+          limit: 10,
         }),
       });
 
@@ -134,22 +132,22 @@ export default function AIAnalyticsDemo() {
         const data = await response.json();
         setSearchResults(data.results);
         toast({
-          title: "Search Complete",
+          title: 'Search Complete',
           description: `Found ${data.results.length} semantic matches`,
         });
       } else {
         toast({
-          title: "Search Failed",
-          description: "Unable to perform semantic search",
-          variant: "destructive",
+          title: 'Search Failed',
+          description: 'Unable to perform semantic search',
+          variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Semantic search error:', error);
       toast({
-        title: "Search Error",
-        description: "An error occurred during search",
-        variant: "destructive",
+        title: 'Search Error',
+        description: 'An error occurred during search',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -157,8 +155,8 @@ export default function AIAnalyticsDemo() {
   };
 
   const handleAssistantQuery = async () => {
-    if (!assistantQuery.trim()) return;
-    
+    if (!assistantQuery.trim()) {return;}
+
     setLoading(true);
     try {
       const response = await fetch('/api/ai-analytics/smart-assistant/query', {
@@ -169,7 +167,7 @@ export default function AIAnalyticsDemo() {
         },
         body: JSON.stringify({
           query: assistantQuery,
-          sessionId: sessionId
+          sessionId: sessionId,
         }),
       });
 
@@ -177,22 +175,22 @@ export default function AIAnalyticsDemo() {
         const data = await response.json();
         setAssistantResponse(data);
         toast({
-          title: "Assistant Response",
+          title: 'Assistant Response',
           description: `Response received with ${data.confidence}% confidence`,
         });
       } else {
         toast({
-          title: "Assistant Error",
-          description: "Unable to get assistant response",
-          variant: "destructive",
+          title: 'Assistant Error',
+          description: 'Unable to get assistant response',
+          variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Assistant query error:', error);
       toast({
-        title: "Assistant Error",
-        description: "An error occurred while processing your query",
-        variant: "destructive",
+        title: 'Assistant Error',
+        description: 'An error occurred while processing your query',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -200,12 +198,10 @@ export default function AIAnalyticsDemo() {
   };
 
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 0.8) return 'bg-green-500';
-    if (confidence >= 0.6) return 'bg-yellow-500';
+    if (confidence >= 0.8) {return 'bg-green-500';}
+    if (confidence >= 0.6) {return 'bg-yellow-500';}
     return 'bg-red-500';
   };
-
-
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
@@ -310,7 +306,7 @@ export default function AIAnalyticsDemo() {
                           <h5 className="font-medium">{result.metadata.company_name}</h5>
                           <p className="text-sm text-gray-600">{result.metadata.industry}</p>
                           <p className="text-sm text-gray-500 mt-1">
-                            {result.metadata.location} • ₹{result.metadata.asking_price?.toLocaleString()} • 
+                            {result.metadata.location} • ₹{result.metadata.asking_price?.toLocaleString()} •
                             {result.metadata.employee_count} employees
                           </p>
                         </div>
@@ -364,7 +360,7 @@ export default function AIAnalyticsDemo() {
                       </Badge>
                     </div>
                     <p className="text-gray-700 mb-4">{assistantResponse.message}</p>
-                    
+
                     {assistantResponse.suggestions.length > 0 && (
                       <div className="mb-4">
                         <h5 className="font-medium text-sm mb-2">Suggestions:</h5>
@@ -488,9 +484,9 @@ export default function AIAnalyticsDemo() {
                         {tool.category === 'compliance' && <FileText className="w-4 h-4 text-orange-500" />}
                       </div>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="w-full mt-3"
                       onClick={() => window.open(tool.url, '_blank')}
                     >

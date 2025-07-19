@@ -5,7 +5,7 @@ export async function notifyAgentEmail(agent: Agent, transaction: EscrowTransact
   const msg = {
     to: agent.email,
     from: 'noreply@msmebazaar.in',
-    subject: `Commission Earned - MSMEBazaar`,
+    subject: 'Commission Earned - MSMEBazaar',
     text: `Hi ${agent.name},\n\nYou’ve earned ₹${transaction.amount} for your referral on MSMEBazaar. Escrow ID: ${transaction.escrowId}.\n\nThanks,\nTeam MSMEBazaar`,
   };
 

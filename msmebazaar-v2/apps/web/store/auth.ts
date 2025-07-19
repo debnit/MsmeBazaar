@@ -12,14 +12,14 @@ interface AuthState {
   tokens: AuthTokens | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  
+
   // Actions
   setUser: (user: User) => void;
   setTokens: (tokens: AuthTokens) => void;
   setLoading: (loading: boolean) => void;
   logout: () => void;
   clearAuth: () => void;
-  
+
   // Getters
   getAccessToken: () => string | null;
   getRefreshToken: () => string | null;
@@ -41,7 +41,7 @@ export const useAuthStore = create<AuthState>()(
 
       setTokens: (tokens: AuthTokens) => {
         set({ tokens });
-        
+
         // Also store in localStorage for axios interceptor
         if (typeof window !== 'undefined') {
           localStorage.setItem('access_token', tokens.accessToken);
@@ -60,7 +60,7 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
           isLoading: false,
         });
-        
+
         // Clear localStorage
         if (typeof window !== 'undefined') {
           localStorage.removeItem('access_token');
@@ -76,7 +76,7 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
           isLoading: false,
         });
-        
+
         // Clear localStorage
         if (typeof window !== 'undefined') {
           localStorage.removeItem('access_token');
@@ -112,8 +112,8 @@ export const useAuthStore = create<AuthState>()(
         tokens: state.tokens,
         isAuthenticated: state.isAuthenticated,
       }),
-    }
-  )
+    },
+  ),
 );
 
 // Helper hooks

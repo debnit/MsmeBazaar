@@ -22,7 +22,7 @@ interface StaticAppState {
 // Static state containers
 class StaticStateManager {
   private static instance: StaticStateManager;
-  
+
   // Static state objects - never null
   public static toastState: StaticToastState = { toasts: [] };
   public static appState: StaticAppState = {
@@ -31,7 +31,7 @@ class StaticStateManager {
     notifications: [],
     preferences: {},
     theme: 'light',
-    language: 'en'
+    language: 'en',
   };
 
   // Static listeners
@@ -64,11 +64,11 @@ class StaticStateManager {
     if (!newState || typeof newState !== 'object') {
       return;
     }
-    
+
     StaticStateManager.toastState = {
-      toasts: Array.isArray(newState.toasts) ? newState.toasts : []
+      toasts: Array.isArray(newState.toasts) ? newState.toasts : [],
     };
-    
+
     // Notify listeners
     StaticStateManager.toastListeners.forEach(listener => {
       try {
@@ -83,9 +83,9 @@ class StaticStateManager {
     if (typeof listener !== 'function') {
       return () => {};
     }
-    
+
     StaticStateManager.toastListeners.push(listener);
-    
+
     return () => {
       const index = StaticStateManager.toastListeners.indexOf(listener);
       if (index > -1) {
@@ -107,7 +107,7 @@ class StaticStateManager {
 
     const currentState = StaticStateManager.getToastState();
     const newToasts = [...currentState.toasts, toast];
-    
+
     StaticStateManager.setToastState({ toasts: newToasts });
   }
 
@@ -118,7 +118,7 @@ class StaticStateManager {
 
     const currentState = StaticStateManager.getToastState();
     const newToasts = currentState.toasts.filter(toast => toast.id !== toastId);
-    
+
     StaticStateManager.setToastState({ toasts: newToasts });
   }
 
@@ -134,7 +134,7 @@ class StaticStateManager {
       notifications: [],
       preferences: {},
       theme: 'light',
-      language: 'en'
+      language: 'en',
     };
     return StaticStateManager.appState;
   }
@@ -147,7 +147,7 @@ class StaticStateManager {
         notifications: [],
         preferences: {},
         theme: 'light',
-        language: 'en'
+        language: 'en',
       };
     }
     return StaticStateManager.appState;
@@ -157,13 +157,13 @@ class StaticStateManager {
     if (!updates || typeof updates !== 'object') {
       return;
     }
-    
+
     const currentState = StaticStateManager.getAppState();
     StaticStateManager.appState = {
       ...currentState,
-      ...updates
+      ...updates,
     };
-    
+
     // Notify listeners
     StaticStateManager.appListeners.forEach(listener => {
       try {
@@ -178,9 +178,9 @@ class StaticStateManager {
     if (typeof listener !== 'function') {
       return () => {};
     }
-    
+
     StaticStateManager.appListeners.push(listener);
-    
+
     return () => {
       const index = StaticStateManager.appListeners.indexOf(listener);
       if (index > -1) {
@@ -198,10 +198,10 @@ class StaticStateManager {
   public static getStateSnapshot(): {
     toast: StaticToastState;
     app: StaticAppState;
-  } {
+    } {
     return {
       toast: StaticStateManager.getToastState(),
-      app: StaticStateManager.getAppState()
+      app: StaticStateManager.getAppState(),
     };
   }
 }
@@ -226,7 +226,7 @@ export const StaticState = {
   // Global methods
   reset: () => StaticStateManager.resetAllState(),
   snapshot: () => StaticStateManager.getStateSnapshot(),
-  
+
   // Safe access methods
   safeGetToasts: () => {
     try {
@@ -237,7 +237,7 @@ export const StaticState = {
       return [];
     }
   },
-  
+
   safeGetUser: () => {
     try {
       const state = StaticStateManager.getAppState();
@@ -247,7 +247,7 @@ export const StaticState = {
       return null;
     }
   },
-  
+
   safeGetAuth: () => {
     try {
       const state = StaticStateManager.getAppState();
@@ -256,7 +256,7 @@ export const StaticState = {
       console.warn('Safe get auth failed:', error);
       return false;
     }
-  }
+  },
 };
 
 // Initialize static state immediately

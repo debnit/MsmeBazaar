@@ -15,7 +15,7 @@ class MicroserviceMemoryManager {
   private readonly MAX_MEMORY_MB = 128; // 128MB per microservice
   private readonly PAGE_SIZE_KB = 512; // 512KB page size
   private readonly MAX_PAGES = Math.floor((this.MAX_MEMORY_MB * 1024) / this.PAGE_SIZE_KB);
-  
+
   private totalMemoryUsed = 0;
   private evictionCount = 0;
   private serviceName: string;
@@ -26,7 +26,7 @@ class MicroserviceMemoryManager {
 
   async loadPage(pageId: string, loader: () => Promise<any>, priority: 'critical' | 'high' | 'medium' | 'low' = 'medium'): Promise<any> {
     const existingPage = this.pages.get(pageId);
-    
+
     if (existingPage) {
       existingPage.lastAccessed = Date.now();
       existingPage.accessCount++;
@@ -35,23 +35,23 @@ class MicroserviceMemoryManager {
 
     const data = await loader();
     const size = this.estimateSize(data);
-    
+
     if (this.pages.size >= this.MAX_PAGES || this.totalMemoryUsed + size > this.MAX_MEMORY_MB * 1024 * 1024) {
       this.evictPages(size);
     }
-    
+
     const page: MemoryPage = {
       id: pageId,
       data,
       lastAccessed: Date.now(),
       accessCount: 1,
       size,
-      priority
+      priority,
     };
-    
+
     this.pages.set(pageId, page);
     this.totalMemoryUsed += size;
-    
+
     return data;
   }
 
@@ -68,9 +68,9 @@ class MicroserviceMemoryManager {
     const targetSize = requiredSize + (this.MAX_MEMORY_MB * 1024 * 1024 * 0.1);
 
     for (const [pageId, page] of sortedPages) {
-      if (freedSize >= targetSize) break;
-      if (page.priority === 'critical') continue;
-      
+      if (freedSize >= targetSize) {break;}
+      if (page.priority === 'critical') {continue;}
+
       this.pages.delete(pageId);
       this.totalMemoryUsed -= page.size;
       this.evictionCount++;
@@ -89,7 +89,7 @@ class MicroserviceMemoryManager {
       pageCount: this.pages.size,
       evictionCount: this.evictionCount,
       memoryUsagePercent: (this.totalMemoryUsed / (this.MAX_MEMORY_MB * 1024 * 1024)) * 100,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
@@ -97,7 +97,7 @@ class MicroserviceMemoryManager {
     const now = Date.now();
     const expiredPages = Array.from(this.pages.entries())
       .filter(([, page]) => now - page.lastAccessed > 10 * 60 * 1000);
-    
+
     for (const [pageId, page] of expiredPages) {
       if (page.priority !== 'critical') {
         this.pages.delete(pageId);

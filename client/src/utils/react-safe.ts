@@ -41,7 +41,7 @@ export function useSafeEffect(effect: React.EffectCallback, deps?: React.Depende
 // Safe React callback hook
 export function useSafeCallback<T extends (...args: any[]) => any>(
   callback: T,
-  deps: React.DependencyList
+  deps: React.DependencyList,
 ): T {
   return React.useCallback(
     ((...args: Parameters<T>) => {
@@ -51,7 +51,7 @@ export function useSafeCallback<T extends (...args: any[]) => any>(
         console.warn('Safe callback failed:', error);
       }
     }) as T,
-    deps
+    deps,
   );
 }
 
@@ -70,7 +70,7 @@ export function useSafeMemo<T>(factory: () => T, deps: React.DependencyList): T 
 // Safe React ref hook
 export function useSafeRef<T>(initialValue: T): React.MutableRefObject<T> {
   const ref = React.useRef<T>(initialValue);
-  
+
   React.useEffect(() => {
     try {
       if (ref.current === null || ref.current === undefined) {
@@ -101,7 +101,7 @@ export function useSafeContext<T>(context: React.Context<T>): T {
 // Safe React reducer hook
 export function useSafeReducer<R extends React.Reducer<any, any>>(
   reducer: R,
-  initialState: React.ReducerState<R>
+  initialState: React.ReducerState<R>,
 ): [React.ReducerState<R>, React.Dispatch<React.ReducerAction<R>>] {
   const safeReducer = React.useCallback((state: React.ReducerState<R>, action: React.ReducerAction<R>) => {
     try {
@@ -178,7 +178,7 @@ export function useSafeWindowSize(): { width: number; height: number } {
 export function useSafeEventListener(
   eventName: string,
   handler: (event: Event) => void,
-  element: EventTarget | null = typeof window !== 'undefined' ? window : null
+  element: EventTarget | null = typeof window !== 'undefined' ? window : null,
 ) {
   const savedHandler = React.useRef<(event: Event) => void>();
 
@@ -209,7 +209,7 @@ export function useSafeEventListener(
 // Safe intersection observer hook
 export function useSafeIntersectionObserver(
   ref: React.RefObject<Element>,
-  options: IntersectionObserverInit = {}
+  options: IntersectionObserverInit = {},
 ): boolean {
   const [isIntersecting, setIsIntersecting] = React.useState(false);
 
@@ -227,7 +227,7 @@ export function useSafeIntersectionObserver(
             console.warn('Safe intersection observer callback failed:', error);
           }
         },
-        options
+        options,
       );
 
       observer.observe(ref.current);

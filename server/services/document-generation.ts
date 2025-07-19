@@ -14,37 +14,37 @@ export interface GeneratedDocument {
 export async function generateDocument(type: string, data: any): Promise<GeneratedDocument> {
   // Mock document generation service
   // In a real implementation, this would use PDF libraries or external services
-  
+
   const documentId = `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  
-  let content = "";
-  
+
+  let content = '';
+
   switch (type) {
-    case "loan_agreement":
-      content = generateLoanAgreement(data);
-      break;
-    case "noc":
-      content = generateNOC(data);
-      break;
-    case "transfer_deed":
-      content = generateTransferDeed(data);
-      break;
-    case "valuation_report":
-      content = generateValuationReport(data);
-      break;
-    case "compliance_report":
-      content = generateComplianceReport(data);
-      break;
-    default:
-      throw new Error(`Unsupported document type: ${type}`);
+  case 'loan_agreement':
+    content = generateLoanAgreement(data);
+    break;
+  case 'noc':
+    content = generateNOC(data);
+    break;
+  case 'transfer_deed':
+    content = generateTransferDeed(data);
+    break;
+  case 'valuation_report':
+    content = generateValuationReport(data);
+    break;
+  case 'compliance_report':
+    content = generateComplianceReport(data);
+    break;
+  default:
+    throw new Error(`Unsupported document type: ${type}`);
   }
-  
+
   return {
     id: documentId,
     type,
     content,
-    format: "pdf",
-    createdAt: new Date()
+    format: 'pdf',
+    createdAt: new Date(),
   };
 }
 

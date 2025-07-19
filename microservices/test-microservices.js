@@ -7,7 +7,7 @@ const services = {
   auth: express(),
   msme: express(),
   valuation: express(),
-  gateway: express()
+  gateway: express(),
 };
 
 // Auth Service Mock
@@ -29,7 +29,7 @@ services.msme.get('/health', (req, res) => {
 services.msme.get('/listings', (req, res) => {
   res.json([
     { id: 1, name: 'Tech Startup', industry: 'technology', revenue: 1000000 },
-    { id: 2, name: 'Manufacturing Co', industry: 'manufacturing', revenue: 2000000 }
+    { id: 2, name: 'Manufacturing Co', industry: 'manufacturing', revenue: 2000000 },
   ]);
 });
 
@@ -45,7 +45,7 @@ services.valuation.post('/valuate', (req, res) => {
   res.json({
     valuation: revenue * multiplier,
     confidence: 85,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -59,15 +59,15 @@ services.gateway.get('/health/all', async (req, res) => {
   const healthChecks = await Promise.allSettled([
     fetch('http://localhost:3001/health').then(r => r.json()),
     fetch('http://localhost:3002/health').then(r => r.json()),
-    fetch('http://localhost:3003/health').then(r => r.json())
+    fetch('http://localhost:3003/health').then(r => r.json()),
   ]);
-  
+
   res.json({
     gateway: 'healthy',
-    services: healthChecks.map(result => 
-      result.status === 'fulfilled' ? result.value : { error: result.reason }
+    services: healthChecks.map(result =>
+      result.status === 'fulfilled' ? result.value : { error: result.reason },
     ),
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 

@@ -59,10 +59,10 @@ export default function RBACTest() {
     try {
       const response = await fetch('/api/auth/permissions', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setPermissions(data.permissions || []);
@@ -82,14 +82,14 @@ export default function RBACTest() {
           method: test.method,
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
           },
           body: test.method === 'POST' ? JSON.stringify({
             businessName: 'Test Business',
             industry: 'Technology',
             revenue: 1000000,
-            location: 'Mumbai'
-          }) : undefined
+            location: 'Mumbai',
+          }) : undefined,
         });
 
         results.push({
@@ -97,7 +97,7 @@ export default function RBACTest() {
           method: test.method,
           status: response.status,
           message: response.ok ? 'Success' : await response.text(),
-          success: response.ok
+          success: response.ok,
         });
       } catch (error) {
         results.push({
@@ -105,16 +105,16 @@ export default function RBACTest() {
           method: test.method,
           status: 0,
           message: error instanceof Error ? error.message : 'Network error',
-          success: false
+          success: false,
         });
       }
     }
 
     setTestResults(results);
     setLoading(false);
-    
+
     toast({
-      title: "Permission Tests Completed",
+      title: 'Permission Tests Completed',
       description: `Ran ${results.length} tests. Check results below.`,
     });
   };
@@ -200,7 +200,7 @@ export default function RBACTest() {
                   {Object.entries(groupedPermissions).map(([category, categoryPermissions]) => {
                     const categoryInfo = PERMISSION_CATEGORIES[category as keyof typeof PERMISSION_CATEGORIES];
                     const Icon = categoryInfo?.icon || Shield;
-                    
+
                     return (
                       <div key={category} className="border rounded-lg p-4">
                         <div className="flex items-center gap-2 mb-3">
@@ -212,9 +212,9 @@ export default function RBACTest() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           {categoryPermissions.map((permission) => (
-                            <Badge 
-                              key={permission} 
-                              variant="outline" 
+                            <Badge
+                              key={permission}
+                              variant="outline"
                               className={categoryInfo?.color || 'bg-gray-100 text-gray-800'}
                             >
                               {permission}
@@ -235,7 +235,7 @@ export default function RBACTest() {
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 API Endpoint Permission Tests
-                <Button 
+                <Button
                   onClick={runPermissionTests}
                   disabled={loading}
                   className="ml-4"

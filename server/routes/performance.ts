@@ -14,7 +14,7 @@ router.get('/performance', async (req, res) => {
         uptime: process.uptime(),
         memory: process.memoryUsage(),
         cpu: cpuOptimizer.getCPUStats(),
-        resources: processPriorityManager.monitorResourceUsage()
+        resources: processPriorityManager.monitorResourceUsage(),
       },
       cache: cacheManager.getCacheStats(),
       services: startupManager.getStatus(),
@@ -24,9 +24,9 @@ router.get('/performance', async (req, res) => {
         processId: process.pid,
         priority: process.getpriority(process.pid),
         cpuCores: require('os').cpus().length,
-        advancedOptimizations: 'enabled'
+        advancedOptimizations: 'enabled',
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     res.json(performanceData);
@@ -41,11 +41,11 @@ router.get('/performance/advanced', async (req, res) => {
     // Try to get advanced performance stats
     const { advancedPerformanceOptimizer } = await import('../infrastructure/advanced-performance');
     const advancedStats = advancedPerformanceOptimizer.getPerformanceStats();
-    
+
     res.json({
       ...advancedStats,
       timestamp: new Date().toISOString(),
-      mode: 'mission-critical'
+      mode: 'mission-critical',
     });
   } catch (error) {
     res.json({
@@ -53,8 +53,8 @@ router.get('/performance/advanced', async (req, res) => {
       basicStats: {
         memory: process.memoryUsage(),
         uptime: process.uptime(),
-        pid: process.pid
-      }
+        pid: process.pid,
+      },
     });
   }
 });
@@ -62,9 +62,9 @@ router.get('/performance/advanced', async (req, res) => {
 // Cache management endpoints
 router.post('/cache/clear', (req, res) => {
   cacheManager.clearAllCaches();
-  res.json({ 
-    success: true, 
-    message: 'All caches cleared successfully' 
+  res.json({
+    success: true,
+    message: 'All caches cleared successfully',
   });
 });
 
@@ -82,17 +82,17 @@ router.get('/cpu/stats', (req, res) => {
 // Process priority optimization
 router.post('/process/optimize/:workload', (req, res) => {
   const { workload } = req.params;
-  
+
   if (!['cpu-intensive', 'io-intensive', 'balanced'].includes(workload)) {
-    return res.status(400).json({ 
-      error: 'Invalid workload type' 
+    return res.status(400).json({
+      error: 'Invalid workload type',
     });
   }
-  
+
   processPriorityManager.optimizeForWorkload(workload as any);
-  res.json({ 
-    success: true, 
-    message: `Optimized for ${workload} workload` 
+  res.json({
+    success: true,
+    message: `Optimized for ${workload} workload`,
   });
 });
 

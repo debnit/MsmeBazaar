@@ -83,7 +83,7 @@ class AuthService {
   async getCurrentUser(): Promise<AuthUser | null> {
     try {
       const token = this.getToken();
-      if (!token) return null;
+      if (!token) {return null;}
 
       const response = await apiRequest('GET', '/api/auth/me');
       return response;
@@ -138,10 +138,10 @@ class AuthService {
   async checkPermission(requiredRole: string): Promise<boolean> {
     try {
       const user = await this.getCurrentUser();
-      if (!user) return false;
+      if (!user) {return false;}
 
       // Admin has access to everything
-      if (user.role === 'admin') return true;
+      if (user.role === 'admin') {return true;}
 
       // Check specific role
       return user.role === requiredRole;
@@ -166,7 +166,7 @@ export function getAuthHeaders(): HeadersInit {
 // Higher-order component for route protection
 export function withAuth<T extends object>(
   Component: React.ComponentType<T>,
-  requiredRole?: string
+  requiredRole?: string,
 ) {
   return function AuthenticatedComponent(props: T) {
     const [isAuthorized, setIsAuthorized] = useState(false);
@@ -201,7 +201,7 @@ export function withAuth<T extends object>(
       return React.createElement(
         'div',
         { className: 'flex items-center justify-center h-screen' },
-        React.createElement('div', { className: 'animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600' })
+        React.createElement('div', { className: 'animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600' }),
       );
     }
 

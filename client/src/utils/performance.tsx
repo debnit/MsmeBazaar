@@ -28,8 +28,8 @@ export class PerformanceMonitor {
 
   endTiming(label: string): number {
     const start = this.metrics[label];
-    if (!start) return 0;
-    
+    if (!start) {return 0;}
+
     const duration = performance.now() - start;
     console.log(`Performance: ${label} took ${duration.toFixed(2)}ms`);
     return duration;
@@ -38,7 +38,7 @@ export class PerformanceMonitor {
   measureComponent<T extends {}>(Component: React.ComponentType<T>, name: string) {
     return (props: T) => {
       this.startTiming(name);
-      
+
       // Use useEffect to measure render time
       React.useEffect(() => {
         this.endTiming(name);
@@ -55,23 +55,23 @@ export const performanceMonitor = new PerformanceMonitor();
 // Image optimization
 export const optimizeImage = (src: string, width?: number, height?: number) => {
   const params = new URLSearchParams();
-  if (width) params.append('w', width.toString());
-  if (height) params.append('h', height.toString());
-  
+  if (width) {params.append('w', width.toString());}
+  if (height) {params.append('h', height.toString());}
+
   // Add format optimization
   params.append('f', 'webp');
   params.append('q', '85'); // Quality
-  
+
   return `${src}?${params.toString()}`;
 };
 
 // Debounce utility
 export const debounce = <T extends (...args: any[]) => any>(
   func: T,
-  delay: number
+  delay: number,
 ): ((...args: Parameters<T>) => void) => {
   let timeoutId: NodeJS.Timeout;
-  
+
   return (...args: Parameters<T>) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => func(...args), delay);
@@ -81,10 +81,10 @@ export const debounce = <T extends (...args: any[]) => any>(
 // Throttle utility
 export const throttle = <T extends (...args: any[]) => any>(
   func: T,
-  delay: number
+  delay: number,
 ): ((...args: Parameters<T>) => void) => {
   let lastCall = 0;
-  
+
   return (...args: Parameters<T>) => {
     const now = Date.now();
     if (now - lastCall >= delay) {
@@ -97,14 +97,14 @@ export const throttle = <T extends (...args: any[]) => any>(
 // Memoization utility
 export const memoize = <T extends (...args: any[]) => any>(func: T): T => {
   const cache = new Map();
-  
+
   return ((...args: Parameters<T>) => {
     const key = JSON.stringify(args);
-    
+
     if (cache.has(key)) {
       return cache.get(key);
     }
-    
+
     const result = func(...args);
     cache.set(key, result);
     return result;
@@ -115,25 +115,25 @@ export const memoize = <T extends (...args: any[]) => any>(func: T): T => {
 export const useVirtualScroll = (
   items: any[],
   itemHeight: number,
-  containerHeight: number
+  containerHeight: number,
 ) => {
   const [scrollTop, setScrollTop] = React.useState(0);
-  
+
   const startIndex = Math.floor(scrollTop / itemHeight);
   const endIndex = Math.min(
     startIndex + Math.ceil(containerHeight / itemHeight) + 1,
-    items.length
+    items.length,
   );
-  
+
   const visibleItems = items.slice(startIndex, endIndex);
-  
+
   return {
     visibleItems,
     startIndex,
     endIndex,
     setScrollTop,
     totalHeight: items.length * itemHeight,
-    offsetY: startIndex * itemHeight
+    offsetY: startIndex * itemHeight,
   };
 };
 
@@ -141,9 +141,9 @@ export const useVirtualScroll = (
 export const createWebWorker = (workerFunction: Function) => {
   const blob = new Blob(
     [`(${workerFunction.toString()})()`],
-    { type: 'application/javascript' }
+    { type: 'application/javascript' },
   );
-  
+
   return new Worker(URL.createObjectURL(blob));
 };
 
@@ -155,7 +155,7 @@ export const preloadCriticalResources = () => {
   criticalCSS.as = 'style';
   criticalCSS.href = '/critical.css';
   document.head.appendChild(criticalCSS);
-  
+
   // Preload critical fonts
   const font = document.createElement('link');
   font.rel = 'preload';
@@ -164,11 +164,11 @@ export const preloadCriticalResources = () => {
   font.crossOrigin = 'anonymous';
   font.href = '/fonts/inter-var.woff2';
   document.head.appendChild(font);
-  
+
   // Preload critical images
   const heroImage = new Image();
   heroImage.src = '/images/hero-banner.webp';
-  
+
   console.log('Critical resources preloaded');
 };
 
@@ -201,13 +201,13 @@ export const addResourceHints = () => {
   dnsPrefetch.rel = 'dns-prefetch';
   dnsPrefetch.href = '//fonts.googleapis.com';
   document.head.appendChild(dnsPrefetch);
-  
+
   // Preconnect to critical origins
   const preconnect = document.createElement('link');
   preconnect.rel = 'preconnect';
   preconnect.href = 'https://api.msmebazaar.com';
   document.head.appendChild(preconnect);
-  
+
   console.log('Resource hints added');
 };
 
@@ -219,7 +219,7 @@ export const initPerformanceObserver = () => {
         console.log(`Performance: ${entry.name} - ${entry.duration}ms`);
       }
     });
-    
+
     observer.observe({ entryTypes: ['measure', 'navigation', 'paint'] });
     return observer;
   }
@@ -231,6 +231,6 @@ export const initializePerformance = () => {
   registerServiceWorker();
   addResourceHints();
   initPerformanceObserver();
-  
+
   console.log('Performance optimizations initialized');
 };

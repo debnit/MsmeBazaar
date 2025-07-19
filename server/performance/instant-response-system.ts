@@ -23,19 +23,19 @@ export class InstantResponseSystem {
 
   async initialize(): Promise<void> {
     console.log('⚡ Initializing instant response system...');
-    
+
     // Precompute critical homepage data
     await this.precomputeHomepageData();
-    
+
     // Precompute dashboard data
     await this.precomputeDashboardData();
-    
+
     // Precompute API responses
     await this.precomputeApiResponses();
-    
+
     // Start background refresh
     this.startBackgroundRefresh();
-    
+
     this.cacheWarmed = true;
     console.log('✅ Instant response system initialized');
   }
@@ -44,62 +44,62 @@ export class InstantResponseSystem {
     const homepageData = {
       hero: {
         title: "MSMESquare - India's Leading MSME Marketplace",
-        subtitle: "Connect, Transact, Grow - Your One-Stop MSME Solution",
+        subtitle: 'Connect, Transact, Grow - Your One-Stop MSME Solution',
         stats: {
           totalMSMEs: 1250,
           successfulDeals: 89,
           registeredAgents: 156,
-          totalFunding: "₹12.5 Cr"
-        }
+          totalFunding: '₹12.5 Cr',
+        },
       },
       features: [
         {
-          icon: "🏢",
-          title: "MSME Marketplace",
-          description: "Buy and sell businesses with confidence"
+          icon: '🏢',
+          title: 'MSME Marketplace',
+          description: 'Buy and sell businesses with confidence',
         },
         {
-          icon: "💰",
-          title: "Instant Financing",
-          description: "Get quick loans from trusted NBFCs"
+          icon: '💰',
+          title: 'Instant Financing',
+          description: 'Get quick loans from trusted NBFCs',
         },
         {
-          icon: "📊",
-          title: "AI Valuation",
-          description: "Get accurate business valuations"
+          icon: '📊',
+          title: 'AI Valuation',
+          description: 'Get accurate business valuations',
         },
         {
-          icon: "👥",
-          title: "Expert Agents",
-          description: "Connect with verified business agents"
-        }
+          icon: '👥',
+          title: 'Expert Agents',
+          description: 'Connect with verified business agents',
+        },
       ],
       testimonials: [
         {
-          name: "Rajesh Kumar",
-          role: "Manufacturing Owner",
-          content: "MSMESquare helped me sell my business in just 15 days!"
+          name: 'Rajesh Kumar',
+          role: 'Manufacturing Owner',
+          content: 'MSMESquare helped me sell my business in just 15 days!',
         },
         {
-          name: "Priya Sharma",
-          role: "Business Agent",
-          content: "Best platform for connecting buyers and sellers"
-        }
+          name: 'Priya Sharma',
+          role: 'Business Agent',
+          content: 'Best platform for connecting buyers and sellers',
+        },
       ],
       categories: [
-        "Manufacturing",
-        "Services",
-        "Retail",
-        "Technology",
-        "Healthcare"
-      ]
+        'Manufacturing',
+        'Services',
+        'Retail',
+        'Technology',
+        'Healthcare',
+      ],
     };
 
     this.precomputedResponses.set('/', {
       path: '/',
       response: homepageData,
       lastUpdated: Date.now(),
-      ttl: 30000 // 30 seconds
+      ttl: 30000, // 30 seconds
     });
   }
 
@@ -110,34 +110,34 @@ export class InstantResponseSystem {
         activeMSMEs: 450,
         totalTransactions: 89,
         revenue: 125000,
-        growthRate: 12.5
+        growthRate: 12.5,
       },
       recentActivity: [
         {
-          type: "listing",
-          title: "New MSME listed in Manufacturing",
-          timestamp: Date.now() - 300000
+          type: 'listing',
+          title: 'New MSME listed in Manufacturing',
+          timestamp: Date.now() - 300000,
         },
         {
-          type: "transaction",
-          title: "Deal closed for ₹25L",
-          timestamp: Date.now() - 600000
-        }
+          type: 'transaction',
+          title: 'Deal closed for ₹25L',
+          timestamp: Date.now() - 600000,
+        },
       ],
       notifications: [
         {
-          type: "info",
-          message: "New features available",
-          timestamp: Date.now() - 900000
-        }
-      ]
+          type: 'info',
+          message: 'New features available',
+          timestamp: Date.now() - 900000,
+        },
+      ],
     };
 
     this.precomputedResponses.set('/api/dashboard/stats', {
       path: '/api/dashboard/stats',
       response: dashboardData,
       lastUpdated: Date.now(),
-      ttl: 60000 // 1 minute
+      ttl: 60000, // 1 minute
     });
   }
 
@@ -147,23 +147,23 @@ export class InstantResponseSystem {
       {
         path: '/api/health',
         response: { status: 'healthy', timestamp: Date.now() },
-        ttl: 30000
+        ttl: 30000,
       },
       {
         path: '/api/user-roles',
         response: { roles: ['admin', 'seller', 'buyer', 'agent', 'nbfc'] },
-        ttl: 3600000 // 1 hour
+        ttl: 3600000, // 1 hour
       },
       {
         path: '/api/industries',
         response: { industries: ['Manufacturing', 'Services', 'Retail', 'Technology'] },
-        ttl: 3600000
+        ttl: 3600000,
       },
       {
         path: '/api/regions',
         response: { regions: ['Odisha', 'Mumbai', 'Delhi', 'Bangalore'] },
-        ttl: 3600000
-      }
+        ttl: 3600000,
+      },
     ];
 
     for (const apiResponse of apiResponses) {
@@ -171,14 +171,14 @@ export class InstantResponseSystem {
         path: apiResponse.path,
         response: apiResponse.response,
         lastUpdated: Date.now(),
-        ttl: apiResponse.ttl
+        ttl: apiResponse.ttl,
       });
     }
   }
 
   getInstantResponse(path: string): any {
     const cached = this.precomputedResponses.get(path);
-    
+
     if (!cached) {
       return null;
     }
@@ -201,19 +201,19 @@ export class InstantResponseSystem {
 
   private async refreshExpiredCache(): Promise<void> {
     const now = Date.now();
-    
+
     for (const [path, cached] of this.precomputedResponses.entries()) {
       if (now - cached.lastUpdated > cached.ttl * 0.8) { // Refresh at 80% of TTL
         switch (path) {
-          case '/':
-            await this.precomputeHomepageData();
-            break;
-          case '/api/dashboard/stats':
-            await this.precomputeDashboardData();
-            break;
-          default:
-            // Refresh specific API response
-            break;
+        case '/':
+          await this.precomputeHomepageData();
+          break;
+        case '/api/dashboard/stats':
+          await this.precomputeDashboardData();
+          break;
+        default:
+          // Refresh specific API response
+          break;
         }
       }
     }
@@ -227,7 +227,7 @@ export class InstantResponseSystem {
     return {
       cachedResponses: this.precomputedResponses.size,
       warmed: this.cacheWarmed,
-      responses: Array.from(this.precomputedResponses.keys())
+      responses: Array.from(this.precomputedResponses.keys()),
     };
   }
 

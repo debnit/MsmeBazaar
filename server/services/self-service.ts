@@ -103,13 +103,13 @@ class SelfServiceManager {
 
     // Calculate earnings
     const earnings = await this.calculateAgentEarnings(agentId);
-    
+
     // Get performance metrics
     const performance = await this.getAgentPerformance(agentId);
-    
+
     // Get clients
     const clients = await this.getAgentClients(agentId);
-    
+
     // Get payout history
     const payouts = await this.getPayoutHistory(agentId);
 
@@ -190,7 +190,7 @@ class SelfServiceManager {
   async requestAgentPayout(agentId: string, amount: number, paymentMethod: string): Promise<any> {
     // Validate payout request
     const dashboard = await this.getAgentDashboard(agentId);
-    
+
     if (amount > dashboard.earnings.pendingPayouts) {
       throw new Error('Insufficient payout balance');
     }
@@ -367,7 +367,7 @@ class SelfServiceManager {
     // Validate application
     const applications = await this.getLoanApplications(nbfcId);
     const application = applications.find(app => app.id === applicationId);
-    
+
     if (!application) {
       throw new Error('Application not found');
     }
@@ -405,7 +405,7 @@ class SelfServiceManager {
   async autoProcessMSMEListing(listingData: any): Promise<any> {
     // Automated validation checks
     const validationResults = await this.validateMSMEListing(listingData);
-    
+
     if (validationResults.autoApprove) {
       // Auto-approve and publish
       await this.autoApproveListing(listingData);
@@ -420,22 +420,22 @@ class SelfServiceManager {
         listingId: listingData.id,
         issues: validationResults.issues,
       });
-      
+
       return {
         status: 'pending_review',
         message: 'Listing queued for manual review',
         validationScore: validationResults.score,
         issues: validationResults.issues,
       };
-    } else {
-      // Auto-reject
-      return {
-        status: 'rejected',
-        message: 'Listing does not meet minimum requirements',
-        validationScore: validationResults.score,
-        issues: validationResults.issues,
-      };
     }
+    // Auto-reject
+    return {
+      status: 'rejected',
+      message: 'Listing does not meet minimum requirements',
+      validationScore: validationResults.score,
+      issues: validationResults.issues,
+    };
+
   }
 
   private async validateMSMEListing(listingData: any) {

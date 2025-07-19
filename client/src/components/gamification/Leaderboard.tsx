@@ -1,20 +1,20 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Trophy, 
-  Medal, 
-  Crown, 
-  Star, 
-  TrendingUp, 
-  Users, 
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Trophy,
+  Medal,
+  Crown,
+  Star,
+  TrendingUp,
+  Users,
   Calendar,
-  X
-} from "lucide-react";
+  X,
+} from 'lucide-react';
 
 interface LeaderboardProps {
   isVisible: boolean;
@@ -37,12 +37,12 @@ interface LeaderboardEntry {
   isCurrentUser?: boolean;
 }
 
-export function Leaderboard({ 
-  isVisible, 
-  onClose, 
-  currentUser 
+export function Leaderboard({
+  isVisible,
+  onClose,
+  currentUser,
 }: LeaderboardProps) {
-  const [activeTab, setActiveTab] = useState("weekly");
+  const [activeTab, setActiveTab] = useState('weekly');
 
   // Mock leaderboard data
   const weeklyLeaderboard: LeaderboardEntry[] = [
@@ -80,28 +80,28 @@ export function Leaderboard({
       points: currentUser.points,
       level: Math.floor(currentUser.points / 500) + 1,
       badge: 'profile',
-      isCurrentUser: true
+      isCurrentUser: true,
     };
 
     if (currentUser.rank <= 10) {
-      return leaderboard.map(entry => 
-        entry.rank === currentUser.rank ? currentUserEntry : entry
+      return leaderboard.map(entry =>
+        entry.rank === currentUser.rank ? currentUserEntry : entry,
       );
-    } else {
-      return [...leaderboard, currentUserEntry];
     }
+    return [...leaderboard, currentUserEntry];
+
   };
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
-      case 1:
-        return <Crown className="w-6 h-6 text-yellow-500" />;
-      case 2:
-        return <Medal className="w-6 h-6 text-gray-400" />;
-      case 3:
-        return <Medal className="w-6 h-6 text-amber-600" />;
-      default:
-        return <span className="text-lg font-bold text-gray-600">#{rank}</span>;
+    case 1:
+      return <Crown className="w-6 h-6 text-yellow-500" />;
+    case 2:
+      return <Medal className="w-6 h-6 text-gray-400" />;
+    case 3:
+      return <Medal className="w-6 h-6 text-amber-600" />;
+    default:
+      return <span className="text-lg font-bold text-gray-600">#{rank}</span>;
     }
   };
 
@@ -125,8 +125,8 @@ export function Leaderboard({
     <motion.div
       key={entry.id}
       className={`flex items-center space-x-4 p-4 rounded-lg transition-all duration-200 ${
-        entry.isCurrentUser 
-          ? 'bg-blue-50 border-2 border-blue-200' 
+        entry.isCurrentUser
+          ? 'bg-blue-50 border-2 border-blue-200'
           : 'bg-gray-50 hover:bg-gray-100'
       }`}
       initial={{ opacity: 0, y: 20 }}
@@ -136,18 +136,18 @@ export function Leaderboard({
       <div className="flex items-center justify-center w-12 h-12">
         {getRankIcon(entry.rank)}
       </div>
-      
+
       <Avatar className="w-10 h-10">
         <AvatarImage src={entry.avatar} alt={entry.name} />
         <AvatarFallback>{entry.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
       </Avatar>
-      
+
       <div className="flex-1">
         <div className="flex items-center space-x-2">
           <h3 className={`font-semibold ${entry.isCurrentUser ? 'text-blue-600' : 'text-gray-900'}`}>
             {entry.name}
           </h3>
-          <Badge 
+          <Badge
             className={`${getBadgeColor(entry.badge)} text-white text-xs`}
             variant="secondary"
           >
@@ -161,7 +161,7 @@ export function Leaderboard({
           </div>
         </div>
       </div>
-      
+
       {entry.rank <= 3 && (
         <div className="flex items-center space-x-2">
           <Trophy className="w-5 h-5 text-yellow-500" />
@@ -205,7 +205,7 @@ export function Leaderboard({
                   </Button>
                 </div>
               </CardHeader>
-              
+
               <CardContent>
                 <Tabs defaultValue="weekly" className="w-full">
                   <TabsList className="grid w-full grid-cols-3">
@@ -222,32 +222,32 @@ export function Leaderboard({
                       <span>All Time</span>
                     </TabsTrigger>
                   </TabsList>
-                  
+
                   <TabsContent value="weekly" className="mt-6">
                     <div className="space-y-3 max-h-[60vh] overflow-y-auto">
-                      {addCurrentUserToLeaderboard(weeklyLeaderboard).map((entry, index) => 
-                        renderLeaderboardEntry(entry, index)
+                      {addCurrentUserToLeaderboard(weeklyLeaderboard).map((entry, index) =>
+                        renderLeaderboardEntry(entry, index),
                       )}
                     </div>
                   </TabsContent>
-                  
+
                   <TabsContent value="monthly" className="mt-6">
                     <div className="space-y-3 max-h-[60vh] overflow-y-auto">
-                      {addCurrentUserToLeaderboard(weeklyLeaderboard).map((entry, index) => 
-                        renderLeaderboardEntry(entry, index)
+                      {addCurrentUserToLeaderboard(weeklyLeaderboard).map((entry, index) =>
+                        renderLeaderboardEntry(entry, index),
                       )}
                     </div>
                   </TabsContent>
-                  
+
                   <TabsContent value="all-time" className="mt-6">
                     <div className="space-y-3 max-h-[60vh] overflow-y-auto">
-                      {addCurrentUserToLeaderboard(allTimeLeaderboard).map((entry, index) => 
-                        renderLeaderboardEntry(entry, index)
+                      {addCurrentUserToLeaderboard(allTimeLeaderboard).map((entry, index) =>
+                        renderLeaderboardEntry(entry, index),
                       )}
                     </div>
                   </TabsContent>
                 </Tabs>
-                
+
                 {/* Rewards Info */}
                 <div className="mt-6 p-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-lg">
                   <div className="flex items-center justify-between">

@@ -56,10 +56,10 @@ class ErrorHandler {
   private attemptRecovery(error: Error): void {
     const errorKey = error.message || 'unknown';
     const count = this.errorCounts.get(errorKey) || 0;
-    
+
     if (count < this.maxRetries) {
       this.errorCounts.set(errorKey, count + 1);
-      
+
       setTimeout(() => {
         console.log(`Attempting recovery for error: ${errorKey} (attempt ${count + 1})`);
         this.performRecovery(error);
@@ -76,10 +76,10 @@ class ErrorHandler {
       if (global.gc) {
         global.gc();
       }
-      
+
       // Reset error counts after successful recovery
       this.errorCounts.clear();
-      
+
       console.log('Recovery successful');
     } catch (recoveryError) {
       console.error('Recovery failed:', recoveryError);
@@ -88,7 +88,7 @@ class ErrorHandler {
 
   private gracefulShutdown(): void {
     console.log('Initiating graceful shutdown...');
-    
+
     // Give ongoing requests time to complete
     setTimeout(() => {
       process.exit(1);
@@ -109,7 +109,7 @@ class ErrorHandler {
 
       // Determine error type and response
       const errorResponse = this.categorizeError(error);
-      
+
       // Send appropriate response
       if (!res.headersSent) {
         res.status(errorResponse.status).json({
@@ -184,7 +184,7 @@ class ErrorHandler {
   public withRetry<T>(fn: () => Promise<T>, maxRetries: number = 3): Promise<T> {
     return new Promise(async (resolve, reject) => {
       let lastError: Error;
-      
+
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
           const result = await fn();
@@ -192,14 +192,14 @@ class ErrorHandler {
           return;
         } catch (error) {
           lastError = error as Error;
-          
+
           if (attempt < maxRetries) {
             const delay = this.retryDelays[attempt] || 4000;
             await new Promise(resolve => setTimeout(resolve, delay));
           }
         }
       }
-      
+
       reject(lastError);
     });
   }

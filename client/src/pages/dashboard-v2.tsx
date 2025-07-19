@@ -27,7 +27,7 @@ import {
   MapPin,
   Phone,
   Mail,
-  ExternalLink
+  ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { api, queryKeys } from '@/lib/api';
@@ -39,7 +39,7 @@ import {
   SuspenseMSMETable,
   LazySection,
   PerformanceWrapper,
-  ProgressiveImage
+  ProgressiveImage,
 } from '@/components/performance/LazyComponents';
 
 interface DashboardStats {
@@ -115,7 +115,7 @@ export default function DashboardV2() {
       icon: <Building2 className="h-6 w-6" />,
       color: 'from-blue-500 to-cyan-500',
       href: '/msme/register',
-      badge: '+200 pts'
+      badge: '+200 pts',
     },
     {
       id: 'request-valuation',
@@ -124,7 +124,7 @@ export default function DashboardV2() {
       icon: <Target className="h-6 w-6" />,
       color: 'from-green-500 to-emerald-500',
       href: '/valuation/request',
-      badge: '+50 pts'
+      badge: '+50 pts',
     },
     {
       id: 'browse-msmes',
@@ -132,7 +132,7 @@ export default function DashboardV2() {
       description: 'Explore business opportunities',
       icon: <Search className="h-6 w-6" />,
       color: 'from-purple-500 to-pink-500',
-      href: '/browse'
+      href: '/browse',
     },
     {
       id: 'view-analytics',
@@ -140,8 +140,8 @@ export default function DashboardV2() {
       description: 'Insights and performance metrics',
       icon: <BarChart3 className="h-6 w-6" />,
       color: 'from-orange-500 to-red-500',
-      href: '/analytics'
-    }
+      href: '/analytics',
+    },
   ];
 
   const containerVariants = {
@@ -150,14 +150,14 @@ export default function DashboardV2() {
       opacity: 1,
       transition: {
         duration: 0.6,
-        staggerChildren: 0.1
-      }
-    }
+        staggerChildren: 0.1,
+      },
+    },
   };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
+    visible: { opacity: 1, y: 0 },
   };
 
   const StatsCard: React.FC<{
@@ -174,7 +174,7 @@ export default function DashboardV2() {
       className={cn(
         'relative p-6 rounded-xl bg-gradient-to-br shadow-soft border border-border/50',
         'hover:shadow-medium transition-all duration-300 cursor-pointer',
-        color
+        color,
       )}
     >
       <div className="flex items-center justify-between mb-3">
@@ -184,7 +184,7 @@ export default function DashboardV2() {
         {change !== undefined && (
           <div className={cn(
             'flex items-center gap-1 text-sm font-medium',
-            change >= 0 ? 'text-green-100' : 'text-red-100'
+            change >= 0 ? 'text-green-100' : 'text-red-100',
           )}>
             {change >= 0 ? (
               <ArrowUpRight className="h-4 w-4" />
@@ -202,7 +202,7 @@ export default function DashboardV2() {
           className="text-3xl font-bold text-white"
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 200 }}
+          transition={{ type: 'spring', stiffness: 200 }}
         >
           {typeof value === 'number' ? value.toLocaleString() : value}
         </motion.p>
@@ -230,7 +230,7 @@ export default function DashboardV2() {
         'relative p-6 rounded-xl bg-gradient-to-br shadow-soft border border-border/50',
         'hover:shadow-medium transition-all duration-300 cursor-pointer group',
         action.color,
-        'text-white overflow-hidden'
+        'text-white overflow-hidden',
       )}
     >
       <div className="relative z-10">
@@ -275,20 +275,20 @@ export default function DashboardV2() {
   const ActivityItem: React.FC<{ activity: RecentActivity }> = ({ activity }) => {
     const getIcon = () => {
       switch (activity.type) {
-        case 'valuation': return <Target className="h-4 w-4 text-blue-500" />;
-        case 'transaction': return <TrendingUp className="h-4 w-4 text-green-500" />;
-        case 'registration': return <Building2 className="h-4 w-4 text-purple-500" />;
-        case 'achievement': return <Award className="h-4 w-4 text-yellow-500" />;
-        default: return <Activity className="h-4 w-4 text-muted-foreground" />;
+      case 'valuation': return <Target className="h-4 w-4 text-blue-500" />;
+      case 'transaction': return <TrendingUp className="h-4 w-4 text-green-500" />;
+      case 'registration': return <Building2 className="h-4 w-4 text-purple-500" />;
+      case 'achievement': return <Award className="h-4 w-4 text-yellow-500" />;
+      default: return <Activity className="h-4 w-4 text-muted-foreground" />;
       }
     };
 
     const getStatusColor = () => {
       switch (activity.status) {
-        case 'completed': return 'text-green-500';
-        case 'processing': return 'text-yellow-500';
-        case 'pending': return 'text-blue-500';
-        default: return 'text-muted-foreground';
+      case 'completed': return 'text-green-500';
+      case 'processing': return 'text-yellow-500';
+      case 'pending': return 'text-blue-500';
+      default: return 'text-muted-foreground';
       }
     };
 
@@ -355,7 +355,7 @@ export default function DashboardV2() {
               </div>
             </div>
           </div>
-          
+
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -398,7 +398,7 @@ export default function DashboardV2() {
               'flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-md transition-all duration-200',
               selectedView === tab.id
                 ? 'bg-background text-primary shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
+                : 'text-muted-foreground hover:text-foreground',
             )}
           >
             <Icon className="h-4 w-4" />
