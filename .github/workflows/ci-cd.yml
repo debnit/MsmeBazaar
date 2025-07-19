@@ -45,12 +45,11 @@ jobs:
         npm config set audit-level none
         npm config set fund false
         npm config set strict-peer-deps false
-        npm config set legacy-peer-deps false
         npm --version
         node --version
     
-    - name: Install dependencies
-      run: node ci-install.js
+    - name: Clean install dependencies
+      run: npm ci --no-audit --no-fund
       env:
         NODE_ENV: production
         CI: true
