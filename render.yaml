@@ -1,34 +1,29 @@
 services:
   # PostgreSQL Database
   - type: pserv
-    name: msmebazaar-postgres
-    env: docker
+    name: vyapaarmitra-postgres
     plan: standard
-    region: oregon
+    region: singapore
     envVars:
       - key: POSTGRES_DB
-        value: msmebazaar
+        value: vyapaarmitra
       - key: POSTGRES_USER
         value: postgres
       - key: POSTGRES_PASSWORD
         generateValue: true
-    disk:
-      name: postgres-data
-      mountPath: /var/lib/postgresql/data
-      sizeGB: 20
 
   # Redis Cache
   - type: redis
-    name: msmebazaar-redis
+    name: vyapaarmitra-redis
     plan: standard
-    region: oregon
+    region: singapore
     maxmemoryPolicy: allkeys-lru
 
   # Next.js Web Frontend
   - type: web
-    name: msmebazaar-web
+    name: vyapaarmitra-web
     env: node
-    region: oregon
+    region: singapore
     plan: standard
     buildCommand: |
       cd msmebazaar-v2/apps/web
@@ -42,29 +37,33 @@ services:
       - key: NODE_ENV
         value: production
       - key: NEXTAUTH_URL
-        value: https://msmebazaar-web.onrender.com
+        value: https://vyapaarmitra.in
       - key: NEXTAUTH_SECRET
         generateValue: true
+      - key: NEXT_PUBLIC_API_URL
+        value: https://api.vyapaarmitra.in
       - key: DATABASE_URL
         fromService:
           type: pserv
-          name: msmebazaar-postgres
+          name: vyapaarmitra-postgres
           property: connectionString
       - key: REDIS_URL
         fromService:
           type: redis
-          name: msmebazaar-redis
+          name: vyapaarmitra-redis
           property: connectionString
       - key: AUTH_API_URL
-        value: https://msmebazaar-auth-api.onrender.com
+        value: https://vyapaarmitra-auth-api.onrender.com
       - key: MSME_API_URL
-        value: https://msmebazaar-msme-api.onrender.com
+        value: https://vyapaarmitra-msme-api.onrender.com
+      - key: VALUATION_API_URL
+        value: https://vyapaarmitra-valuation-api.onrender.com
 
-  # Admin Dashboard Frontend
+  # Admin Dashboard
   - type: web
-    name: msmebazaar-admin
+    name: vyapaarmitra-admin
     env: node
-    region: oregon
+    region: singapore
     plan: standard
     buildCommand: |
       cd admin-dashboard/backend
@@ -82,12 +81,12 @@ services:
       - key: DATABASE_URL
         fromService:
           type: pserv
-          name: msmebazaar-postgres
+          name: vyapaarmitra-postgres
           property: connectionString
       - key: REDIS_URL
         fromService:
           type: redis
-          name: msmebazaar-redis
+          name: vyapaarmitra-redis
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
@@ -96,9 +95,9 @@ services:
 
   # Authentication API (FastAPI)
   - type: web
-    name: msmebazaar-auth-api
+    name: vyapaarmitra-auth-api
     env: python
-    region: oregon
+    region: singapore
     plan: standard
     buildCommand: |
       cd msmebazaar-v2/apps/auth-api
@@ -106,19 +105,19 @@ services:
     startCommand: |
       cd msmebazaar-v2/apps/auth-api
       uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2
-    healthCheckPath: /healthz
+    healthCheckPath: /health
     envVars:
       - key: ENVIRONMENT
         value: production
       - key: DATABASE_URL
         fromService:
           type: pserv
-          name: msmebazaar-postgres
+          name: vyapaarmitra-postgres
           property: connectionString
       - key: REDIS_URL
         fromService:
           type: redis
-          name: msmebazaar-redis
+          name: vyapaarmitra-redis
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
@@ -139,13 +138,15 @@ services:
       - key: SENDGRID_API_KEY
         value: ""
       - key: SENDGRID_FROM_EMAIL
-        value: "noreply@msmebazaar.com"
+        value: "noreply@vyapaarmitra.in"
+      - key: PROMETHEUS_ENABLED
+        value: true
 
   # MSME Business API (FastAPI)
   - type: web
-    name: msmebazaar-msme-api
+    name: vyapaarmitra-msme-api
     env: python
-    region: oregon
+    region: singapore
     plan: standard
     buildCommand: |
       cd msmebazaar-v2/apps/msme-api
@@ -153,19 +154,19 @@ services:
     startCommand: |
       cd msmebazaar-v2/apps/msme-api
       uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2
-    healthCheckPath: /healthz
+    healthCheckPath: /health
     envVars:
       - key: ENVIRONMENT
         value: production
       - key: DATABASE_URL
         fromService:
           type: pserv
-          name: msmebazaar-postgres
+          name: vyapaarmitra-postgres
           property: connectionString
       - key: REDIS_URL
         fromService:
           type: redis
-          name: msmebazaar-redis
+          name: vyapaarmitra-redis
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
@@ -176,15 +177,17 @@ services:
       - key: AWS_SECRET_ACCESS_KEY
         value: ""
       - key: AWS_BUCKET_NAME
-        value: msmebazaar-uploads
+        value: vyapaarmitra-uploads
       - key: AWS_REGION
-        value: us-east-1
+        value: ap-south-1
+      - key: PROMETHEUS_ENABLED
+        value: true
 
   # Valuation API (FastAPI)
   - type: web
-    name: msmebazaar-valuation-api
+    name: vyapaarmitra-valuation-api
     env: python
-    region: oregon
+    region: singapore
     plan: standard
     buildCommand: |
       cd msmebazaar-v2/apps/valuation-api
@@ -192,30 +195,32 @@ services:
     startCommand: |
       cd msmebazaar-v2/apps/valuation-api
       uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2
-    healthCheckPath: /healthz
+    healthCheckPath: /health
     envVars:
       - key: ENVIRONMENT
         value: production
       - key: DATABASE_URL
         fromService:
           type: pserv
-          name: msmebazaar-postgres
+          name: vyapaarmitra-postgres
           property: connectionString
       - key: REDIS_URL
         fromService:
           type: redis
-          name: msmebazaar-redis
+          name: vyapaarmitra-redis
           property: connectionString
       - key: ML_MODEL_PATH
         value: /app/models
       - key: SENTRY_DSN
         value: ""
+      - key: PROMETHEUS_ENABLED
+        value: true
 
   # Background Worker for async tasks
   - type: worker
-    name: msmebazaar-worker
+    name: vyapaarmitra-worker
     env: python
-    region: oregon
+    region: singapore
     plan: standard
     buildCommand: |
       cd msmebazaar-v2/apps/auth-api
@@ -229,12 +234,12 @@ services:
       - key: DATABASE_URL
         fromService:
           type: pserv
-          name: msmebazaar-postgres
+          name: vyapaarmitra-postgres
           property: connectionString
       - key: REDIS_URL
         fromService:
           type: redis
-          name: msmebazaar-redis
+          name: vyapaarmitra-redis
           property: connectionString
       - key: TWILIO_ACCOUNT_SID
         value: ""
@@ -245,9 +250,9 @@ services:
 
   # Cron Job for scheduled tasks
   - type: cron
-    name: msmebazaar-scheduler
+    name: vyapaarmitra-scheduler
     env: python
-    region: oregon
+    region: singapore
     plan: standard
     schedule: "0 */6 * * *"  # Every 6 hours
     buildCommand: |
@@ -262,20 +267,35 @@ services:
       - key: DATABASE_URL
         fromService:
           type: pserv
-          name: msmebazaar-postgres
+          name: vyapaarmitra-postgres
           property: connectionString
       - key: REDIS_URL
         fromService:
           type: redis
-          name: msmebazaar-redis
+          name: vyapaarmitra-redis
           property: connectionString
 
 databases:
-  - name: msmebazaar-postgres
-    databaseName: msmebazaar
+  - name: vyapaarmitra-postgres
+    databaseName: vyapaarmitra
     user: postgres
     plan: standard
-    region: oregon
+    region: singapore
+
+# Custom domains configuration
+domains:
+  - name: vyapaarmitra.in
+    type: apex
+    service: vyapaarmitra-web
+  - name: www.vyapaarmitra.in
+    type: redirect
+    redirectTo: https://vyapaarmitra.in
+  - name: admin.vyapaarmitra.in
+    type: subdomain
+    service: vyapaarmitra-admin
+  - name: api.vyapaarmitra.in
+    type: subdomain
+    service: vyapaarmitra-auth-api
 
 environments:
   - name: NODE_ENV

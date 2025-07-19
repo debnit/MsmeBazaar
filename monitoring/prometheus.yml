@@ -1,0 +1,146 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'vyapaarmitra-production'
+    environment: 'production'
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # Add alertmanager targets here
+          # - alertmanager:9093
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Auth API monitoring
+  - job_name: 'vyapaarmitra-auth-api'
+    static_configs:
+      - targets: ['auth-api:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    params:
+      format: ['prometheus']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'auth-api'
+      - target_label: service
+        replacement: 'auth-api'
+
+  # MSME API monitoring
+  - job_name: 'vyapaarmitra-msme-api'
+    static_configs:
+      - targets: ['msme-api:8001']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    params:
+      format: ['prometheus']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'msme-api'
+      - target_label: service
+        replacement: 'msme-api'
+
+  # Valuation API monitoring
+  - job_name: 'vyapaarmitra-valuation-api'
+    static_configs:
+      - targets: ['valuation-api:8002']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    params:
+      format: ['prometheus']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'valuation-api'
+      - target_label: service
+        replacement: 'valuation-api'
+
+  # Web Frontend monitoring
+  - job_name: 'vyapaarmitra-web'
+    static_configs:
+      - targets: ['web:3000']
+    metrics_path: '/api/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'web-frontend'
+      - target_label: service
+        replacement: 'web'
+
+  # Admin Dashboard monitoring
+  - job_name: 'vyapaarmitra-admin'
+    static_configs:
+      - targets: ['admin-dashboard:3001']
+    metrics_path: '/api/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'admin-dashboard'
+      - target_label: service
+        replacement: 'admin'
+
+  # PostgreSQL monitoring (requires postgres_exporter)
+  - job_name: 'vyapaarmitra-postgres'
+    static_configs:
+      - targets: ['postgres_exporter:9187']
+    scrape_interval: 30s
+    relabel_configs:
+      - target_label: service
+        replacement: 'postgres'
+
+  # Redis monitoring (requires redis_exporter)
+  - job_name: 'vyapaarmitra-redis'
+    static_configs:
+      - targets: ['redis_exporter:9121']
+    scrape_interval: 30s
+    relabel_configs:
+      - target_label: service
+        replacement: 'redis'
+
+  # NGINX monitoring (requires nginx-prometheus-exporter)
+  - job_name: 'vyapaarmitra-nginx'
+    static_configs:
+      - targets: ['nginx_exporter:9113']
+    scrape_interval: 30s
+    relabel_configs:
+      - target_label: service
+        replacement: 'nginx'
+
+  # Node exporter for system metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node_exporter:9100']
+    scrape_interval: 30s
+    relabel_configs:
+      - target_label: service
+        replacement: 'system'
+
+  # cAdvisor for container metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 30s
+    metrics_path: '/metrics'
+    relabel_configs:
+      - target_label: service
+        replacement: 'containers'

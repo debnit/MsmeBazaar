@@ -17,9 +17,17 @@
       },
       "deploy": {
         "startCommand": "uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2",
-        "healthcheckPath": "/healthz",
+        "healthcheckPath": "/health",
         "healthcheckTimeout": 30,
-        "numReplicas": 1
+        "numReplicas": 2
+      },
+      "variables": {
+        "ENVIRONMENT": "production",
+        "JWT_ALGORITHM": "HS256",
+        "JWT_EXPIRATION_HOURS": "24",
+        "OTP_EXPIRATION_MINUTES": "5",
+        "SENDGRID_FROM_EMAIL": "noreply@vyapaarmitra.in",
+        "PROMETHEUS_ENABLED": "true"
       }
     },
     "msme-api": {
@@ -30,9 +38,15 @@
       },
       "deploy": {
         "startCommand": "uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2",
-        "healthcheckPath": "/healthz",
+        "healthcheckPath": "/health",
         "healthcheckTimeout": 30,
-        "numReplicas": 1
+        "numReplicas": 2
+      },
+      "variables": {
+        "ENVIRONMENT": "production",
+        "AWS_BUCKET_NAME": "vyapaarmitra-uploads",
+        "AWS_REGION": "ap-south-1",
+        "PROMETHEUS_ENABLED": "true"
       }
     },
     "valuation-api": {
@@ -43,9 +57,14 @@
       },
       "deploy": {
         "startCommand": "uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2",
-        "healthcheckPath": "/healthz",
+        "healthcheckPath": "/health",
         "healthcheckTimeout": 30,
         "numReplicas": 1
+      },
+      "variables": {
+        "ENVIRONMENT": "production",
+        "ML_MODEL_PATH": "/app/models",
+        "PROMETHEUS_ENABLED": "true"
       }
     },
     "web": {
@@ -58,7 +77,12 @@
         "startCommand": "npm start",
         "healthcheckPath": "/api/health",
         "healthcheckTimeout": 30,
-        "numReplicas": 1
+        "numReplicas": 2
+      },
+      "variables": {
+        "NODE_ENV": "production",
+        "NEXTAUTH_URL": "https://vyapaarmitra.in",
+        "NEXT_PUBLIC_API_URL": "https://api.vyapaarmitra.in"
       }
     },
     "admin-dashboard": {
@@ -72,6 +96,9 @@
         "healthcheckPath": "/api/health",
         "healthcheckTimeout": 30,
         "numReplicas": 1
+      },
+      "variables": {
+        "NODE_ENV": "production"
       }
     }
   },
@@ -81,6 +108,17 @@
     },
     "redis": {
       "plan": "hobby"
+    }
+  },
+  "domains": {
+    "vyapaarmitra.in": {
+      "service": "web"
+    },
+    "admin.vyapaarmitra.in": {
+      "service": "admin-dashboard"
+    },
+    "api.vyapaarmitra.in": {
+      "service": "auth-api"
     }
   }
 }
