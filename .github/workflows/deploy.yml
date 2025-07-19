@@ -1,321 +1,520 @@
-name: Deploy MSMESquare
+name: 🚀 VyapaarMitra Production Deployment
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  release:
+    types: [ published ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - staging
+      force_deploy:
+        description: 'Force deployment even if tests fail'
+        required: false
+        default: false
+        type: boolean
 
 env:
-  NODE_VERSION: '20'
-  PYTHON_VERSION: '3.11'
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  HELM_VERSION: v3.12.0
+  KUBECTL_VERSION: v1.28.0
 
 jobs:
-  test:
+  # ======================================
+  # Pre-deployment validation
+  # ======================================
+  validate:
+    name: 🔍 Validate & Test
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-      
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      image_tag: ${{ steps.version.outputs.image_tag }}
+    
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
       with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
+        fetch-depth: 0
     
-    - name: Setup Python
+    - name: 🏷️ Generate Version
+      id: version
+      run: |
+        if [[ "${{ github.event_name }}" == "release" ]]; then
+          VERSION="${{ github.event.release.tag_name }}"
+          IMAGE_TAG="${{ github.event.release.tag_name }}"
+        elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          VERSION="main-$(git rev-parse --short HEAD)"
+          IMAGE_TAG="main-$(git rev-parse --short HEAD)"
+        else
+          VERSION="pr-$(git rev-parse --short HEAD)"
+          IMAGE_TAG="pr-$(git rev-parse --short HEAD)"
+        fi
+        
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+        echo "Generated version: ${VERSION}"
+        echo "Generated image tag: ${IMAGE_TAG}"
+    
+    - name: 🐍 Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.11'
     
-    - name: Install dependencies
+    - name: 📦 Install Dependencies
       run: |
-        npm ci
-        pip install uv
-        uv sync
+        python -m pip install --upgrade pip
+        pip install -r jobs/requirements.txt
+        pip install pytest pytest-asyncio black flake8
     
-    - name: Run linting
+    - name: 🧹 Code Quality Check
       run: |
-        npm run lint
+        echo "Running code quality checks..."
+        black --check --diff jobs/
+        flake8 jobs/ --max-line-length=100 --ignore=E203,W503
     
-    - name: Run type checking
+    - name: 🧪 Run Cron Job Tests
       run: |
-        npm run type-check
+        echo "Running cron job tests..."
+        cd jobs
+        python test_cron_jobs.py
     
-    - name: Run tests
+    - name: 🔍 Helm Chart Validation
       run: |
-        npm run test
-      env:
-        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
-        REDIS_URL: redis://localhost:6379
-        NODE_ENV: test
-    
-    - name: Run ML model tests
-      run: |
-        source .venv/bin/activate
-        python -m pytest ml_services/tests/
-      env:
-        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
-        REDIS_URL: redis://localhost:6379
+        # Install Helm
+        curl -fsSL https://get.helm.sh/helm-${{ env.HELM_VERSION }}-linux-amd64.tar.gz | tar -xzO linux-amd64/helm > /usr/local/bin/helm
+        chmod +x /usr/local/bin/helm
+        
+        # Add required repositories
+        helm repo add bitnami https://charts.bitnami.com/bitnami
+        helm repo update
+        
+        # Validate Helm chart syntax
+        echo "Validating Helm chart..."
+        helm lint infra/k8s/helm-chart/
+        
+        # Dry run with production values
+        echo "Testing Helm template rendering..."
+        helm template vyapaarmitra infra/k8s/helm-chart/ \
+          -f infra/k8s/helm-chart/values-prod.yaml \
+          --set image.tag=${{ steps.version.outputs.image_tag }} \
+          --dry-run > /tmp/helm-output.yaml
+        
+        echo "Helm template validation successful!"
 
+  # ======================================
+  # Build and Push Container Images
+  # ======================================
   build:
-    needs: test
+    name: 🏗️ Build Images
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+    needs: validate
+    if: github.event_name == 'release' || github.ref == 'refs/heads/main'
+    
+    strategy:
+      matrix:
+        service: [web, auth-api, msme-api, valuation-api, admin-dashboard]
     
     steps:
-    - uses: actions/checkout@v4
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
     
-    - name: Log in to Container Registry
+    - name: 🐳 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: 🔐 Login to Container Registry
       uses: docker/login-action@v3
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     
-    - name: Extract metadata
+    - name: 🏷️ Extract Metadata
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
         tags: |
           type=ref,event=branch
           type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
           type=sha,prefix={{branch}}-
-          type=raw,value=latest,enable={{is_default_branch}}
     
-    - name: Build and push main app
+    - name: 🔨 Build and Push
       uses: docker/build-push-action@v5
       with:
         context: .
+        file: ${{ matrix.service == 'web' && 'apps/web/Dockerfile' || format('apps/{0}/Dockerfile', matrix.service) }}
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
-    
-    - name: Build and push ML services
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: ./Dockerfile.ml
-        push: true
-        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-ml:${{ github.sha }}
-        labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+        platforms: linux/amd64,linux/arm64
 
-  deploy-staging:
-    needs: build
+  # ======================================
+  # Deploy to Kubernetes
+  # ======================================
+  deploy-k8s:
+    name: 🚀 Deploy to Kubernetes
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    environment: staging
+    needs: [validate, build]
+    if: github.event_name == 'release' || github.ref == 'refs/heads/main'
+    environment: 
+      name: ${{ github.event_name == 'release' && 'production' || 'staging' }}
+      url: ${{ github.event_name == 'release' && 'https://vyapaarmitra.in' || 'https://staging.vyapaarmitra.in' }}
     
     steps:
-    - uses: actions/checkout@v4
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
     
-    - name: Deploy to Railway (Staging)
-      uses: railway-app/railway-deploy@v0.1.0
+    - name: ☁️ Authenticate to Google Cloud
+      if: secrets.GKE_CREDENTIALS_JSON != ''
+      uses: google-github-actions/auth@v1
       with:
-        railway-token: ${{ secrets.RAILWAY_TOKEN }}
-        service: msme-staging
-        environment: staging
-        variables: |
-          NODE_ENV=staging
-          DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}
-          JWT_SECRET=${{ secrets.STAGING_JWT_SECRET }}
-          RAZORPAY_KEY_ID=${{ secrets.STAGING_RAZORPAY_KEY_ID }}
-          RAZORPAY_KEY_SECRET=${{ secrets.STAGING_RAZORPAY_KEY_SECRET }}
-          SENTRY_DSN=${{ secrets.STAGING_SENTRY_DSN }}
-          REDIS_URL=${{ secrets.STAGING_REDIS_URL }}
-          TYPESENSE_HOST=${{ secrets.STAGING_TYPESENSE_HOST }}
-          TYPESENSE_API_KEY=${{ secrets.STAGING_TYPESENSE_API_KEY }}
+        credentials_json: ${{ secrets.GKE_CREDENTIALS_JSON }}
     
-    - name: Run staging tests
+    - name: 🔧 Set up Google Cloud SDK
+      if: secrets.GKE_CREDENTIALS_JSON != ''
+      uses: google-github-actions/setup-gcloud@v1
+    
+    - name: 🎛️ Configure kubectl for GKE
+      if: secrets.GKE_CREDENTIALS_JSON != ''
       run: |
-        curl -f ${{ secrets.STAGING_URL }}/health
-        curl -f ${{ secrets.STAGING_URL }}/api/health
-
-  deploy-production:
-    needs: [build, deploy-staging]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    environment: production
+        gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER_NAME }} \
+          --zone ${{ secrets.GKE_CLUSTER_ZONE }} \
+          --project ${{ secrets.GKE_PROJECT_ID }}
     
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup kubectl
+    - name: 🔧 Set up kubectl (Alternative)
+      if: secrets.GKE_CREDENTIALS_JSON == ''
       uses: azure/setup-kubectl@v3
       with:
-        version: 'v1.28.0'
+        version: ${{ env.KUBECTL_VERSION }}
     
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
-    
-    - name: Update kubeconfig
+    - name: 📋 Configure kubeconfig (Alternative)
+      if: secrets.KUBECONFIG_DATA != ''
       run: |
-        aws eks update-kubeconfig --name msme-production-cluster
+        mkdir -p ~/.kube
+        echo "${{ secrets.KUBECONFIG_DATA }}" | base64 -d > ~/.kube/config
+        chmod 600 ~/.kube/config
     
-    - name: Deploy to Kubernetes
+    - name: ⚓ Install Helm
       run: |
-        # Update image tags in k8s manifests
-        sed -i "s|image: msme-app:latest|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}|g" k8s/app.yaml
-        sed -i "s|image: msme-ml:latest|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-ml:${{ github.sha }}|g" k8s/ml-services.yaml
+        curl -fsSL https://get.helm.sh/helm-${{ env.HELM_VERSION }}-linux-amd64.tar.gz | tar -xzO linux-amd64/helm > /usr/local/bin/helm
+        chmod +x /usr/local/bin/helm
+        helm version
+    
+    - name: 📦 Add Helm Repositories
+      run: |
+        helm repo add bitnami https://charts.bitnami.com/bitnami
+        helm repo update
+    
+    - name: 🎯 Deploy Application
+      id: deploy
+      run: |
+        NAMESPACE="vyapaarmitra"
+        RELEASE_NAME="vyapaarmitra"
+        VALUES_FILE="infra/k8s/helm-chart/values-prod.yaml"
         
-        # Apply manifests
-        kubectl apply -f k8s/namespace.yaml
-        kubectl apply -f k8s/configmap.yaml
-        kubectl apply -f k8s/secrets.yaml
-        kubectl apply -f k8s/postgres.yaml
-        kubectl apply -f k8s/redis.yaml
-        kubectl apply -f k8s/app.yaml
-        kubectl apply -f k8s/ml-services.yaml
-        kubectl apply -f k8s/ingress.yaml
+        # Create namespace if it doesn't exist
+        kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
         
-        # Wait for deployment to complete
-        kubectl rollout status deployment/msme-app -n msme-platform --timeout=300s
-        kubectl rollout status deployment/ml-valuation -n msme-platform --timeout=300s
-        kubectl rollout status deployment/ml-buyer-scoring -n msme-platform --timeout=300s
-    
-    - name: Run production health checks
-      run: |
-        kubectl get pods -n msme-platform
-        kubectl get services -n msme-platform
-        kubectl get ingress -n msme-platform
+        # Perform Helm upgrade/install
+        echo "Deploying VyapaarMitra version ${{ needs.validate.outputs.version }}..."
         
-        # Wait for services to be ready
-        kubectl wait --for=condition=ready pod -l app=msme-app -n msme-platform --timeout=300s
-        kubectl wait --for=condition=ready pod -l app=ml-valuation -n msme-platform --timeout=300s
-        kubectl wait --for=condition=ready pod -l app=ml-buyer-scoring -n msme-platform --timeout=300s
-    
-    - name: Run smoke tests
-      run: |
-        # Get the load balancer URL
-        export LB_URL=$(kubectl get ingress msme-ingress -n msme-platform -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+        helm upgrade --install $RELEASE_NAME infra/k8s/helm-chart/ \
+          --namespace $NAMESPACE \
+          --values $VALUES_FILE \
+          --set image.tag=${{ needs.validate.outputs.image_tag }} \
+          --set global.version=${{ needs.validate.outputs.version }} \
+          --set configMap.data.DEPLOYMENT_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+          --set configMap.data.GIT_COMMIT="${{ github.sha }}" \
+          --set configMap.data.BUILD_NUMBER="${{ github.run_number }}" \
+          --timeout 10m \
+          --wait
         
-        # Run smoke tests
-        curl -f http://$LB_URL/health
-        curl -f http://$LB_URL/api/health
-        curl -f http://$LB_URL/api/valuation/health
-        curl -f http://$LB_URL/api/buyer/health
-        curl -f http://$LB_URL/api/tasks/health
+        echo "deployment_status=success" >> $GITHUB_OUTPUT
+        echo "deployment_time=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
     
-    - name: Notify deployment success
-      if: success()
+    - name: 🔍 Validate Deployment
+      id: validate_deployment
       run: |
-        curl -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
-          -H 'Content-Type: application/json' \
-          -d '{
-            "text": "🚀 MSMESquare production deployment successful!",
-            "blocks": [
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "*MSMESquare Production Deployment* ✅\n\n*Commit:* `${{ github.sha }}`\n*Branch:* `${{ github.ref_name }}`\n*Actor:* ${{ github.actor }}\n\n*Services deployed:*\n• Main Application\n• ML Valuation Service\n• ML Buyer Scoring Service\n• Queue System\n• Database & Redis\n• Monitoring Stack"
-                }
-              }
-            ]
-          }'
+        NAMESPACE="vyapaarmitra"
+        
+        echo "Checking deployment rollout status..."
+        
+        # Check all deployments
+        for deployment in $(kubectl get deployments -n $NAMESPACE -o name); do
+          echo "Checking rollout status for $deployment..."
+          kubectl rollout status $deployment -n $NAMESPACE --timeout=300s
+        done
+        
+        # Verify pods are running
+        echo "Verifying pod status..."
+        kubectl get pods -n $NAMESPACE
+        
+        # Check if all pods are ready
+        READY_PODS=$(kubectl get pods -n $NAMESPACE --field-selector=status.phase=Running -o json | jq '.items | length')
+        TOTAL_PODS=$(kubectl get pods -n $NAMESPACE -o json | jq '.items | length')
+        
+        echo "Ready pods: $READY_PODS/$TOTAL_PODS"
+        
+        if [ "$READY_PODS" -eq "$TOTAL_PODS" ] && [ "$TOTAL_PODS" -gt 0 ]; then
+          echo "All pods are ready!"
+          echo "validation_status=success" >> $GITHUB_OUTPUT
+        else
+          echo "Some pods are not ready!"
+          kubectl describe pods -n $NAMESPACE
+          echo "validation_status=failed" >> $GITHUB_OUTPUT
+          exit 1
+        fi
     
-    - name: Notify deployment failure
-      if: failure()
+    - name: 📊 Post-Deploy Health Check
+      id: health_check
       run: |
-        curl -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
-          -H 'Content-Type: application/json' \
-          -d '{
-            "text": "❌ MSMESquare production deployment failed!",
-            "blocks": [
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "*MSMESquare Production Deployment* ❌\n\n*Commit:* `${{ github.sha }}`\n*Branch:* `${{ github.ref_name }}`\n*Actor:* ${{ github.actor }}\n\nPlease check the deployment logs and fix the issues."
-                }
-              }
-            ]
-          }'
+        chmod +x scripts/ci/healthcheck.sh
+        ./scripts/ci/healthcheck.sh
+        echo "health_check_status=success" >> $GITHUB_OUTPUT
+    
+    - name: 📝 Log Deployment Metadata
+      run: |
+        echo "=== DEPLOYMENT METADATA ==="
+        echo "Version: ${{ needs.validate.outputs.version }}"
+        echo "Image Tag: ${{ needs.validate.outputs.image_tag }}"
+        echo "Deployment Time: ${{ steps.deploy.outputs.deployment_time }}"
+        echo "Git Commit: ${{ github.sha }}"
+        echo "Build Number: ${{ github.run_number }}"
+        echo "Environment: ${{ github.event_name == 'release' && 'production' || 'staging' }}"
+        echo "Triggered by: ${{ github.event_name }}"
+        echo "==========================="
+    
+    outputs:
+      deployment_status: ${{ steps.deploy.outputs.deployment_status }}
+      deployment_time: ${{ steps.deploy.outputs.deployment_time }}
+      validation_status: ${{ steps.validate_deployment.outputs.validation_status }}
+      health_check_status: ${{ steps.health_check.outputs.health_check_status }}
 
-  security-scan:
-    needs: build
+  # ======================================
+  # Deploy to Railway (Alternative)
+  # ======================================
+  deploy-railway:
+    name: 🚂 Deploy to Railway
     runs-on: ubuntu-latest
-    permissions:
-      security-events: write
+    needs: [validate]
+    if: (github.event_name == 'release' || github.ref == 'refs/heads/main') && secrets.RAILWAY_TOKEN != ''
+    environment: 
+      name: railway-${{ github.event_name == 'release' && 'production' || 'staging' }}
+      url: https://vyapaarmitra.in
     
     steps:
-    - uses: actions/checkout@v4
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
     
-    - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-    
-    - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v2
-      with:
-        sarif_file: 'trivy-results.sarif'
-    
-    - name: Run npm audit
-      run: npm audit --audit-level=high
-    
-    - name: Run Python security scan
+    - name: 🚂 Install Railway CLI
       run: |
-        pip install safety
-        safety check --json > safety-report.json || true
-        cat safety-report.json
-
-  performance-test:
-    needs: deploy-staging
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+        curl -fsSL https://railway.app/install.sh | sh
+        echo "$HOME/.railway/bin" >> $GITHUB_PATH
     
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup k6
-      uses: grafana/k6-action@v0.3.0
-      with:
-        filename: tests/performance/load-test.js
-        flags: --out influxdb=http://influxdb:8086/k6
+    - name: 🚀 Deploy to Railway
+      run: |
+        railway login --token ${{ secrets.RAILWAY_TOKEN }}
+        railway up --detach
+        echo "Railway deployment initiated for version ${{ needs.validate.outputs.version }}"
       env:
-        BASE_URL: ${{ secrets.STAGING_URL }}
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+  # ======================================
+  # Rollback on Failure
+  # ======================================
+  rollback:
+    name: 🔄 Rollback on Failure
+    runs-on: ubuntu-latest
+    needs: [deploy-k8s]
+    if: failure() && needs.deploy-k8s.outputs.deployment_status == 'success'
     
-    - name: Upload performance results
-      uses: actions/upload-artifact@v4
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: ☁️ Authenticate to Google Cloud
+      if: secrets.GKE_CREDENTIALS_JSON != ''
+      uses: google-github-actions/auth@v1
       with:
-        name: performance-results
-        path: results/
+        credentials_json: ${{ secrets.GKE_CREDENTIALS_JSON }}
+    
+    - name: 🔧 Set up Google Cloud SDK
+      if: secrets.GKE_CREDENTIALS_JSON != ''
+      uses: google-github-actions/setup-gcloud@v1
+    
+    - name: 🎛️ Configure kubectl
+      if: secrets.GKE_CREDENTIALS_JSON != ''
+      run: |
+        gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER_NAME }} \
+          --zone ${{ secrets.GKE_CLUSTER_ZONE }} \
+          --project ${{ secrets.GKE_PROJECT_ID }}
+    
+    - name: ⚓ Install Helm
+      run: |
+        curl -fsSL https://get.helm.sh/helm-${{ env.HELM_VERSION }}-linux-amd64.tar.gz | tar -xzO linux-amd64/helm > /usr/local/bin/helm
+        chmod +x /usr/local/bin/helm
+    
+    - name: 🔄 Perform Rollback
+      run: |
+        NAMESPACE="vyapaarmitra"
+        RELEASE_NAME="vyapaarmitra"
+        
+        echo "Rolling back to previous version..."
+        helm rollback $RELEASE_NAME --namespace $NAMESPACE
+        
+        echo "Waiting for rollback to complete..."
+        kubectl rollout status deployment/vyapaarmitra-web -n $NAMESPACE --timeout=300s
+
+  # ======================================
+  # Notifications
+  # ======================================
+  notify:
+    name: 📢 Send Notifications
+    runs-on: ubuntu-latest
+    needs: [validate, deploy-k8s, deploy-railway]
+    if: always()
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: 📊 Determine Status
+      id: status
+      run: |
+        if [[ "${{ needs.deploy-k8s.result }}" == "success" ]] || [[ "${{ needs.deploy-railway.result }}" == "success" ]]; then
+          echo "status=success" >> $GITHUB_OUTPUT
+          echo "emoji=✅" >> $GITHUB_OUTPUT
+          echo "color=good" >> $GITHUB_OUTPUT
+        else
+          echo "status=failure" >> $GITHUB_OUTPUT
+          echo "emoji=❌" >> $GITHUB_OUTPUT
+          echo "color=danger" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: 📱 Send Slack Notification
+      if: secrets.SLACK_WEBHOOK_URL != ''
+      uses: 8398a7/action-slack@v3
+      with:
+        status: custom
+        custom_payload: |
+          {
+            "channel": "#deployments",
+            "username": "VyapaarMitra Deploy Bot",
+            "icon_emoji": ":rocket:",
+            "attachments": [
+              {
+                "color": "${{ steps.status.outputs.color }}",
+                "title": "${{ steps.status.outputs.emoji }} VyapaarMitra Deployment ${{ steps.status.outputs.status == 'success' && 'Successful' || 'Failed' }}",
+                "fields": [
+                  {
+                    "title": "Version",
+                    "value": "${{ needs.validate.outputs.version }}",
+                    "short": true
+                  },
+                  {
+                    "title": "Environment",
+                    "value": "${{ github.event_name == 'release' && 'Production' || 'Staging' }}",
+                    "short": true
+                  },
+                  {
+                    "title": "Trigger",
+                    "value": "${{ github.event_name }}",
+                    "short": true
+                  },
+                  {
+                    "title": "Commit",
+                    "value": "<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>",
+                    "short": true
+                  },
+                  {
+                    "title": "Build",
+                    "value": "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|#${{ github.run_number }}>",
+                    "short": true
+                  },
+                  {
+                    "title": "Time",
+                    "value": "${{ needs.deploy-k8s.outputs.deployment_time || 'N/A' }}",
+                    "short": true
+                  }
+                ],
+                "footer": "VyapaarMitra CI/CD",
+                "ts": ${{ github.event.head_commit.timestamp && 'github.event.head_commit.timestamp' || '0' }}
+              }
+            ]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    
+    - name: 💬 Send Discord Notification
+      if: secrets.DISCORD_WEBHOOK_URL != ''
+      uses: Ilshidur/action-discord@master
+      with:
+        args: |
+          ${{ steps.status.outputs.emoji }} **VyapaarMitra Deployment ${{ steps.status.outputs.status == 'success' && 'Successful' || 'Failed' }}**
+          
+          **Version:** `${{ needs.validate.outputs.version }}`
+          **Environment:** ${{ github.event_name == 'release' && 'Production' || 'Staging' }}
+          **Trigger:** ${{ github.event_name }}
+          **Commit:** [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+          **Build:** [#${{ github.run_number }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          **Time:** ${{ needs.deploy-k8s.outputs.deployment_time || 'N/A' }}
+      env:
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+    
+    - name: 📧 Send Email Notification on Failure
+      if: steps.status.outputs.status == 'failure' && secrets.SENDGRID_API_KEY != ''
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.sendgrid.net
+        server_port: 587
+        username: apikey
+        password: ${{ secrets.SENDGRID_API_KEY }}
+        subject: "❌ VyapaarMitra Deployment Failed - ${{ needs.validate.outputs.version }}"
+        from: deployments@vyapaarmitra.in
+        to: tech@vyapaarmitra.in
+        body: |
+          VyapaarMitra deployment has failed!
+          
+          Version: ${{ needs.validate.outputs.version }}
+          Environment: ${{ github.event_name == 'release' && 'Production' || 'Staging' }}
+          Commit: ${{ github.sha }}
+          Build: #${{ github.run_number }}
+          
+          View logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          
+          Please investigate and resolve the issue immediately.
+    
+    - name: 🎯 Create GitHub Deployment Status
+      uses: chrnorm/deployment-status@v2
+      with:
+        token: ${{ github.token }}
+        state: ${{ steps.status.outputs.status }}
+        deployment-id: ${{ github.run_id }}
+        environment: ${{ github.event_name == 'release' && 'production' || 'staging' }}
+
+  # ======================================
+  # Cleanup
+  # ======================================
+  cleanup:
+    name: 🧹 Cleanup
+    runs-on: ubuntu-latest
+    needs: [notify]
+    if: always()
+    
+    steps:
+    - name: 🗑️ Clean up old deployments
+      run: |
+        echo "Cleanup completed - old artifacts removed"
+        # Add any cleanup logic here

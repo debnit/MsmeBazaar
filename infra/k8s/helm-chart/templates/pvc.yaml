@@ -1,0 +1,65 @@
+{{- if .Values.persistence.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "vyapaarmitra.fullname" . }}-uploads
+  labels:
+    {{- include "vyapaarmitra.labels" . | nindent 4 }}
+    app.kubernetes.io/component: storage
+  {{- with .Values.persistence.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.size }}
+  {{- if .Values.persistence.storageClass }}
+  storageClassName: {{ .Values.persistence.storageClass }}
+  {{- end }}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "vyapaarmitra.fullname" . }}-models
+  labels:
+    {{- include "vyapaarmitra.labels" . | nindent 4 }}
+    app.kubernetes.io/component: storage
+  {{- with .Values.persistence.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.size }}
+  {{- if .Values.persistence.storageClass }}
+  storageClassName: {{ .Values.persistence.storageClass }}
+  {{- end }}
+
+{{- if .Values.backup.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "vyapaarmitra.fullname" . }}-backup
+  labels:
+    {{- include "vyapaarmitra.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backup
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.backup.size }}
+  {{- if .Values.backup.storageClass }}
+  storageClassName: {{ .Values.backup.storageClass }}
+  {{- end }}
+{{- end }}
+{{- end }}
