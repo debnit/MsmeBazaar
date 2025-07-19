@@ -85,8 +85,7 @@ jobs:
       with:
         node-version: '18'
         cache: 'npm'
-        cache-dependency-path: |
-          **/package-lock.json
+        cache-dependency-path: 'package-lock.json'
 
     - name: Install Python dependencies
       run: |
