@@ -32,8 +32,7 @@
       "@/hooks/*": ["client/src/hooks/*"],
       "@/utils/*": ["client/src/utils/*"],
       "@/shared/*": ["shared/*"]
-    },
-    "types": ["node", "react", "react-dom", "webworker"]
+    }
   },
   "include": [
     "client/src/**/*",
