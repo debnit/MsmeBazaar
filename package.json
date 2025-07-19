@@ -19,6 +19,16 @@
     "vyapaarmitra"
   ],
   "scripts": {
+    "dev": "cd msmebazaar-v2 && pnpm run dev",
+    "build": "cd msmebazaar-v2 && pnpm run build",
+    "start": "cd msmebazaar-v2 && pnpm run start",
+    "test": "cd msmebazaar-v2 && pnpm run test",
+    "lint": "cd msmebazaar-v2 && pnpm run lint",
+    "lint:fix": "cd msmebazaar-v2 && pnpm run lint:fix",
+    "check": "cd msmebazaar-v2 && pnpm run type-check",
+    "type-check": "cd msmebazaar-v2 && pnpm run type-check",
+    "format": "cd msmebazaar-v2 && pnpm run format",
+    "clean": "cd msmebazaar-v2 && pnpm run clean",
     "version:bump": "./scripts/ci/bump-version.sh",
     "version:major": "./scripts/ci/bump-version.sh major --tag --push",
     "version:minor": "./scripts/ci/bump-version.sh minor --tag --push",
@@ -26,13 +36,18 @@
     "version:auto": "./scripts/ci/bump-version.sh auto --tag --push",
     "deploy:k8s": "helm upgrade --install vyapaarmitra ./infra/k8s/helm-chart --namespace vyapaarmitra --values ./infra/k8s/helm-chart/values-prod.yaml",
     "health:check": "./scripts/ci/healthcheck.sh",
-    "test:cron": "cd jobs && python test_cron_jobs.py"
+    "test:cron": "cd jobs && python test_cron_jobs.py",
+    "postinstall": "cd msmebazaar-v2 && pnpm install"
   },
   "engines": {
     "node": ">=18.0.0",
-    "npm": ">=8.0.0"
+    "npm": ">=8.0.0",
+    "pnpm": ">=8.0.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/node": "^20.10.5"
+  },
   "dependencies": {},
   "author": {
     "name": "VyapaarMitra Team",

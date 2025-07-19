@@ -21,3 +21,7 @@ security-reports/
 *-audit-report.json
 trivy-cache/
 .trivy/
+
+# CI/CD test reports
+ci-test-reports/
+*.log
