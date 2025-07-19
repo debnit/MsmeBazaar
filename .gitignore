@@ -4,3 +4,13 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+node_modules/
+.env
+__pycache__/
+*.pyc
+*.sqlite3
+*.log
+dist/
+.next/
+.cache/
