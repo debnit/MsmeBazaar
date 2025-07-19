@@ -1,0 +1,1 @@
+# Shared security components for MSMEBazaar microservices
