@@ -11,7 +11,7 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
-export function authenticateToken(req: Request, res: Response, next: NextFunction) {
+export function authenticateToken(req: Request, res: Response, next: NextFunction): void {
   // Check for token in Authorization header first
   const authHeader = req.headers["authorization"];
   let token = authHeader && authHeader.split(" ")[1];
@@ -35,7 +35,7 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
 }
 
 export function requireRole(role: string) {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     const authReq = req as AuthenticatedRequest;
     if (authReq.user.role !== role) {
       return res.status(403).json({ message: "Insufficient permissions" });

@@ -58,12 +58,12 @@ export class MSMEWhatsAppIntegration {
   // Send Welcome Message for New Users
   async sendWelcomeMessage(userId: number, userRole: string): Promise<void> {
     const [user] = await db.select().from(users).where(eq(users.id, userId));
-    if (!user || !user.mobile) return;
+    if (!user || !user.phone) return;
 
     const templateName = userRole === 'seller' ? 'seller_welcome' : 'buyer_welcome';
     
     const message: WhatsAppMessage = {
-      to: user.mobile,
+      to: user.phone,
       type: 'template',
       template: {
         name: templateName,
@@ -334,14 +334,14 @@ export class MSMEWhatsAppIntegration {
   // Send Interactive Flow Message
   async sendInteractiveFlow(userId: number, flowType: 'onboarding' | 'valuation' | 'interest'): Promise<void> {
     const [user] = await db.select().from(users).where(eq(users.id, userId));
-    if (!user || !user.mobile) return;
+    if (!user || !user.phone) return;
 
     let message: WhatsAppMessage;
 
     switch (flowType) {
       case 'onboarding':
         message = {
-          to: user.mobile,
+          to: user.phone,
           type: 'interactive',
           interactive: {
             type: 'button',
@@ -379,7 +379,7 @@ export class MSMEWhatsAppIntegration {
 
       case 'valuation':
         message = {
-          to: user.mobile,
+          to: user.phone,
           type: 'interactive',
           interactive: {
             type: 'button',
@@ -417,7 +417,7 @@ export class MSMEWhatsAppIntegration {
 
       case 'interest':
         message = {
-          to: user.mobile,
+          to: user.phone,
           type: 'interactive',
           interactive: {
             type: 'button',
@@ -489,8 +489,8 @@ export class MSMEWhatsAppIntegration {
       const from = message.from;
       const messageType = message.type;
 
-      // Find user by mobile number
-      const [user] = await db.select().from(users).where(eq(users.mobile, from));
+      // Find user by phone number
+      const [user] = await db.select().from(users).where(eq(users.phone, from));
       if (!user) continue;
 
       if (messageType === 'text') {
@@ -510,15 +510,15 @@ export class MSMEWhatsAppIntegration {
 
     // Simple keyword-based responses
     if (lowerText.includes('help') || lowerText.includes('support')) {
-      await this.sendSupportMessage(user.mobile);
+      await this.sendSupportMessage(user.phone);
     } else if (lowerText.includes('list') || lowerText.includes('sell')) {
-      await this.sendListingGuideMessage(user.mobile);
+      await this.sendListingGuideMessage(user.phone);
     } else if (lowerText.includes('buy') || lowerText.includes('search')) {
-      await this.sendBuyingGuideMessage(user.mobile);
+      await this.sendBuyingGuideMessage(user.phone);
     } else if (lowerText.includes('valuation') || lowerText.includes('value')) {
-      await this.sendValuationInfoMessage(user.mobile);
+      await this.sendValuationInfoMessage(user.phone);
     } else {
-      await this.sendDefaultMessage(user.mobile);
+      await this.sendDefaultMessage(user.phone);
     }
   }
 
@@ -531,22 +531,22 @@ export class MSMEWhatsAppIntegration {
 
     switch (buttonId) {
       case 'complete_profile':
-        await this.sendProfileCompletionMessage(user.mobile);
+        await this.sendProfileCompletionMessage(user.phone);
         break;
       case 'browse_listings':
-        await this.sendBrowseListingsMessage(user.mobile);
+        await this.sendBrowseListingsMessage(user.phone);
         break;
       case 'get_help':
-        await this.sendSupportMessage(user.mobile);
+        await this.sendSupportMessage(user.phone);
         break;
       case 'schedule_visit':
-        await this.sendScheduleVisitMessage(user.mobile);
+        await this.sendScheduleVisitMessage(user.phone);
         break;
       case 'request_financials':
-        await this.sendRequestFinancialsMessage(user.mobile);
+        await this.sendRequestFinancialsMessage(user.phone);
         break;
       case 'connect_agent':
-        await this.sendConnectAgentMessage(user.mobile);
+        await this.sendConnectAgentMessage(user.phone);
         break;
     }
   }
@@ -688,7 +688,7 @@ export class MSMEWhatsAppIntegration {
       );
 
       console.log('WhatsApp message sent:', response.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('WhatsApp message failed:', error.response?.data || error.message);
       throw error;
     }
