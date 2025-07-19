@@ -1,4 +1,4 @@
-# Cursor: npm ci fails with lock mismatch. Regenerate and commit lock file correctly.
+# Cursor: Lock file mismatch error on npm ci. Regenerate lock file and commit.
 name: CI/CD Pipeline
 
 on:
