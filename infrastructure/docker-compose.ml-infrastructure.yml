@@ -1,0 +1,443 @@
+version: '3.8'
+
+services:
+  # MLflow Tracking Server
+  mlflow-server:
+    image: python:3.9-slim
+    container_name: mlflow-server
+    ports:
+      - "5000:5000"
+    environment:
+      - MLFLOW_BACKEND_STORE_URI=postgresql://mlflow:mlflow123@postgres-mlflow:5432/mlflow
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=s3://mlflow-artifacts
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    command: >
+      bash -c "
+        pip install mlflow psycopg2-binary boto3 &&
+        mlflow server 
+        --backend-store-uri postgresql://mlflow:mlflow123@postgres-mlflow:5432/mlflow
+        --default-artifact-root s3://mlflow-artifacts
+        --host 0.0.0.0
+        --port 5000
+      "
+    depends_on:
+      - postgres-mlflow
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+  # PostgreSQL for MLflow
+  postgres-mlflow:
+    image: postgres:14
+    container_name: postgres-mlflow
+    environment:
+      - POSTGRES_DB=mlflow
+      - POSTGRES_USER=mlflow
+      - POSTGRES_PASSWORD=mlflow123
+    volumes:
+      - mlflow_postgres_data:/var/lib/postgresql/data
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+  # ML Model Monitoring Service
+  ml-monitoring:
+    build:
+      context: ../microservices/ml-monitoring-service
+      dockerfile: Dockerfile
+    container_name: ml-monitoring
+    ports:
+      - "8005:8005"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres-main:5432/msmebazaar
+      - REDIS_URL=redis://redis-main:6379
+      - MLFLOW_TRACKING_URI=http://mlflow-server:5000
+    depends_on:
+      - postgres-main
+      - redis-main
+      - mlflow-server
+    networks:
+      - ml-network
+    volumes:
+      - ./models:/app/models
+    restart: unless-stopped
+
+  # Celery Worker for ML Tasks
+  celery-ml-worker:
+    build:
+      context: ../microservices/ml-monitoring-service
+      dockerfile: Dockerfile
+    container_name: celery-ml-worker
+    command: celery -A app.celery_app worker --loglevel=info --concurrency=4
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres-main:5432/msmebazaar
+      - REDIS_URL=redis://redis-main:6379
+      - MLFLOW_TRACKING_URI=http://mlflow-server:5000
+    depends_on:
+      - postgres-main
+      - redis-main
+      - mlflow-server
+    networks:
+      - ml-network
+    volumes:
+      - ./models:/app/models
+    restart: unless-stopped
+
+  # Celery Beat for Scheduled Tasks
+  celery-beat:
+    build:
+      context: ../microservices/ml-monitoring-service
+      dockerfile: Dockerfile
+    container_name: celery-beat
+    command: celery -A app.celery_app beat --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres-main:5432/msmebazaar
+      - REDIS_URL=redis://redis-main:6379
+      - MLFLOW_TRACKING_URI=http://mlflow-server:5000
+    depends_on:
+      - postgres-main
+      - redis-main
+      - mlflow-server
+    networks:
+      - ml-network
+    volumes:
+      - ./models:/app/models
+    restart: unless-stopped
+
+  # Flower for Celery Monitoring
+  flower:
+    build:
+      context: ../microservices/ml-monitoring-service
+      dockerfile: Dockerfile
+    container_name: flower
+    ports:
+      - "5555:5555"
+    command: celery -A app.celery_app flower --port=5555
+    environment:
+      - REDIS_URL=redis://redis-main:6379
+    depends_on:
+      - redis-main
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+  # Apache Airflow
+  airflow-webserver:
+    image: apache/airflow:2.7.0-python3.9
+    container_name: airflow-webserver
+    ports:
+      - "8080:8080"
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow123@postgres-airflow:5432/airflow
+      - AIRFLOW__CORE__FERNET_KEY=ZmDfcTF7_60GrrY167zsiPd67pEvs0aGOv2oasOM1Pg=
+      - AIRFLOW__WEBSERVER__SECRET_KEY=a25mQ1FHTUh3MnFRSk5KMEIyVVU2YmN0VGRyYTVXY08
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=false
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+    command: >
+      bash -c "
+        airflow db init &&
+        airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@msmebazaar.com &&
+        airflow webserver
+      "
+    depends_on:
+      - postgres-airflow
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+  # Airflow Scheduler
+  airflow-scheduler:
+    image: apache/airflow:2.7.0-python3.9
+    container_name: airflow-scheduler
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow123@postgres-airflow:5432/airflow
+      - AIRFLOW__CORE__FERNET_KEY=ZmDfcTF7_60GrrY167zsiPd67pEvs0aGOv2oasOM1Pg=
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+    command: airflow scheduler
+    depends_on:
+      - postgres-airflow
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+  # PostgreSQL for Airflow
+  postgres-airflow:
+    image: postgres:14
+    container_name: postgres-airflow
+    environment:
+      - POSTGRES_DB=airflow
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow123
+    volumes:
+      - airflow_postgres_data:/var/lib/postgresql/data
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+  # Main PostgreSQL Database
+  postgres-main:
+    image: postgres:14
+    container_name: postgres-main
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=msmebazaar
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_main_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+  # Redis for Caching and Message Broker
+  redis-main:
+    image: redis:7-alpine
+    container_name: redis-main
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass redis123
+    volumes:
+      - redis_data:/data
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+  # TensorBoard for Model Visualization
+  tensorboard:
+    image: tensorflow/tensorflow:latest
+    container_name: tensorboard
+    ports:
+      - "6006:6006"
+    command: tensorboard --logdir=/logs --host=0.0.0.0 --port=6006
+    volumes:
+      - ./tensorboard_logs:/logs
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+  # Prometheus for Metrics Collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+  # Grafana for Monitoring Dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+  # Jaeger for Distributed Tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+  # ElasticSearch for Logging
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.5.0
+    container_name: elasticsearch
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+  # Kibana for Log Visualization
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.5.0
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+  # Logstash for Log Processing
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.5.0
+    container_name: logstash
+    ports:
+      - "5044:5044"
+      - "9600:9600"
+    volumes:
+      - ./monitoring/logstash/pipeline:/usr/share/logstash/pipeline
+      - ./monitoring/logstash/config:/usr/share/logstash/config
+    environment:
+      - "LS_JAVA_OPTS=-Xmx512m -Xms512m"
+    depends_on:
+      - elasticsearch
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+  # MinIO for Object Storage (S3 Compatible)
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minio123
+      - MINIO_ROOT_PASSWORD=minio123456
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+  # Jupyter Lab for ML Development
+  jupyter:
+    image: jupyter/tensorflow-notebook:latest
+    container_name: jupyter
+    ports:
+      - "8888:8888"
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=msmebazaar123
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./models:/home/jovyan/models
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+  # Model Registry UI (Alternative to MLflow)
+  model-registry:
+    build:
+      context: ../microservices/model-registry-ui
+      dockerfile: Dockerfile
+    container_name: model-registry
+    ports:
+      - "8090:8090"
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow-server:5000
+      - DATABASE_URL=postgresql://postgres:password@postgres-main:5432/msmebazaar
+    depends_on:
+      - mlflow-server
+      - postgres-main
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+  # Data Pipeline Scheduler
+  data-pipeline:
+    build:
+      context: ../microservices/data-pipeline
+      dockerfile: Dockerfile
+    container_name: data-pipeline
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres-main:5432/msmebazaar
+      - REDIS_URL=redis://redis-main:6379
+    depends_on:
+      - postgres-main
+      - redis-main
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+  # Feature Store
+  feature-store:
+    build:
+      context: ../microservices/feature-store
+      dockerfile: Dockerfile
+    container_name: feature-store
+    ports:
+      - "8006:8006"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres-main:5432/msmebazaar
+      - REDIS_URL=redis://redis-main:6379
+    depends_on:
+      - postgres-main
+      - redis-main
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+  # Model Serving API Gateway
+  model-gateway:
+    build:
+      context: ../microservices/model-gateway
+      dockerfile: Dockerfile
+    container_name: model-gateway
+    ports:
+      - "8007:8007"
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow-server:5000
+      - REDIS_URL=redis://redis-main:6379
+    depends_on:
+      - mlflow-server
+      - redis-main
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+networks:
+  ml-network:
+    driver: bridge
+
+volumes:
+  mlflow_postgres_data:
+  airflow_postgres_data:
+  postgres_main_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+  elasticsearch_data:
+  minio_data:

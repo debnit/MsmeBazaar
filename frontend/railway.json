@@ -1,0 +1,22 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "npm ci && npm run build"
+  },
+  "deploy": {
+    "startCommand": "npx serve -s build -l $PORT",
+    "numReplicas": 1,
+    "sleepApplication": false,
+    "restartPolicyType": "ON_FAILURE"
+  },
+  "env": {
+    "SERVICE_NAME": "frontend",
+    "NODE_ENV": "production",
+    "REACT_APP_API_URL": "https://recommendation-service-production.up.railway.app",
+    "REACT_APP_ML_MONITORING_URL": "https://ml-monitoring-service-production.up.railway.app",
+    "REACT_APP_TRANSACTION_MATCHING_URL": "https://transaction-matching-service-production.up.railway.app",
+    "REACT_APP_MLFLOW_URL": "https://mlflow-server-production.up.railway.app",
+    "REACT_APP_ENVIRONMENT": "production"
+  }
+}

@@ -1,0 +1,187 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transaction-matching-service
+  namespace: msmebazaar-prod
+  labels:
+    app: transaction-matching-service
+    version: v1
+    environment: production
+spec:
+  replicas: 4
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 2
+  selector:
+    matchLabels:
+      app: transaction-matching-service
+  template:
+    metadata:
+      labels:
+        app: transaction-matching-service
+        version: v1
+    spec:
+      containers:
+      - name: transaction-matching-service
+        image: ${TRANSACTION_MATCHING_SERVICE_IMAGE}
+        ports:
+        - containerPort: 8008
+          name: http
+        env:
+        - name: POSTGRES_HOST
+          value: "postgres-main"
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DB
+          value: "msmebazaar"
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: password
+        - name: REDIS_HOST
+          value: "redis-main"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: ENVIRONMENT
+          value: "production"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /api/matching_stats
+            port: 8008
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/matching_stats
+            port: 8008
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - transaction-matching-service
+              topologyKey: kubernetes.io/hostname
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: transaction-matching-service
+  namespace: msmebazaar-prod
+  labels:
+    app: transaction-matching-service
+spec:
+  selector:
+    app: transaction-matching-service
+  ports:
+  - port: 8008
+    targetPort: 8008
+    name: http
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: transaction-matching-service-ingress
+  namespace: msmebazaar-prod
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - api.msmebazaar.com
+    secretName: prod-api-tls
+  rules:
+  - host: api.msmebazaar.com
+    http:
+      paths:
+      - path: /api/transaction_match
+        pathType: Prefix
+        backend:
+          service:
+            name: transaction-matching-service
+            port:
+              number: 8008
+      - path: /api/similar_entities
+        pathType: Prefix
+        backend:
+          service:
+            name: transaction-matching-service
+            port:
+              number: 8008
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: transaction-matching-service-hpa
+  namespace: msmebazaar-prod
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: transaction-matching-service
+  minReplicas: 4
+  maxReplicas: 16
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: transaction-matching-service-pdb
+  namespace: msmebazaar-prod
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: transaction-matching-service

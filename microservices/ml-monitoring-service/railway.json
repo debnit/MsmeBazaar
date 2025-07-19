@@ -1,0 +1,51 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "pip install -r requirements.txt"
+  },
+  "deploy": {
+    "startCommand": "uvicorn app:app --host 0.0.0.0 --port $PORT --workers 2",
+    "healthcheckPath": "/api/models/status",
+    "healthcheckTimeout": 30,
+    "numReplicas": 1,
+    "sleepApplication": false,
+    "restartPolicyType": "ON_FAILURE"
+  },
+  "env": {
+    "SERVICE_NAME": "ml-monitoring-service",
+    "ENVIRONMENT": "production",
+    "PYTHONPATH": "/app",
+    "POSTGRES_HOST": {
+      "$ref": "PGHOST"
+    },
+    "POSTGRES_PORT": {
+      "$ref": "PGPORT"
+    },
+    "POSTGRES_DB": {
+      "$ref": "PGDATABASE"
+    },
+    "POSTGRES_USER": {
+      "$ref": "PGUSER"
+    },
+    "POSTGRES_PASSWORD": {
+      "$ref": "PGPASSWORD"
+    },
+    "REDIS_HOST": {
+      "$ref": "REDIS_HOST"
+    },
+    "REDIS_PORT": {
+      "$ref": "REDIS_PORT"
+    },
+    "REDIS_PASSWORD": {
+      "$ref": "REDIS_PASSWORD"
+    },
+    "CELERY_BROKER_URL": {
+      "$ref": "REDIS_URL"
+    },
+    "CELERY_RESULT_BACKEND": {
+      "$ref": "REDIS_URL"
+    },
+    "MLFLOW_TRACKING_URI": "https://mlflow-server-production.up.railway.app"
+  }
+}
