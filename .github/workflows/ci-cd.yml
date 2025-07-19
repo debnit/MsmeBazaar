@@ -175,17 +175,13 @@ jobs:
     - name: 🔍 Run Trivy Filesystem Scan with Retry
       run: |
         echo "🔍 Running Trivy filesystem scan with retry logic..."
+        echo "📋 Using trivy.yaml configuration with 5m timeout"
         RETRIES=3
         for i in $(seq 1 $RETRIES); do
           echo "🔄 Filesystem scan attempt $i of $RETRIES..."
           if trivy fs . \
-            --timeout 5m \
-            --format sarif \
-            --output trivy-fs-results.sarif \
-            --severity HIGH,CRITICAL \
-            --ignorefile .trivyignore \
-            --exit-code 0 \
-            --quiet; then
+            --config trivy.yaml \
+            --output trivy-fs-results.sarif; then
             echo "✅ Filesystem scan completed successfully on attempt $i"
             break
           else

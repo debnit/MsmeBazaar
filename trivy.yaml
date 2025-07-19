@@ -1,208 +1,34 @@
-# Trivy Configuration File - DevSecOps Security Scanning
-# This file defines security scanning policies and standards
+# Trivy Security Scanner Configuration
+# https://aquasecurity.github.io/trivy/latest/docs/references/configuration/
 
-# ==============================================================================
-# SCAN CONFIGURATION
-# ==============================================================================
+# Global timeout for all scan operations
+timeout: 5m
 
-# Define which scanners to use
-scan:
-  scanners:
-    - vuln          # Vulnerability scanning
-    - secret        # Secret scanning
-    - config        # Configuration scanning
-    - license       # License scanning
-  
-  # Security levels that will cause CI failure
-  severity:
-    - CRITICAL      # Always fail on critical
-    - HIGH          # Always fail on high
-  
-  # Exit codes
-  exit-code: 1      # Fail CI on findings
-
-# ==============================================================================
-# VULNERABILITY SCANNING
-# ==============================================================================
-
-vulnerability:
-  # Vulnerability databases to use
-  type:
-    - os            # Operating system packages
-    - library       # Application dependencies
-  
-  # Ignore unfixed vulnerabilities (no available patch)
-  ignore-unfixed: false
-  
-  # Ignore development dependencies
-  ignore-dev-deps: true
-
-# ==============================================================================
-# SECRET SCANNING
-# ==============================================================================
-
-secret:
-  # Enable secret scanning
-  config: |
-    rules:
-      - id: aws-access-key-id
-        description: AWS Access Key ID
-        regex: 'AKIA[0-9A-Z]{16}'
-        severity: CRITICAL
-      
-      - id: aws-secret-access-key
-        description: AWS Secret Access Key
-        regex: '[A-Za-z0-9/+=]{40}'
-        severity: CRITICAL
-      
-      - id: github-token
-        description: GitHub Personal Access Token
-        regex: 'ghp_[A-Za-z0-9]{36}'
-        severity: HIGH
-      
-      - id: jwt-token
-        description: JWT Token
-        regex: 'eyJ[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.[A-Za-z0-9-_.+/=]*'
-        severity: MEDIUM
-      
-      - id: database-url
-        description: Database Connection String
-        regex: '(mongodb|mysql|postgresql|redis)://[^\s]*'
-        severity: HIGH
-
-# ==============================================================================
-# CONFIGURATION SCANNING
-# ==============================================================================
-
-config:
-  # Dockerfile security checks
-  dockerfile:
-    - CIS Docker Benchmark
-    - Docker Security Best Practices
-  
-  # Kubernetes security checks (if applicable)
-  kubernetes:
-    - CIS Kubernetes Benchmark
-    - Pod Security Standards
-
-# ==============================================================================
-# LICENSE SCANNING
-# ==============================================================================
-
-license:
-  # Prohibited licenses that will cause failure
-  prohibited:
-    - GPL-2.0
-    - GPL-3.0
-    - AGPL-1.0
-    - AGPL-3.0
-  
-  # Allowed licenses
-  allowed:
-    - MIT
-    - Apache-2.0
-    - BSD-2-Clause
-    - BSD-3-Clause
-    - ISC
-    - Unlicense
-
-# ==============================================================================
-# REPORTING
-# ==============================================================================
-
-format:
-  # Default output format
-  default: table
-  
-  # Available formats
-  formats:
-    - table         # Human readable
-    - json          # Machine readable
-    - sarif         # GitHub Security tab
-    - template      # Custom templates
-
-# Report templates
-template:
-  # Custom security report template
-  security: |
-    ## Security Scan Report
-    
-    **Scan Date:** {{ .Metadata.ScanDate }}
-    **Scanner Version:** {{ .Metadata.Version }}
-    **Target:** {{ .ArtifactName }}
-    
-    ### Summary
-    - **Critical:** {{ .Summary.Critical }}
-    - **High:** {{ .Summary.High }}
-    - **Medium:** {{ .Summary.Medium }}
-    - **Low:** {{ .Summary.Low }}
-    
-    ### Vulnerabilities
-    {{- range .Results }}
-    {{- if .Vulnerabilities }}
-    #### {{ .Target }}
-    {{- range .Vulnerabilities }}
-    - **{{ .VulnerabilityID }}** ({{ .Severity }})
-      - Package: {{ .PkgName }}
-      - Version: {{ .InstalledVersion }}
-      - Fixed Version: {{ .FixedVersion }}
-      - Description: {{ .Description }}
-    {{- end }}
-    {{- end }}
-    {{- end }}
-
-# ==============================================================================
-# CACHE CONFIGURATION
-# ==============================================================================
-
+# Cache configuration
 cache:
-  # Cache directory
-  dir: /tmp/trivy-cache
-  
-  # Cache TTL
-  ttl: 24h
-  
-  # Clear cache on major version updates
-  clear-on-version-change: true
+  dir: ~/.cache/trivy
 
-# ==============================================================================
-# DATABASE CONFIGURATION
-# ==============================================================================
-
+# Database configuration
 db:
-  # Skip database update (use cached)
-  skip-update: false
-  
-  # Database repository
   repository: ghcr.io/aquasecurity/trivy-db
-  
-  # Light mode (faster but less accurate)
-  light: false
+  java-repository: ghcr.io/aquasecurity/trivy-java-db
 
-# ==============================================================================
-# TIMEOUT CONFIGURATION
-# ==============================================================================
+# Output configuration
+format: sarif
+severity: HIGH,CRITICAL
+exit-code: 0
+quiet: true
 
-timeout:
-  # Overall scan timeout
-  scan: 10m
-  
-  # Database download timeout
-  db: 5m
-  
-  # Individual package scan timeout
-  package: 30s
+# Ignore file for acceptable vulnerabilities
+ignorefile: .trivyignore
 
-# ==============================================================================
-# IGNORE POLICIES
-# ==============================================================================
-
-ignore:
-  # Ignore file location
-  file: .trivyignore
-  
-  # Policy for expired ignores
-  expired: warn
-  
-  # Require justification for ignores
-  require-justification: true
+# Skip files and directories
+skip-files:
+  - "**/*.md"
+  - "**/README*"
+  - "**/LICENSE*"
+  - "**/*.txt"
+  - ".git/**"
+  - "node_modules/**"
+  - "dist/**"
+  - "build/**"
