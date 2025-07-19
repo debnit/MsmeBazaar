@@ -1,0 +1,24 @@
+name: Retrain ML Model
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'apps/ml-api/train/**'
+      - 'apps/ml-api/models/**'
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          pip install -r apps/ml-api/train/requirements.txt
+      - name: Run training
+        run: |
+          python apps/ml-api/train/train_model.py

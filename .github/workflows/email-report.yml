@@ -1,0 +1,22 @@
+name: Auto Email Admin PDF Report
+
+on:
+  schedule:
+    - cron: '0 9 * * *' # Every day at 9am IST
+
+jobs:
+  email_report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install deps
+        run: npm install
+      - name: Generate & Send PDF
+        run: |
+          node scripts/generate-and-email-pdf.js
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}

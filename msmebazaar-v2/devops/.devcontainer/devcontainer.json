@@ -1,0 +1,147 @@
+{
+  "name": "MSMEBazaar V2.0",
+  "dockerComposeFile": "../../docker-compose.yml",
+  "service": "web",
+  "workspaceFolder": "/app",
+  "shutdownAction": "stopCompose",
+  
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.black-formatter",
+        "ms-python.isort",
+        "charliermarsh.ruff",
+        "bradlc.vscode-tailwindcss",
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-typescript-next",
+        "ms-vscode.vscode-json",
+        "ms-vscode.vscode-eslint",
+        "ms-vscode.vscode-docker",
+        "ms-vscode.vscode-git",
+        "ms-vscode.vscode-github-pullrequest",
+        "ms-vscode.vscode-thunder-client",
+        "ms-vscode.vscode-prisma",
+        "ms-vscode.vscode-database-client",
+        "ms-vscode.vscode-yaml",
+        "redhat.vscode-yaml",
+        "ms-vscode.vscode-markdown",
+        "yzhang.markdown-all-in-one",
+        "ms-vscode.vscode-todo-highlight",
+        "gruntfuggly.todo-tree",
+        "ms-vscode.vscode-github-copilot",
+        "ms-vscode.vscode-github-copilot-chat"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.formatting.provider": "black",
+        "python.linting.enabled": true,
+        "python.linting.ruffEnabled": true,
+        "python.linting.pylintEnabled": false,
+        "python.linting.flake8Enabled": false,
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": true,
+          "source.fixAll.eslint": true
+        },
+        "typescript.preferences.importModuleSpecifier": "relative",
+        "typescript.suggest.autoImports": true,
+        "emmet.includeLanguages": {
+          "javascript": "javascriptreact",
+          "typescript": "typescriptreact"
+        },
+        "tailwindCSS.experimental.classRegex": [
+          "tw`([^`]*)",
+          "tw=\"([^\"]*)",
+          "tw={\"([^\"}]*)",
+          "tw\\.\\w+`([^`]*)",
+          "tw\\(.*?\\)`([^`]*)"
+        ],
+        "files.associations": {
+          "*.env": "dotenv",
+          "*.env.*": "dotenv"
+        },
+        "git.autofetch": true,
+        "git.enableSmartCommit": true,
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  
+  "forwardPorts": [3000, 8000, 8001, 8002, 8003, 8004, 5432, 6379, 9000, 9001, 8080, 9090, 3001],
+  "portsAttributes": {
+    "3000": {
+      "label": "Next.js Web App",
+      "onAutoForward": "openPreview"
+    },
+    "8000": {
+      "label": "Auth API",
+      "onAutoForward": "ignore"
+    },
+    "8001": {
+      "label": "MSME API",
+      "onAutoForward": "ignore"
+    },
+    "8002": {
+      "label": "Valuation API",
+      "onAutoForward": "ignore"
+    },
+    "8003": {
+      "label": "Match API",
+      "onAutoForward": "ignore"
+    },
+    "8004": {
+      "label": "Admin API",
+      "onAutoForward": "ignore"
+    },
+    "5432": {
+      "label": "PostgreSQL",
+      "onAutoForward": "ignore"
+    },
+    "6379": {
+      "label": "Redis",
+      "onAutoForward": "ignore"
+    },
+    "9000": {
+      "label": "MinIO API",
+      "onAutoForward": "ignore"
+    },
+    "9001": {
+      "label": "MinIO Console",
+      "onAutoForward": "ignore"
+    },
+    "8080": {
+      "label": "Weaviate",
+      "onAutoForward": "ignore"
+    },
+    "9090": {
+      "label": "Prometheus",
+      "onAutoForward": "ignore"
+    },
+    "3001": {
+      "label": "Grafana",
+      "onAutoForward": "ignore"
+    }
+  },
+  
+  "postCreateCommand": "npm install && cd apps/web && npm install",
+  "postStartCommand": "docker-compose up -d postgres redis minio weaviate",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18"
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  
+  "mounts": [
+    "source=${localWorkspaceFolder}/.env,target=/app/.env,type=bind,consistency=cached"
+  ],
+  
+  "remoteUser": "node"
+}

@@ -1,0 +1,23 @@
+
+name: Retrain Model
+
+on:
+  schedule:
+    - cron: '0 2 * * SUN'
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Retrain
+        run: python apps/ml-api/train_model.py
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'apps/ml-api/train/**'
+      - 'apps/ml-api/models/**'
+      - 'apps/ml-api/feedback/**'   # ← Add this if not already present

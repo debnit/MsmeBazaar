@@ -308,5 +308,8 @@ For support and questions:
 - 🔄 Blockchain integration
 
 ---
+MSMEBazaar V2
+Production-ready monorepo with PostgreSQL, Razorpay, Auth, and CI/CD.
+
 
 **MSMESquare** - Empowering India's MSME ecosystem through technology and innovation.
