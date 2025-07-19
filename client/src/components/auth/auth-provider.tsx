@@ -24,6 +24,8 @@ interface AuthContextType extends AuthState {
   getToken: () => string | null;
   setToken: (token: string, remember?: boolean) => void;
   removeToken: () => void;
+  isAdmin: boolean;
+  hasPermission: (permission: string) => boolean;
 }
 
 // Create Auth Context
@@ -171,7 +173,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuth,
     getToken,
     setToken,
-    removeToken
+    removeToken,
+    isAdmin: state.user?.role === 'admin' || state.user?.role === 'super_admin',
+    hasPermission: (permission: string) => {
+      if (!state.user) return false;
+      if (state.user.role === 'super_admin') return true;
+      if (state.user.role === 'admin') {
+        // Define admin permissions
+        const adminPermissions = ['view_dashboard', 'manage_users', 'view_reports', 'manage_msmes'];
+        return adminPermissions.includes(permission);
+      }
+      return false;
+    }
   };
   
   return (

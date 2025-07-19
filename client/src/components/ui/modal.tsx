@@ -319,7 +319,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       case 'warning':
         return 'bg-warning text-warning-foreground hover:bg-warning/90';
       default:
-        return 'bg-primary text-primary-foreground hover:bg-primary/90';
+        return 'bg-primary text-primary-foreground hover:bg-primary hover:opacity-90';
     }
   };
 
@@ -413,7 +413,7 @@ export const AlertModal: React.FC<AlertModalProps> = ({
             'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
             'h-10 px-4 py-2',
-            'bg-primary text-primary-foreground hover:bg-primary/90'
+            'bg-primary text-primary-foreground hover:bg-primary hover:opacity-90'
           )}
         >
           {buttonText}

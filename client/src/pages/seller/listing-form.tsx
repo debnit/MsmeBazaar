@@ -656,7 +656,7 @@ export default function ListingForm() {
               <Button 
                 type="submit" 
                 disabled={createMutation.isPending || updateMutation.isPending}
-                className="bg-primary hover:bg-primary/90"
+                className="bg-primary hover:bg-primary hover:opacity-90"
               >
                 {(createMutation.isPending || updateMutation.isPending) && (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>

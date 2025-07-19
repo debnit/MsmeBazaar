@@ -19,17 +19,10 @@ import {
   Zap,
   Database,
   Activity,
-  FileText,
-  Lightbulb
+  FileText
 } from 'lucide-react';
 
-interface SemanticMatch {
-  msme_id: number;
-  buyer_id: number;
-  similarity_score: number;
-  match_reasons: string[];
-  confidence_level: 'high' | 'medium' | 'low';
-}
+
 
 interface AssistantResponse {
   message: string;
@@ -212,14 +205,7 @@ export default function AIAnalyticsDemo() {
     return 'bg-red-500';
   };
 
-  const getMatchConfidenceColor = (level: string) => {
-    switch (level) {
-      case 'high': return 'bg-green-100 text-green-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">

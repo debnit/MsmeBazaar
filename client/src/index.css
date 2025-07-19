@@ -196,7 +196,7 @@ body {
   }
 
   .btn-primary {
-    @apply btn-base bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2;
+    @apply btn-base bg-primary text-primary-foreground hover:bg-primary hover:opacity-90 h-10 px-4 py-2;
   }
 
   .btn-secondary {
@@ -292,15 +292,30 @@ body {
 
   /* Animation Classes */
   .animate-fade-in {
-    @apply animate-fade-in;
+    animation: fadeIn 0.3s ease-in-out;
   }
 
   .animate-slide-up {
-    @apply animate-slide-up;
+    animation: slideUp 0.3s ease-out;
   }
 
   .animate-slide-down {
-    @apply animate-slide-down;
+    animation: slideDown 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  @keyframes slideDown {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
   }
 
   /* Accessibility Classes */

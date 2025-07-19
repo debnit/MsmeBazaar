@@ -83,7 +83,7 @@ export default function SellerDashboard() {
               <p className="text-gray-600">Manage your MSME listings and track performance</p>
             </div>
             <Link href="/seller/listing/new">
-              <Button className="bg-primary hover:bg-primary/90">
+              <Button className="bg-primary hover:bg-primary hover:opacity-90">
                 <Plus className="h-4 w-4 mr-2" />
                 New Listing
               </Button>

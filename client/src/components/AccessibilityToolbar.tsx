@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useTextToSpeech } from "@/hooks/useLocalization";
-import { Volume2, VolumeX, Type, Minus, Plus } from "lucide-react";
+import { Volume2, VolumeX, Minus, Plus } from "lucide-react";
 import { useState } from "react";
 
 export function AccessibilityToolbar() {

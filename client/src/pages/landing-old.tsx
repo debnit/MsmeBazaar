@@ -3,6 +3,43 @@ import { LanguageSelector } from '@/components/LanguageSelector';
 import { AccessibilityToolbar } from '@/components/AccessibilityToolbar';
 import { initializeCaching } from '@/utils/enhanced-caching';
 import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Building } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+
+// Translation function placeholder - replace with actual i18n implementation
+const t = (key: string) => {
+  const translations: Record<string, string> = {
+    'features.title': 'Features',
+    'features.proximity.title': 'Proximity-Based Matching',
+    'features.proximity.description': 'Connect with nearby businesses for faster transactions',
+    'features.loan.title': 'Easy Loan Access',
+    'features.loan.description': 'Get quick access to business loans',
+    'features.compliance.title': 'Compliance Support',
+    'features.compliance.description': 'Stay compliant with government regulations',
+    'stats.title': 'Platform Statistics',
+    'stats.lakh': 'Lakh+',
+    'stats.crore': 'Crore+',
+    'stats.odisha.msmes': 'MSMEs in Odisha',
+    'stats.national.msmes': 'MSMEs Nationally',
+    'stats.districts': 'Districts Covered',
+    'cta.title': 'Ready to Get Started?',
+    'cta.description': 'Join thousands of MSMEs already on our platform',
+    'cta.button': 'Get Started',
+    'footer.description': 'Connecting MSMEs across India',
+    'footer.services': 'Services',
+    'footer.support': 'Support',
+    'footer.languages': 'Languages',
+    'footer.help': 'Help Center',
+    'footer.contact': 'Contact Us',
+    'footer.faq': 'FAQ',
+    'footer.rights': 'All rights reserved.',
+    'nav.sell': 'Sell Business',
+    'nav.buy': 'Buy Business',
+    'nav.loan': 'Get Loan'
+  };
+  return translations[key] || key;
+};
 
 export default function Landing() {
   const [currentLanguage, setCurrentLanguage] = useState<'en' | 'hi' | 'or'>('en');
@@ -28,9 +65,6 @@ export default function Landing() {
         </div>
         <FastHomeScreen />
       </div>
-    </>
-  );
-}
 
       {/* Features Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
@@ -158,6 +192,6 @@ export default function Landing() {
         </div>
       </footer>
       <AccessibilityToolbar />
-    </div>
+    </>
   );
 }

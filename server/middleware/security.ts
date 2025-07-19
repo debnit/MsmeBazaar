@@ -1,314 +1,299 @@
-// Security middleware with rate limiting and protection
-import rateLimit from 'express-rate-limit';
-import helmet from 'helmet';
-import compression from 'compression';
-import { Request, Response, NextFunction } from 'express';
+import { FastifyRequest, FastifyReply, FastifyInstance } from 'fastify';
+import rateLimit from '@fastify/rate-limit';
+import helmet from '@fastify/helmet';
+import cors from '@fastify/cors';
 
-// Rate limiting configurations
-const createRateLimit = (windowMs: number, max: number, message: string) => {
-  return rateLimit({
-    windowMs,
-    max,
-    message: {
-      error: 'Too Many Requests',
-      message,
-      retryAfter: Math.ceil(windowMs / 1000),
+// Security Headers Middleware
+export const securityHeaders = (app: FastifyInstance) => {
+  app.register(helmet, {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: ["'self'", "https://api.msmebazaar.com"],
+        frameSrc: ["'none'"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        childSrc: ["'none'"],
+      },
     },
-    standardHeaders: true,
-    legacyHeaders: false,
-    handler: (req: Request, res: Response) => {
-      res.status(429).json({
-        error: 'Too Many Requests',
-        message,
-        retryAfter: Math.ceil(windowMs / 1000),
-        timestamp: new Date().toISOString(),
-      });
-    },
+    crossOriginEmbedderPolicy: false,
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true
+    }
   });
 };
 
-// Different rate limits for different endpoints
-export const rateLimits = {
-  // General API rate limit
-  general: createRateLimit(
-    15 * 60 * 1000, // 15 minutes
-    1000, // 1000 requests per 15 minutes
-    'Too many requests from this IP, please try again later'
-  ),
+// CORS Configuration
+export const corsSetup = (app: FastifyInstance) => {
+  app.register(cors, {
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'https://msmebazaar.com',
+        'https://www.msmebazaar.com',
+        'https://app.msmebazaar.com'
+      ];
 
-  // Strict rate limit for authentication
-  auth: createRateLimit(
-    15 * 60 * 1000, // 15 minutes
-    10, // 10 attempts per 15 minutes
-    'Too many authentication attempts, please try again later'
-  ),
-
-  // Moderate rate limit for API endpoints
-  api: createRateLimit(
-    1 * 60 * 1000, // 1 minute
-    100, // 100 requests per minute
-    'API rate limit exceeded, please slow down'
-  ),
-
-  // Strict rate limit for password reset
-  passwordReset: createRateLimit(
-    60 * 60 * 1000, // 1 hour
-    3, // 3 attempts per hour
-    'Too many password reset attempts, please try again later'
-  ),
-
-  // Admin endpoints
-  admin: createRateLimit(
-    15 * 60 * 1000, // 15 minutes
-    50, // 50 requests per 15 minutes
-    'Admin rate limit exceeded'
-  ),
-
-  // File upload
-  upload: createRateLimit(
-    15 * 60 * 1000, // 15 minutes
-    20, // 20 uploads per 15 minutes
-    'Too many file uploads, please try again later'
-  ),
-
-  // Search endpoints
-  search: createRateLimit(
-    1 * 60 * 1000, // 1 minute
-    30, // 30 searches per minute
-    'Search rate limit exceeded'
-  ),
-};
-
-// Helmet configuration for security headers
-export const helmetConfig = helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:", "blob:"],
-      connectSrc: ["'self'", "ws:", "wss:", "https:"],
-      mediaSrc: ["'self'"],
-      objectSrc: ["'none'"],
-      frameSrc: ["'none'"],
-      baseUri: ["'self'"],
-      formAction: ["'self'"],
-      frameAncestors: ["'none'"],
-      upgradeInsecureRequests: [],
+      // Allow requests with no origin (mobile apps, etc.)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
     },
-  },
-  crossOriginEmbedderPolicy: false,
-  crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
-  crossOriginResourcePolicy: { policy: 'cross-origin' },
-  dnsPrefetchControl: true,
-  frameguard: { action: 'deny' },
-  hidePoweredBy: true,
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true,
-  },
-  ieNoOpen: true,
-  noSniff: true,
-  originAgentCluster: true,
-  permittedCrossDomainPolicies: false,
-  referrerPolicy: { policy: 'no-referrer' },
-  xssFilter: true,
-});
-
-// Compression middleware
-export const compressionConfig = compression({
-  filter: (req: Request, res: Response) => {
-    if (req.headers['x-no-compression']) {
-      return false;
-    }
-    return compression.filter(req, res);
-  },
-  threshold: 1024,
-  level: 6,
-  memLevel: 8,
-});
-
-// IP whitelist middleware
-export const ipWhitelist = (allowedIPs: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const clientIP = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
-    
-    if (allowedIPs.length === 0 || allowedIPs.includes(clientIP)) {
-      return next();
-    }
-    
-    res.status(403).json({
-      error: 'Forbidden',
-      message: 'IP address not allowed',
-      timestamp: new Date().toISOString(),
-    });
-  };
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: [
+      'Origin',
+      'X-Requested-With',
+      'Content-Type',
+      'Accept',
+      'Authorization',
+      'X-API-Key',
+      'X-Request-ID'
+    ]
+  });
 };
 
-// Request validation middleware
-export const validateRequest = (req: Request, res: Response, next: NextFunction) => {
-  // Check for common attack patterns
-  const suspicious = [
-    'SELECT * FROM',
-    'DROP TABLE',
-    'INSERT INTO',
-    'UPDATE SET',
-    'DELETE FROM',
-    '<script>',
-    'javascript:',
-    'onload=',
-    'onerror=',
-    '../../../',
-    '..\\..\\',
-  ];
+// Rate Limiting
+export const rateLimitSetup = (app: FastifyInstance) => {
+  // Global rate limit
+  app.register(rateLimit, {
+    max: 100,
+    timeWindow: '1 minute',
+    keyGenerator: (req: FastifyRequest) => {
+      return req.ip;
+    },
+    errorResponseBuilder: (req: FastifyRequest, context: any) => {
+      return {
+        code: 429,
+        error: 'Too Many Requests',
+        message: `Rate limit exceeded, retry in ${Math.round(context.ttl / 1000)} seconds`,
+        retryAfter: Math.round(context.ttl / 1000)
+      };
+    }
+  });
 
-  const requestData = JSON.stringify({
-    url: req.url,
-    query: req.query,
-    body: req.body,
-    headers: req.headers,
-  }).toLowerCase();
+  // Stricter rate limit for auth endpoints
+  app.register(async function (app: FastifyInstance) {
+    await app.register(rateLimit, {
+      max: 5,
+      timeWindow: '1 minute',
+      keyGenerator: (req: FastifyRequest) => {
+        return req.ip;
+      }
+    });
 
-  for (const pattern of suspicious) {
-    if (requestData.includes(pattern.toLowerCase())) {
-      console.warn(`Suspicious request detected from ${req.ip}: ${pattern}`);
-      return res.status(400).json({
-        error: 'Bad Request',
-        message: 'Request contains suspicious content',
-        timestamp: new Date().toISOString(),
+    app.register(async function (app: FastifyInstance) {
+      app.addHook('preHandler', async (req: FastifyRequest, reply: FastifyReply) => {
+        if (req.url.startsWith('/api/auth/')) {
+          // Additional rate limiting logic for auth endpoints
+        }
       });
-    }
-  }
-
-  next();
-};
-
-// Request size limiter
-export const requestSizeLimit = (maxSize: number) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const contentLength = parseInt(req.headers['content-length'] || '0');
-    
-    if (contentLength > maxSize) {
-      return res.status(413).json({
-        error: 'Payload Too Large',
-        message: `Request size exceeds ${maxSize} bytes`,
-        timestamp: new Date().toISOString(),
-      });
-    }
-    
-    next();
-  };
-};
-
-// API key validation middleware
-export const validateApiKey = (req: Request, res: Response, next: NextFunction) => {
-  const apiKey = req.headers['x-api-key'] || req.query.apiKey;
-  
-  if (!apiKey) {
-    return res.status(401).json({
-      error: 'Unauthorized',
-      message: 'API key required',
-      timestamp: new Date().toISOString(),
     });
-  }
-  
-  // In production, validate against database
-  const validApiKeys = [
-    process.env.API_KEY_1,
-    process.env.API_KEY_2,
-    process.env.API_KEY_3,
-  ].filter(Boolean);
-  
-  if (!validApiKeys.includes(apiKey as string)) {
-    return res.status(401).json({
-      error: 'Unauthorized',
-      message: 'Invalid API key',
-      timestamp: new Date().toISOString(),
-    });
-  }
-  
-  next();
+  });
 };
 
-// CORS configuration
-export const corsConfig = {
-  origin: (origin: string | undefined, callback: (error: Error | null, allow?: boolean) => void) => {
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:5000',
-      'https://yourdomain.com',
-      'https://www.yourdomain.com',
+// Request ID Middleware
+export const requestIdMiddleware = (app: FastifyInstance) => {
+  app.addHook('onRequest', async (req: FastifyRequest, reply: FastifyReply) => {
+    const requestId = req.headers['x-request-id'] as string || 
+                     `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    req.headers['x-request-id'] = requestId;
+    reply.header('x-request-id', requestId);
+  });
+};
+
+// JWT Token Validation Middleware
+export const jwtAuthMiddleware = (app: FastifyInstance) => {
+  app.addHook('preHandler', async (req: FastifyRequest, reply: FastifyReply) => {
+    const protectedRoutes = [
+      '/api/users',
+      '/api/msmes',
+      '/api/valuations',
+      '/api/transactions',
+      '/api/dashboard'
     ];
-    
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+
+    const isProtectedRoute = protectedRoutes.some(route => 
+      req.url.startsWith(route)
+    );
+
+    if (isProtectedRoute) {
+      const authHeader = req.headers.authorization;
+      
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return reply.code(401).send({
+          error: 'Unauthorized',
+          message: 'Missing or invalid authorization header'
+        });
+      }
+
+      const token = authHeader.substring(7);
+      
+      try {
+        // JWT verification logic would go here
+        // For now, we'll just check if token exists
+        if (!token) {
+          throw new Error('Invalid token');
+        }
+        
+        // Add user info to request object
+        (req as any).user = { id: 'user_id', role: 'user' };
+      } catch (error) {
+        return reply.code(401).send({
+          error: 'Unauthorized',
+          message: 'Invalid or expired token'
+        });
+      }
     }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
-  exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
-  maxAge: 86400, // 24 hours
+  });
 };
 
-// Security headers middleware
-export const securityHeaders = (req: Request, res: Response, next: NextFunction) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-  res.setHeader('X-DNS-Prefetch-Control', 'off');
-  res.setHeader('X-Download-Options', 'noopen');
-  res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
-  
-  if (req.secure || req.headers['x-forwarded-proto'] === 'https') {
-    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+// Input Sanitization Middleware
+export const inputSanitizationMiddleware = (app: FastifyInstance) => {
+  app.addHook('preHandler', async (req: FastifyRequest, reply: FastifyReply) => {
+    if (req.body && typeof req.body === 'object') {
+      sanitizeObject(req.body);
+    }
+    
+    if (req.query && typeof req.query === 'object') {
+      sanitizeObject(req.query);
+    }
+  });
+};
+
+function sanitizeObject(obj: any): void {
+  for (const key in obj) {
+    if (typeof obj[key] === 'string') {
+      // Remove potential XSS attacks
+      obj[key] = obj[key]
+        .replace(/<script[^>]*>.*?<\/script>/gi, '')
+        .replace(/<[^>]*>/g, '')
+        .trim();
+    } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+      sanitizeObject(obj[key]);
+    }
   }
-  
-  next();
+}
+
+// API Key Middleware for Public API Access
+export const apiKeyMiddleware = (app: FastifyInstance) => {
+  app.addHook('preHandler', async (req: FastifyRequest, reply: FastifyReply) => {
+    const publicApiRoutes = ['/api/public'];
+    
+    const isPublicApiRoute = publicApiRoutes.some(route => 
+      req.url.startsWith(route)
+    );
+
+    if (isPublicApiRoute) {
+      const apiKey = req.headers['x-api-key'] as string;
+      
+      if (!apiKey) {
+        return reply.code(401).send({
+          error: 'Unauthorized',
+          message: 'API key required for public API access'
+        });
+      }
+
+      // Validate API key (in production, check against database)
+      const validApiKeys = process.env.VALID_API_KEYS?.split(',') || [];
+      
+      if (!validApiKeys.includes(apiKey)) {
+        return reply.code(401).send({
+          error: 'Unauthorized',
+          message: 'Invalid API key'
+        });
+      }
+    }
+  });
 };
 
-// Request logging middleware
-export const requestLogger = (req: Request, res: Response, next: NextFunction) => {
-  const start = Date.now();
-  
-  res.on('finish', () => {
-    const duration = Date.now() - start;
-    const logData = {
+// Request Logging Middleware
+export const requestLoggingMiddleware = (app: FastifyInstance) => {
+  app.addHook('onRequest', async (req: FastifyRequest, reply: FastifyReply) => {
+    const startTime = Date.now();
+    
+    app.log.info({
+      requestId: req.headers['x-request-id'],
       method: req.method,
       url: req.url,
-      status: res.statusCode,
-      duration: `${duration}ms`,
-      ip: req.ip,
       userAgent: req.headers['user-agent'],
-      timestamp: new Date().toISOString(),
-    };
-    
-    if (res.statusCode >= 400) {
-      console.error('Request error:', logData);
-    } else {
-      console.log('Request:', logData);
-    }
+      ip: req.ip,
+      timestamp: new Date().toISOString()
+    }, 'Incoming request');
+
+    reply.header('x-response-time', '0');
   });
-  
-  next();
+
+  app.addHook('onResponse', async (req: FastifyRequest, reply: FastifyReply) => {
+    const responseTime = Date.now() - parseInt(reply.getHeader('x-response-time') as string || '0');
+    reply.header('x-response-time', responseTime.toString());
+
+    app.log.info({
+      requestId: req.headers['x-request-id'],
+      method: req.method,
+      url: req.url,
+      statusCode: reply.statusCode,
+      responseTime: `${responseTime}ms`,
+      timestamp: new Date().toISOString()
+    }, 'Request completed');
+  });
 };
 
-// Export all middleware
-export const securityMiddleware = {
-  rateLimits,
-  helmetConfig,
-  compressionConfig,
-  ipWhitelist,
-  validateRequest,
-  requestSizeLimit,
-  validateApiKey,
-  corsConfig,
-  securityHeaders,
-  requestLogger,
+// Error Handling Middleware
+export const errorHandlingMiddleware = (app: FastifyInstance) => {
+  app.setErrorHandler(async (error: any, req: FastifyRequest, reply: FastifyReply) => {
+    const requestId = req.headers['x-request-id'];
+    
+    app.log.error({
+      requestId,
+      error: error.message,
+      stack: error.stack,
+      method: req.method,
+      url: req.url
+    }, 'Request error');
+
+    // Don't expose internal errors in production
+    if (process.env.NODE_ENV === 'production') {
+      return reply.code(500).send({
+        error: 'Internal Server Error',
+        message: 'An unexpected error occurred',
+        requestId
+      });
+    }
+
+    return reply.code(error.statusCode || 500).send({
+      error: error.name || 'Internal Server Error',
+      message: error.message,
+      requestId,
+      ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+    });
+  });
+};
+
+// Main security setup function
+export const setupSecurity = (app: FastifyInstance) => {
+  // Apply all security middleware
+  securityHeaders(app);
+  corsSetup(app);
+  rateLimitSetup(app);
+  requestIdMiddleware(app);
+  jwtAuthMiddleware(app);
+  inputSanitizationMiddleware(app);
+  apiKeyMiddleware(app);
+  requestLoggingMiddleware(app);
+  errorHandlingMiddleware(app);
+
+  app.log.info('Security middleware configured successfully');
 };

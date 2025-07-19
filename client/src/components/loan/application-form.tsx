@@ -383,7 +383,7 @@ export default function LoanApplicationForm({ msme, onSuccess }: LoanApplication
               <Button
                 type="submit"
                 disabled={createApplicationMutation.isPending}
-                className="bg-primary hover:bg-primary/90"
+                className="bg-primary hover:bg-primary hover:opacity-90"
               >
                 {createApplicationMutation.isPending ? (
                   <div className="flex items-center">

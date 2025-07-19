@@ -82,7 +82,7 @@ export default function NbfcDashboard() {
               <h1 className="text-3xl font-bold text-gray-900">NBFC Dashboard</h1>
               <p className="text-gray-600">Monitor loan applications, disbursements, and compliance metrics</p>
             </div>
-            <Button className="bg-primary hover:bg-primary/90">
+            <Button className="bg-primary hover:bg-primary hover:opacity-90">
               <Plus className="h-4 w-4 mr-2" />
               New Loan Product
             </Button>
@@ -270,7 +270,7 @@ export default function NbfcDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <Button className="w-full bg-primary hover:bg-primary/90 text-left justify-start">
+                  <Button className="w-full bg-primary hover:bg-primary hover:opacity-90 text-left justify-start">
                     <Plus className="h-4 w-4 mr-2" />
                     Create New Loan Product
                   </Button>

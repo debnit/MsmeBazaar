@@ -410,6 +410,39 @@ export const api = {
     markAllAsRead: () =>
       apiClient.post<APIResponse<null>>('/notifications/read-all'),
   },
+
+  // Transactions
+  transactions: {
+    list: (params?: { page?: number; limit?: number; status?: string }) =>
+      apiClient.get<APIResponse<PaginatedResponse<any>>>('/transactions', params),
+    
+    get: (id: string) =>
+      apiClient.get<APIResponse<any>>(`/transactions/${id}`),
+    
+    create: (data: any) =>
+      apiClient.post<APIResponse<any>>('/transactions', data),
+  },
+
+  // Loans
+  loans: {
+    list: (params?: { page?: number; limit?: number; status?: string }) =>
+      apiClient.get<APIResponse<PaginatedResponse<any>>>('/loans', params),
+    
+    get: (id: string) =>
+      apiClient.get<APIResponse<any>>(`/loans/${id}`),
+    
+    apply: (data: any) =>
+      apiClient.post<APIResponse<any>>('/loans/apply', data),
+  },
+
+  // NBFCs
+  nbfcs: {
+    list: (params?: { page?: number; limit?: number }) =>
+      apiClient.get<APIResponse<PaginatedResponse<any>>>('/nbfcs', params),
+    
+    get: (id: string) =>
+      apiClient.get<APIResponse<any>>(`/nbfcs/${id}`),
+  },
 };
 
 // Query client configuration
@@ -519,3 +552,14 @@ export const isValidFileSize = (file: File, maxSizeInMB: number): boolean => {
   const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
   return file.size <= maxSizeInBytes;
 };
+
+// Convenient exports for easier imports
+export const authApi = api.auth;
+export const userApi = api.users;
+export const msmeApi = api.msmes;
+export const valuationApi = api.valuations;
+export const transactionApi = api.transactions;
+export const dashboardApi = api.dashboard;
+export const notificationApi = api.notifications;
+export const loanApi = api.loans;
+export const nbfcApi = api.nbfcs;

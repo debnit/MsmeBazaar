@@ -228,7 +228,7 @@ export default function RegisterForm() {
 
       <Button
         type="submit"
-        className="w-full bg-primary hover:bg-primary/90"
+        className="w-full bg-primary hover:bg-primary hover:opacity-90"
         disabled={registerMutation.isPending}
       >
         {registerMutation.isPending ? (

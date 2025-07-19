@@ -95,7 +95,7 @@ export default function BuyerDashboard() {
               </p>
             </div>
             <Link href="/buyer/browse">
-              <Button className="bg-primary hover:bg-primary/90">
+              <Button className="bg-primary hover:bg-primary hover:opacity-90">
                 <Search className="h-4 w-4 mr-2" />
                 Browse MSMEs
               </Button>
@@ -249,7 +249,7 @@ export default function BuyerDashboard() {
             <CardContent>
               <div className="space-y-3">
                 <Link href="/buyer/browse">
-                  <Button className="w-full justify-start bg-primary hover:bg-primary/90">
+                  <Button className="w-full justify-start bg-primary hover:bg-primary hover:opacity-90">
                     <Search className="h-4 w-4 mr-2" />
                     Browse MSME Listings
                   </Button>

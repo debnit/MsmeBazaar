@@ -195,7 +195,7 @@ export default function ListingCard({ listing, showActions = true }: ListingCard
             <Button
               onClick={handleExpressInterest}
               disabled={expressInterestMutation.isPending}
-              className="flex-1 bg-primary hover:bg-primary/90"
+              className="flex-1 bg-primary hover:bg-primary hover:opacity-90"
             >
               {expressInterestMutation.isPending ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
