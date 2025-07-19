@@ -519,3 +519,15 @@ export const isValidFileSize = (file: File, maxSizeInMB: number): boolean => {
   const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
   return file.size <= maxSizeInBytes;
 };
+
+// Export API aliases for backward compatibility
+export const msmeApi = api;
+export const dashboardApi = api;
+export const nbfcApi = api;
+export const loanApi = api;
+export const agentApi = api;
+export const adminApi = api;
+export const buyerApi = api;
+export const sellerApi = api;
+export const vaasApi = api;
+export const analyticsApi = api;

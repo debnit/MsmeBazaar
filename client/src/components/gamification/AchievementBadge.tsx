@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
+// import { Badge } from "@/components/ui/badge"; // TODO: Use Badge component
 import { 
   Trophy, 
   User, 

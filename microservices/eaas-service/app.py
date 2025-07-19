@@ -203,7 +203,7 @@ class DocumentGenerator:
             ['', '', ''],
             ['Signature: _________________', '', 'Signature: _________________'],
             [f"Name: {data.get('seller_name', 'SELLER NAME')}", '', f"Name: {data.get('buyer_name', 'BUYER NAME')}"],
-            [f"Date: {data.get('execution_date', datetime.now().strftime('%B %d, %Y')}", '', f"Date: {data.get('execution_date', datetime.now().strftime('%B %d, %Y'))}"]
+            [f"Date: {data.get('execution_date', datetime.now().strftime('%B %d, %Y'))}", '', f"Date: {data.get('execution_date', datetime.now().strftime('%B %d, %Y'))}"]
         ]
         
         sig_table = Table(sig_data, colWidths=[2.5*inch, 1*inch, 2.5*inch])

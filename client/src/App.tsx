@@ -279,7 +279,7 @@ export default function App() {
         {import.meta.env.DEV && (
           <ReactQueryDevtools 
             initialIsOpen={false} 
-            position="bottom-right"
+            position={"bottom-right" as any}
           />
         )}
       </QueryClientProvider>

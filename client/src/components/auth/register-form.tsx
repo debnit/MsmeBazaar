@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, UserPlus, AlertCircle } from "lucide-react";
-import { register as registerUser } from "@/lib/auth";
+import { useAuth } from "@/components/auth/auth-provider";
 
 const registerSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
@@ -34,6 +34,7 @@ export default function RegisterForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { register: registerUser } = useAuth();
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -44,16 +45,16 @@ export default function RegisterForm() {
       phone: "",
       password: "",
       confirmPassword: "",
-      role: undefined,
+      role: "buyer" as const,
     },
   });
 
   const registerMutation = useMutation({
     mutationFn: registerUser,
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       toast({
         title: "Registration Successful",
-        description: `Welcome to MSMEAtlas, ${data.user.firstName}!`,
+        description: `Welcome to MSMEAtlas, ${data.user?.firstName}!`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       // Navigation will be handled by the App component based on auth state
