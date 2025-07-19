@@ -61,7 +61,7 @@ jobs:
     - name: TypeScript check - All packages
       working-directory: msmebazaar-v2
       run: pnpm run type-check
-      
+       
     # TypeScript check for root project
     - name: TypeScript check - Root
       run: npx tsc --noEmit
@@ -100,8 +100,236 @@ jobs:
           apps/admin-dashboard/.next/
         retention-days: 1
 
-  deploy:
+  security-scan:
+    runs-on: ubuntu-latest
     needs: test
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    # Build Docker images for scanning
+    - name: Build Web App Docker Image
+      run: |
+        cd msmebazaar-v2/apps/web
+        docker build -t msmebazaar-web:latest .
+    
+    - name: Build Auth API Docker Image
+      run: |
+        cd msmebazaar-v2/apps/auth-api
+        docker build -t msmebazaar-auth-api:latest .
+    
+    - name: Build MSME API Docker Image
+      run: |
+        cd msmebazaar-v2/apps/msme-api
+        docker build -t msmebazaar-msme-api:latest .
+    
+    - name: Build Admin API Docker Image
+      run: |
+        cd msmebazaar-v2/apps/admin-api
+        docker build -t msmebazaar-admin-api:latest .
+    
+    - name: Build Match API Docker Image
+      run: |
+        cd msmebazaar-v2/apps/match-api
+        docker build -t msmebazaar-match-api:latest .
+    
+    # Run Trivy filesystem scan on source code
+    - name: Run Trivy filesystem scan - Root
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-fs-root.sarif'
+        severity: 'CRITICAL,HIGH,MEDIUM'
+        exit-code: '0'
+    
+    - name: Run Trivy filesystem scan - MSMEBazaar V2
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: './msmebazaar-v2'
+        format: 'sarif'
+        output: 'trivy-fs-v2.sarif'
+        severity: 'CRITICAL,HIGH,MEDIUM'
+        exit-code: '0'
+    
+    # Run Trivy Docker image scans
+    - name: Run Trivy scan on Web App image
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'msmebazaar-web:latest'
+        format: 'sarif'
+        output: 'trivy-web-image.sarif'
+        severity: 'CRITICAL,HIGH'
+        exit-code: '0'
+    
+    - name: Run Trivy scan on Auth API image
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'msmebazaar-auth-api:latest'
+        format: 'sarif'
+        output: 'trivy-auth-image.sarif'
+        severity: 'CRITICAL,HIGH'
+        exit-code: '0'
+    
+    - name: Run Trivy scan on MSME API image
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'msmebazaar-msme-api:latest'
+        format: 'sarif'
+        output: 'trivy-msme-image.sarif'
+        severity: 'CRITICAL,HIGH'
+        exit-code: '0'
+    
+    - name: Run Trivy scan on Admin API image
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'msmebazaar-admin-api:latest'
+        format: 'sarif'
+        output: 'trivy-admin-image.sarif'
+        severity: 'CRITICAL,HIGH'
+        exit-code: '0'
+    
+    - name: Run Trivy scan on Match API image
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'msmebazaar-match-api:latest'
+        format: 'sarif'
+        output: 'trivy-match-image.sarif'
+        severity: 'CRITICAL,HIGH'
+        exit-code: '0'
+    
+    # Generate comprehensive security report
+    - name: Generate Trivy security report
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'table'
+        output: 'security-report.txt'
+        severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+        exit-code: '0'
+    
+    # Check for critical vulnerabilities and fail CI if found
+    - name: Check for critical vulnerabilities
+      run: |
+        echo "=== SECURITY SCAN RESULTS ==="
+        
+        # Function to check for critical/high vulnerabilities in SARIF files
+        check_sarif_vulnerabilities() {
+          local file=$1
+          local name=$2
+          
+          if [ -f "$file" ]; then
+            echo "Checking $name..."
+            
+            # Extract critical and high severity issues from SARIF
+            critical_count=$(jq '.runs[0].results | map(select(.level == "error" or .ruleId | contains("CRITICAL"))) | length' "$file" 2>/dev/null || echo "0")
+            high_count=$(jq '.runs[0].results | map(select(.level == "warning" or .ruleId | contains("HIGH"))) | length' "$file" 2>/dev/null || echo "0")
+            
+            echo "  Critical vulnerabilities: $critical_count"
+            echo "  High vulnerabilities: $high_count"
+            
+            # Return the total count
+            echo $((critical_count + high_count))
+          else
+            echo "SARIF file $file not found"
+            echo "0"
+          fi
+        }
+        
+        total_critical_high=0
+        
+        # Check all SARIF files
+        total_critical_high=$((total_critical_high + $(check_sarif_vulnerabilities "trivy-fs-root.sarif" "Root Filesystem")))
+        total_critical_high=$((total_critical_high + $(check_sarif_vulnerabilities "trivy-fs-v2.sarif" "MSMEBazaar V2 Filesystem")))
+        total_critical_high=$((total_critical_high + $(check_sarif_vulnerabilities "trivy-web-image.sarif" "Web App Docker Image")))
+        total_critical_high=$((total_critical_high + $(check_sarif_vulnerabilities "trivy-auth-image.sarif" "Auth API Docker Image")))
+        total_critical_high=$((total_critical_high + $(check_sarif_vulnerabilities "trivy-msme-image.sarif" "MSME API Docker Image")))
+        total_critical_high=$((total_critical_high + $(check_sarif_vulnerabilities "trivy-admin-image.sarif" "Admin API Docker Image")))
+        total_critical_high=$((total_critical_high + $(check_sarif_vulnerabilities "trivy-match-image.sarif" "Match API Docker Image")))
+        
+        echo ""
+        echo "=== TOTAL CRITICAL/HIGH VULNERABILITIES: $total_critical_high ==="
+        
+        # Display the full security report
+        echo ""
+        echo "=== DETAILED SECURITY REPORT ==="
+        if [ -f "security-report.txt" ]; then
+          cat security-report.txt
+        fi
+        
+        # Fail the CI if critical or high vulnerabilities are found
+        if [ $total_critical_high -gt 0 ]; then
+          echo ""
+          echo "❌ SECURITY SCAN FAILED: Found $total_critical_high critical or high severity vulnerabilities!"
+          echo "Please review and fix the vulnerabilities before proceeding."
+          echo "Check the uploaded security reports for details."
+          exit 1
+        else
+          echo ""
+          echo "✅ SECURITY SCAN PASSED: No critical or high severity vulnerabilities found!"
+        fi
+    
+    # Upload all security scan results
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: '.'
+        category: 'trivy-security-scan'
+    
+    - name: Upload security artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-scan-results
+        path: |
+          *.sarif
+          security-report.txt
+        retention-days: 30
+    
+    # Run additional security tools
+    - name: Run npm audit
+      working-directory: msmebazaar-v2
+      run: |
+        echo "=== NPM SECURITY AUDIT ==="
+        npm audit --audit-level high || true
+        
+        # Generate npm audit report
+        npm audit --json > npm-audit-report.json || true
+        
+        # Check for high/critical npm vulnerabilities
+        high_critical=$(jq '.metadata.vulnerabilities.high + .metadata.vulnerabilities.critical' npm-audit-report.json 2>/dev/null || echo "0")
+        
+        echo "NPM High/Critical vulnerabilities: $high_critical"
+        
+        if [ "$high_critical" -gt 0 ]; then
+          echo "❌ NPM AUDIT FAILED: Found $high_critical high/critical vulnerabilities!"
+          npm audit
+          exit 1
+        else
+          echo "✅ NPM AUDIT PASSED: No high/critical vulnerabilities found!"
+        fi
+    
+    - name: Run Snyk security scan
+      uses: snyk/actions/node@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high --all-projects
+      continue-on-error: true
+
+  deploy:
+    needs: [test, security-scan]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     
@@ -165,31 +393,6 @@ jobs:
         webhook_url: ${{ secrets.SLACK_WEBHOOK }}
         fields: repo,message,commit,author,action,eventName,ref,workflow
 
-  security-scan:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: 'fs'
-        scan-ref: '.'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-    
-    - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v2
-      with:
-        sarif_file: 'trivy-results.sarif'
-    
-    - name: Run Snyk security scan
-      uses: snyk/actions/node@master
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      with:
-        args: --severity-threshold=high
-
   performance-test:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
@@ -201,16 +404,16 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
+        cache: 'pnpm'
     
     - name: Install dependencies
       working-directory: msmebazaar-v2
-      run: npm ci
+      run: pnpm install --frozen-lockfile
     
     - name: Start application
       working-directory: msmebazaar-v2
       run: |
-        npm run start &
+        pnpm run start &
         sleep 15
     
     - name: Run load tests

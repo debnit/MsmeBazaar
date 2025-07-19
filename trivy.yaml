@@ -1,0 +1,101 @@
+# Trivy Configuration File
+# This file configures Trivy scanner behavior for the MSMEBazaar project
+
+# Global settings
+timeout: 10m
+cache:
+  clear: false
+  dir: /tmp/trivy
+
+# Database settings
+db:
+  no-update: false
+  no-progress: false
+  light: false
+  download-db-only: false
+
+# Vulnerability settings
+vulnerability:
+  type:
+    - os
+    - library
+  severity:
+    - CRITICAL
+    - HIGH
+    - MEDIUM
+    - LOW
+    - UNKNOWN
+  ignore-policy: .trivyignore
+
+# Security checks to enable
+security-checks:
+  - vuln
+  - secret
+  - config
+
+# Secret scanning settings
+secret:
+  config-path: "trivy-secret.yaml"
+
+# Misconfiguration scanning
+misconfiguration:
+  trace: false
+  config-policy: "trivy-config-policy"
+  policy-namespaces:
+    - appshield
+    - builtin
+
+# File patterns to scan
+file-patterns:
+  dockerfile:
+    - "Dockerfile*"
+    - "*.dockerfile"
+  kubernetes:
+    - "*.yaml"
+    - "*.yml"
+  terraform:
+    - "*.tf"
+    - "*.tfvars"
+
+# Output settings
+format: table
+output: ""
+
+# Scanning targets to skip
+skip-dirs:
+  - node_modules
+  - .git
+  - .next
+  - dist
+  - build
+  - coverage
+  - .turbo
+
+skip-files:
+  - "**/*.min.js"
+  - "**/*.min.css"
+  - "**/package-lock.json"
+  - "**/yarn.lock"
+  - "**/pnpm-lock.yaml"
+
+# License scanning (optional)
+license:
+  full: false
+  ignored:
+    - MIT
+    - Apache-2.0
+    - BSD-3-Clause
+    - ISC
+
+# Exit codes
+exit-code: 0  # Don't fail on vulnerabilities (handled by CI script)
+
+# Offline mode settings
+offline-scan: false
+
+# Compliance settings
+compliance:
+  spec:
+    - docker-cis
+    - k8s-nsa
+    - aws-foundational

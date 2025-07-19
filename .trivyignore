@@ -1,0 +1,40 @@
+# Trivy Ignore File
+# This file contains vulnerabilities that have been assessed and deemed acceptable
+# Format: CVE-ID or vulnerability ID (one per line)
+# Add comments explaining why each vulnerability is ignored
+
+# =============================================================================
+# ACCEPTED RISKS - These have been reviewed and accepted by the security team
+# =============================================================================
+
+# Node.js Alpine base image known issues (if using specific versions)
+# CVE-2023-XXXX # Alpine package manager issue - patched in runtime
+# CVE-2023-YYYY # Node.js development dependency - not in production
+
+# =============================================================================
+# FALSE POSITIVES - These are incorrectly flagged by scanners
+# =============================================================================
+
+# Example: CVE-2023-ZZZZ # False positive - affects different package version
+
+# =============================================================================
+# TEMPORARY IGNORES - These should be reviewed and removed regularly
+# =============================================================================
+# Note: Add expiration dates and ticket numbers for tracking
+
+# CVE-2023-AAAA # Temporary ignore until upstream fix available - Review by 2024-02-01 - Ticket: SEC-001
+
+# =============================================================================
+# INSTRUCTIONS FOR ADDING NEW IGNORES
+# =============================================================================
+# 1. Each ignore must have a comment explaining the reason
+# 2. Include risk assessment and mitigation measures
+# 3. Add review dates for temporary ignores
+# 4. Get security team approval for new ignores
+# 5. Regular review and cleanup of this file is required
+
+# =============================================================================
+# DEVELOPMENT DEPENDENCIES ONLY (not in production)
+# =============================================================================
+# Add vulnerabilities that only affect development dependencies here
+# with clear documentation that they don't impact production
