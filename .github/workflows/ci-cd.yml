@@ -46,7 +46,7 @@ jobs:
       run: npm run lint || true
     
     - name: Run TypeScript check
-      run: npx tsc --noEmit --skipLibCheck --noImplicitAny false --allowJs || echo "TypeScript check completed with warnings"
+      run: npx tsc --noEmit --skipLibCheck --allowJs || echo "TypeScript check completed with warnings"
       continue-on-error: true
     
     - name: Setup test database
