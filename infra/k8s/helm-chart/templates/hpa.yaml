@@ -1,0 +1,61 @@
+{{- if .Values.autoscaling.enabled }}
+{{- range $service := list "web" "authApi" "msmeApi" "valuationApi" }}
+{{- $serviceConfig := index $.Values $service }}
+{{- $hpaConfig := index $.Values.autoscaling $service }}
+{{- if $serviceConfig.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "vyapaarmitra.fullname" $ }}-{{ $serviceConfig.name }}
+  labels:
+    {{- include "vyapaarmitra.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $serviceConfig.name }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "vyapaarmitra.fullname" $ }}-{{ $serviceConfig.name }}
+  minReplicas: {{ $hpaConfig.minReplicas }}
+  maxReplicas: {{ $hpaConfig.maxReplicas }}
+  metrics:
+    {{- if $hpaConfig.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ $hpaConfig.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if $hpaConfig.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ $hpaConfig.targetMemoryUtilizationPercentage }}
+    {{- end }}
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      selectPolicy: Min
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      - type: Pods
+        value: 4
+        periodSeconds: 15
+      selectPolicy: Max
+{{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,424 @@
+# VyapaarMitra Helm Chart Values
+# This is a YAML-formatted file.
+
+# Global configuration
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+
+# Common configuration
+common:
+  labels:
+    app: vyapaarmitra
+    environment: production
+  annotations: {}
+
+# Image configuration
+image:
+  registry: ghcr.io
+  repository: your-org/vyapaarmitra
+  tag: latest
+  pullPolicy: Always
+  pullSecrets: []
+
+# Web Frontend (Next.js)
+web:
+  enabled: true
+  name: web
+  replicaCount: 2
+  image:
+    repository: web
+    tag: latest
+  port: 3000
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 3000
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  env:
+    NODE_ENV: production
+    NEXT_TELEMETRY_DISABLED: "1"
+  envFrom: []
+
+# Auth API (FastAPI)
+authApi:
+  enabled: true
+  name: auth-api
+  replicaCount: 2
+  image:
+    repository: auth-api
+    tag: latest
+  port: 8000
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8000
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  env:
+    ENVIRONMENT: production
+    JWT_ALGORITHM: HS256
+    JWT_EXPIRATION_HOURS: "24"
+    PROMETHEUS_ENABLED: "true"
+  envFrom: []
+
+# MSME API (FastAPI)
+msmeApi:
+  enabled: true
+  name: msme-api
+  replicaCount: 2
+  image:
+    repository: msme-api
+    tag: latest
+  port: 8001
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8001
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  env:
+    ENVIRONMENT: production
+    AWS_REGION: ap-south-1
+    PROMETHEUS_ENABLED: "true"
+  envFrom: []
+
+# Valuation API (FastAPI)
+valuationApi:
+  enabled: true
+  name: valuation-api
+  replicaCount: 1
+  image:
+    repository: valuation-api
+    tag: latest
+  port: 8002
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8002
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  env:
+    ENVIRONMENT: production
+    ML_MODEL_PATH: /app/models
+    PROMETHEUS_ENABLED: "true"
+  envFrom: []
+
+# Admin Dashboard
+adminDashboard:
+  enabled: true
+  name: admin-dashboard
+  replicaCount: 1
+  image:
+    repository: admin-dashboard
+    tag: latest
+  port: 3001
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 3001
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  env:
+    NODE_ENV: production
+  envFrom: []
+
+# Background Worker
+worker:
+  enabled: true
+  name: worker
+  replicaCount: 1
+  image:
+    repository: auth-api
+    tag: latest
+  command: ["celery", "-A", "tasks.celery_app", "worker", "--loglevel=info", "--concurrency=2"]
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  env:
+    ENVIRONMENT: production
+  envFrom: []
+
+# Horizontal Pod Autoscaler
+autoscaling:
+  enabled: true
+  web:
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  authApi:
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  msmeApi:
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  valuationApi:
+    minReplicas: 1
+    maxReplicas: 4
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Service configuration
+service:
+  type: ClusterIP
+  annotations: {}
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+  hosts:
+    - host: vyapaarmitra.in
+      paths:
+        - path: /
+          pathType: Prefix
+          service: web
+    - host: admin.vyapaarmitra.in
+      paths:
+        - path: /
+          pathType: Prefix
+          service: admin-dashboard
+    - host: api.vyapaarmitra.in
+      paths:
+        - path: /auth
+          pathType: Prefix
+          service: auth-api
+        - path: /msme
+          pathType: Prefix
+          service: msme-api
+        - path: /valuation
+          pathType: Prefix
+          service: valuation-api
+  tls:
+    - secretName: vyapaarmitra-tls
+      hosts:
+        - vyapaarmitra.in
+        - admin.vyapaarmitra.in
+        - api.vyapaarmitra.in
+
+# ConfigMap configuration
+configMap:
+  enabled: true
+  data:
+    DOMAIN: "vyapaarmitra.in"
+    WEB_URL: "https://vyapaarmitra.in"
+    ADMIN_URL: "https://admin.vyapaarmitra.in"
+    API_BASE_URL: "https://api.vyapaarmitra.in"
+    DEFAULT_TIMEZONE: "Asia/Kolkata"
+    DEFAULT_CURRENCY: "INR"
+    DEFAULT_LANGUAGE: "en"
+
+# Secrets configuration
+secrets:
+  enabled: true
+  data:
+    # Database
+    DATABASE_URL: ""
+    POSTGRES_PASSWORD: ""
+    
+    # Redis
+    REDIS_URL: ""
+    REDIS_PASSWORD: ""
+    
+    # Authentication
+    JWT_SECRET: ""
+    NEXTAUTH_SECRET: ""
+    ADMIN_SECRET_KEY: ""
+    SESSION_SECRET: ""
+    
+    # External services
+    TWILIO_ACCOUNT_SID: ""
+    TWILIO_AUTH_TOKEN: ""
+    SENDGRID_API_KEY: ""
+    AWS_ACCESS_KEY_ID: ""
+    AWS_SECRET_ACCESS_KEY: ""
+    SENTRY_DSN: ""
+
+# PostgreSQL configuration (using Bitnami chart)
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: ""
+    username: vyapaarmitra
+    password: ""
+    database: vyapaarmitra
+  architecture: standalone
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi
+      storageClass: ""
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+# Redis configuration (using Bitnami chart)
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: ""
+  architecture: standalone
+  master:
+    persistence:
+      enabled: true
+      size: 8Gi
+      storageClass: ""
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+# ServiceMonitor for Prometheus
+serviceMonitor:
+  enabled: true
+  namespace: monitoring
+  labels:
+    app: vyapaarmitra
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+
+# Network Policies
+networkPolicy:
+  enabled: true
+  ingress:
+    enabled: true
+  egress:
+    enabled: true
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Security Context
+securityContext:
+  enabled: true
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+
+# Pod Security Context
+podSecurityContext:
+  enabled: true
+  fsGroup: 1001
+
+# Liveness and Readiness Probes
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+  successThreshold: 1
+
+# Persistence for shared volumes
+persistence:
+  enabled: true
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 10Gi
+  annotations: {}
+
+# Node selector, tolerations, and affinity
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Pod annotations for Prometheus scraping
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8000"
+  prometheus.io/path: "/metrics"
+
+# Additional labels
+labels: {}
+
+# Additional annotations
+annotations: {}

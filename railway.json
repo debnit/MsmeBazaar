@@ -110,6 +110,28 @@
       "plan": "hobby"
     }
   },
+  "schedules": {
+    "daily-reports": {
+      "cron": "0 7 * * *",
+      "service": "auth-api",
+      "command": "python /app/jobs/cron/generate_report_pdf.py"
+    },
+    "sheets-sync": {
+      "cron": "0 */6 * * *",
+      "service": "auth-api", 
+      "command": "python /app/jobs/cron/upload_to_drive.py"
+    },
+    "database-backup": {
+      "cron": "0 0 * * 0",
+      "service": "auth-api",
+      "command": "python /app/jobs/cron/backup_db.py"
+    },
+    "cache-refresh": {
+      "cron": "0 */4 * * *",
+      "service": "valuation-api",
+      "command": "python -c \"import redis; r = redis.from_url('$REDIS_URL'); r.flushdb(); print('Cache refreshed')\""
+    }
+  },
   "domains": {
     "vyapaarmitra.in": {
       "service": "web"

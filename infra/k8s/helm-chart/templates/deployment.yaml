@@ -1,0 +1,301 @@
+{{- range $service := list "web" "authApi" "msmeApi" "valuationApi" "adminDashboard" }}
+{{- $serviceConfig := index $.Values $service }}
+{{- if $serviceConfig.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "vyapaarmitra.fullname" $ }}-{{ $serviceConfig.name }}
+  labels:
+    {{- include "vyapaarmitra.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $serviceConfig.name }}
+  {{- with $.Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if not $.Values.autoscaling.enabled }}
+  replicas: {{ $serviceConfig.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "vyapaarmitra.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ $serviceConfig.name }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") $ | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") $ | sha256sum }}
+        {{- with $.Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "vyapaarmitra.selectorLabels" $ | nindent 8 }}
+        app.kubernetes.io/component: {{ $serviceConfig.name }}
+        {{- with $.Values.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with $.Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "vyapaarmitra.serviceAccountName" $ }}
+      {{- if $.Values.podSecurityContext.enabled }}
+      securityContext:
+        {{- omit $.Values.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ $serviceConfig.name }}
+          {{- if $.Values.securityContext.enabled }}
+          securityContext:
+            {{- omit $.Values.securityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          image: "{{ $.Values.image.registry }}/{{ $.Values.image.repository }}/{{ $serviceConfig.image.repository }}:{{ $serviceConfig.image.tag | default $.Values.image.tag }}"
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          {{- if eq $service "worker" }}
+          command:
+            {{- toYaml $serviceConfig.command | nindent 12 }}
+          {{- end }}
+          ports:
+            {{- if ne $service "worker" }}
+            - name: http
+              containerPort: {{ $serviceConfig.port }}
+              protocol: TCP
+            {{- end }}
+          {{- if and $.Values.livenessProbe.enabled (ne $service "worker") }}
+          livenessProbe:
+            httpGet:
+              path: {{ if eq $service "web" }}/api/health{{ else }}/health{{ end }}
+              port: http
+            initialDelaySeconds: {{ $.Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ $.Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ $.Values.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ $.Values.livenessProbe.failureThreshold }}
+            successThreshold: {{ $.Values.livenessProbe.successThreshold }}
+          {{- end }}
+          {{- if and $.Values.readinessProbe.enabled (ne $service "worker") }}
+          readinessProbe:
+            httpGet:
+              path: {{ if eq $service "web" }}/api/health{{ else }}/health{{ end }}
+              port: http
+            initialDelaySeconds: {{ $.Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ $.Values.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ $.Values.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ $.Values.readinessProbe.failureThreshold }}
+            successThreshold: {{ $.Values.readinessProbe.successThreshold }}
+          {{- end }}
+          env:
+            {{- range $key, $value := $serviceConfig.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- if eq $service "web" }}
+            - name: NEXTAUTH_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "vyapaarmitra.fullname" $ }}-config
+                  key: WEB_URL
+            - name: NEXT_PUBLIC_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "vyapaarmitra.fullname" $ }}-config
+                  key: API_BASE_URL
+            {{- end }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vyapaarmitra.fullname" $ }}-secret
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vyapaarmitra.fullname" $ }}-secret
+                  key: REDIS_URL
+            {{- if or (eq $service "authApi") (eq $service "msmeApi") (eq $service "valuationApi") (eq $service "worker") }}
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vyapaarmitra.fullname" $ }}-secret
+                  key: JWT_SECRET
+            {{- end }}
+            {{- if eq $service "web" }}
+            - name: NEXTAUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vyapaarmitra.fullname" $ }}-secret
+                  key: NEXTAUTH_SECRET
+            {{- end }}
+            {{- if eq $service "adminDashboard" }}
+            - name: ADMIN_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vyapaarmitra.fullname" $ }}-secret
+                  key: ADMIN_SECRET_KEY
+            {{- end }}
+            {{- if or (eq $service "authApi") (eq $service "worker") }}
+            - name: TWILIO_ACCOUNT_SID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vyapaarmitra.fullname" $ }}-secret
+                  key: TWILIO_ACCOUNT_SID
+            - name: TWILIO_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vyapaarmitra.fullname" $ }}-secret
+                  key: TWILIO_AUTH_TOKEN
+            - name: SENDGRID_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vyapaarmitra.fullname" $ }}-secret
+                  key: SENDGRID_API_KEY
+            {{- end }}
+            {{- if eq $service "msmeApi" }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vyapaarmitra.fullname" $ }}-secret
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vyapaarmitra.fullname" $ }}-secret
+                  key: AWS_SECRET_ACCESS_KEY
+            {{- end }}
+            - name: SENTRY_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vyapaarmitra.fullname" $ }}-secret
+                  key: SENTRY_DSN
+          {{- with $serviceConfig.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml $serviceConfig.resources | nindent 12 }}
+          {{- if and $.Values.persistence.enabled (eq $service "msmeApi") }}
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+          {{- end }}
+          {{- if and $.Values.persistence.enabled (eq $service "valuationApi") }}
+          volumeMounts:
+            - name: models
+              mountPath: /app/models
+          {{- end }}
+      {{- if $.Values.persistence.enabled }}
+      volumes:
+        {{- if eq $service "msmeApi" }}
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: {{ include "vyapaarmitra.fullname" $ }}-uploads
+        {{- end }}
+        {{- if eq $service "valuationApi" }}
+        - name: models
+          persistentVolumeClaim:
+            claimName: {{ include "vyapaarmitra.fullname" $ }}-models
+        {{- end }}
+      {{- end }}
+      {{- with $serviceConfig.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $serviceConfig.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $serviceConfig.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.worker.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "vyapaarmitra.fullname" . }}-{{ .Values.worker.name }}
+  labels:
+    {{- include "vyapaarmitra.labels" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.worker.name }}
+spec:
+  replicas: {{ .Values.worker.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "vyapaarmitra.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: {{ .Values.worker.name }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print .Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print .Template.BasePath "/secret.yaml") . | sha256sum }}
+      labels:
+        {{- include "vyapaarmitra.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: {{ .Values.worker.name }}
+    spec:
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "vyapaarmitra.serviceAccountName" . }}
+      {{- if .Values.podSecurityContext.enabled }}
+      securityContext:
+        {{- omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Values.worker.name }}
+          {{- if .Values.securityContext.enabled }}
+          securityContext:
+            {{- omit .Values.securityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}/{{ .Values.worker.image.repository }}:{{ .Values.worker.image.tag | default .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            {{- toYaml .Values.worker.command | nindent 12 }}
+          env:
+            {{- range $key, $value := .Values.worker.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vyapaarmitra.fullname" . }}-secret
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vyapaarmitra.fullname" . }}-secret
+                  key: REDIS_URL
+            - name: TWILIO_ACCOUNT_SID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vyapaarmitra.fullname" . }}-secret
+                  key: TWILIO_ACCOUNT_SID
+            - name: TWILIO_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vyapaarmitra.fullname" . }}-secret
+                  key: TWILIO_AUTH_TOKEN
+            - name: SENDGRID_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vyapaarmitra.fullname" . }}-secret
+                  key: SENDGRID_API_KEY
+          resources:
+            {{- toYaml .Values.worker.resources | nindent 12 }}
+      {{- with .Values.worker.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.worker.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.worker.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

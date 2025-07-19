@@ -248,19 +248,17 @@ services:
       - key: SENDGRID_API_KEY
         value: ""
 
-  # Cron Job for scheduled tasks
+  # Daily Report Generation Cron Job
   - type: cron
-    name: vyapaarmitra-scheduler
+    name: vyapaarmitra-daily-reports
     env: python
     region: singapore
     plan: standard
-    schedule: "0 */6 * * *"  # Every 6 hours
+    schedule: "0 7 * * *"  # Daily at 7 AM IST
     buildCommand: |
-      cd msmebazaar-v2/apps/auth-api
-      pip install -r requirements.txt
+      pip install -r jobs/requirements.txt
     startCommand: |
-      cd msmebazaar-v2/apps/auth-api
-      python scripts/cleanup_expired_otps.py
+      python jobs/cron/generate_report_pdf.py
     envVars:
       - key: ENVIRONMENT
         value: production
@@ -274,6 +272,84 @@ services:
           type: redis
           name: vyapaarmitra-redis
           property: connectionString
+      - key: AWS_ACCESS_KEY_ID
+        value: ""
+      - key: AWS_SECRET_ACCESS_KEY
+        value: ""
+      - key: AWS_BUCKET_NAME
+        value: "vyapaarmitra-reports"
+      - key: SENDGRID_API_KEY
+        value: ""
+      - key: SENTRY_DSN
+        value: ""
+      - key: REPORT_RECIPIENTS
+        value: "admin@vyapaarmitra.in"
+
+  # Google Sheets Sync Cron Job
+  - type: cron
+    name: vyapaarmitra-sheets-sync
+    env: python
+    region: singapore
+    plan: standard
+    schedule: "0 */6 * * *"  # Every 6 hours
+    buildCommand: |
+      pip install -r jobs/requirements.txt
+    startCommand: |
+      python jobs/cron/upload_to_drive.py
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: vyapaarmitra-postgres
+          property: connectionString
+      - key: GOOGLE_CREDENTIALS_JSON
+        value: ""
+      - key: GOOGLE_SPREADSHEET_ID
+        value: ""
+      - key: GOOGLE_DRIVE_FOLDER_ID
+        value: ""
+      - key: SENTRY_DSN
+        value: ""
+
+  # Database Backup Cron Job
+  - type: cron
+    name: vyapaarmitra-db-backup
+    env: python
+    region: singapore
+    plan: standard
+    schedule: "0 0 * * 0"  # Weekly on Sunday at midnight
+    buildCommand: |
+      pip install -r jobs/requirements.txt
+    startCommand: |
+      python jobs/cron/backup_db.py
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: vyapaarmitra-postgres
+          property: connectionString
+      - key: AWS_ACCESS_KEY_ID
+        value: ""
+      - key: AWS_SECRET_ACCESS_KEY
+        value: ""
+      - key: AWS_BACKUP_BUCKET
+        value: "vyapaarmitra-backups"
+      - key: AWS_REGION
+        value: "ap-south-1"
+      - key: SLACK_WEBHOOK_URL
+        value: ""
+      - key: TELEGRAM_BOT_TOKEN
+        value: ""
+      - key: TELEGRAM_CHAT_ID
+        value: ""
+      - key: BACKUP_RETENTION_DAYS
+        value: "30"
+      - key: SENTRY_DSN
+        value: ""
 
 databases:
   - name: vyapaarmitra-postgres
