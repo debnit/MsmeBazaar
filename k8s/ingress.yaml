@@ -1,60 +1,94 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: msme-ingress
-  namespace: msme-platform
+  name: msmebazaar-ingress
+  namespace: msmebazaar
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
     nginx.ingress.kubernetes.io/rate-limit: "100"
     nginx.ingress.kubernetes.io/rate-limit-window: "1m"
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
 spec:
   tls:
   - hosts:
-    - msme.example.com
-    - api.msme.example.com
-    secretName: msme-tls
+    - api.msmebazaar.com
+    - msme.msmebazaar.com
+    - valuation.msmebazaar.com
+    - app.msmebazaar.com
+    - admin.msmebazaar.com
+    secretName: msmebazaar-tls
   rules:
-  - host: msme.example.com
+  # Auth API
+  - host: api.msmebazaar.com
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: msme-app-service
-            port:
+            name: auth-api-service
+            port: 
               number: 80
-  - host: api.msme.example.com
+  # MSME API
+  - host: msme.msmebazaar.com
     http:
       paths:
-      - path: /valuation
-        pathType: Prefix
-        backend:
-          service:
-            name: ml-valuation-service
-            port:
-              number: 8001
-      - path: /buyer
-        pathType: Prefix
-        backend:
-          service:
-            name: ml-buyer-scoring-service
-            port:
-              number: 8002
-      - path: /tasks
-        pathType: Prefix
-        backend:
-          service:
-            name: ml-queue-service
-            port:
-              number: 8003
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: msme-app-service
-            port:
+            name: msme-api-service
+            port: 
+              number: 80
+  # Valuation API
+  - host: valuation.msmebazaar.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: valuation-api-service
+            port: 
+              number: 80
+  # Web Frontend
+  - host: app.msmebazaar.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web-frontend-service
+            port: 
+              number: 80
+  # Admin Dashboard
+  - host: admin.msmebazaar.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: admin-dashboard-service
+            port: 
+              number: 80
+  # Fallback for www subdomain (redirect to app)
+  - host: www.msmebazaar.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web-frontend-service
+            port: 
               number: 80

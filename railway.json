@@ -7,5 +7,80 @@
     "numReplicas": 1,
     "sleepApplication": false,
     "restartPolicyType": "ON_FAILURE"
+  },
+  "services": {
+    "auth-api": {
+      "source": "msmebazaar-v2/apps/auth-api",
+      "build": {
+        "builder": "NIXPACKS",
+        "buildCommand": "pip install -r requirements.txt"
+      },
+      "deploy": {
+        "startCommand": "uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2",
+        "healthcheckPath": "/healthz",
+        "healthcheckTimeout": 30,
+        "numReplicas": 1
+      }
+    },
+    "msme-api": {
+      "source": "msmebazaar-v2/apps/msme-api",
+      "build": {
+        "builder": "NIXPACKS",
+        "buildCommand": "pip install -r requirements.txt"
+      },
+      "deploy": {
+        "startCommand": "uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2",
+        "healthcheckPath": "/healthz",
+        "healthcheckTimeout": 30,
+        "numReplicas": 1
+      }
+    },
+    "valuation-api": {
+      "source": "msmebazaar-v2/apps/valuation-api",
+      "build": {
+        "builder": "NIXPACKS",
+        "buildCommand": "pip install -r requirements.txt"
+      },
+      "deploy": {
+        "startCommand": "uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2",
+        "healthcheckPath": "/healthz",
+        "healthcheckTimeout": 30,
+        "numReplicas": 1
+      }
+    },
+    "web": {
+      "source": "msmebazaar-v2/apps/web",
+      "build": {
+        "builder": "NIXPACKS",
+        "buildCommand": "npm ci && npm run build"
+      },
+      "deploy": {
+        "startCommand": "npm start",
+        "healthcheckPath": "/api/health",
+        "healthcheckTimeout": 30,
+        "numReplicas": 1
+      }
+    },
+    "admin-dashboard": {
+      "source": "admin-dashboard/backend",
+      "build": {
+        "builder": "NIXPACKS",
+        "buildCommand": "npm ci && npm run build"
+      },
+      "deploy": {
+        "startCommand": "npm start",
+        "healthcheckPath": "/api/health",
+        "healthcheckTimeout": 30,
+        "numReplicas": 1
+      }
+    }
+  },
+  "plugins": {
+    "postgresql": {
+      "plan": "hobby"
+    },
+    "redis": {
+      "plan": "hobby"
+    }
   }
 }

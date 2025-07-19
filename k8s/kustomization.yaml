@@ -1,0 +1,73 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Common metadata
+commonLabels:
+  app: msmebazaar
+  version: v3
+
+# Namespace
+namespace: msmebazaar
+
+# Resources
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secrets.yaml
+  - postgres.yaml
+  - redis.yaml
+  - auth-api-deployment.yaml
+  - msme-api-deployment.yaml
+  - valuation-api-deployment.yaml
+  - web-deployment.yaml
+  - admin-dashboard-deployment.yaml
+  - services.yaml
+  - ingress.yaml
+  - hpa.yaml
+
+# ConfigMap Generator
+configMapGenerator:
+  - name: app-config
+    literals:
+      - NODE_ENV=production
+      - PYTHON_VERSION=3.11
+      - NODE_VERSION=18
+      - JWT_ALGORITHM=HS256
+      - JWT_EXPIRATION_HOURS=24
+      - OTP_EXPIRATION_MINUTES=5
+      - AWS_REGION=us-east-1
+      - AWS_BUCKET_NAME=msmebazaar-uploads
+      - SENDGRID_FROM_EMAIL=noreply@msmebazaar.com
+
+# Secret Generator
+secretGenerator:
+  - name: app-secrets
+    literals:
+      - JWT_SECRET=change-me-in-production
+      - NEXTAUTH_SECRET=change-me-in-production
+      - ADMIN_SECRET_KEY=change-me-in-production
+      - TWILIO_ACCOUNT_SID=change-me
+      - TWILIO_AUTH_TOKEN=change-me
+      - TWILIO_PHONE_NUMBER=change-me
+      - SENDGRID_API_KEY=change-me
+      - AWS_ACCESS_KEY_ID=change-me
+      - AWS_SECRET_ACCESS_KEY=change-me
+      - SENTRY_DSN=change-me
+
+# Images to use
+images:
+  - name: msmebazaar/auth-api
+    newTag: latest
+  - name: msmebazaar/msme-api
+    newTag: latest
+  - name: msmebazaar/valuation-api
+    newTag: latest
+  - name: msmebazaar/web
+    newTag: latest
+  - name: msmebazaar/admin-dashboard
+    newTag: latest
+
+# Patches for different environments
+patchesStrategicMerge:
+  - production/resource-limits.yaml
+  - production/security-context.yaml

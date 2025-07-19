@@ -3,7 +3,6 @@ services:
   - type: pserv
     name: msmebazaar-postgres
     env: docker
-    dockerfilePath: ./infrastructure/docker/postgres/Dockerfile
     plan: standard
     region: oregon
     envVars:
@@ -25,323 +24,263 @@ services:
     region: oregon
     maxmemoryPolicy: allkeys-lru
 
-  # Recommendation Service
+  # Next.js Web Frontend
   - type: web
-    name: recommendation-service
-    env: python
-    buildCommand: |
-      cd microservices/recommendation-service
-      pip install -r requirements.txt
-    startCommand: |
-      cd microservices/recommendation-service
-      uvicorn app:app --host 0.0.0.0 --port $PORT --workers 4
+    name: msmebazaar-web
+    env: node
+    region: oregon
     plan: standard
-    region: oregon
-    healthCheckPath: /api/recommendation_stats
-    envVars:
-      - key: POSTGRES_HOST
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: host
-      - key: POSTGRES_PORT
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: port
-      - key: POSTGRES_DB
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_DB
-      - key: POSTGRES_USER
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_USER
-      - key: POSTGRES_PASSWORD
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_PASSWORD
-      - key: REDIS_HOST
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: port
-      - key: REDIS_PASSWORD
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: password
-      - key: ENVIRONMENT
-        value: production
-      - key: MLFLOW_TRACKING_URI
-        value: https://mlflow-server-msmebazaar.onrender.com
-    autoDeploy: true
-
-  # ML Monitoring Service
-  - type: web
-    name: ml-monitoring-service
-    env: python
     buildCommand: |
-      cd microservices/ml-monitoring-service
-      pip install -r requirements.txt
-    startCommand: |
-      cd microservices/ml-monitoring-service
-      uvicorn app:app --host 0.0.0.0 --port $PORT --workers 2
-    plan: standard
-    region: oregon
-    healthCheckPath: /api/models/status
-    envVars:
-      - key: POSTGRES_HOST
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: host
-      - key: POSTGRES_PORT
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: port
-      - key: POSTGRES_DB
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_DB
-      - key: POSTGRES_USER
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_USER
-      - key: POSTGRES_PASSWORD
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_PASSWORD
-      - key: REDIS_HOST
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: port
-      - key: REDIS_PASSWORD
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: password
-      - key: ENVIRONMENT
-        value: production
-      - key: MLFLOW_TRACKING_URI
-        value: https://mlflow-server-msmebazaar.onrender.com
-      - key: CELERY_BROKER_URL
-        value: redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/0
-      - key: CELERY_RESULT_BACKEND
-        value: redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/0
-    autoDeploy: true
-
-  # Transaction Matching Service
-  - type: web
-    name: transaction-matching-service
-    env: python
-    buildCommand: |
-      cd microservices/transaction-matching-service
-      pip install -r requirements.txt
-    startCommand: |
-      cd microservices/transaction-matching-service
-      uvicorn app:app --host 0.0.0.0 --port $PORT --workers 2
-    plan: standard
-    region: oregon
-    healthCheckPath: /api/matching_stats
-    envVars:
-      - key: POSTGRES_HOST
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: host
-      - key: POSTGRES_PORT
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: port
-      - key: POSTGRES_DB
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_DB
-      - key: POSTGRES_USER
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_USER
-      - key: POSTGRES_PASSWORD
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_PASSWORD
-      - key: REDIS_HOST
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: port
-      - key: REDIS_PASSWORD
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: password
-      - key: ENVIRONMENT
-        value: production
-    autoDeploy: true
-
-  # MLflow Server
-  - type: web
-    name: mlflow-server
-    env: python
-    buildCommand: |
-      pip install mlflow psycopg2-binary boto3
-    startCommand: |
-      mlflow server --host 0.0.0.0 --port $PORT --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/mlflow --default-artifact-root s3://msmebazaar-mlflow-artifacts
-    plan: starter
-    region: oregon
-    envVars:
-      - key: POSTGRES_HOST
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: host
-      - key: POSTGRES_PORT
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: port
-      - key: POSTGRES_USER
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_USER
-      - key: POSTGRES_PASSWORD
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_PASSWORD
-      - key: AWS_ACCESS_KEY_ID
-        sync: false
-      - key: AWS_SECRET_ACCESS_KEY
-        sync: false
-      - key: AWS_DEFAULT_REGION
-        value: us-west-2
-    autoDeploy: true
-
-  # Celery Worker
-  - type: worker
-    name: celery-worker
-    env: python
-    buildCommand: |
-      cd microservices/ml-monitoring-service
-      pip install -r requirements.txt
-    startCommand: |
-      cd microservices/ml-monitoring-service
-      celery -A app.celery worker --loglevel=info --concurrency=2
-    plan: starter
-    region: oregon
-    envVars:
-      - key: POSTGRES_HOST
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: host
-      - key: POSTGRES_PORT
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: port
-      - key: POSTGRES_DB
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_DB
-      - key: POSTGRES_USER
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_USER
-      - key: POSTGRES_PASSWORD
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_PASSWORD
-      - key: REDIS_HOST
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: port
-      - key: REDIS_PASSWORD
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: password
-      - key: CELERY_BROKER_URL
-        value: redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/0
-      - key: CELERY_RESULT_BACKEND
-        value: redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/0
-      - key: ENVIRONMENT
-        value: production
-    autoDeploy: true
-
-  # Frontend (React)
-  - type: web
-    name: msmebazaar-frontend
-    env: static
-    buildCommand: |
-      cd frontend
+      cd msmebazaar-v2/apps/web
       npm ci
       npm run build
-    staticPublishPath: ./frontend/build
-    plan: starter
-    region: oregon
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
+    startCommand: |
+      cd msmebazaar-v2/apps/web
+      npm start
+    healthCheckPath: /api/health
     envVars:
-      - key: REACT_APP_API_URL
-        value: https://recommendation-service-msmebazaar.onrender.com
-      - key: REACT_APP_ML_MONITORING_URL
-        value: https://ml-monitoring-service-msmebazaar.onrender.com
-      - key: REACT_APP_TRANSACTION_MATCHING_URL
-        value: https://transaction-matching-service-msmebazaar.onrender.com
-      - key: REACT_APP_ENVIRONMENT
+      - key: NODE_ENV
         value: production
-    autoDeploy: true
+      - key: NEXTAUTH_URL
+        value: https://msmebazaar-web.onrender.com
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: msmebazaar-redis
+          property: connectionString
+      - key: AUTH_API_URL
+        value: https://msmebazaar-auth-api.onrender.com
+      - key: MSME_API_URL
+        value: https://msmebazaar-msme-api.onrender.com
+
+  # Admin Dashboard Frontend
+  - type: web
+    name: msmebazaar-admin
+    env: node
+    region: oregon
+    plan: standard
+    buildCommand: |
+      cd admin-dashboard/backend
+      npm ci
+      npm run build
+    startCommand: |
+      cd admin-dashboard/backend
+      npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: msmebazaar-redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_SECRET_KEY
+        generateValue: true
+
+  # Authentication API (FastAPI)
+  - type: web
+    name: msmebazaar-auth-api
+    env: python
+    region: oregon
+    plan: standard
+    buildCommand: |
+      cd msmebazaar-v2/apps/auth-api
+      pip install -r requirements.txt
+    startCommand: |
+      cd msmebazaar-v2/apps/auth-api
+      uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2
+    healthCheckPath: /healthz
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: msmebazaar-redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: JWT_EXPIRATION_HOURS
+        value: 24
+      - key: OTP_EXPIRATION_MINUTES
+        value: 5
+      - key: SENTRY_DSN
+        value: ""
+      - key: TWILIO_ACCOUNT_SID
+        value: ""
+      - key: TWILIO_AUTH_TOKEN
+        value: ""
+      - key: TWILIO_PHONE_NUMBER
+        value: ""
+      - key: SENDGRID_API_KEY
+        value: ""
+      - key: SENDGRID_FROM_EMAIL
+        value: "noreply@msmebazaar.com"
+
+  # MSME Business API (FastAPI)
+  - type: web
+    name: msmebazaar-msme-api
+    env: python
+    region: oregon
+    plan: standard
+    buildCommand: |
+      cd msmebazaar-v2/apps/msme-api
+      pip install -r requirements.txt
+    startCommand: |
+      cd msmebazaar-v2/apps/msme-api
+      uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2
+    healthCheckPath: /healthz
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: msmebazaar-redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SENTRY_DSN
+        value: ""
+      - key: AWS_ACCESS_KEY_ID
+        value: ""
+      - key: AWS_SECRET_ACCESS_KEY
+        value: ""
+      - key: AWS_BUCKET_NAME
+        value: msmebazaar-uploads
+      - key: AWS_REGION
+        value: us-east-1
+
+  # Valuation API (FastAPI)
+  - type: web
+    name: msmebazaar-valuation-api
+    env: python
+    region: oregon
+    plan: standard
+    buildCommand: |
+      cd msmebazaar-v2/apps/valuation-api
+      pip install -r requirements.txt
+    startCommand: |
+      cd msmebazaar-v2/apps/valuation-api
+      uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2
+    healthCheckPath: /healthz
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: msmebazaar-redis
+          property: connectionString
+      - key: ML_MODEL_PATH
+        value: /app/models
+      - key: SENTRY_DSN
+        value: ""
+
+  # Background Worker for async tasks
+  - type: worker
+    name: msmebazaar-worker
+    env: python
+    region: oregon
+    plan: standard
+    buildCommand: |
+      cd msmebazaar-v2/apps/auth-api
+      pip install -r requirements.txt
+    startCommand: |
+      cd msmebazaar-v2/apps/auth-api
+      python -m celery worker -A tasks.celery_app --loglevel=info
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: msmebazaar-redis
+          property: connectionString
+      - key: TWILIO_ACCOUNT_SID
+        value: ""
+      - key: TWILIO_AUTH_TOKEN
+        value: ""
+      - key: SENDGRID_API_KEY
+        value: ""
+
+  # Cron Job for scheduled tasks
+  - type: cron
+    name: msmebazaar-scheduler
+    env: python
+    region: oregon
+    plan: standard
+    schedule: "0 */6 * * *"  # Every 6 hours
+    buildCommand: |
+      cd msmebazaar-v2/apps/auth-api
+      pip install -r requirements.txt
+    startCommand: |
+      cd msmebazaar-v2/apps/auth-api
+      python scripts/cleanup_expired_otps.py
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: msmebazaar-redis
+          property: connectionString
 
 databases:
   - name: msmebazaar-postgres
     databaseName: msmebazaar
     user: postgres
+    plan: standard
+    region: oregon
 
-envVarGroups:
-  - name: database-config
-    envVars:
-      - key: POSTGRES_DB
-        value: msmebazaar
-      - key: POSTGRES_USER
-        value: postgres
+environments:
+  - name: NODE_ENV
+    value: production
+  - name: PYTHON_VERSION
+    value: "3.11"
+  - name: NODE_VERSION
+    value: "18"
