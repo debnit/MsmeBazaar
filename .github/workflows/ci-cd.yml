@@ -151,84 +151,39 @@ jobs:
         npm ci --no-audit --no-fund --prefer-offline
         echo "✅ Dependencies installed"
 
-    # ✅ IMPROVED: Modern Trivy installation with robust configuration
-    - name: 🔧 Install Trivy
-      run: |
-        echo "🔧 Installing Trivy security scanner..."
-        curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.48.3
-        trivy --version
-        
-        # Configure Trivy with extended timeouts and retries
-        echo "🔧 Configuring Trivy for CI environment..."
-        export TRIVY_TIMEOUT=10m
-        export TRIVY_DB_REPOSITORY=ghcr.io/aquasecurity/trivy-db
-        export TRIVY_JAVA_DB_REPOSITORY=ghcr.io/aquasecurity/trivy-java-db
-        
-        # Pre-download DB with retries
-        echo "📥 Pre-downloading Trivy vulnerability database..."
-        for i in {1..3}; do
-          if trivy image --download-db-only --timeout 10m; then
-            echo "✅ Trivy database downloaded successfully on attempt $i"
-            break
-          else
-            echo "⚠️ Database download attempt $i failed, retrying..."
-            sleep 30
-          fi
-        done
-        
-        echo "✅ Trivy installed and configured successfully"
+    # ✅ ROBUST: Use official Trivy action with built-in timeout handling
+    - name: 🔧 Cache Trivy DB
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/trivy
+        key: trivy-db-${{ github.run_id }}
+        restore-keys: |
+          trivy-db-
 
     - name: 🔍 Scan filesystem vulnerabilities
-      env:
-        TRIVY_TIMEOUT: 10m
-        TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db
-        TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db
-      run: |
-        echo "🔍 Scanning filesystem for vulnerabilities..."
-        echo "📋 Using .trivyignore for acceptable risks..."
-        
-        # Create empty SARIF file as fallback
-        echo '{"version":"2.1.0","$schema":"https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json","runs":[{"tool":{"driver":{"name":"Trivy","version":"0.48.3"}},"results":[]}]}' > trivy-fs-results.sarif
-        
-        # Run Trivy scan with extended timeout
-        echo "🔄 Running filesystem scan with 10-minute timeout..."
-        trivy fs . \
-          --format sarif \
-          --output trivy-fs-results.sarif \
-          --severity HIGH,CRITICAL \
-          --ignorefile .trivyignore \
-          --timeout 10m \
-          --exit-code 0 \
-          --quiet || echo "⚠️ Trivy scan completed with warnings"
-          
-        # Verify SARIF file exists
-        if [ -f "trivy-fs-results.sarif" ]; then
-          echo "📊 SARIF file generated successfully"
-        else
-          echo "⚠️ SARIF file not found, creating empty one"
-          echo '{"version":"2.1.0","$schema":"https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json","runs":[{"tool":{"driver":{"name":"Trivy","version":"0.48.3"}},"results":[]}]}' > trivy-fs-results.sarif
-        fi
-        
-        echo "✅ Filesystem scan completed (with ignore rules applied)"
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-fs-results.sarif'
+        severity: 'HIGH,CRITICAL'
+        timeout: '15m'
+        exit-code: '0'
+        trivyignores: '.trivyignore'
       continue-on-error: true
 
     - name: 🔍 Scan dependencies
-      env:
-        TRIVY_TIMEOUT: 10m
-        TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db
-        TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db
-      run: |
-        echo "🔍 Scanning Node.js dependencies..."
-        echo "📋 Using .trivyignore for acceptable dependency risks..."
-        trivy fs . \
-          --scanners vuln \
-          --format table \
-          --severity HIGH,CRITICAL \
-          --ignorefile .trivyignore \
-          --timeout 10m \
-          --exit-code 0 \
-          --quiet || echo "⚠️ Dependency scan completed with warnings"
-        echo "✅ Dependency scan completed (with ignore rules applied)"
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'table'
+        scanners: 'vuln'
+        severity: 'HIGH,CRITICAL'
+        timeout: '15m'
+        exit-code: '0'
+        trivyignores: '.trivyignore'
       continue-on-error: true
 
     # ✅ FIXED: Build Docker image for security scanning
@@ -239,35 +194,15 @@ jobs:
         echo "✅ Docker image built successfully"
 
     - name: 🔍 Scan Docker image
-      env:
-        TRIVY_TIMEOUT: 10m
-        TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db
-        TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db
-      run: |
-        echo "🔍 Scanning Docker image for vulnerabilities..."
-        
-        # Create empty SARIF file as fallback
-        echo '{"version":"2.1.0","$schema":"https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json","runs":[{"tool":{"driver":{"name":"Trivy","version":"0.48.3"}},"results":[]}]}' > trivy-image-results.sarif
-        
-        # Run Docker image scan with extended timeout
-        echo "🔄 Running Docker image scan with 10-minute timeout..."
-        trivy image \
-          --format sarif \
-          --output trivy-image-results.sarif \
-          --severity HIGH,CRITICAL \
-          --timeout 10m \
-          --exit-code 0 \
-          security-scan-image:latest || echo "⚠️ Docker image scan completed with warnings"
-          
-        # Verify SARIF file exists
-        if [ -f "trivy-image-results.sarif" ]; then
-          echo "📊 Docker image SARIF file generated successfully"
-        else
-          echo "⚠️ Docker image SARIF file not found, creating empty one"
-          echo '{"version":"2.1.0","$schema":"https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json","runs":[{"tool":{"driver":{"name":"Trivy","version":"0.48.3"}},"results":[]}]}' > trivy-image-results.sarif
-        fi
-        
-        echo "✅ Docker image scan completed"
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'image'
+        image-ref: 'security-scan-image:latest'
+        format: 'sarif'
+        output: 'trivy-image-results.sarif'
+        severity: 'HIGH,CRITICAL'
+        timeout: '15m'
+        exit-code: '0'
       continue-on-error: true
 
     - name: 📊 Upload security results
