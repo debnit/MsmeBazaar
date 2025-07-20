@@ -418,46 +418,46 @@ env:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-# ✅ Optional: Validate Docker build (without pushing)
-- name: 🔍 Validate Docker build
-  uses: docker/build-push-action@v5
-  with:
-    context: .
-    file: ./Dockerfile
-    push: false
-    load: false
-    tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:validation
-    cache-from: type=gha
-    cache-to: type=gha,mode=max
+    # ✅ Optional: Validate Docker build (without pushing)
+    - name: 🔍 Validate Docker build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: false
+        load: false
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:validation
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
 
-# ✅ Robust Docker build and push
-- name: 🏗️ Build and push Docker image
-  id: build
-  uses: docker/build-push-action@v5
-  with:
-    context: .
-    push: true
-    tags: |
-      ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-      ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-    labels: |
-      org.opencontainers.image.title=${{ github.repository }}
-      org.opencontainers.image.description=MSME Bazaar Node.js Application
-      org.opencontainers.image.url=https://github.com/${{ github.repository }}
-      org.opencontainers.image.source=https://github.com/${{ github.repository }}
-      org.opencontainers.image.version=${{ github.sha }}
+    # ✅ Robust Docker build and push
+    - name: 🏗️ Build and push Docker image
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: |
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        labels: |
+          org.opencontainers.image.title=${{ github.repository }}
+          org.opencontainers.image.description=MSME Bazaar Node.js Application
+          org.opencontainers.image.url=https://github.com/${{ github.repository }}
+          org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          org.opencontainers.image.version=${{ github.sha }}
           org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
-    org.opencontainers.image.revision=${{ github.sha }}
-  file: ./Dockerfile
-  cache-from: type=gha
-  cache-to: type=gha,mode=max
-  provenance: true
+          org.opencontainers.image.revision=${{ github.sha }}
+        file: ./Dockerfile
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        provenance: true
 
-# ✅ Remote verification using Buildx (no local Docker needed)
-- name: ✅ Verify Docker image (remote)
-  run: |
-    echo "✅ Verifying Docker image (remote)..."
-    docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+    # ✅ Remote verification using Buildx (no local Docker needed)
+    - name: ✅ Verify Docker image (remote)
+      run: |
+        echo "✅ Verifying Docker image (remote)..."
+        docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
   # ============================================================================
   # 🚀 RENDER DEPLOYMENT JOB
