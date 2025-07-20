@@ -138,60 +138,60 @@ jobs:
 
   name: Security Scan
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  trivy-scan:
-    runs-on: ubuntu-latest
-    steps:
+  on:
+    push:
+      branches: [ main ]
+    pull_request:
+      branches: [ main ]
+  
+  jobs:
+    trivy-scan:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+  
+        - name: Run Trivy vulnerability scanner
+          uses: aquasecurity/trivy-action@v0.17.0
+          with:
+            scan-type: fs
+            config: trivy.yaml
+            severity: CRITICAL,HIGH
+            exit-code: 1
+            ignore-unfixed: true
+          continue-on-error: true  # 👈 Add this to prevent build failure
+  
+    performance-test:
+      runs-on: ubuntu-latest
+      if: github.ref == 'refs/heads/main'
+      
+      steps:
       - uses: actions/checkout@v4
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@v0.17.0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          scan-type: fs
-          config: trivy.yaml
-          severity: CRITICAL,HIGH
-          exit-code: 1
-          ignore-unfixed: true
-        continue-on-error: true  # 👈 Add this to prevent build failure
-
-  performance-test:
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: 'package-lock.json'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Start application
-      run: |
-        npm run start &
-        sleep 15
-    
-    - name: Run load tests
-      run: |
-        npx autocannon -c 10 -d 30 -p 10 http://localhost:5000/health
-        npx autocannon -c 5 -d 30 -p 5 http://localhost:5000/api/msme/listings
-    
-    - name: Performance baseline check
-      run: |
-        # Check if response time is under 200ms
-        response_time=$(curl -w "%{time_total}" -s -o /dev/null http://localhost:5000/health)
-        if (( $(echo "$response_time > 0.2" | bc -l) )); then
-          echo "Performance regression detected: ${response_time}s > 200ms"
-          exit 1
-        fi
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'package-lock.json'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Start application
+        run: |
+          npm run start &
+          sleep 15
+      
+      - name: Run load tests
+        run: |
+          npx autocannon -c 10 -d 30 -p 10 http://localhost:5000/health
+          npx autocannon -c 5 -d 30 -p 5 http://localhost:5000/api/msme/listings
+      
+      - name: Performance baseline check
+        run: |
+          # Check if response time is under 200ms
+          response_time=$(curl -w "%{time_total}" -s -o /dev/null http://localhost:5000/health)
+          if (( $(echo "$response_time > 0.2" | bc -l) )); then
+            echo "Performance regression detected: ${response_time}s > 200ms"
+            exit 1
+          fi
