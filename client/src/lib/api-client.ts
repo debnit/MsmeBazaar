@@ -18,7 +18,9 @@ export async function apiRequest(url: string, options: RequestInit = {}) {
     },
   };
 
-  const response = await fetch(`${import.meta.env.VITE_API_URL || ''}${url}`, mergedOptions);
+  const apiBaseUrl = import.meta.env.VITE_API_URL || 
+    (typeof window !== 'undefined' ? `${window.location.origin}/api` : '/api');
+  const response = await fetch(`${apiBaseUrl}${url}`, mergedOptions);
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Network error' }));

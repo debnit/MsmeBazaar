@@ -16,6 +16,11 @@ export default defineConfig({
         ]
       : []),
   ],
+  define: {
+    // Ensure environment variables are available in production
+    'import.meta.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL || ''),
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+  },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
