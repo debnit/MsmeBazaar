@@ -1,35 +1,52 @@
 #!/bin/bash
 
-# Render Build Script - Production Ready
-set -e
+# Render Build Script for MSMEBazaar
+# This script runs on Render to build the application
 
-echo "🚀 Starting Render build process..."
+set -e  # Exit on any error
+
+echo "🚀 Starting MSMEBazaar build process..."
 
 # Set production environment
 export NODE_ENV=production
 
-echo "📦 Installing all dependencies for build..."
-npm ci --no-audit --no-fund
+# Install dependencies
+echo "📦 Installing dependencies..."
+npm ci --only=production --legacy-peer-deps
 
-echo "🏗️ Building client (frontend)..."
+# Install dev dependencies needed for build
+echo "🔧 Installing build dependencies..."
+npm install --legacy-peer-deps
+
+# Build the client (frontend)
+echo "🎨 Building client (frontend)..."
 npm run build:client
 
-echo "🏗️ Building server (backend)..."
+# Build the server (backend)
+echo "⚙️ Building server (backend)..."
 npm run build:server
 
-echo "📁 Checking build outputs..."
-ls -la dist/
-echo "Client build contents:"
-ls -la dist/public/ || echo "No client build found"
+# Verify build files exist
+echo "✅ Verifying build files..."
+if [ ! -f "dist/index.js" ]; then
+    echo "❌ Server build failed - dist/index.js not found"
+    exit 1
+fi
 
-echo "🧹 Cleaning up dev dependencies..."
-npm prune --production
+if [ ! -f "dist/public/index.html" ]; then
+    echo "❌ Client build failed - dist/public/index.html not found"
+    exit 1
+fi
 
+echo "🎉 Build completed successfully!"
 echo "📊 Build summary:"
-echo "✅ Client built to: dist/public"
-echo "✅ Server built to: dist/index.js"
-echo "📦 Production dependencies only"
+echo "   - Server: dist/index.js ($(du -h dist/index.js | cut -f1))"
+echo "   - Client: dist/public/ ($(du -sh dist/public/ | cut -f1))"
+echo "   - Assets: $(find dist/public -name "*.js" -o -name "*.css" | wc -l) files"
 
+# List generated files for debugging
+echo "📁 Generated files:"
 ls -la dist/
+ls -la dist/public/
 
-echo "🎉 Render build completed successfully!"
+echo "✅ MSMEBazaar build ready for production!"
