@@ -8,6 +8,8 @@ import { ChatOpenAI } from '@langchain/openai';
 import { ConversationalRetrievalQAChain } from 'langchain/chains';
 import { OpenAIEmbeddings } from '@langchain/openai';
 import { BufferMemory } from 'langchain/memory';
+import { Document } from 'langchain/document';
+import { PineconeStore } from '@langchain/pinecone';
 import { db } from '../db';
 import { users, msmeListings, conversations, knowledgeBase } from '@shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
@@ -288,6 +290,29 @@ export class MSMESmartAssistant {
       // Create retrieval chain if not exists
       let chain = this.conversationChains.get(context.sessionId);
       if (!chain) {
+        // Check if vector search is available
+        if (!process.env.PINECONE_API_KEY || !process.env.OPENAI_API_KEY) {
+          // Fallback to simple chat without retrieval if vector search is disabled
+          const simpleResponse = await this.chatModel.invoke([
+            { role: 'system', content: this.getRoleContext(context.userRole) },
+            { role: 'user', content: enhancedQuery }
+          ]);
+
+          // Generate suggestions and actions without vector search
+          const suggestions = await this.generateSuggestions(query, context);
+          const actions = await this.generateActions(query, context, { text: simpleResponse.content });
+
+          await this.storeConversation(context, query, simpleResponse.content);
+
+          return {
+            message: simpleResponse.content,
+            suggestions,
+            actions,
+            confidence: 0.7, // Lower confidence without retrieval
+            sources: []
+          };
+        }
+
         const vectorStore = await PineconeStore.fromExistingIndex(
           this.embeddings,
           { pineconeIndex: vectorSearch.pinecone.index('msme-knowledge') }

@@ -9,8 +9,11 @@ console.log('🚀 Starting MSME Bazaar in production mode...');
 process.env.NODE_ENV = 'production';
 
 // Verify required files exist
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const requiredFiles = [
   'dist/index.js',
@@ -19,7 +22,8 @@ const requiredFiles = [
 
 console.log('📋 Checking required files...');
 for (const file of requiredFiles) {
-  if (!fs.existsSync(path.resolve(file))) {
+  const fullPath = path.resolve(__dirname, file);
+  if (!fs.existsSync(fullPath)) {
     console.error(`❌ Missing required file: ${file}`);
     console.error('Please run the build process first:');
     console.error('  npm run build:client');
@@ -37,4 +41,7 @@ console.log(`PORT: ${process.env.PORT || 3000}`);
 console.log('🎯 Starting server...');
 
 // Import and start the server
-require('./dist/index.js');
+import('./dist/index.js').catch(error => {
+  console.error('❌ Failed to start server:', error);
+  process.exit(1);
+});
