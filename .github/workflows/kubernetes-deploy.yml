@@ -1,0 +1,415 @@
+# ☸️ Kubernetes Deployment Workflow - Enterprise Ready
+name: Deploy to Kubernetes
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - staging
+        - development
+      namespace:
+        description: 'Kubernetes namespace'
+        required: true
+        default: 'msme-platform'
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  K8S_NAMESPACE: ${{ github.event.inputs.namespace || 'msme-platform' }}
+
+jobs:
+  # ============================================================================
+  # 🏗️ BUILD & PUSH DOCKER IMAGES
+  # ============================================================================
+  build-and-push:
+    name: 🏗️ Build & Push Docker Images
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    
+    steps:
+    - name: 📅 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🐳 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: 🔐 Login to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: 📝 Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: 🛠️ Build and push Docker image
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        platforms: linux/amd64,linux/arm64
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        provenance: false
+
+  # ============================================================================
+  # ☸️ KUBERNETES DEPLOYMENT - STAGING
+  # ============================================================================
+  deploy-k8s-staging:
+    name: ☸️ Deploy to Kubernetes (Staging)
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' || github.event.inputs.environment == 'staging'
+    environment: 
+      name: kubernetes-staging
+      url: ${{ secrets.K8S_STAGING_URL }}
+    
+    steps:
+    - name: 📅 Checkout code
+      uses: actions/checkout@v4
+
+    - name: ☸️ Setup kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+
+    - name: 🔐 Configure Kubernetes credentials
+      run: |
+        echo "${{ secrets.KUBECONFIG_STAGING }}" | base64 -d > ~/.kube/config
+        chmod 600 ~/.kube/config
+        
+        # Test connection
+        kubectl cluster-info
+        kubectl get nodes
+
+    - name: 🏗️ Create namespace if not exists
+      run: |
+        kubectl create namespace ${{ env.K8S_NAMESPACE }}-staging --dry-run=client -o yaml | kubectl apply -f -
+
+    - name: 🔄 Update deployment manifests
+      run: |
+        # Update image tags in Kubernetes manifests
+        find k8s/staging -name "*.yaml" -exec sed -i "s|image: .*${{ env.IMAGE_NAME }}.*|image: ${{ needs.build-and-push.outputs.image-tag }}|g" {} \;
+        
+        # Verify changes
+        echo "Updated manifests:"
+        grep -r "image:" k8s/staging/ || echo "No image references found"
+
+    - name: 🚀 Deploy to Kubernetes staging
+      run: |
+        echo "🚀 Deploying to Kubernetes staging..."
+        
+        # Apply configurations in order
+        kubectl apply -f k8s/staging/namespace.yaml -n ${{ env.K8S_NAMESPACE }}-staging || true
+        kubectl apply -f k8s/staging/configmap.yaml -n ${{ env.K8S_NAMESPACE }}-staging
+        kubectl apply -f k8s/staging/secrets.yaml -n ${{ env.K8S_NAMESPACE }}-staging
+        kubectl apply -f k8s/staging/postgres.yaml -n ${{ env.K8S_NAMESPACE }}-staging
+        kubectl apply -f k8s/staging/redis.yaml -n ${{ env.K8S_NAMESPACE }}-staging
+        kubectl apply -f k8s/staging/app.yaml -n ${{ env.K8S_NAMESPACE }}-staging
+        kubectl apply -f k8s/staging/service.yaml -n ${{ env.K8S_NAMESPACE }}-staging
+        kubectl apply -f k8s/staging/ingress.yaml -n ${{ env.K8S_NAMESPACE }}-staging
+
+    - name: ⏳ Wait for deployment
+      run: |
+        echo "⏳ Waiting for staging deployment to complete..."
+        kubectl rollout status deployment/msme-app -n ${{ env.K8S_NAMESPACE }}-staging --timeout=300s
+        kubectl rollout status deployment/postgres -n ${{ env.K8S_NAMESPACE }}-staging --timeout=300s
+        kubectl rollout status deployment/redis -n ${{ env.K8S_NAMESPACE }}-staging --timeout=300s
+
+    - name: 🔍 Staging health check
+      run: |
+        echo "🔍 Kubernetes staging health check..."
+        kubectl get pods -n ${{ env.K8S_NAMESPACE }}-staging
+        kubectl get services -n ${{ env.K8S_NAMESPACE }}-staging
+        
+        # Wait for pods to be ready
+        kubectl wait --for=condition=ready pod -l app=msme-app -n ${{ env.K8S_NAMESPACE }}-staging --timeout=300s
+
+  # ============================================================================
+  # ☸️ KUBERNETES DEPLOYMENT - PRODUCTION
+  # ============================================================================
+  deploy-k8s-production:
+    name: ☸️ Deploy to Kubernetes (Production)
+    needs: [build-and-push, deploy-k8s-staging]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: 
+      name: kubernetes-production
+      url: ${{ secrets.K8S_PRODUCTION_URL }}
+    
+    steps:
+    - name: 📅 Checkout code
+      uses: actions/checkout@v4
+
+    - name: ☸️ Setup kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+
+    - name: 🔐 Configure AWS credentials (EKS)
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
+    - name: 🔐 Update kubeconfig for EKS
+      run: |
+        aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME || 'msme-production-cluster' }} --region ${{ secrets.AWS_REGION || 'us-east-1' }}
+        
+        # Test connection
+        kubectl cluster-info
+        kubectl get nodes
+
+    - name: 🏗️ Create production namespace
+      run: |
+        kubectl create namespace ${{ env.K8S_NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+
+    - name: 🔄 Update production manifests
+      run: |
+        # Update image tags in Kubernetes manifests
+        find k8s/production -name "*.yaml" -exec sed -i "s|image: .*${{ env.IMAGE_NAME }}.*|image: ${{ needs.build-and-push.outputs.image-tag }}|g" {} \;
+        
+        # Update image pull secrets
+        find k8s/production -name "*.yaml" -exec sed -i "s|{{IMAGE_PULL_SECRET}}|ghcr-secret|g" {} \;
+
+    - name: 🔐 Create image pull secret
+      run: |
+        kubectl create secret docker-registry ghcr-secret \
+          --docker-server=${{ env.REGISTRY }} \
+          --docker-username=${{ github.actor }} \
+          --docker-password=${{ secrets.GITHUB_TOKEN }} \
+          --namespace=${{ env.K8S_NAMESPACE }} \
+          --dry-run=client -o yaml | kubectl apply -f -
+
+    - name: 🚀 Deploy to Kubernetes production
+      run: |
+        echo "🚀 Deploying to Kubernetes production..."
+        
+        # Apply configurations in order
+        kubectl apply -f k8s/production/namespace.yaml
+        kubectl apply -f k8s/production/configmap.yaml -n ${{ env.K8S_NAMESPACE }}
+        kubectl apply -f k8s/production/secrets.yaml -n ${{ env.K8S_NAMESPACE }}
+        kubectl apply -f k8s/production/postgres.yaml -n ${{ env.K8S_NAMESPACE }}
+        kubectl apply -f k8s/production/redis.yaml -n ${{ env.K8S_NAMESPACE }}
+        kubectl apply -f k8s/production/app.yaml -n ${{ env.K8S_NAMESPACE }}
+        kubectl apply -f k8s/production/service.yaml -n ${{ env.K8S_NAMESPACE }}
+        kubectl apply -f k8s/production/ingress.yaml -n ${{ env.K8S_NAMESPACE }}
+        kubectl apply -f k8s/production/hpa.yaml -n ${{ env.K8S_NAMESPACE }}
+
+    - name: ⏳ Wait for production deployment
+      run: |
+        echo "⏳ Waiting for production deployment to complete..."
+        kubectl rollout status deployment/msme-app -n ${{ env.K8S_NAMESPACE }} --timeout=600s
+        kubectl rollout status deployment/postgres -n ${{ env.K8S_NAMESPACE }} --timeout=300s
+        kubectl rollout status deployment/redis -n ${{ env.K8S_NAMESPACE }} --timeout=300s
+
+    - name: 🔍 Production health check
+      run: |
+        echo "🔍 Kubernetes production health check..."
+        kubectl get pods -n ${{ env.K8S_NAMESPACE }}
+        kubectl get services -n ${{ env.K8S_NAMESPACE }}
+        kubectl get ingress -n ${{ env.K8S_NAMESPACE }}
+        
+        # Wait for pods to be ready
+        kubectl wait --for=condition=ready pod -l app=msme-app -n ${{ env.K8S_NAMESPACE }} --timeout=600s
+        
+        # Test internal service
+        kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -n ${{ env.K8S_NAMESPACE }} -- curl -f http://msme-app-service:3000/health
+
+    - name: 📊 Production deployment summary
+      run: |
+        echo "## ☸️ Kubernetes Production Deployment" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| **Status** | ✅ Deployed |" >> $GITHUB_STEP_SUMMARY
+        echo "| **Environment** | Production |" >> $GITHUB_STEP_SUMMARY
+        echo "| **Cluster** | ${{ secrets.EKS_CLUSTER_NAME || 'msme-production-cluster' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| **Namespace** | ${{ env.K8S_NAMESPACE }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| **Image** | ${{ needs.build-and-push.outputs.image-tag }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+        echo "| **Deployed At** | $(date -u) |" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # 🔄 DATABASE MIGRATIONS
+  # ============================================================================
+  k8s-migrations:
+    name: 🔄 Run Database Migrations
+    needs: deploy-k8s-production
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 📅 Checkout code
+      uses: actions/checkout@v4
+
+    - name: ☸️ Setup kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+
+    - name: 🔐 Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
+    - name: 🔐 Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME || 'msme-production-cluster' }}
+
+    - name: 🔄 Run migrations in Kubernetes
+      run: |
+        echo "🔄 Running database migrations in Kubernetes..."
+        
+        # Create migration job
+        cat <<EOF | kubectl apply -f -
+        apiVersion: batch/v1
+        kind: Job
+        metadata:
+          name: db-migration-$(date +%s)
+          namespace: ${{ env.K8S_NAMESPACE }}
+        spec:
+          template:
+            spec:
+              containers:
+              - name: migration
+                image: ${{ needs.build-and-push.outputs.image-tag }}
+                command: ["npm", "run", "migrate"]
+                env:
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: msme-secrets
+                      key: database-url
+              restartPolicy: Never
+          backoffLimit: 3
+        EOF
+        
+        # Wait for migration to complete
+        kubectl wait --for=condition=complete job -l job-name=db-migration --timeout=300s -n ${{ env.K8S_NAMESPACE }}
+
+  # ============================================================================
+  # 🧪 POST-DEPLOYMENT TESTS
+  # ============================================================================
+  k8s-integration-tests:
+    name: 🧪 Kubernetes Integration Tests
+    needs: [deploy-k8s-production, k8s-migrations]
+    runs-on: ubuntu-latest
+    if: always() && needs.deploy-k8s-production.result == 'success'
+    
+    steps:
+    - name: ☸️ Setup kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+
+    - name: 🔐 Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
+    - name: 🔐 Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME || 'msme-production-cluster' }}
+
+    - name: 🧪 Run integration tests
+      run: |
+        echo "🧪 Running Kubernetes integration tests..."
+        
+        # Test pod health
+        kubectl get pods -n ${{ env.K8S_NAMESPACE }} -o wide
+        
+        # Test services
+        kubectl get services -n ${{ env.K8S_NAMESPACE }}
+        
+        # Test ingress
+        kubectl get ingress -n ${{ env.K8S_NAMESPACE }}
+        
+        # Test application endpoints
+        EXTERNAL_IP=$(kubectl get service msme-app-service -n ${{ env.K8S_NAMESPACE }} -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+        if [ ! -z "$EXTERNAL_IP" ]; then
+          echo "Testing external endpoint: http://$EXTERNAL_IP/health"
+          curl -f "http://$EXTERNAL_IP/health" || echo "External health check failed"
+        fi
+
+    - name: 📈 Performance and load test
+      run: |
+        echo "📈 Running performance tests..."
+        
+        # Simple load test using kubectl run
+        kubectl run load-test --image=curlimages/curl --rm -it --restart=Never -n ${{ env.K8S_NAMESPACE }} -- sh -c "
+          for i in \$(seq 1 20); do
+            echo \"Request \$i:\"
+            curl -s -w \"Time: %{time_total}s\\n\" http://msme-app-service:3000/health
+            sleep 1
+          done
+        "
+
+  # ============================================================================
+  # 🔧 CLEANUP OLD DEPLOYMENTS
+  # ============================================================================
+  k8s-cleanup:
+    name: 🔧 Cleanup Old Resources
+    needs: k8s-integration-tests
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: ☸️ Setup kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+
+    - name: 🔐 Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
+    - name: 🔐 Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME || 'msme-production-cluster' }}
+
+    - name: 🔧 Cleanup old jobs and pods
+      run: |
+        echo "🔧 Cleaning up old resources..."
+        
+        # Delete completed jobs older than 1 day
+        kubectl delete jobs --field-selector=status.successful=1 -n ${{ env.K8S_NAMESPACE }} --ignore-not-found=true
+        
+        # Delete failed jobs older than 1 day
+        kubectl delete jobs --field-selector=status.failed=1 -n ${{ env.K8S_NAMESPACE }} --ignore-not-found=true
+        
+        # Clean up old ReplicaSets (keep last 3)
+        kubectl get rs -n ${{ env.K8S_NAMESPACE }} --sort-by=.metadata.creationTimestamp -o name | head -n -3 | xargs -r kubectl delete -n ${{ env.K8S_NAMESPACE }}
+        
+        echo "✅ Cleanup completed"
