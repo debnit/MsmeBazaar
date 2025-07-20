@@ -1,6 +1,7 @@
 /**
  * 📊 Metabase Analytics Integration
- * Embedded analytics for NBFCs and agents
+ * Provides analytics dashboard and reporting capabilities
+ * Safe for production - handles connection failures gracefully
  */
 
 import axios from 'axios';
@@ -8,6 +9,7 @@ import jwt from 'jsonwebtoken';
 import { db } from '../db';
 import { users, msmeListings, loanApplications, buyerInterests } from '@shared/schema';
 import { eq, and, gte, lte, count, sum, avg, sql } from 'drizzle-orm';
+import { productionConfig, safeExternalCall } from '../config/production';
 
 interface MetabaseConfig {
   siteUrl: string;
@@ -38,33 +40,71 @@ interface DashboardData {
   };
 }
 
+interface Dashboard {
+  id: number;
+  name: string;
+  description: string;
+  created_at: string;
+  creator: any;
+}
+
+interface Card {
+  id: number;
+  name: string;
+  description: string;
+  display: string;
+  dataset_query: any;
+}
+
+interface EmbedToken {
+  token: string;
+  expires: number;
+}
+
 export class MSMEMetabaseIntegration {
   private config: MetabaseConfig;
   private sessionToken: string | null = null;
+  private isEnabled: boolean;
 
   constructor() {
     this.config = {
-      siteUrl: process.env.METABASE_SITE_URL || 'http://localhost:3000',
+      siteUrl: process.env.METABASE_SITE_URL || '',
       secretKey: process.env.METABASE_SECRET_KEY || '',
-      username: process.env.METABASE_USERNAME || 'admin@msmesquare.com',
+      username: process.env.METABASE_USERNAME || '',
       password: process.env.METABASE_PASSWORD || ''
     };
+    
+    // Check if Metabase is properly configured and enabled
+    this.isEnabled = this.config.siteUrl && 
+                     this.config.username && 
+                     this.config.password &&
+                     !this.config.siteUrl.includes('localhost') &&
+                     !this.config.siteUrl.includes('127.0.0.1') &&
+                     !this.config.siteUrl.includes('10.211.24.215'); // Block problematic IP
+    
+    if (!this.isEnabled) {
+      console.warn('Metabase integration disabled - missing or invalid configuration');
+    }
   }
 
-  // Authenticate with Metabase
+  // Authenticate with Metabase - with safe error handling
   async authenticate(): Promise<void> {
-    try {
+    if (!this.isEnabled) {
+      console.warn('Metabase authentication skipped - service disabled');
+      return;
+    }
+
+    return safeExternalCall('Metabase Authentication', async () => {
       const response = await axios.post(`${this.config.siteUrl}/api/session`, {
         username: this.config.username,
         password: this.config.password
+      }, {
+        timeout: productionConfig.externalServices.metabase.timeout
       });
 
       this.sessionToken = response.data.id;
-      console.log('Metabase authentication successful');
-    } catch (error) {
-      console.error('Metabase authentication failed:', error);
-      throw error;
-    }
+      console.log('✅ Metabase authentication successful');
+    });
   }
 
   // Generate embedding token for secure dashboard access
@@ -572,17 +612,27 @@ export class MSMEMetabaseIntegration {
     }
   }
 
-  // Health check
+  // Health check - safe for production
   async isHealthy(): Promise<boolean> {
+    if (!this.isEnabled) {
+      return false;
+    }
+
     try {
-      const response = await axios.get(`${this.config.siteUrl}/api/health`);
-      return response.status === 200;
+      const result = await safeExternalCall('Metabase Health Check', async () => {
+        const response = await axios.get(`${this.config.siteUrl}/api/health`, {
+          timeout: productionConfig.externalServices.metabase.timeout
+        });
+        return response.status === 200;
+      });
+      
+      return result === true;
     } catch (error) {
       return false;
     }
   }
 
-  // Get system status
+  // Get system status - safe for production
   async getSystemStatus(): Promise<{
     status: 'healthy' | 'degraded' | 'down';
     version: string;
@@ -590,25 +640,43 @@ export class MSMEMetabaseIntegration {
     activeUsers: number;
     totalDashboards: number;
   }> {
-    try {
-      const response = await axios.get(`${this.config.siteUrl}/api/health`);
-      
-      return {
-        status: 'healthy',
-        version: response.data.version || '0.47.0',
-        uptime: response.data.uptime || 0,
-        activeUsers: 45,
-        totalDashboards: 12
-      };
-    } catch (error) {
+    if (!this.isEnabled) {
       return {
         status: 'down',
-        version: 'unknown',
+        version: 'disabled',
         uptime: 0,
         activeUsers: 0,
         totalDashboards: 0
       };
     }
+
+    try {
+      const response = await safeExternalCall('Metabase System Status', async () => {
+        return await axios.get(`${this.config.siteUrl}/api/health`, {
+          timeout: productionConfig.externalServices.metabase.timeout
+        });
+      });
+      
+      if (response) {
+        return {
+          status: 'healthy',
+          version: response.data.version || '0.47.0',
+          uptime: response.data.uptime || 0,
+          activeUsers: 45,
+          totalDashboards: 12
+        };
+      }
+    } catch (error) {
+      // Fall through to return 'down' status
+    }
+
+    return {
+      status: 'down',
+      version: 'unknown',
+      uptime: 0,
+      activeUsers: 0,
+      totalDashboards: 0
+    };
   }
 }
 
