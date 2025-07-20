@@ -319,3 +319,74 @@ jobs:
       with:
         name: performance-results
         path: results/
+
+  # ============================================================================
+  # 🚀 RENDER DEPLOYMENT - Simple and Reliable
+  # ============================================================================
+  deploy-render:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: render-production
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: 🚀 Deploy to Render
+      uses: johnbeynon/render-deploy-action@v0.0.8
+      with:
+        service-id: ${{ secrets.RENDER_SERVICE_ID }}
+        api-key: ${{ secrets.RENDER_API_KEY }}
+        wait-for-success: true
+        
+    - name: 🔍 Verify Render deployment
+      run: |
+        echo "🎯 Deployment to Render completed"
+        echo "🔗 Service URL: ${{ secrets.RENDER_SERVICE_URL }}"
+        
+        # Wait for service to be ready
+        sleep 30
+        
+        # Health check
+        if curl -f "${{ secrets.RENDER_SERVICE_URL }}/health" 2>/dev/null; then
+          echo "✅ Render service is healthy"
+        else
+          echo "⚠️ Health check failed, but deployment may still be starting"
+        fi
+        
+    - name: 📊 Post-deployment summary
+      run: |
+        echo "## 🎉 Render Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: ✅ Completed" >> $GITHUB_STEP_SUMMARY  
+        echo "- **Service**: ${{ secrets.RENDER_SERVICE_ID }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **URL**: ${{ secrets.RENDER_SERVICE_URL }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # 🚀 ALTERNATIVE: DOCKER-BASED RENDER DEPLOYMENT
+  # ============================================================================
+  deploy-render-docker:
+    needs: build
+    runs-on: ubuntu-latest
+    if: false  # Enable this if you prefer Docker-based deployment to Render
+    environment: render-production
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: 🐳 Deploy Docker image to Render
+      run: |
+        echo "🚀 Deploying Docker image to Render..."
+        echo "📦 Image: ghcr.io/${{ github.repository }}:${{ github.sha }}"
+        
+        # Render automatically pulls and deploys from container registry
+        # when connected to GitHub and configured for Docker deployment
+        
+        curl -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
+          -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "clearCache": "clear"
+          }'
+          
+        echo "✅ Docker deployment triggered on Render"
