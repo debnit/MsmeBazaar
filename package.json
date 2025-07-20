@@ -22,7 +22,9 @@
     "verify": "node scripts/verify-server.js",
     "db:push": "drizzle-kit push",
     "setup:ai": "node setup-ai.js",
-    "test:ai": "node test-ai-config.js"
+    "test:ai": "node test-ai-config.js",
+    "setup:db": "node setup-database.js",
+    "test:db": "node test-database.js"
   },
   "dependencies": {
     "@fastify/compress": "^8.1.0",
