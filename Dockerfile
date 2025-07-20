@@ -1,5 +1,5 @@
 # 🏗️ Base image for building the app
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 
 # Install required system packages
 RUN apk add --no-cache libc6-compat curl
@@ -22,7 +22,7 @@ RUN npm run build
 
 # ------------------------------------------------
 # 🚀 Production image
-FROM node:18-alpine AS production
+FROM node:20-alpine AS production
 
 # Install minimal packages for runtime
 RUN apk add --no-cache curl
