@@ -55,7 +55,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     environment: 
       name: railway-production
-      url: ${{ secrets.RAILWAY_PRODUCTION_URL }}
+     
     
     steps:
     - name: 📅 Checkout code
