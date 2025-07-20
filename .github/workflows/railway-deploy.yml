@@ -65,22 +65,27 @@ jobs:
       run: |
         npm install -g @railway/cli
         
-    - name: 🚂 Deploy to Railway
+    - name: 🚂 Set Railway Environment Variables
       run: |
         railway login --token ${{ secrets.RAILWAY_TOKEN }}
+        railway variables set NODE_ENV=production
+        railway variables set DATABASE_URL="${{ secrets.DATABASE_URL }}"
+        railway variables set REDIS_URL="${{ secrets.REDIS_URL }}"
+        railway variables set JWT_SECRET="${{ secrets.JWT_SECRET }}"
+        railway variables set NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}"
+        railway variables set RAZORPAY_KEY_ID="${{ secrets.RAZORPAY_KEY_ID }}"
+        railway variables set RAZORPAY_KEY_SECRET="${{ secrets.RAZORPAY_KEY_SECRET }}"
+        railway variables set SENTRY_DSN="${{ secrets.SENTRY_DSN }}"
+        railway variables set TYPESENSE_HOST="${{ secrets.TYPESENSE_HOST }}"
+        railway variables set TYPESENSE_API_KEY="${{ secrets.TYPESENSE_API_KEY }}"
+      env:
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        
+    - name: 🚂 Deploy to Railway
+      run: |
         railway up --detach
       env:
         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        NODE_ENV: production
-        DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        REDIS_URL: ${{ secrets.REDIS_URL }}
-        JWT_SECRET: ${{ secrets.JWT_SECRET }}
-        NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-        RAZORPAY_KEY_ID: ${{ secrets.RAZORPAY_KEY_ID }}
-        RAZORPAY_KEY_SECRET: ${{ secrets.RAZORPAY_KEY_SECRET }}
-        SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        TYPESENSE_HOST: ${{ secrets.TYPESENSE_HOST }}
-        TYPESENSE_API_KEY: ${{ secrets.TYPESENSE_API_KEY }}
 
     - name: ⏳ Wait for deployment
       run: |
@@ -140,19 +145,24 @@ jobs:
       run: |
         npm install -g @railway/cli
         
-    - name: 🚂 Deploy to Railway Staging
+    - name: 🚂 Set Railway Staging Environment Variables
       run: |
         railway login --token ${{ secrets.RAILWAY_TOKEN }}
+        railway variables set NODE_ENV=staging --environment staging
+        railway variables set DATABASE_URL="${{ secrets.STAGING_DATABASE_URL }}" --environment staging
+        railway variables set REDIS_URL="${{ secrets.STAGING_REDIS_URL }}" --environment staging
+        railway variables set JWT_SECRET="${{ secrets.STAGING_JWT_SECRET }}" --environment staging
+        railway variables set NEXTAUTH_SECRET="${{ secrets.STAGING_NEXTAUTH_SECRET }}" --environment staging
+        railway variables set RAZORPAY_KEY_ID="${{ secrets.STAGING_RAZORPAY_KEY_ID }}" --environment staging
+        railway variables set RAZORPAY_KEY_SECRET="${{ secrets.STAGING_RAZORPAY_KEY_SECRET }}" --environment staging
+      env:
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        
+    - name: 🚂 Deploy to Railway Staging
+      run: |
         railway up --detach --environment staging
       env:
         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        NODE_ENV: staging
-        DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
-        REDIS_URL: ${{ secrets.STAGING_REDIS_URL }}
-        JWT_SECRET: ${{ secrets.STAGING_JWT_SECRET }}
-        NEXTAUTH_SECRET: ${{ secrets.STAGING_NEXTAUTH_SECRET }}
-        RAZORPAY_KEY_ID: ${{ secrets.STAGING_RAZORPAY_KEY_ID }}
-        RAZORPAY_KEY_SECRET: ${{ secrets.STAGING_RAZORPAY_KEY_SECRET }}
 
     - name: 🔍 Staging health check
       run: |
