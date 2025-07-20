@@ -5,13 +5,8 @@ on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main ]name: CI/CD Pipeline
-
-on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
     branches: [ main ]
+  workflow_dispatch: # Allow manual triggering
 
 jobs:
   build-and-deploy:
@@ -60,9 +55,11 @@ jobs:
         push: true
         tags: |
           ghcr.io/${{ github.repository }}:latest
-          ghcr.io/${{ github.repository }}:${{ github.sha }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+          ghcr.io/${{ github.repository }}:main
+          ghcr.io/${{ github.repository }}:main-${{ github.sha }}
+        # Using registry cache instead of GHA cache to avoid driver issues
+        cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:cache
+        cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:cache,mode=max
 
     - name: 🌎 Post-deploy health check (non-blocking)
       run: |
@@ -74,16 +71,13 @@ jobs:
       run: echo "Deployment completed."
       continue-on-error: true
 
-  workflow_dispatch: # Allow manual triggering
-
 env:
   NODE_VERSION: '18'
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
-jobs:
   # ============================================================================
-  # 🧪 TEST JOB - Run tests with PostgreSQL service
+  # 🧪 TEST JOB - Run tests with PostgreSQL service  
   # ============================================================================
   test:
     name: 🧪 Test & Quality Checks
