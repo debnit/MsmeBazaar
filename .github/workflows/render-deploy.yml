@@ -37,7 +37,11 @@ jobs:
       run: npm ci --no-audit --no-fund
 
     - name: 🔨 Build application
-      run: npm run build
+      run: |
+        echo "🔨 Building client and server separately..."
+        npm run build:client
+        npm run build:server
+        echo "✅ Build completed successfully"
 
     - name: 📊 Build summary
       run: |

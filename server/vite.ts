@@ -1,12 +1,30 @@
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
-import { createServer as createViteServer, createLogger } from "vite";
-import { type Server } from "http";
-import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
+import { type Server } from "http";
 
-const viteLogger = createLogger();
+// Only import Vite in development
+let createViteServer: any = null;
+let createLogger: any = null;
+let viteConfig: any = null;
+
+if (process.env.NODE_ENV !== "production") {
+  try {
+    const viteModule = await import("vite");
+    createViteServer = viteModule.createServer;
+    createLogger = viteModule.createLogger;
+    viteConfig = (await import("../vite.config.js")).default;
+  } catch (error) {
+    console.warn("Vite not available, running in production mode");
+  }
+}
+
+const viteLogger = createLogger?.() || {
+  error: console.error,
+  warn: console.warn,
+  info: console.log,
+};
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -20,6 +38,16 @@ export function log(message: string, source = "express") {
 }
 
 export async function setupVite(app: Express, server: Server) {
+  if (process.env.NODE_ENV === "production") {
+    log("Skipping Vite setup in production");
+    return;
+  }
+
+  if (!createViteServer || !viteConfig) {
+    log("Vite not available, skipping development setup");
+    return;
+  }
+
   const serverOptions = {
     middlewareMode: true,
     hmr: { server },
@@ -31,7 +59,7 @@ export async function setupVite(app: Express, server: Server) {
     configFile: false,
     customLogger: {
       ...viteLogger,
-      error: (msg, options) => {
+      error: (msg: any, options: any) => {
         viteLogger.error(msg, options);
         process.exit(1);
       },
@@ -45,9 +73,9 @@ export async function setupVite(app: Express, server: Server) {
     const url = req.originalUrl;
 
     try {
+      // Use process.cwd() instead of import.meta.dirname for Node.js compatibility
       const clientTemplate = path.resolve(
-        import.meta.dirname,
-        "..",
+        process.cwd(),
         "client",
         "index.html",
       );
@@ -68,7 +96,8 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "public");
+  // Use process.cwd() instead of import.meta.dirname for Node.js compatibility
+  const distPath = path.resolve(process.cwd(), "dist", "public");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
