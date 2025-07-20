@@ -115,8 +115,9 @@ jobs:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+        # Using registry cache instead of GHA cache to avoid driver issues
+        cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:cache
+        cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:cache,mode=max
     
     - name: Build and push ML services
       run: |

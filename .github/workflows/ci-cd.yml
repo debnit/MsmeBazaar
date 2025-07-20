@@ -421,8 +421,9 @@ env:
     push: false
     load: false
     tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:validation
-    cache-from: type=gha
-    cache-to: type=gha,mode=max
+    # Using registry cache instead of GHA cache to avoid driver issues
+    cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache
+    cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache,mode=max
 
 # ✅ Robust Docker build and push
 - name: 🏗️ Build and push Docker image
@@ -442,8 +443,9 @@ env:
       org.opencontainers.image.version=${{ github.sha }}
       org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
       org.opencontainers.image.revision=${{ github.sha }}
-    cache-from: type=gha
-    cache-to: type=gha,mode=max
+    # Using registry cache instead of GHA cache to avoid driver issues
+    cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache
+    cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache,mode=max
 
 # ✅ Remote verification using Buildx (no local Docker needed)
 - name: ✅ Verify Docker image (remote)
