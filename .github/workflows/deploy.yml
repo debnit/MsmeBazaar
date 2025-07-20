@@ -136,7 +136,7 @@ jobs:
   deploy-staging:
     needs: build
     runs-on: ubuntu-latest
-    if: false  # Disabled until staging environment is configured
+    if: github.ref == 'refs/heads/main'  # Enable staging deployment on main branch
     environment: staging
     
     steps:
@@ -167,7 +167,7 @@ jobs:
   deploy-production:
     needs: [build, deploy-staging]
     runs-on: ubuntu-latest
-    if: false  # Disabled until production environment is configured
+    if: github.ref == 'refs/heads/main'  # Enable production deployment on main branch
     environment: production
     
     steps:
