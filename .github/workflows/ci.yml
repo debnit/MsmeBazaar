@@ -51,8 +51,9 @@ jobs:
       run: npx tsc --showConfig
 
     
-    - name: Run type checking
-      run: npm run check
+    - name: Run type check
+      run: npm run type-check
+
     
     - name: Run tests
       run: npm run test
