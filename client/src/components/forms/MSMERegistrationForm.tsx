@@ -98,10 +98,10 @@ export const MSMERegistrationForm: React.FC<MSMERegistrationFormProps> = ({
 
   // Mutation for creating MSME
   const createMSMEMutation = useMutation({
-    mutationFn: (data: MSMERegistration) => api.msmes.create(data),
+    mutationFn: (data: MSMERegistration) => api.msme.create(data),
     onSuccess: (response) => {
       success('MSME Registration Successful', 'Your MSME has been registered successfully!');
-      queryClient.invalidateQueries({ queryKey: queryKeys.msmes() });
+      queryClient.invalidateQueries({ queryKey: [queryKeys.msme.listings] });
       onSuccess?.(response.data);
       onClose();
     },

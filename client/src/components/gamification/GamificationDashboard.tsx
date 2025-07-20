@@ -23,7 +23,7 @@ import { useToastHelpers } from '@/lib/toast';
 interface UserStats {
   user_id: string;
   total_points: number;
-  level: int;
+  level: number;
   badges: string[];
   achievements: string[];
   rank?: number;
@@ -65,27 +65,27 @@ export const GamificationDashboard: React.FC = () => {
 
   // Fetch user stats
   const { data: userStats, isLoading: statsLoading } = useQuery({
-    queryKey: queryKeys.user(user?.id || ''),
-    queryFn: () => api.gamification.getUserStats(user?.id || ''),
+    queryKey: queryKeys.user.progress,
+    queryFn: () => api.gamification.getUserProgress(user?.id || ''),
     enabled: !!user?.id,
   });
 
   // Fetch leaderboard
   const { data: leaderboard, isLoading: leaderboardLoading } = useQuery({
     queryKey: ['leaderboard'],
-    queryFn: () => api.gamification.getLeaderboard(),
+    queryFn: () => api.gamification.getUserLeaderboard(),
   });
 
-  // Fetch badges
+  // Fetch badges (using available rewards as badges)
   const { data: badges } = useQuery({
     queryKey: ['badges'],
-    queryFn: () => api.gamification.getBadges(),
+    queryFn: () => api.gamification.getAvailableRewards(),
   });
 
   // Fetch achievements
   const { data: achievements } = useQuery({
     queryKey: ['achievements'],
-    queryFn: () => api.gamification.getAchievements(),
+    queryFn: () => api.gamification.getUserAchievements(),
   });
 
   const tabs = [
@@ -545,7 +545,7 @@ export const GamificationDashboard: React.FC = () => {
                   <LeaderboardRow
                     key={entry.user_id}
                     entry={entry}
-                    isCurrentUser={entry.user_id === user?.id}
+                    isCurrentUser={String(entry.user_id) === String(user?.id)}
                   />
                 ))}
               </div>
