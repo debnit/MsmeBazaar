@@ -19,6 +19,7 @@
     "type-check": "tsc --noEmit",
     "lint": "echo 'Skipping lint (CI-safe)' || true",
     "test": "echo 'Skipping tests (CI-safe)' || true",
+    "verify": "node scripts/verify-server.js",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
