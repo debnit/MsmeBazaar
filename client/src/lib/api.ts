@@ -93,16 +93,62 @@ export const notificationsApi = {
   getUnreadCount: () => apiClient.get('/notifications/unread-count'),
 };
 
+// Types for gamification API responses
+interface UserStats {
+  user_id: string;
+  total_points: number;
+  level: number;
+  badges: string[];
+  achievements: string[];
+  rank?: number;
+  next_level_points: number;
+  progress_percentage: number;
+}
+
+interface LeaderboardEntry {
+  user_id: string;
+  username: string;
+  total_points: number;
+  level: number;
+  badges_count: number;
+  rank: number;
+}
+
+interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  rarity: string;
+  points_required: number;
+}
+
+interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  points_reward: number;
+}
+
 export const gamificationApi = {
-  getUserAchievements: (userId?: string) => apiClient.get(`/gamification/achievements${userId ? `/${userId}` : ''}`),
-  getUserProgress: (userId?: string) => apiClient.get(`/gamification/progress${userId ? `/${userId}` : ''}`),
-  getUserLeaderboard: (params?: any) => apiClient.get('/gamification/leaderboard', { params }),
-  getUserStats: (userId?: string) => apiClient.get(`/gamification/stats${userId ? `/${userId}` : ''}`),
-  getLeaderboard: (params?: any) => apiClient.get('/gamification/leaderboard', { params }),
-  getBadges: (userId?: string) => apiClient.get(`/gamification/badges${userId ? `/${userId}` : ''}`),
-  getAchievements: (userId?: string) => apiClient.get(`/gamification/achievements${userId ? `/${userId}` : ''}`),
+  getUserAchievements: (userId?: string): Promise<{ data: Achievement[] }> => 
+    apiClient.get(`/gamification/achievements${userId ? `/${userId}` : ''}`),
+  getUserProgress: (userId?: string): Promise<{ data: UserStats }> => 
+    apiClient.get(`/gamification/progress${userId ? `/${userId}` : ''}`),
+  getUserLeaderboard: (params?: any): Promise<{ data: LeaderboardEntry[] }> => 
+    apiClient.get('/gamification/leaderboard', { params }),
+  getUserStats: (userId?: string): Promise<{ data: UserStats }> => 
+    apiClient.get(`/gamification/stats${userId ? `/${userId}` : ''}`),
+  getLeaderboard: (params?: any): Promise<{ data: LeaderboardEntry[] }> => 
+    apiClient.get('/gamification/leaderboard', { params }),
+  getBadges: (userId?: string): Promise<{ data: Badge[] }> => 
+    apiClient.get(`/gamification/badges${userId ? `/${userId}` : ''}`),
+  getAchievements: (userId?: string): Promise<{ data: Achievement[] }> => 
+    apiClient.get(`/gamification/achievements${userId ? `/${userId}` : ''}`),
   claimReward: (rewardId: string) => apiClient.post(`/gamification/rewards/${rewardId}/claim`),
-  getAvailableRewards: () => apiClient.get('/gamification/rewards'),
+  getAvailableRewards: (): Promise<{ data: Badge[] }> => 
+    apiClient.get('/gamification/rewards'),
   updateProgress: (data: any) => apiClient.post('/gamification/progress', data),
 };
 

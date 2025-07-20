@@ -64,28 +64,40 @@ export const GamificationDashboard: React.FC = () => {
   const [showPointsAnimation, setShowPointsAnimation] = useState(false);
 
   // Fetch user stats
-  const { data: userStats, isLoading: statsLoading } = useQuery({
+  const { data: userStats, isLoading: statsLoading } = useQuery<UserStats>({
     queryKey: queryKeys.user.progress,
-    queryFn: () => api.gamification.getUserProgress(user?.id || ''),
+    queryFn: async () => {
+      const response = await api.gamification.getUserProgress(user?.id || '');
+      return response.data;
+    },
     enabled: !!user?.id,
   });
 
   // Fetch leaderboard
-  const { data: leaderboard, isLoading: leaderboardLoading } = useQuery({
+  const { data: leaderboard, isLoading: leaderboardLoading } = useQuery<LeaderboardEntry[]>({
     queryKey: ['leaderboard'],
-    queryFn: () => api.gamification.getUserLeaderboard(),
+    queryFn: async () => {
+      const response = await api.gamification.getUserLeaderboard();
+      return response.data;
+    },
   });
 
   // Fetch badges (using available rewards as badges)
-  const { data: badges } = useQuery({
+  const { data: badges } = useQuery<Badge[]>({
     queryKey: ['badges'],
-    queryFn: () => api.gamification.getAvailableRewards(),
+    queryFn: async () => {
+      const response = await api.gamification.getAvailableRewards();
+      return response.data;
+    },
   });
 
   // Fetch achievements
-  const { data: achievements } = useQuery({
+  const { data: achievements } = useQuery<Achievement[]>({
     queryKey: ['achievements'],
-    queryFn: () => api.gamification.getUserAchievements(),
+    queryFn: async () => {
+      const response = await api.gamification.getUserAchievements();
+      return response.data;
+    },
   });
 
   const tabs = [
