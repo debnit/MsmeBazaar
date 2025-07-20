@@ -19,9 +19,9 @@ PINECONE_ENVIRONMENT=us-east-1-aws
 PINECONE_INDEX_NAME=msmebazaar-vectors
 ```
 
-### **🗄️ Database (Already Configured)**
+### **🗄️ Database (Your Render PostgreSQL)**
 ```bash
-DATABASE_URL=postgresql://neondb_owner:npg_H5QmOcyWDGa1@ep-cool-glade-a17clyba-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+DATABASE_URL=postgresql://msme_user:0g6YUzCtRtTI7ngQuQDRReXE91Ezs4A9@dpg-d1t934be5dus73boktrg-a/msmebazaar
 ```
 
 ---

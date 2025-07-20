@@ -1,8 +1,14 @@
 # 🚀 Quick Render Environment Setup
 
-## 📋 **Copy These 4 Environment Variables to Render**
+## 📋 **Copy These 5 Environment Variables to Render**
 
 Go to your Render dashboard → Your MSMEBazaar service → Environment tab → Add these:
+
+### **0. Database URL (Use Your Render PostgreSQL)**
+```
+Key: DATABASE_URL
+Value: postgresql://msme_user:0g6YUzCtRtTI7ngQuQDRReXE91Ezs4A9@dpg-d1t934be5dus73boktrg-a/msmebazaar
+```
 
 ### **1. OpenAI API Key**
 ```
