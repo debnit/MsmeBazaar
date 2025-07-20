@@ -84,7 +84,7 @@ jobs:
         echo "✅ Linting completed"
       # Only continue on error for linting - it's not critical for deployment
 
-    - name: 🔧 TypeScript check
+    - name: 🔧Run TypeScript check
       run: |
         echo "🔧 Running TypeScript checks..."
         echo "⚠️  Development mode - TypeScript errors are non-blocking"
