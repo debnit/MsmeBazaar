@@ -16,9 +16,9 @@ export class CacheManager {
 
   // Start periodic cache cleanup
   private startCleanupSchedule() {
-    this.cleanupInterval = setInterval(() => {
+    this.cleanupInterval = setInterval(async () => {
       this.cleanupExpiredEntries();
-      this.enforceMemoryLimits();
+      await this.enforceMemoryLimits();
     }, 10 * 60 * 1000); // Every 10 minutes - less aggressive
   }
 
@@ -43,7 +43,7 @@ export class CacheManager {
   }
 
   // Enforce memory usage limits
-  private enforceMemoryLimits() {
+  private async enforceMemoryLimits() {
     const memUsage = process.memoryUsage();
     const totalMemory = memUsage.heapUsed + memUsage.external;
     
@@ -58,31 +58,30 @@ export class CacheManager {
       
       // Clear caches to free memory
       performanceCache.clear();
-      this.cleanMemoryCache();
+      await this.cleanMemoryCache();
     }
   }
 
   // Clean in-memory caches
-  private cleanMemoryCache() {
+  private async cleanMemoryCache() {
     try {
-      // Clear Node.js internal DNS cache safely
-      const dns = eval('require')('dns');
-      if (dns && dns.clearDNSCache) {
+      // Clear Node.js internal DNS cache safely using dynamic import
+      const dns = await import('dns');
+      if (dns && 'clearDNSCache' in dns && typeof dns.clearDNSCache === 'function') {
         dns.clearDNSCache();
       }
       
       // Clear module cache for non-critical modules safely
-      const moduleCache = eval('require').cache;
-      if (moduleCache && typeof moduleCache === 'object') {
-        Object.keys(moduleCache).forEach(key => {
+      if (typeof require !== 'undefined' && require.cache) {
+        Object.keys(require.cache).forEach(key => {
           if (key.includes('temp') || key.includes('cache')) {
-            delete moduleCache[key];
+            delete require.cache[key];
           }
         });
       }
     } catch (error) {
       // Fallback: manual cache cleanup
-      console.warn('Native cache cleanup failed, using fallback:', error.message);
+      console.warn('Native cache cleanup failed, using fallback:', error instanceof Error ? error.message : 'Unknown error');
       this.memoryCache.clear();
       this.cacheHits = 0;
       this.cacheMisses = 0;
