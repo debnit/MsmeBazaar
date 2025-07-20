@@ -85,8 +85,9 @@ jobs:
     
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-      with:
-        driver: docker-container
+      # Temporarily use default driver to avoid cache issues
+      # with:
+      #   driver: docker-container
 
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@v3
@@ -105,9 +106,11 @@ jobs:
           ghcr.io/${{ github.repository }}:latest
           ghcr.io/${{ github.repository }}:main
           ghcr.io/${{ github.repository }}:main-${{ github.sha }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-        provenance: true
+        platforms: linux/amd64
+        # Temporarily disabled cache to avoid driver issues
+        # cache-from: type=gha
+        # cache-to: type=gha,mode=max
+        provenance: false
     
     - name: Deploy to production
       run: |

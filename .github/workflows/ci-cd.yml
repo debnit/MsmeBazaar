@@ -60,9 +60,11 @@ jobs:
           ghcr.io/${{ github.repository }}:latest
           ghcr.io/${{ github.repository }}:main
           ghcr.io/${{ github.repository }}:main-${{ github.sha }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-        provenance: true
+        platforms: linux/amd64
+        # Temporarily disabled cache to avoid driver issues
+        # cache-from: type=gha
+        # cache-to: type=gha,mode=max
+        provenance: false
 
     - name: 🌎 Post-deploy health check (non-blocking)
       run: |
@@ -407,8 +409,9 @@ env:
     # ✅ FIXED: Proper Docker setup with BuildKit
     - name: 🐳 Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-      with:
-        driver: docker-container
+      # Temporarily use default driver to avoid cache issues
+      # with:
+      #   driver: docker-container
 
     # ✅ FIXED: Proper GHCR authentication with correct permissions
     - name: 🔐 Login to GitHub Container Registry
@@ -427,8 +430,10 @@ env:
         push: false
         load: false
         tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:validation
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+        platforms: linux/amd64
+        # Temporarily disabled cache to avoid driver issues
+        # cache-from: type=gha
+        # cache-to: type=gha,mode=max
 
     # ✅ Robust Docker build and push
     - name: 🏗️ Build and push Docker image
@@ -449,9 +454,11 @@ env:
           org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
           org.opencontainers.image.revision=${{ github.sha }}
         file: ./Dockerfile
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-        provenance: true
+        platforms: linux/amd64
+        # Temporarily disabled cache to avoid driver issues
+        # cache-from: type=gha
+        # cache-to: type=gha,mode=max
+        provenance: false
 
     # ✅ Remote verification using Buildx (no local Docker needed)
     - name: ✅ Verify Docker image (remote)

@@ -1,5 +1,5 @@
 // scripts/safe-build.js
-const { execSync } = require("node:child_process");
+import { execSync } from "node:child_process";
 
 function run(label, command) {
   console.log(`\n🔧 Running: ${label}`);
