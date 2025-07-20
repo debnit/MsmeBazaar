@@ -92,7 +92,7 @@ jobs:
         # Try TypeScript check, but don't fail the build
         if npx tsc --version > /dev/null 2>&1; then
           echo "🔧 Running TypeScript syntax validation..."
-          npx tsc --noEmit --skipLibCheck --allowJs --suppressImplicitAnyIndexErrors || true
+          npx tsc --noEmit --skipLibCheck --allowJs || true
           echo "ℹ️  TypeScript check completed (warnings allowed in development)"
         else
           echo "⚠️  TypeScript not available, skipping type check"
