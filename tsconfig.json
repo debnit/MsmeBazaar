@@ -20,11 +20,14 @@
       "@/lib/*": ["client/src/lib/*"],
       "@/hooks/*": ["client/src/hooks/*"],
       "@/utils/*": ["client/src/utils/*"],
-      "@/shared/*": ["shared/*"]
+      "@/shared/*": ["shared/*"],
+      "@shared/*": ["shared/*"]
     }
   },
   "include": [
     "client/src/**/*",
+    "client/src/types/**/*",
+    "client/src/vite-env.d.ts",
     "shared/**/*",
     "client/src/sw.ts",
     "server/**/*"

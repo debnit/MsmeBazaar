@@ -1,11 +1,14 @@
 import { useState, useCallback } from 'react';
 
+export type ToastVariant = 'default' | 'destructive' | 'success' | 'warning' | 'info';
+
 export interface Toast {
   id: string;
   title?: string;
   description?: string;
-  variant?: 'default' | 'destructive';
+  variant?: ToastVariant;
   action?: any;
+  duration?: number;
 }
 
 interface ToastState {

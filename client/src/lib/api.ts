@@ -70,4 +70,43 @@ export const authApi = {
   updateProfile: (data: any) => apiClient.put('/auth/profile', data),
 };
 
+// Query client for React Query (if used)
+export const queryClient = {
+  invalidateQueries: (key: string) => {
+    console.log(`Invalidating queries for key: ${key}`);
+    // Placeholder - would integrate with React Query
+  },
+  setQueryData: (key: string, data: any) => {
+    console.log(`Setting query data for key: ${key}`, data);
+    // Placeholder - would integrate with React Query
+  },
+};
+
+// Query keys for consistent cache management
+export const queryKeys = {
+  dashboard: {
+    stats: 'dashboard-stats',
+    activity: 'dashboard-activity',
+  },
+  msme: {
+    listings: 'msme-listings',
+    listing: (id: string) => `msme-listing-${id}`,
+  },
+  nbfc: {
+    applications: 'nbfc-applications',
+    application: (id: string) => `nbfc-application-${id}`,
+  },
+  loan: {
+    applications: 'loan-applications',
+    application: (id: string) => `loan-application-${id}`,
+  },
+  auth: {
+    profile: 'auth-profile',
+  },
+};
+
+// Export the main API client as default
 export default apiClient;
+
+// Also export as named export for consistency
+export const api = apiClient;
