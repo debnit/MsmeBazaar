@@ -20,8 +20,7 @@ ENV NODE_ENV=production
 # Build the app (fails fast if broken)
 RUN npm run build
 
----
-
+# ------------------------------------------------
 # 🚀 Production image
 FROM node:18-alpine AS production
 
