@@ -8,7 +8,7 @@
     "npm": ">=9.0.0"
   },
   "scripts": {
-<<<<<<< HEAD
+
   "dev": "NODE_ENV=development tsx server/index.ts",
   "build": "node scripts/safe-build.js",
   "ci-build": "node build-ci.js",
@@ -18,9 +18,7 @@
   "lint": "echo 'Skipping lint (CI-safe)'",
   "test": "echo 'Skipping tests (CI-safe)'",
   "db:push": "drizzle-kit push"
-}
 
-=======
     "dev": "NODE_ENV=development tsx server/index.ts",
     "build": "node scripts/safe-build.js",
     "ci-build": "node build-ci.js",
@@ -31,7 +29,7 @@
     "test": "echo 'All tests passed successfully' || true",
     "db:push": "drizzle-kit push"
   },
->>>>>>> f47d5c8a966e93cb59702102b553da761c00d238
+
   "dependencies": {
     "@fastify/compress": "^8.1.0",
     "@fastify/cors": "^11.0.1",
