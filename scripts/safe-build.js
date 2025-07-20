@@ -13,4 +13,4 @@ function run(label, command) {
 }
 
 run("Vite frontend build", "vite build");
-run("esbuild backend build", "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist");
+run("esbuild backend build", "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist --log-level=warning");

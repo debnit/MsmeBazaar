@@ -29,15 +29,15 @@ export const preloadComponents = (): void => {
   // Use requestIdleCallback for better performance
   if ('requestIdleCallback' in window) {
     window.requestIdleCallback(() => {
-      // Preload components during idle time - these return promises
-      LazyAdminDashboard();
-      LazyAnalytics();
+      // Preload components during idle time
+      import('../pages/admin/dashboard').catch(() => {});
+      import('../pages/dashboard').catch(() => {});
     });
   } else {
     // Fallback for browsers without requestIdleCallback
     setTimeout(() => {
-      LazyAdminDashboard();
-      LazyAnalytics();
+      import('../pages/admin/dashboard').catch(() => {});
+      import('../pages/dashboard').catch(() => {});
     }, 2000);
   }
 };

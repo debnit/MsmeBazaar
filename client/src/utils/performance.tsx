@@ -4,9 +4,9 @@ import React from 'react';
 
 // Lazy load components
 export const LazyDashboard = lazy(() => import('../pages/dashboard'));
-export const LazyMSMEListings = lazy(() => import('../pages/msme-listings'));
-export const LazyLoanApplications = lazy(() => import('../pages/loan-applications'));
-export const LazyAnalytics = lazy(() => import('../pages/analytics'));
+export const LazyMSMEListings = lazy(() => import('../pages/seller/dashboard')); // Use seller dashboard as placeholder
+export const LazyLoanApplications = lazy(() => import('../pages/nbfc/loan-applications'));
+export const LazyAnalytics = lazy(() => import('../pages/dashboard')); // Use dashboard as placeholder for analytics
 
 // Code splitting wrapper
 export const LazyWrapper = ({ children }: { children: React.ReactNode }): JSX.Element => (
