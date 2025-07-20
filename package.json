@@ -20,7 +20,9 @@
     "lint": "echo 'Skipping lint (CI-safe)' || true",
     "test": "echo 'Skipping tests (CI-safe)' || true",
     "verify": "node scripts/verify-server.js",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "setup:ai": "node setup-ai.js",
+    "test:ai": "node test-ai-config.js"
   },
   "dependencies": {
     "@fastify/compress": "^8.1.0",
