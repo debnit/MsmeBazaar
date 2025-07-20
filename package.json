@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
-    "build": "node scripts/safe-build.js"
+    "build": "node scripts/safe-build.js",
     "ci-build": "node build-ci.js",
     "ci-install": "npm ci --no-audit --no-fund --prefer-offline",
     "start": "NODE_ENV=production node dist/index.js",
