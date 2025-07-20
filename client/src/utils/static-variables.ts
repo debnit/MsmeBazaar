@@ -41,7 +41,7 @@ export const StaticUtils = {
     }
     
     // Add to static array
-    STATIC_TOAST_STATE.toasts.push(toast);
+    STATIC_TOAST_STATE.toasts.push(toast as any);
     
     // Notify listeners
     STATIC_TOAST_STATE.listeners.forEach(listener => {

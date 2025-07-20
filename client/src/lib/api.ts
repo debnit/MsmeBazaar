@@ -70,6 +70,27 @@ export const authApi = {
   updateProfile: (data: any) => apiClient.put('/auth/profile', data),
 };
 
+export const buyerApi = {
+  getDashboard: () => apiClient.get('/buyer/dashboard'),
+  getInterests: (params?: any) => apiClient.get('/buyer/interests', { params }),
+  createInterest: (data: any) => apiClient.post('/buyer/interests', data),
+  updateInterest: (id: string, data: any) => apiClient.put(`/buyer/interests/${id}`, data),
+  deleteInterest: (id: string) => apiClient.delete(`/buyer/interests/${id}`),
+};
+
+export const usersApi = {
+  getProfile: () => apiClient.get('/users/profile'),
+  updateProfile: (data: any) => apiClient.put('/users/profile', data),
+  getStats: () => apiClient.get('/users/stats'),
+};
+
+export const notificationsApi = {
+  list: (params?: any) => apiClient.get('/notifications', { params }),
+  markAsRead: (id: string) => apiClient.put(`/notifications/${id}/read`),
+  markAllAsRead: () => apiClient.put('/notifications/read-all'),
+  getUnreadCount: () => apiClient.get('/notifications/unread-count'),
+};
+
 // Query client for React Query (if used)
 export const queryClient = {
   invalidateQueries: (key: string) => {
@@ -88,6 +109,8 @@ export const queryKeys = {
     stats: 'dashboard-stats',
     activity: 'dashboard-activity',
   },
+  dashboardStats: () => 'dashboard-stats',
+  userProfile: () => 'user-profile',
   msme: {
     listings: 'msme-listings',
     listing: (id: string) => `msme-listing-${id}`,
@@ -103,10 +126,24 @@ export const queryKeys = {
   auth: {
     profile: 'auth-profile',
   },
+  notifications: {
+    list: 'notifications-list',
+    unreadCount: 'notifications-unread-count',
+  },
 };
 
 // Export the main API client as default
 export default apiClient;
 
 // Also export as named export for consistency
-export const api = apiClient;
+export const api = {
+  ...apiClient,
+  dashboard: dashboardApi,
+  users: usersApi,
+  notifications: notificationsApi,
+  msme: msmeApi,
+  nbfc: nbfcApi,
+  loan: loanApi,
+  auth: authApi,
+  buyer: buyerApi,
+};

@@ -15,8 +15,8 @@
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",
     "type-check": "tsc --noEmit",
-    "lint": "echo 'Linting completed successfully' || true",
-    "test": "echo 'All tests passed successfully' || true",
+    "lint": "echo 'Skipping lint (CI-safe)' || true",
+    "test": "echo 'Skipping tests (CI-safe)' || true",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {

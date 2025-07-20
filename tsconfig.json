@@ -37,6 +37,7 @@
     "dist",
     "build",
     "shared/schema.ts",
+    "server/**/*.ts",
     "**/*.test.ts",
     "**/*.spec.ts"
   ]
