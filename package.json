@@ -18,9 +18,7 @@
     "lint": "echo 'Linting completed successfully' || true",
     "test": "echo 'All tests passed successfully' || true",
     "db:push": "drizzle-kit push"
-  }
-}
-
+  },
   "dependencies": {
     "@fastify/compress": "^8.1.0",
     "@fastify/cors": "^11.0.1",
