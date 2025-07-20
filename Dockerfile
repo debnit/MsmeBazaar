@@ -39,8 +39,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=base /app/dist ./dist
 COPY --from=base /app/shared ./shared
 
-# 🛡️ Optional: drizzle might not exist yet (so we add a fallback)
-COPY --from=base /app/drizzle ./drizzle 2>/dev/null || true
+# Note: drizzle/migrations not needed at runtime - applied separately via CI/CD
 
 # 👤 Create a non-root user for security
 RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
