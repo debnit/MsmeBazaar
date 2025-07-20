@@ -153,3 +153,17 @@ docker-compose*.yml
 .fusebox
 .swc
 .parcel-cache
+node_modules
+dist
+build
+*.log
+*.tsbuildinfo
+.env*
+.vscode
+.git
+test/
+tests/
+docs/
+*.md
+*.zip
+*.tar.gz
