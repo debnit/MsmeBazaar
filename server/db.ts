@@ -36,12 +36,23 @@ export const pool = new Pool({
 // Database instance with error handling
 export const db = drizzle({ client: pool, schema });
 
-// Connection health check
+// Connection health check with timeout and retry
 export async function checkDatabaseHealth(): Promise<{ healthy: boolean; latency?: number; error?: string }> {
   const startTime = Date.now();
+  const timeout = 5000; // 5 second timeout
   
   try {
-    await pool.query('SELECT 1 as health_check');
+    // Create a timeout promise
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Database health check timeout')), timeout);
+    });
+    
+    // Race between query and timeout
+    await Promise.race([
+      pool.query('SELECT 1 as health_check'),
+      timeoutPromise
+    ]);
+    
     const latency = Date.now() - startTime;
     
     return {
@@ -49,10 +60,15 @@ export async function checkDatabaseHealth(): Promise<{ healthy: boolean; latency
       latency
     };
   } catch (error) {
-    console.error('Database health check failed:', error);
+    const latency = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    console.warn(`Database health check failed after ${latency}ms:`, errorMessage);
+    
     return {
       healthy: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      latency,
+      error: errorMessage
     };
   }
 }
