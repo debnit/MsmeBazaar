@@ -48,7 +48,7 @@ jobs:
       run: npm ci
 
     - name: Show Effective TypeScript Config
-  run: npx tsc --showConfig
+      run: npx tsc --showConfig
 
     
     - name: Run type checking
