@@ -12,6 +12,14 @@ const DB_CONNECTION_TIMEOUT = parseInt(process.env.DB_CONNECTION_TIMEOUT || "300
 const DB_IDLE_TIMEOUT = parseInt(process.env.DB_IDLE_TIMEOUT || "30000");
 
 if (!DATABASE_URL) {
+  console.error("❌ DATABASE_URL environment variable is not set");
+  console.error("📋 To fix this issue:");
+  console.error("1. Provision a PostgreSQL database in Render");
+  console.error("2. Copy the Internal Database URL");
+  console.error("3. Set DATABASE_URL environment variable in Render dashboard");
+  console.error("4. Redeploy your service");
+  console.error("📖 See docs/RENDER_SETUP.md for detailed instructions");
+  
   throw new Error(
     "DATABASE_URL must be set. Did you forget to provision a database?",
   );
