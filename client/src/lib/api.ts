@@ -1,5 +1,6 @@
 // API Client - Basic implementation for development
 import axios from 'axios';
+import { QueryClient } from '@tanstack/react-query';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -91,17 +92,61 @@ export const notificationsApi = {
   getUnreadCount: () => apiClient.get('/notifications/unread-count'),
 };
 
-// Query client for React Query (if used)
-export const queryClient = {
-  invalidateQueries: (key: string) => {
-    console.log(`Invalidating queries for key: ${key}`);
-    // Placeholder - would integrate with React Query
-  },
-  setQueryData: (key: string, data: any) => {
-    console.log(`Setting query data for key: ${key}`, data);
-    // Placeholder - would integrate with React Query
-  },
+export const gamificationApi = {
+  getUserAchievements: (userId?: string) => apiClient.get(`/gamification/achievements${userId ? `/${userId}` : ''}`),
+  getUserProgress: (userId?: string) => apiClient.get(`/gamification/progress${userId ? `/${userId}` : ''}`),
+  getUserLeaderboard: (params?: any) => apiClient.get('/gamification/leaderboard', { params }),
+  claimReward: (rewardId: string) => apiClient.post(`/gamification/rewards/${rewardId}/claim`),
+  getAvailableRewards: () => apiClient.get('/gamification/rewards'),
+  updateProgress: (data: any) => apiClient.post('/gamification/progress', data),
 };
+
+export const filesApi = {
+  upload: (file: File | FormData, options?: any) => {
+    const formData = file instanceof FormData ? file : (() => {
+      const fd = new FormData();
+      fd.append('file', file);
+      return fd;
+    })();
+    
+    return apiClient.post('/files/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      ...options,
+    });
+  },
+  delete: (fileId: string) => apiClient.delete(`/files/${fileId}`),
+  getUploadUrl: (filename: string) => apiClient.post('/files/upload-url', { filename }),
+};
+
+export const userApi = {
+  getProfile: () => apiClient.get('/users/profile'),
+  updateProfile: (data: any) => apiClient.put('/users/profile', data),
+  getStats: () => apiClient.get('/users/stats'),
+  getAchievements: () => apiClient.get('/users/achievements'),
+  getProgress: () => apiClient.get('/users/progress'),
+};
+
+  // Create a proper QueryClient instance
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
+      retry: (failureCount, error: any) => {
+        // Don't retry on 4xx errors
+        if (error?.response?.status >= 400 && error?.response?.status < 500) {
+          return false;
+        }
+        return failureCount < 3;
+      },
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
 
 // Query keys for consistent cache management
 export const queryKeys = {
@@ -111,9 +156,24 @@ export const queryKeys = {
   },
   dashboardStats: () => 'dashboard-stats',
   userProfile: () => 'user-profile',
+  user: {
+    profile: 'user-profile',
+    stats: 'user-stats',
+    achievements: 'user-achievements',
+    progress: 'user-progress',
+  },
+  users: {
+    profile: 'users-profile',
+    stats: 'users-stats',
+  },
   msme: {
     listings: 'msme-listings',
     listing: (id: string) => `msme-listing-${id}`,
+  },
+  msmes: {
+    listings: 'msmes-listings',
+    listing: (id: string) => `msmes-listing-${id}`,
+    create: 'msmes-create',
   },
   nbfc: {
     applications: 'nbfc-applications',
@@ -130,6 +190,16 @@ export const queryKeys = {
     list: 'notifications-list',
     unreadCount: 'notifications-unread-count',
   },
+  gamification: {
+    achievements: 'gamification-achievements',
+    progress: 'gamification-progress',
+    leaderboard: 'gamification-leaderboard',
+    rewards: 'gamification-rewards',
+  },
+  files: {
+    upload: 'files-upload',
+    list: 'files-list',
+  },
 };
 
 // Export the main API client as default
@@ -139,11 +209,16 @@ export default apiClient;
 export const api = {
   ...apiClient,
   dashboard: dashboardApi,
+  user: userApi,
   users: usersApi,
   notifications: notificationsApi,
   msme: msmeApi,
+  msmes: msmeApi, // Alias for compatibility
   nbfc: nbfcApi,
   loan: loanApi,
   auth: authApi,
   buyer: buyerApi,
+  gamification: gamificationApi,
+  files: filesApi,
+  queryKeys,
 };
