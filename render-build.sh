@@ -17,6 +17,11 @@ npm run build:client
 echo "🏗️ Building server (backend)..."
 npm run build:server
 
+echo "📁 Checking build outputs..."
+ls -la dist/
+echo "Client build contents:"
+ls -la dist/public/ || echo "No client build found"
+
 echo "🧹 Cleaning up dev dependencies..."
 npm prune --production
 
