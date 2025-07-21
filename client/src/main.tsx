@@ -5,6 +5,8 @@ import { queryClient } from './lib/api';
 import App from './App';
 import './index.css';
 import { initializeLazyLoading } from './utils/lazy-loading';
+import { initializeOptimizedLazyLoading, monitorLazyLoadingPerformance } from './utils/optimized-lazy-loading';
+import { initializeRouteDebugging } from './utils/route-debugger';
 import { memoryOptimizer, registerServiceWorker } from './utils/memory-optimizer';
 import { initializeCaching } from './utils/enhanced-caching';
 import { initializeDemandPaging } from './utils/demand-paging';
@@ -14,10 +16,13 @@ import { functionTracer } from './utils/function-tracer';
 
 // Performance optimization: Initialize core systems immediately
 initializeLazyLoading();
+initializeOptimizedLazyLoading();
+initializeRouteDebugging();
 memoryOptimizer.initialize();
 initializeCaching();
 initializeDemandPaging();
 initializeApp();
+monitorLazyLoadingPerformance();
 
 // Initialize safe runtime system
 safeRuntime.initializeFeature(
