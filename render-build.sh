@@ -8,8 +8,8 @@ echo "🚀 Starting Render build process..."
 # Set production environment
 export NODE_ENV=production
 
-echo "📦 Installing all dependencies for build..."
-npm ci --no-audit --no-fund
+echo "📦 Installing all dependencies for build (legacy peer deps)..."
+npm ci --no-audit --no-fund --legacy-peer-deps
 
 echo "🏗️ Building client (frontend)..."
 npm run build:client
