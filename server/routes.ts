@@ -68,30 +68,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const coreRoutes = await import('./routes/core');
   app.use('/api', coreRoutes.default);
   
-  // Check if we should load full routes or just core
-  const { startupManager } = await import('./infrastructure/startup-manager');
-  const allServicesInitialized = startupManager.getStatus().totalInitialized > 4;
-  
-  if (!allServicesInitialized) {
-    console.log('🚀 Starting with core routes only');
-    const httpServer = createServer(app);
-    
-    // Load full routes after startup
-    setTimeout(async () => {
-      try {
-        await loadFullRoutes(app);
-        console.log('✅ Full routes loaded');
-      } catch (error) {
-        console.error('❌ Failed to load full routes:', error);
-      }
-    }, 3000);
-    
-    return httpServer;
-  }
-  
-  // Load full routes if all services are ready
-  await loadFullRoutes(app);
+  console.log('🚀 Starting with core routes, loading full routes immediately...');
   const httpServer = createServer(app);
+  
+  // Load full routes immediately to ensure proper API functionality
+  setTimeout(async () => {
+    try {
+      await loadFullRoutes(app);
+      console.log('✅ Full routes loaded and ready');
+    } catch (error) {
+      console.error('❌ Failed to load full routes:', error);
+    }
+  }, 1000); // Reduced timeout to 1 second
+  
   return httpServer;
 }
 

@@ -28,7 +28,9 @@
     "setup:ai": "node setup-ai.js",
     "test:ai": "node test-ai-config.js",
     "setup:db": "node setup-database.js",
-    "test:db": "node test-database.js"
+    "test:db": "node test-database.js",
+    "check:db": "node check-database.js",
+    "migrate": "npx drizzle-kit push --config drizzle.config.ts"
   },
   "dependencies": {
     "@fastify/compress": "^8.1.0",
