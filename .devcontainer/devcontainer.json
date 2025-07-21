@@ -1,13 +1,27 @@
 {
-  "name": "MsmeBazaar DevContainer",
-"image": "mcr.microsoft.com/devcontainers/javascript-node:20"
-"postCreateCommand": "npm install --legacy-peer-deps || true",
+  "name": "MsmeBazaar Dev Container",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20-bullseye",
+
   "customizations": {
     "vscode": {
       "extensions": [
         "dbaeumer.vscode-eslint",
-        "esbenp.prettier-vscode"
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-typescript-next",
+        "ms-azuretools.vscode-docker",
+        "streetsidesoftware.code-spell-checker"
       ]
     }
+  },
+
+  "forwardPorts": [3000, 5173],
+
+  "postCreateCommand": "npm install",
+
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    },
+    "ghcr.io/devcontainers/features/git:1": {}
   }
 }
