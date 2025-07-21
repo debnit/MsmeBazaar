@@ -1,1 +1,18 @@
+# Admin Reports Workflow (Disabled)
+# This workflow is currently disabled and can be enabled when admin reporting features are implemented
 
+# name: Generate Admin Reports
+# 
+# on:
+#   schedule:
+#     - cron: '0 6 * * MON'  # Every Monday at 6 AM UTC
+#   workflow_dispatch:
+# 
+# jobs:
+#   generate-reports:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+#       - name: Generate reports placeholder
+#         run: echo "Admin reports workflow disabled until implementation"

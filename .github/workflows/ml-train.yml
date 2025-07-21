@@ -3,21 +3,48 @@ name: Retrain Model
 
 on:
   schedule:
-    - cron: '0 2 * * SUN'
+    - cron: '0 2 * * SUN'  # every Sunday at 2 AM UTC
+  workflow_dispatch:       # allow manual trigger
+  push:
+    paths:
+      - 'apps/ml-api/train/**'
+      - 'apps/ml-api/models/**'
+      - 'apps/ml-api/feedback/**'
 
 jobs:
   train:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Install deps
-        run: pip install -r requirements.txt
-      - name: Retrain
-        run: python apps/ml-api/train_model.py
-on:
-  workflow_dispatch:
-  push:
-    paths:
-      - 'apps/ml-api/train/**'
-      - 'apps/ml-api/models/**'
-      - 'apps/ml-api/feedback/**'   # ← Add this if not already present
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f apps/ml-api/requirements.txt ]; then
+            pip install -r apps/ml-api/requirements.txt
+          else
+            pip install scikit-learn pandas numpy joblib fastapi uvicorn
+          fi
+          
+      - name: Check if training script exists
+        run: |
+          if [ -f apps/ml-api/train_model.py ]; then
+            echo "Training script found"
+          else
+            echo "Training script not found, skipping training"
+            exit 0
+          fi
+          
+      - name: Retrain model
+        run: |
+          if [ -f apps/ml-api/train_model.py ]; then
+            python apps/ml-api/train_model.py
+          else
+            echo "No training script available, skipping ML model training"
+          fi
