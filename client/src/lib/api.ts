@@ -2,10 +2,10 @@
 import axios from 'axios';
 import { QueryClient } from '@tanstack/react-query';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
   (typeof window !== 'undefined' && window.location.origin ? 
     `${window.location.origin}/api` : 
-    'http://localhost:3001/api');
+    'http://localhost:3000/api');
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,

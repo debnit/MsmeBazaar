@@ -1,5 +1,5 @@
 import { createContext, useContext, ReactNode, useState, useEffect, useCallback } from 'react';
-import { apiRequest } from '@/lib/api-client';
+import { api } from '@/lib/api';
 
 interface User {
   id: number;
@@ -63,12 +63,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
     
     try {
-      const response = await apiRequest('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password })
-      });
-
-      const { user, token } = response;
+      const response = await api.auth.login({ email, password });
+      const { user, token } = response.data;
+      
       setToken(token, remember);
       
       setState({
@@ -83,10 +80,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setState(prev => ({
         ...prev,
         isLoading: false,
-        error: error.message || 'Login failed'
+        error: error.response?.data?.message || error.message || 'Login failed'
       }));
       
-      return { success: false, error: error.message || 'Login failed' };
+      return { success: false, error: error.response?.data?.message || error.message || 'Login failed' };
     }
   }, [setToken]);
 
@@ -94,12 +91,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
     
     try {
-      const response = await apiRequest('/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
-
-      const { user, token } = response;
+      const response = await api.auth.register(data);
+      const { user, token } = response.data;
+      
       setToken(token);
       
       setState({
@@ -114,10 +108,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setState(prev => ({
         ...prev,
         isLoading: false,
-        error: error.message || 'Registration failed'
+        error: error.response?.data?.message || error.message || 'Registration failed'
       }));
       
-      return { success: false, error: error.message || 'Registration failed' };
+      return { success: false, error: error.response?.data?.message || error.message || 'Registration failed' };
     }
   }, [setToken]);
 
@@ -140,7 +134,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const user = await apiRequest('/api/auth/me');
+      const response = await api.auth.me();
+      const user = response.data;
+      
       setState({
         user,
         isAuthenticated: true,
@@ -149,18 +145,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     } catch (error: any) {
       console.error('Auth check failed:', error);
-      removeToken();
-      setState({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: null
-      });
+      
+      // If it's a network error or API is not available, don't remove token immediately
+      // Just set user as not authenticated but keep token for retry
+      if (error.code === 'NETWORK_ERROR' || error.code === 'ECONNREFUSED' || error.response?.status >= 500) {
+        setState({
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+          error: 'Unable to verify authentication. Please try again later.'
+        });
+      } else {
+        // For 401/403 errors, remove token
+        removeToken();
+        setState({
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+          error: null
+        });
+      }
     }
   }, [getToken, removeToken]);
 
   useEffect(() => {
-    checkAuth();
+    // Add timeout to prevent indefinite loading
+    const timeoutId = setTimeout(() => {
+      setState(prev => {
+        if (prev.isLoading) {
+          return {
+            ...prev,
+            isLoading: false,
+            error: 'Authentication check timed out'
+          };
+        }
+        return prev;
+      });
+    }, 10000); // 10 second timeout
+
+    checkAuth().finally(() => {
+      clearTimeout(timeoutId);
+    });
+
+    return () => clearTimeout(timeoutId);
   }, [checkAuth]);
 
   const value: AuthContextType = {

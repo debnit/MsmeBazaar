@@ -335,8 +335,8 @@ async function loadFullRoutes(app: Express) {
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
       });
       
-      // Redirect to dashboard after successful login
-      res.redirect('/');
+      // Return JSON response for API clients
+      res.json({ user: { ...user, password: undefined }, token });
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ message: "Login failed" });

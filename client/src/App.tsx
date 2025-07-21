@@ -116,11 +116,12 @@ class ErrorBoundary extends React.Component<
 
 // Router component with authentication
 function Router() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, error } = useAuth();
 
   // Initialize global toast
   useInitializeGlobalToast();
 
+  // Show loading spinner only for a brief moment
   if (isLoading) {
     return <LoadingSpinner />;
   }
@@ -136,6 +137,13 @@ function Router() {
             <Route path="/login" component={AuthPage} />
             <Route path="/register" component={AuthPage} />
             <Route path="/vaas-demo" component={VaaSDemoPage} />
+            {/* Fallback routes for when API is not available */}
+            <Route path="/dashboard" component={InstantHomepage} />
+            <Route path="/admin" component={InstantHomepage} />
+            <Route path="/seller/:rest*" component={InstantHomepage} />
+            <Route path="/buyer/:rest*" component={InstantHomepage} />
+            <Route path="/agent/:rest*" component={InstantHomepage} />
+            <Route path="/nbfc/:rest*" component={InstantHomepage} />
           </>
         ) : (
           <>
