@@ -1,0 +1,19 @@
+{
+  "name": "MsmeBazaar DevContainer",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": {
+    "ghcr.io/devcontainers-contrib/features/nodejs:1": {
+      "version": "20"
+    }
+  },
+  "postCreateCommand": "npm install --legacy-peer-deps",
+  "customizations": {
+    "vscode": {
+      "settings": {},
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  }
+}
