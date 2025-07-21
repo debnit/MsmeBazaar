@@ -1,7 +1,9 @@
 services:
-  # Main Web Application (Frontend + Backend)
+  # ===============================================
+  # MAIN APPLICATION (Monolithic - Primary Service)
+  # ===============================================
   - type: web
-    name: msmebazaar-v2
+    name: msmebazaar-main
     env: node
     region: oregon
     plan: starter
@@ -11,7 +13,7 @@ services:
     envVars:
       # Database Configuration
       - key: DATABASE_URL
-        sync: false  # Will be set manually in Render dashboard
+        sync: false
       - key: DATABASE_POOL_SIZE
         value: "10"
       - key: DATABASE_MAX_OVERFLOW
@@ -27,7 +29,7 @@ services:
       - key: DEBUG
         value: "false"
       
-      # Security Keys (to be set manually in Render dashboard)
+      # Security Keys
       - key: SECRET_KEY
         sync: false
       - key: JWT_SECRET
@@ -37,7 +39,7 @@ services:
       - key: ENCRYPTION_KEY
         sync: false
       
-      # AI Services (to be set manually in Render dashboard)
+      # AI Services
       - key: OPENAI_API_KEY
         sync: false
       - key: ANTHROPIC_API_KEY
@@ -57,7 +59,315 @@ services:
       - key: RAZORPAY_WEBHOOK_SECRET
         sync: false
       
-      # Email Configuration
+      # Microservices URLs (Internal Communication)
+      - key: AUTH_SERVICE_URL
+        value: https://msmebazaar-auth.onrender.com
+      - key: RECOMMENDATION_SERVICE_URL
+        value: https://msmebazaar-recommendations.onrender.com
+      - key: ML_MONITORING_SERVICE_URL
+        value: https://msmebazaar-ml-monitoring.onrender.com
+      - key: TRANSACTION_MATCHING_SERVICE_URL
+        value: https://msmebazaar-transactions.onrender.com
+      - key: GAMIFICATION_SERVICE_URL
+        value: https://msmebazaar-gamification.onrender.com
+      - key: USER_PROFILE_SERVICE_URL
+        value: https://msmebazaar-profiles.onrender.com
+      - key: VALUATION_SERVICE_URL
+        value: https://msmebazaar-valuation.onrender.com
+      - key: MSME_LISTING_SERVICE_URL
+        value: https://msmebazaar-listings.onrender.com
+      - key: SEARCH_SERVICE_URL
+        value: https://msmebazaar-search.onrender.com
+      - key: PAYMENTS_API_URL
+        value: https://msmebazaar-payments.onrender.com
+      - key: ML_API_URL
+        value: https://msmebazaar-ml-api.onrender.com
+      
+      # CORS Settings
+      - key: CORS_ORIGINS
+        value: https://vyapaarmitra.in,https://www.vyapaarmitra.in,https://app.vyapaarmitra.in,https://api.vyapaarmitra.in
+      - key: CORS_ALLOW_CREDENTIALS
+        value: "true"
+      
+      # API URLs
+      - key: VITE_API_URL
+        value: https://api.vyapaarmitra.in/api
+      - key: VITE_AUTH_API_URL
+        value: https://auth.vyapaarmitra.in
+      - key: VITE_WS_URL
+        value: wss://api.vyapaarmitra.in/ws
+    
+    # Custom domains
+    domains:
+      - vyapaarmitra.in
+      - www.vyapaarmitra.in
+      - api.vyapaarmitra.in
+    
+    autoDeploy: true
+
+  # ===============================================
+  # FRONTEND APPLICATION (Separate React App)
+  # ===============================================
+  - type: web
+    name: msmebazaar-frontend
+    env: node
+    region: oregon
+    plan: starter
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: REACT_APP_API_URL
+        value: https://api.vyapaarmitra.in
+      - key: REACT_APP_AUTH_URL
+        value: https://auth.vyapaarmitra.in
+      - key: REACT_APP_ENVIRONMENT
+        value: production
+    
+    domains:
+      - app.vyapaarmitra.in
+    
+    autoDeploy: true
+
+  # ===============================================
+  # MICROSERVICES (Python-based)
+  # ===============================================
+  
+  # Authentication Service
+  - type: web
+    name: msmebazaar-auth
+    env: python
+    region: oregon
+    plan: starter
+    rootDir: microservices/auth-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+    
+    domains:
+      - auth.vyapaarmitra.in
+    
+    autoDeploy: true
+
+  # Recommendation Service
+  - type: web
+    name: msmebazaar-recommendations
+    env: python
+    region: oregon
+    plan: starter
+    rootDir: microservices/recommendation-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT --workers 2
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: ML_MODEL_PATH
+        value: /opt/render/project/src/models
+    
+    autoDeploy: true
+
+  # ML Monitoring Service
+  - type: web
+    name: msmebazaar-ml-monitoring
+    env: python
+    region: oregon
+    plan: starter
+    rootDir: microservices/ml-monitoring-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT --workers 2
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: MLFLOW_TRACKING_URI
+        value: https://msmebazaar-mlflow.onrender.com
+    
+    autoDeploy: true
+
+  # Transaction Matching Service
+  - type: web
+    name: msmebazaar-transactions
+    env: python
+    region: oregon
+    plan: starter
+    rootDir: microservices/transaction-matching-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT --workers 2
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+    
+    autoDeploy: true
+
+  # Gamification Service
+  - type: web
+    name: msmebazaar-gamification
+    env: python
+    region: oregon
+    plan: starter
+    rootDir: microservices/gamification-service
+    buildCommand: pip install -r requirements.txt || pip install fastapi uvicorn redis asyncpg
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+    
+    autoDeploy: true
+
+  # User Profile Service
+  - type: web
+    name: msmebazaar-profiles
+    env: python
+    region: oregon
+    plan: starter
+    rootDir: microservices/user-profile-service
+    buildCommand: pip install -r requirements.txt || pip install fastapi uvicorn redis asyncpg
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+    
+    autoDeploy: true
+
+  # Valuation Service
+  - type: web
+    name: msmebazaar-valuation
+    env: python
+    region: oregon
+    plan: starter
+    rootDir: microservices/valuation-service
+    buildCommand: pip install -r requirements.txt || pip install fastapi uvicorn redis asyncpg numpy pandas scikit-learn
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: OPENAI_API_KEY
+        sync: false
+    
+    autoDeploy: true
+
+  # MSME Listing Service
+  - type: web
+    name: msmebazaar-listings
+    env: python
+    region: oregon
+    plan: starter
+    rootDir: microservices/msme-listing-service
+    buildCommand: pip install -r requirements.txt || pip install fastapi uvicorn redis asyncpg
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+    
+    autoDeploy: true
+
+  # Search & Matchmaking Service
+  - type: web
+    name: msmebazaar-search
+    env: python
+    region: oregon
+    plan: starter
+    rootDir: microservices/search-matchmaking-service
+    buildCommand: pip install -r requirements.txt || pip install fastapi uvicorn redis asyncpg elasticsearch
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: ELASTICSEARCH_URL
+        sync: false
+    
+    autoDeploy: true
+
+  # EaaS Service (Email as a Service)
+  - type: web
+    name: msmebazaar-eaas
+    env: python
+    region: oregon
+    plan: starter
+    rootDir: microservices/eaas-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
       - key: SMTP_HOST
         value: smtp.gmail.com
       - key: SMTP_PORT
@@ -66,86 +376,112 @@ services:
         sync: false
       - key: SMTP_PASSWORD
         sync: false
-      - key: SMTP_FROM_EMAIL
-        value: noreply@vyapaarmitra.in
-      
-      # Cloud Storage (AWS S3)
-      - key: AWS_ACCESS_KEY_ID
-        sync: false
-      - key: AWS_SECRET_ACCESS_KEY
-        sync: false
-      - key: AWS_REGION
-        value: us-east-1
-      - key: AWS_S3_BUCKET
-        value: msmebazaar-uploads
-      
-      # Monitoring & Analytics
-      - key: SENTRY_DSN
-        sync: false
-      - key: SENTRY_ENVIRONMENT
-        value: production
-      - key: GA_TRACKING_ID
-        sync: false
-      
-      # Performance Settings
-      - key: RATE_LIMIT_REQUESTS_PER_MINUTE
-        value: "100"
-      - key: RATE_LIMIT_BURST_SIZE
-        value: "20"
-      - key: CACHE_TTL
-        value: "3600"
-      - key: CACHE_MAX_SIZE
-        value: "1000"
-      - key: SESSION_TIMEOUT
-        value: "86400"
-      - key: REFRESH_TOKEN_EXPIRY
-        value: "604800"
-      
-      # Feature Flags
-      - key: ENABLE_DEVELOPMENT_TOOLS
-        value: "false"
-      - key: ENABLE_DEBUG_TOOLBAR
-        value: "false"
-      - key: ENABLE_SWAGGER_UI
-        value: "true"
-      - key: METRICS_ENABLED
-        value: "true"
-      
-      # Localization
-      - key: DEFAULT_LANGUAGE
-        value: en
-      - key: SUPPORTED_LANGUAGES
-        value: en,hi
-      - key: DEFAULT_TIMEZONE
-        value: Asia/Kolkata
-      
-      # CORS Settings
-      - key: CORS_ORIGINS
-        value: https://vyapaarmitra.in,https://www.vyapaarmitra.in
-      - key: CORS_ALLOW_CREDENTIALS
-        value: "true"
-      
-      # API URLs (will be auto-generated by Render)
-      - key: VITE_API_URL
-        value: https://msmebazaar-v2.onrender.com/api
-      - key: VITE_AUTH_API_URL
-        value: https://msmebazaar-v2.onrender.com/auth
-      - key: VITE_WS_URL
-        value: wss://msmebazaar-v2.onrender.com/ws
-    
-    # Custom domains
-    domains:
-      - vyapaarmitra.in
-      - www.vyapaarmitra.in
     
     autoDeploy: true
+
+  # ===============================================
+  # ADDITIONAL SERVICES
+  # ===============================================
+
+  # ML API Service
+  - type: web
+    name: msmebazaar-ml-api
+    env: python
+    region: oregon
+    plan: starter
+    rootDir: apps/ml-api
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PINECONE_API_KEY
+        sync: false
     
-    # Health check configuration
-    healthCheck:
-      path: /health
-      timeout: 30
-      interval: 30
-      retries: 3
+    autoDeploy: true
+
+  # Payments API Service
+  - type: web
+    name: msmebazaar-payments
+    env: python
+    region: oregon
+    plan: starter
+    rootDir: apps/payments-api
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+    
+    autoDeploy: true
+
+  # Admin Dashboard Backend
+  - type: web
+    name: msmebazaar-admin-api
+    env: node
+    region: oregon
+    plan: starter
+    rootDir: admin-dashboard/backend
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_SECRET
+        sync: false
+    
+    domains:
+      - admin-api.vyapaarmitra.in
+    
+    autoDeploy: true
+
+  # Scheduler Service (Background Worker)
+  - type: worker
+    name: msmebazaar-scheduler
+    env: node
+    region: oregon
+    plan: starter
+    rootDir: scheduler
+    buildCommand: npm ci
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: SCHEDULER_INTERVAL
+        value: "300000"
+    
+    autoDeploy: true
+
+  # ===============================================
+  # INFRASTRUCTURE SERVICES
+  # ===============================================
 
   # PostgreSQL Database
   - type: pserv
