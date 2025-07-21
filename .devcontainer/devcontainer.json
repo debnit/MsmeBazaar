@@ -1,7 +1,7 @@
 {
   "name": "MsmeBazaar DevContainer",
-  "image": "mcr.microsoft.com/devcontainers/node:20",
-  "postCreateCommand": "npm install --legacy-peer-deps || true",
+"image": "mcr.microsoft.com/devcontainers/javascript-node:20"
+"postCreateCommand": "npm install --legacy-peer-deps || true",
   "customizations": {
     "vscode": {
       "extensions": [
