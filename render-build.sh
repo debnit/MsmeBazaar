@@ -5,11 +5,8 @@ set -e
 
 echo "🚀 Starting Render build process..."
 
-# Set production environment
-export NODE_ENV=production
-
 echo "📦 Installing all dependencies for build..."
-npm ci --no-audit --no-fund
+npm install --legacy-peer-deps
 
 echo "🏗️ Building client (frontend)..."
 npm run build:client
@@ -22,8 +19,9 @@ ls -la dist/
 echo "Client build contents:"
 ls -la dist/public/ || echo "No client build found"
 
-echo "🧹 Cleaning up dev dependencies..."
-npm prune --production
+echo "🧹 Cleaning up dev dependencies (keeping runtime deps)..."
+# Don't prune in production build as Render manages this
+echo "Skipping npm prune for Render deployment"
 
 echo "📊 Build summary:"
 echo "✅ Client built to: dist/public"
