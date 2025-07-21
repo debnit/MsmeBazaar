@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, LogIn, AlertCircle } from "lucide-react";
-import { login } from "@/lib/auth";
+import { useAuth } from "@/components/auth/auth-provider";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -22,6 +22,7 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { login } = useAuth();
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -32,11 +33,13 @@ export default function LoginForm() {
   });
 
   const loginMutation = useMutation({
-    mutationFn: login,
-    onSuccess: (data) => {
+    mutationFn: async (credentials: LoginFormData) => {
+      return login(credentials.email, credentials.password);
+    },
+    onSuccess: (data: any) => {
       toast({
         title: "Login Successful",
-        description: `Welcome back, ${data.user.firstName || data.user.email}!`,
+        description: `Welcome back, ${data.user?.firstName || data.user?.email}!`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       // Navigation will be handled by the App component based on auth state

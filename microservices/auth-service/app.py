@@ -6,6 +6,7 @@ Handles OTP login, JWT, role-based access, token refresh
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 import jwt
@@ -19,17 +20,48 @@ import os
 from twilio.rest import Client
 import random
 import string
+import logging
 
-app = FastAPI(title="Auth Service", description="Authentication and Authorization Service")
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
-# CORS middleware
+app = FastAPI(
+    title="Auth Service", 
+    description="Authentication and Authorization Service",
+    version="1.0.0"
+)
+
+# Secure CORS configuration
+allowed_origins = [
+    "http://localhost:3000",
+    "http://localhost:5173", 
+    "http://localhost:5000",
+    "https://your-production-domain.com"  # Replace with actual production domain
+]
+
+# Only allow wildcard in development
+if os.getenv("NODE_ENV") == "development":
+    allowed_origins.append("http://localhost:*")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["X-Request-ID"]
 )
+
+# Add trusted host middleware for production
+if os.getenv("NODE_ENV") == "production":
+    app.add_middleware(
+        TrustedHostMiddleware, 
+        allowed_hosts=["your-production-domain.com", "auth.your-domain.com"]
+    )
 
 # Configuration
 JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key")

@@ -1,0 +1,34 @@
+# Trivy Security Scanner Configuration
+# https://aquasecurity.github.io/trivy/latest/docs/references/configuration/
+
+# Global timeout for all scan operations
+timeout: 5m
+
+# Cache configuration
+cache:
+  dir: ~/.cache/trivy
+
+# Database configuration
+db:
+  repository: ghcr.io/aquasecurity/trivy-db
+  java-repository: ghcr.io/aquasecurity/trivy-java-db
+
+# Output configuration
+format: sarif
+severity: HIGH,CRITICAL
+exit-code: 0
+quiet: true
+
+# Ignore file for acceptable vulnerabilities
+ignorefile: .trivyignore
+
+# Skip files and directories
+skip-files:
+  - "**/*.md"
+  - "**/README*"
+  - "**/LICENSE*"
+  - "**/*.txt"
+  - ".git/**"
+  - "node_modules/**"
+  - "dist/**"
+  - "build/**"

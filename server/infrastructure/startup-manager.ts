@@ -14,11 +14,20 @@ export class StartupManager {
   // Initialize advanced performance optimizations
   private async initializeAdvancedOptimizations() {
     try {
-      const { advancedPerformanceOptimizer } = await import('./advanced-performance');
-      console.log('🚀 Advanced performance optimizations loaded');
+      // Check if we're in a production environment where advanced optimizations make sense
+      if (process.env.NODE_ENV === 'production') {
+        const { AdvancedPerformanceOptimizer } = await import('./advanced-performance.js');
+        const optimizer = new AdvancedPerformanceOptimizer();
+        console.log('🚀 Advanced performance optimizations loaded');
+        return optimizer;
+      } else {
+        console.log('⚡ Running in development mode - advanced optimizations disabled');
+      }
     } catch (error) {
-      console.log('⚠️ Advanced optimizations not available');
+      console.log('⚠️ Advanced optimizations not available (this is normal for most environments)');
+      console.log('   These optimizations require specific system permissions and are optional');
     }
+    return null;
   }
 
   // Define critical services needed for basic app functionality

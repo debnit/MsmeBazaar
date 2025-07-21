@@ -1,50 +1,56 @@
-# Multi-stage Docker build for MSMESquare
-FROM node:18-alpine AS base
+# 🏗️ Base image for building the app
+FROM node:20-alpine AS base
 
-# Install dependencies for building
-RUN apk add --no-cache libc6-compat
+# Install required system packages
+RUN apk add --no-cache libc6-compat curl
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
+# Use separate COPY to leverage Docker layer caching
 COPY package.json package-lock.json ./
-RUN npm ci --only=production
 
-# Copy source code
+# Install all deps including devDeps for build
+RUN npm ci
+
+# Copy the rest of the code
 COPY . .
 
-# Build the application
 ENV NODE_ENV=production
+
+# Build the app (fails fast if broken)
 RUN npm run build
 
-# Production stage
-FROM node:18-alpine AS production
+# ------------------------------------------------
+# 🚀 Production image
+FROM node:20-alpine AS production
+
+# Install minimal packages for runtime
+RUN apk add --no-cache curl
 
 WORKDIR /app
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
+# Copy only what's needed
+COPY package.json package-lock.json ./
 
-# Copy built application
-COPY --from=base --chown=nextjs:nodejs /app/dist ./dist
-COPY --from=base --chown=nextjs:nodejs /app/node_modules ./node_modules
-COPY --from=base --chown=nextjs:nodejs /app/package.json ./package.json
+# Install production deps only
+RUN npm ci --omit=dev && npm cache clean --force
 
-# Copy database migration files
-COPY --from=base --chown=nextjs:nodejs /app/drizzle ./drizzle
-COPY --from=base --chown=nextjs:nodejs /app/shared ./shared
+# Copy built output and necessary shared folders
+COPY --from=base /app/dist ./dist
+COPY --from=base /app/shared ./shared
 
-# Switch to non-root user
+# Note: drizzle/migrations not needed at runtime - applied separately via CI/CD
+
+# 👤 Create a non-root user for security
+RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
 USER nextjs
 
-# Expose port
+# 📡 App listens on this port
 EXPOSE 5000
 
-# Health check
+# 🔍 Basic healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:5000/health || exit 1
 
-# Start the application
-CMD ["node", "dist/server/index.js"]
+# 🏁 Start the app
+CMD ["node", "dist/index.js"]

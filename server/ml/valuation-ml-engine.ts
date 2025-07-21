@@ -50,7 +50,8 @@ class MLValuationEngine {
   private isHealthy: boolean = true;
 
   constructor() {
-    this.mlServiceUrl = process.env.ML_SERVICE_URL || 'http://localhost:8000';
+    this.mlServiceUrl = process.env.ML_SERVICE_URL || '';
+    this.isMLServiceEnabled = !!this.mlServiceUrl && this.mlServiceUrl !== 'http://localhost:8000';
   }
 
   async valuateBusiness(businessData: BusinessData): Promise<ValuationResult> {

@@ -6,7 +6,7 @@ export const LazyAdminDashboard = lazy(() => import('../pages/admin/dashboard'))
 export const LazyAnalytics = lazy(() => import('../pages/analytics'));
 
 // Loading component for better UX
-export const LoadingSpinner = () => {
+export const LoadingSpinner = (): JSX.Element => {
   return (
     <div className="flex items-center justify-center h-64">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -16,7 +16,7 @@ export const LoadingSpinner = () => {
 };
 
 // Lazy wrapper component
-export const LazyComponent = ({ children }: { children: ReactNode }) => {
+export const LazyComponent = ({ children }: { children: ReactNode }): JSX.Element => {
   return (
     <Suspense fallback={<LoadingSpinner />}>
       {children}
@@ -25,25 +25,25 @@ export const LazyComponent = ({ children }: { children: ReactNode }) => {
 };
 
 // Preload components when system is idle
-export const preloadComponents = () => {
+export const preloadComponents = (): void => {
   // Use requestIdleCallback for better performance
   if ('requestIdleCallback' in window) {
-    requestIdleCallback(() => {
+    window.requestIdleCallback(() => {
       // Preload components during idle time
-      LazyAdminDashboard();
-      LazyAnalytics();
+      import('../pages/admin/dashboard').catch(() => {});
+      import('../pages/dashboard').catch(() => {});
     });
   } else {
     // Fallback for browsers without requestIdleCallback
     setTimeout(() => {
-      LazyAdminDashboard();
-      LazyAnalytics();
+      import('../pages/admin/dashboard').catch(() => {});
+      import('../pages/dashboard').catch(() => {});
     }, 2000);
   }
 };
 
 // Initialize lazy loading
-export const initializeLazyLoading = () => {
+export const initializeLazyLoading = (): void => {
   // Preload critical components after initial render
   setTimeout(preloadComponents, 1000);
   

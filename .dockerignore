@@ -66,3 +66,104 @@ spec/
 *.zip
 *.rar
 *.7z
+
+**.dockerignore** (optimized for layer caching):
+```
+# Dependencies
+node_modules
+.pnpm
+.yarn
+.npm
+
+# Logs
+logs
+*.log
+debug.log
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# Runtime
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Directory bloat
+coverage
+build
+dist
+tmp
+.cache
+
+# Configs and secrets
+.env
+.env.*
+*.tsbuildinfo
+
+# IDEs
+.vscode
+.idea
+
+# OS
+.DS_Store
+
+# Docs and metadata
+*.md
+docs/
+README.md
+
+# Testing
+*.test.*
+*.spec.*
+tests/
+test/
+spec/
+
+# Docker & Deployment
+Dockerfile*
+docker-compose*.yml
+
+# CI/CD
+.vercel
+.netlify
+.turbo
+.aws-sam
+.terraform
+
+# Misc
+*.tar.gz
+*.zip
+*.7z
+*.rar
+.yarn-integrity
+.rpt2_cache
+.rts2_cache_*
+.lock-wscript
+.wafpickle-*
+.node_repl_history
+.tern-port
+
+# Frontend builds
+.next
+.nuxt
+.vuepress/dist
+.serverless
+.fusebox
+.swc
+.parcel-cache
+node_modules
+dist
+build
+*.log
+*.tsbuildinfo
+.env*
+.vscode
+.git
+test/
+tests/
+docs/
+*.md
+*.zip
+*.tar.gz

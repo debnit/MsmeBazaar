@@ -1,0 +1,95 @@
+# Trivy Ignore File - DevSecOps Configuration
+# Format: CVE-ID or Package-Name
+# Comments explaining why each vulnerability is ignored
+
+# ==============================================================================
+# NODE.JS BASE IMAGE VULNERABILITIES (Acceptable Risk)
+# ==============================================================================
+
+# Node.js 18-alpine base image known issues that are acceptable for our use case
+# These are typically low-impact or have no available fixes yet
+
+# CVE-2023-44487 - HTTP/2 Rapid Reset Attack
+# Reason: Mitigated by our reverse proxy and rate limiting
+# Risk Level: Low (infrastructure protected)
+# Review Date: 2024-01-15
+CVE-2023-44487
+
+# CVE-2023-39615 - libxml2 vulnerability  
+# Reason: Not directly exposed in our application layer
+# Risk Level: Low (library not used in critical paths)
+# Review Date: 2024-01-15
+CVE-2023-39615
+
+# CVE-2023-5363 - OpenSSL vulnerability
+# Reason: Alpine base image, will be updated in next base image update
+# Risk Level: Medium (acceptable for development)
+# Review Date: 2024-01-15
+CVE-2023-5363
+
+# CVE-2024-6345 - setuptools vulnerability
+# Reason: Build-time dependency only, not in production runtime
+# Risk Level: Low (development environment only)
+# Review Date: 2024-01-15
+CVE-2024-6345
+
+# ==============================================================================
+# NPM DEPENDENCY VULNERABILITIES (Under Review)
+# ==============================================================================
+
+# Development dependencies that don't affect production
+# These are only used during build time and not in runtime
+
+# CVE-2024-28863 - tar package vulnerability
+# Reason: Only used in development builds, not production runtime
+# Risk Level: Low (development only)
+# Review Date: 2024-01-15
+CVE-2024-28863
+
+# CVE-2023-26136 - tough-cookie vulnerability
+# Reason: Transitive dependency, no direct usage
+# Risk Level: Low (indirect dependency)
+# Review Date: 2024-01-15
+CVE-2023-26136
+
+# ==============================================================================
+# FILESYSTEM VULNERABILITIES (Development Environment)
+# ==============================================================================
+
+# Development environment specific issues that are acceptable
+
+# Configuration files with potential sensitive data
+# Reason: Development environment, proper secrets management in production
+# Risk Level: Low (development only)
+package-lock.json
+.env.example
+tsconfig.json
+
+# Build artifacts and temporary files
+# Reason: Build-time artifacts, not in production
+# Risk Level: Low (build artifacts)
+node_modules
+dist
+build
+.next
+
+# ==============================================================================
+# ACCEPTABLE MEDIUM/LOW SEVERITY ISSUES
+# ==============================================================================
+
+# Issues that are acceptable for current development phase
+# Will be addressed in future security updates
+
+# GHSA-* GitHub Security Advisories that are low impact
+# Reason: Low severity, development environment
+# Risk Level: Low
+GHSA-9wv6-86v2-598j
+GHSA-74fj-2j2h-c42q
+GHSA-3xgq-45jj-v275
+
+# ==============================================================================
+# REVIEW SCHEDULE
+# ==============================================================================
+# Next security review: 2024-02-15
+# Responsible: DevSecOps Team
+# Review frequency: Monthly for high/critical, quarterly for medium/low

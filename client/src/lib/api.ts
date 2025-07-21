@@ -1,142 +1,278 @@
-import { apiRequest } from "./queryClient";
-import { getAuthToken } from "./auth";
+// API Client - Basic implementation for development
+import axios from 'axios';
+import { QueryClient } from '@tanstack/react-query';
 
-// Enhanced API request with authentication
-export async function authenticatedApiRequest(
-  method: string,
-  url: string,
-  data?: unknown
-): Promise<Response> {
-  const token = getAuthToken();
-  
-  const response = await fetch(url, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-    body: data ? JSON.stringify(data) : undefined,
-  });
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 
+  (typeof window !== 'undefined' && window.location.origin ? 
+    `${window.location.origin}/api` : 
+    'http://localhost:3001/api');
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`${response.status}: ${errorText}`);
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/auth/login';
+    }
+    return Promise.reject(error);
   }
+);
 
-  return response;
+// API endpoints
+export const dashboardApi = {
+  getStats: () => apiClient.get('/dashboard/stats'),
+  getRecentActivity: () => apiClient.get('/dashboard/activity'),
+};
+
+export const msmeApi = {
+  getListings: (params?: any) => apiClient.get('/msme/listings', { params }),
+  createListing: (data: any) => apiClient.post('/msme/listings', data),
+  create: (data: any) => apiClient.post('/msme/listings', data), // Alias for compatibility
+  updateListing: (id: string, data: any) => apiClient.put(`/msme/listings/${id}`, data),
+  deleteListing: (id: string) => apiClient.delete(`/msme/listings/${id}`),
+  getListing: (id: string) => apiClient.get(`/msme/listings/${id}`),
+};
+
+export const nbfcApi = {
+  getLoanApplications: (params?: any) => apiClient.get('/nbfc/applications', { params }),
+  updateApplication: (id: string, data: any) => apiClient.put(`/nbfc/applications/${id}`, data),
+  getApplication: (id: string) => apiClient.get(`/nbfc/applications/${id}`),
+};
+
+export const loanApi = {
+  createApplication: (data: any) => apiClient.post('/loan/applications', data),
+  getApplications: (params?: any) => apiClient.get('/loan/applications', { params }),
+  getApplication: (id: string) => apiClient.get(`/loan/applications/${id}`),
+  updateApplication: (id: string, data: any) => apiClient.put(`/loan/applications/${id}`, data),
+};
+
+export const authApi = {
+  login: (credentials: any) => apiClient.post('/auth/login', credentials),
+  register: (userData: any) => apiClient.post('/auth/register', userData),
+  logout: () => apiClient.post('/auth/logout'),
+  getProfile: () => apiClient.get('/auth/profile'),
+  updateProfile: (data: any) => apiClient.put('/auth/profile', data),
+};
+
+export const buyerApi = {
+  getDashboard: () => apiClient.get('/buyer/dashboard'),
+  getInterests: (params?: any) => apiClient.get('/buyer/interests', { params }),
+  createInterest: (data: any) => apiClient.post('/buyer/interests', data),
+  updateInterest: (id: string, data: any) => apiClient.put(`/buyer/interests/${id}`, data),
+  deleteInterest: (id: string) => apiClient.delete(`/buyer/interests/${id}`),
+};
+
+export const usersApi = {
+  getProfile: () => apiClient.get('/users/profile'),
+  updateProfile: (data: any) => apiClient.put('/users/profile', data),
+  getStats: () => apiClient.get('/users/stats'),
+};
+
+export const notificationsApi = {
+  list: (params?: any) => apiClient.get('/notifications', { params }),
+  markAsRead: (id: string) => apiClient.put(`/notifications/${id}/read`),
+  markAllAsRead: () => apiClient.put('/notifications/read-all'),
+  getUnreadCount: () => apiClient.get('/notifications/unread-count'),
+};
+
+// Types for gamification API responses
+interface UserStats {
+  user_id: string;
+  total_points: number;
+  level: number;
+  badges: string[];
+  achievements: string[];
+  rank?: number;
+  next_level_points: number;
+  progress_percentage: number;
 }
 
-// MSME API
-export const msmeApi = {
-  createListing: async (data: any) => {
-    const response = await authenticatedApiRequest("POST", "/api/msme/listings", data);
-    return response.json();
+interface LeaderboardEntry {
+  user_id: string;
+  username: string;
+  total_points: number;
+  level: number;
+  badges_count: number;
+  rank: number;
+}
+
+interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  rarity: string;
+  points_required: number;
+}
+
+interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  points_reward: number;
+}
+
+export const gamificationApi = {
+  getUserAchievements: (userId?: string): Promise<{ data: Achievement[] }> => 
+    apiClient.get(`/gamification/achievements${userId ? `/${userId}` : ''}`),
+  getUserProgress: (userId?: string): Promise<{ data: UserStats }> => 
+    apiClient.get(`/gamification/progress${userId ? `/${userId}` : ''}`),
+  getUserLeaderboard: (params?: any): Promise<{ data: LeaderboardEntry[] }> => 
+    apiClient.get('/gamification/leaderboard', { params }),
+  getUserStats: (userId?: string): Promise<{ data: UserStats }> => 
+    apiClient.get(`/gamification/stats${userId ? `/${userId}` : ''}`),
+  getLeaderboard: (params?: any): Promise<{ data: LeaderboardEntry[] }> => 
+    apiClient.get('/gamification/leaderboard', { params }),
+  getBadges: (userId?: string): Promise<{ data: Badge[] }> => 
+    apiClient.get(`/gamification/badges${userId ? `/${userId}` : ''}`),
+  getAchievements: (userId?: string): Promise<{ data: Achievement[] }> => 
+    apiClient.get(`/gamification/achievements${userId ? `/${userId}` : ''}`),
+  claimReward: (rewardId: string) => apiClient.post(`/gamification/rewards/${rewardId}/claim`),
+  getAvailableRewards: (): Promise<{ data: Badge[] }> => 
+    apiClient.get('/gamification/rewards'),
+  updateProgress: (data: any) => apiClient.post('/gamification/progress', data),
+};
+
+export const filesApi = {
+  upload: (file: File | FormData, options?: any) => {
+    const formData = file instanceof FormData ? file : (() => {
+      const fd = new FormData();
+      fd.append('file', file);
+      return fd;
+    })();
+    
+    return apiClient.post('/files/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      ...options,
+    });
   },
-  
-  getListings: async (filters?: any) => {
-    const params = new URLSearchParams(filters || {});
-    const response = await authenticatedApiRequest("GET", `/api/msme/listings?${params}`);
-    return response.json();
+  delete: (fileId: string) => apiClient.delete(`/files/${fileId}`),
+  getUploadUrl: (filename: string) => apiClient.post('/files/upload-url', { filename }),
+};
+
+export const userApi = {
+  getProfile: () => apiClient.get('/users/profile'),
+  updateProfile: (data: any) => apiClient.put('/users/profile', data),
+  getStats: () => apiClient.get('/users/stats'),
+  getAchievements: () => apiClient.get('/users/achievements'),
+  getProgress: () => apiClient.get('/users/progress'),
+};
+
+  // Create a proper QueryClient instance
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
+      retry: (failureCount, error: any) => {
+        // Don't retry on 4xx errors
+        if (error?.response?.status >= 400 && error?.response?.status < 500) {
+          return false;
+        }
+        return failureCount < 3;
+      },
+    },
+    mutations: {
+      retry: 1,
+    },
   },
-  
-  getListing: async (id: number) => {
-    const response = await authenticatedApiRequest("GET", `/api/msme/listings/${id}`);
-    return response.json();
+});
+
+// Query keys for consistent cache management
+export const queryKeys = {
+  dashboard: {
+    stats: 'dashboard-stats',
+    activity: 'dashboard-activity',
   },
-  
-  updateListing: async (id: number, data: any) => {
-    const response = await authenticatedApiRequest("PATCH", `/api/msme/listings/${id}`, data);
-    return response.json();
+  dashboardStats: () => 'dashboard-stats',
+  userProfile: () => 'user-profile',
+  user: {
+    profile: 'user-profile',
+    stats: 'user-stats',
+    achievements: 'user-achievements',
+    progress: 'user-progress',
   },
-  
-  getMyListings: async () => {
-    const response = await authenticatedApiRequest("GET", "/api/msme/my-listings");
-    return response.json();
+  users: {
+    profile: 'users-profile',
+    stats: 'users-stats',
   },
-  
-  requestValuation: async (msmeId: number) => {
-    const response = await authenticatedApiRequest("POST", "/api/msme/valuation", { msmeId });
-    return response.json();
+  msme: {
+    listings: 'msme-listings',
+    listing: (id: string) => `msme-listing-${id}`,
+  },
+  msmes: {
+    listings: 'msmes-listings',
+    listing: (id: string) => `msmes-listing-${id}`,
+    create: 'msmes-create',
+  },
+  nbfc: {
+    applications: 'nbfc-applications',
+    application: (id: string) => `nbfc-application-${id}`,
+  },
+  loan: {
+    applications: 'loan-applications',
+    application: (id: string) => `loan-application-${id}`,
+  },
+  auth: {
+    profile: 'auth-profile',
+  },
+  notifications: {
+    list: 'notifications-list',
+    unreadCount: 'notifications-unread-count',
+  },
+  gamification: {
+    achievements: 'gamification-achievements',
+    progress: 'gamification-progress',
+    leaderboard: 'gamification-leaderboard',
+    rewards: 'gamification-rewards',
+  },
+  files: {
+    upload: 'files-upload',
+    list: 'files-list',
   },
 };
 
-// Loan API
-export const loanApi = {
-  createApplication: async (data: any) => {
-    const response = await authenticatedApiRequest("POST", "/api/loan/applications", data);
-    return response.json();
-  },
-  
-  getApplications: async () => {
-    const response = await authenticatedApiRequest("GET", "/api/loan/applications");
-    return response.json();
-  },
-  
-  updateApplication: async (id: number, data: any) => {
-    const response = await authenticatedApiRequest("PATCH", `/api/nbfc/loan-applications/${id}`, data);
-    return response.json();
-  },
-};
+// Export the main API client as default
+export default apiClient;
 
-// NBFC API
-export const nbfcApi = {
-  createDetails: async (data: any) => {
-    const response = await authenticatedApiRequest("POST", "/api/nbfc/details", data);
-    return response.json();
-  },
-  
-  getDetails: async () => {
-    const response = await authenticatedApiRequest("GET", "/api/nbfc/details");
-    return response.json();
-  },
-  
-  createLoanProduct: async (data: any) => {
-    const response = await authenticatedApiRequest("POST", "/api/nbfc/loan-products", data);
-    return response.json();
-  },
-  
-  getLoanProducts: async () => {
-    const response = await authenticatedApiRequest("GET", "/api/nbfc/loan-products");
-    return response.json();
-  },
-  
-  getCompliance: async () => {
-    const response = await authenticatedApiRequest("GET", "/api/nbfc/compliance");
-    return response.json();
-  },
-};
-
-// Buyer API
-export const buyerApi = {
-  createInterest: async (data: any) => {
-    const response = await authenticatedApiRequest("POST", "/api/buyer/interests", data);
-    return response.json();
-  },
-  
-  getInterests: async () => {
-    const response = await authenticatedApiRequest("GET", "/api/buyer/interests");
-    return response.json();
-  },
-  
-  getMatches: async (criteria: any) => {
-    const params = new URLSearchParams(criteria);
-    const response = await authenticatedApiRequest("GET", `/api/buyer/matches?${params}`);
-    return response.json();
-  },
-};
-
-// Dashboard API
-export const dashboardApi = {
-  getStats: async () => {
-    const response = await authenticatedApiRequest("GET", "/api/dashboard/stats");
-    return response.json();
-  },
-};
-
-// Document API
-export const documentApi = {
-  generate: async (type: string, data: any) => {
-    const response = await authenticatedApiRequest("POST", "/api/documents/generate", { type, data });
-    return response.json();
-  },
+// Also export as named export for consistency
+export const api = {
+  ...apiClient,
+  dashboard: dashboardApi,
+  user: userApi,
+  users: usersApi,
+  notifications: notificationsApi,
+  msme: msmeApi,
+  msmes: msmeApi, // Alias for compatibility
+  nbfc: nbfcApi,
+  loan: loanApi,
+  auth: authApi,
+  buyer: buyerApi,
+  gamification: gamificationApi,
+  files: filesApi,
+  queryKeys,
 };

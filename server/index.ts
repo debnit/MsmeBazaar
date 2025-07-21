@@ -1,3 +1,7 @@
+// Load environment variables first
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
 import compression from "compression";
@@ -29,6 +33,7 @@ import { memoryOptimizations } from "./architecture/memory-efficient-systems";
 import { instantResponseSystem } from "./performance/instant-response-system";
 import { UltraFastMiddleware, StaticAssetOptimizer } from "./performance/ultra-fast-middleware";
 import { extremeOptimization, CPUOptimizer, DatabaseOptimizer } from "./performance/extreme-optimization";
+import { testDatabaseConnection } from "./db";
 
 // Initialize mission-critical mode with extreme optimizations
 console.log('⚡ Starting in mission-critical performance mode...');
@@ -43,10 +48,14 @@ app.use(UltraFastMiddleware.createCacheHeaders());
 // Initialize advanced architecture patterns
 (async () => {
   try {
-    // 0. Initialize extreme performance optimizations
+    // 0. Test database connection FIRST
+    console.log('🔧 Step 0: Testing database connection...');
+    await testDatabaseConnection();
+    
+    // 0.1. Initialize extreme performance optimizations
     await extremeOptimization.initializeExtremeMode();
     
-    // 0.1. Initialize instant response system FIRST
+    // 0.2. Initialize instant response system
     await instantResponseSystem.initialize();
     
     // 0.2. Initialize CPU and Database optimizations

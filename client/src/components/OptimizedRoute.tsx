@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import { Suspense } from 'react';
 import { Route, RouteProps } from 'wouter';
 import { LoadingSpinner } from './ui/loading-spinner';
 

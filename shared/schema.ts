@@ -24,7 +24,7 @@ export const users = pgTable("users", {
   isVerified: boolean("is_verified").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+} as const);
 
 // NBFC specific details
 export const nbfcDetails = pgTable("nbfc_details", {
@@ -48,7 +48,7 @@ export const nbfcDetails = pgTable("nbfc_details", {
   website: varchar("website", { length: 200 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+} as const);
 
 // MSME listings
 export const msmeListings = pgTable("msme_listings", {
@@ -103,7 +103,7 @@ export const msmeListings = pgTable("msme_listings", {
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+} as const);
 
 // Loan applications
 export const loanApplications = pgTable("loan_applications", {
@@ -141,7 +141,7 @@ export const loanApplications = pgTable("loan_applications", {
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+} as const);
 
 // Buyer interests
 export const buyerInterests = pgTable("buyer_interests", {
@@ -154,7 +154,7 @@ export const buyerInterests = pgTable("buyer_interests", {
   status: varchar("status", { length: 50 }).default("active"), // active, withdrawn, accepted, rejected
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+} as const);
 
 // Agent assignments
 export const agentAssignments = pgTable("agent_assignments", {
@@ -167,7 +167,7 @@ export const agentAssignments = pgTable("agent_assignments", {
   earnings: decimal("earnings", { precision: 10, scale: 2 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+} as const);
 
 // NBFC loan products
 export const loanProducts = pgTable("loan_products", {
@@ -188,7 +188,7 @@ export const loanProducts = pgTable("loan_products", {
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+} as const);
 
 // Compliance tracking
 export const complianceRecords = pgTable("compliance_records", {
@@ -204,7 +204,7 @@ export const complianceRecords = pgTable("compliance_records", {
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+} as const);
 
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
@@ -283,54 +283,54 @@ export const complianceRecordsRelations = relations(complianceRecords, ({ one })
   }),
 }));
 
-// Schema definitions
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+// Schema definitions - Using correct drizzle-zod v0.7.0 syntax
+export const insertUserSchema = createInsertSchema(users, {
+  id: z.number().optional(),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
+}).omit(['id', 'createdAt', 'updatedAt']);
 
-export const insertNbfcDetailsSchema = createInsertSchema(nbfcDetails).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const insertNbfcDetailsSchema = createInsertSchema(nbfcDetails, {
+  id: z.number().optional(),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
+}).omit(['id', 'createdAt', 'updatedAt']);
 
-export const insertMsmeListingSchema = createInsertSchema(msmeListings).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const insertMsmeListingSchema = createInsertSchema(msmeListings, {
+  id: z.number().optional(),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
+}).omit(['id', 'createdAt', 'updatedAt']);
 
-export const insertLoanApplicationSchema = createInsertSchema(loanApplications).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const insertLoanApplicationSchema = createInsertSchema(loanApplications, {
+  id: z.number().optional(),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
+}).omit(['id', 'createdAt', 'updatedAt']);
 
 export const insertBuyerInterestSchema = createInsertSchema(buyerInterests).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+} as const);
 
 export const insertAgentAssignmentSchema = createInsertSchema(agentAssignments).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+} as const);
 
 export const insertLoanProductSchema = createInsertSchema(loanProducts).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+} as const);
 
 export const insertComplianceRecordSchema = createInsertSchema(complianceRecords).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+} as const);
 
 // VaaS (Valuation-as-a-Service) Tables
 export const valuationRequests = pgTable("valuation_requests", {
@@ -346,7 +346,7 @@ export const valuationRequests = pgTable("valuation_requests", {
   completedAt: timestamp("completed_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
-});
+} as const);
 
 export const valuationReports = pgTable("valuation_reports", {
   id: text("id").primaryKey(),
@@ -358,19 +358,19 @@ export const valuationReports = pgTable("valuation_reports", {
   reportPath: text("report_path"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
-});
+} as const);
 
 export const insertValuationRequestSchema = createInsertSchema(valuationRequests).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+} as const);
 
 export const insertValuationReportSchema = createInsertSchema(valuationReports).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+} as const);
 
 // AI and Analytics Tables
 export const vectorEmbeddings = pgTable("vector_embeddings", {
@@ -380,7 +380,7 @@ export const vectorEmbeddings = pgTable("vector_embeddings", {
   embedding: real("embedding").array().notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+} as const);
 
 export const conversations = pgTable("conversations", {
   id: serial("id").primaryKey(),
@@ -390,7 +390,7 @@ export const conversations = pgTable("conversations", {
   assistantResponse: text("assistant_response").notNull(),
   userRole: varchar("user_role", { length: 20 }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-});
+} as const);
 
 export const knowledgeBase = pgTable("knowledge_base", {
   id: serial("id").primaryKey(),
@@ -400,7 +400,7 @@ export const knowledgeBase = pgTable("knowledge_base", {
   tags: json("tags"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+} as const);
 
 export const auditLogs = pgTable("audit_logs", {
   id: serial("id").primaryKey(),
@@ -414,7 +414,7 @@ export const auditLogs = pgTable("audit_logs", {
   userAgent: text("user_agent"),
   timestamp: timestamp("timestamp").defaultNow(),
   details: text("details"),
-});
+} as const);
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -454,7 +454,7 @@ export const escrowAccounts = pgTable("escrow_accounts", {
   releaseConditions: json("release_conditions").default([]),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+} as const);
 
 // Escrow milestones table
 export const escrowMilestones = pgTable("escrow_milestones", {
@@ -469,7 +469,7 @@ export const escrowMilestones = pgTable("escrow_milestones", {
   evidence: text("evidence"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+} as const);
 
 // Escrow transactions table
 export const escrowTransactions = pgTable("escrow_transactions", {
@@ -483,7 +483,7 @@ export const escrowTransactions = pgTable("escrow_transactions", {
   metadata: json("metadata"),
   timestamp: timestamp("timestamp").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
-});
+} as const);
 
 // Notification tables
 export const notificationTemplates = pgTable("notification_templates", {
@@ -497,7 +497,7 @@ export const notificationTemplates = pgTable("notification_templates", {
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+} as const);
 
 export const notificationHistory = pgTable("notification_history", {
   id: serial("id").primaryKey(),
@@ -514,7 +514,7 @@ export const notificationHistory = pgTable("notification_history", {
   sentAt: timestamp("sent_at"),
   deliveredAt: timestamp("delivered_at"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+} as const);
 
 export const notificationPreferences = pgTable("notification_preferences", {
   id: serial("id").primaryKey(),
@@ -524,7 +524,7 @@ export const notificationPreferences = pgTable("notification_preferences", {
   channels: json("channels").default(["sms"]),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+} as const);
 
 // Subscription plans
 export const subscriptionPlans = pgTable("subscription_plans", {
@@ -539,7 +539,7 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+} as const);
 
 // User subscriptions
 export const userSubscriptions = pgTable("user_subscriptions", {
@@ -554,7 +554,7 @@ export const userSubscriptions = pgTable("user_subscriptions", {
   transactionId: varchar("transaction_id", { length: 100 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+} as const);
 
 // Buyer contact limits tracking
 export const buyerContactLimits = pgTable("buyer_contact_limits", {
@@ -564,7 +564,7 @@ export const buyerContactLimits = pgTable("buyer_contact_limits", {
   contactedAt: timestamp("contacted_at").defaultNow(),
   contactType: varchar("contact_type", { length: 50 }), // email, phone, message
   monthYear: varchar("month_year", { length: 7 }), // Format: YYYY-MM for tracking monthly limits
-});
+} as const);
 
 // Valuation access tracking
 export const valuationAccess = pgTable("valuation_access", {
@@ -574,7 +574,7 @@ export const valuationAccess = pgTable("valuation_access", {
   accessType: varchar("access_type", { length: 20 }), // summary, full_pdf
   accessedAt: timestamp("accessed_at").defaultNow(),
   monthYear: varchar("month_year", { length: 7 }), // Format: YYYY-MM for tracking monthly limits
-});
+} as const);
 
 // Agent commission tracking
 export const agentCommissions = pgTable("agent_commissions", {
@@ -588,7 +588,7 @@ export const agentCommissions = pgTable("agent_commissions", {
   status: varchar("status", { length: 20 }).default("pending"), // pending, paid, cancelled
   paidAt: timestamp("paid_at"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+} as const);
 
 // Valuation payments
 export const valuationPayments = pgTable("valuation_payments", {
@@ -602,7 +602,7 @@ export const valuationPayments = pgTable("valuation_payments", {
   pdfGenerated: boolean("pdf_generated").default(false),
   pdfUrl: varchar("pdf_url", { length: 500 }),
   createdAt: timestamp("created_at").defaultNow(),
-});
+} as const);
 
 // Matchmaking report payments
 export const matchmakingReportPayments = pgTable("matchmaking_report_payments", {
@@ -616,7 +616,7 @@ export const matchmakingReportPayments = pgTable("matchmaking_report_payments", 
   reportGenerated: boolean("report_generated").default(false),
   reportUrl: varchar("report_url", { length: 500 }),
   createdAt: timestamp("created_at").defaultNow(),
-});
+} as const);
 
 // Lead credits for MSMEs
 export const leadCredits = pgTable("lead_credits", {
@@ -628,7 +628,7 @@ export const leadCredits = pgTable("lead_credits", {
   lastPurchaseAt: timestamp("last_purchase_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+} as const);
 
 // Lead purchases
 export const leadPurchases = pgTable("lead_purchases", {
@@ -639,7 +639,7 @@ export const leadPurchases = pgTable("lead_purchases", {
   creditsUsed: integer("credits_used").default(1),
   contactInfo: json("contact_info"), // Buyer's contact details
   purchasedAt: timestamp("purchased_at").defaultNow(),
-});
+} as const);
 
 // API access for banks/NBFCs
 export const apiAccess = pgTable("api_access", {
@@ -653,7 +653,7 @@ export const apiAccess = pgTable("api_access", {
   expiresAt: timestamp("expires_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+} as const);
 
 // Platform revenue tracking
 export const platformRevenue = pgTable("platform_revenue", {
@@ -668,102 +668,102 @@ export const platformRevenue = pgTable("platform_revenue", {
   status: varchar("status", { length: 20 }).default("pending"), // pending, collected, refunded
   metadata: json("metadata"), // Additional context
   createdAt: timestamp("created_at").defaultNow(),
-});
+} as const);
 
 // Escrow and notification types
 export const insertEscrowAccountSchema = createInsertSchema(escrowAccounts).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+} as const);
 
 export const insertEscrowMilestoneSchema = createInsertSchema(escrowMilestones).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+} as const);
 
 export const insertEscrowTransactionSchema = createInsertSchema(escrowTransactions).omit({
   id: true,
   createdAt: true,
   timestamp: true,
-});
+} as const);
 
 export const insertNotificationTemplateSchema = createInsertSchema(notificationTemplates).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+} as const);
 
 export const insertNotificationHistorySchema = createInsertSchema(notificationHistory).omit({
   id: true,
   createdAt: true,
-});
+} as const);
 
 export const insertNotificationPreferenceSchema = createInsertSchema(notificationPreferences).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+} as const);
 
 export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+} as const);
 
 export const insertUserSubscriptionSchema = createInsertSchema(userSubscriptions).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+} as const);
 
 export const insertBuyerContactLimitSchema = createInsertSchema(buyerContactLimits).omit({
   id: true,
   contactedAt: true,
-});
+} as const);
 
 export const insertValuationAccessSchema = createInsertSchema(valuationAccess).omit({
   id: true,
   accessedAt: true,
-});
+} as const);
 
 export const insertAgentCommissionSchema = createInsertSchema(agentCommissions).omit({
   id: true,
   createdAt: true,
-});
+} as const);
 
 export const insertValuationPaymentSchema = createInsertSchema(valuationPayments).omit({
   id: true,
   createdAt: true,
-});
+} as const);
 
 export const insertMatchmakingReportPaymentSchema = createInsertSchema(matchmakingReportPayments).omit({
   id: true,
   createdAt: true,
-});
+} as const);
 
 export const insertLeadCreditSchema = createInsertSchema(leadCredits).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+} as const);
 
 export const insertLeadPurchaseSchema = createInsertSchema(leadPurchases).omit({
   id: true,
   purchasedAt: true,
-});
+} as const);
 
 export const insertApiAccessSchema = createInsertSchema(apiAccess).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+} as const);
 
 export const insertPlatformRevenueSchema = createInsertSchema(platformRevenue).omit({
   id: true,
   createdAt: true,
-});
+} as const);
 
 export type EscrowAccount = typeof escrowAccounts.$inferSelect;
 export type InsertEscrowAccount = z.infer<typeof insertEscrowAccountSchema>;

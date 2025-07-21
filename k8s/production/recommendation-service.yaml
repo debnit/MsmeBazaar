@@ -1,0 +1,223 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: msmebazaar-prod
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: recommendation-service
+  namespace: msmebazaar-prod
+  labels:
+    app: recommendation-service
+    version: v1
+    environment: production
+spec:
+  replicas: 4
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 2
+  selector:
+    matchLabels:
+      app: recommendation-service
+  template:
+    metadata:
+      labels:
+        app: recommendation-service
+        version: v1
+    spec:
+      containers:
+      - name: recommendation-service
+        image: ${RECOMMENDATION_SERVICE_IMAGE}
+        ports:
+        - containerPort: 8004
+          name: http
+        env:
+        - name: POSTGRES_HOST
+          value: "postgres-main"
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DB
+          value: "msmebazaar"
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: password
+        - name: REDIS_HOST
+          value: "redis-main"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: MLFLOW_TRACKING_URI
+          value: "http://mlflow-server:5000"
+        - name: ENVIRONMENT
+          value: "production"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /api/recommendation_stats
+            port: 8004
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/recommendation_stats
+            port: 8004
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: model-storage
+          mountPath: /app/models
+      volumes:
+      - name: model-storage
+        persistentVolumeClaim:
+          claimName: model-storage-pvc
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - recommendation-service
+              topologyKey: kubernetes.io/hostname
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: recommendation-service
+  namespace: msmebazaar-prod
+  labels:
+    app: recommendation-service
+spec:
+  selector:
+    app: recommendation-service
+  ports:
+  - port: 8004
+    targetPort: 8004
+    name: http
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: recommendation-service-ingress
+  namespace: msmebazaar-prod
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - api.msmebazaar.com
+    secretName: prod-api-tls
+  rules:
+  - host: api.msmebazaar.com
+    http:
+      paths:
+      - path: /api/recommendations
+        pathType: Prefix
+        backend:
+          service:
+            name: recommendation-service
+            port:
+              number: 8004
+      - path: /api/feedback
+        pathType: Prefix
+        backend:
+          service:
+            name: recommendation-service
+            port:
+              number: 8004
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-storage-pvc
+  namespace: msmebazaar-prod
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: fast-ssd
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+  namespace: msmebazaar-prod
+type: Opaque
+data:
+  password: cGFzc3dvcmQxMjM=  # base64 encoded password (change in production)
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: recommendation-service-hpa
+  namespace: msmebazaar-prod
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: recommendation-service
+  minReplicas: 4
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: recommendation-service-pdb
+  namespace: msmebazaar-prod
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: recommendation-service

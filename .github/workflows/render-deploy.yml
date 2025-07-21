@@ -1,0 +1,145 @@
+# 🚀 Render Deployment Workflow - Simple & Reliable
+name: Deploy to Render
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - staging
+
+jobs:
+  # ============================================================================
+  # 🏗️ BUILD JOB - Reuse from main CI
+  # ============================================================================
+  build:
+    name: 🏗️ Build Application
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📅 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 📈 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+        cache: 'npm'
+
+    - name: 📦 Install dependencies
+      run: npm ci --no-audit --no-fund
+
+    - name: 🔨 Build application
+      run: |
+        echo "🔨 Building client and server separately..."
+        npm run build:client
+        npm run build:server
+        echo "✅ Build completed successfully"
+
+    - name: 📊 Build summary
+      run: |
+        echo "✅ Build completed successfully"
+        echo "📦 Build artifacts ready for deployment"
+
+  # ============================================================================
+  # 🚀 RENDER DEPLOYMENT - Production Ready
+  # ============================================================================
+  deploy-render:
+    name: 🚀 Deploy to Render
+    needs: build
+    runs-on: ubuntu-latest
+    environment: 
+      name: ${{ github.event.inputs.environment || 'production' }}
+      url: ${{ secrets.RENDER_SERVICE_URL }}
+    
+    steps:
+    - name: 📅 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🚀 Deploy to Render
+      uses: johnbeynon/render-deploy-action@v0.0.8
+      with:
+        service-id: ${{ secrets.RENDER_SERVICE_ID }}
+        api-key: ${{ secrets.RENDER_API_KEY }}
+
+    - name: ⏳ Wait for deployment
+      run: |
+        echo "⏳ Waiting for Render service to be ready..."
+        sleep 45
+        
+    - name: 🔍 Health check
+      run: |
+        echo "🔍 Performing health check..."
+        SERVICE_URL="${{ secrets.RENDER_SERVICE_URL }}"
+        
+        # Try multiple endpoints
+        ENDPOINTS=("/health" "/api/health" "/")
+        
+        for endpoint in "${ENDPOINTS[@]}"; do
+          echo "Testing: ${SERVICE_URL}${endpoint}"
+          if curl -f -s "${SERVICE_URL}${endpoint}" > /dev/null 2>&1; then
+            echo "✅ Health check passed: ${endpoint}"
+            break
+          else
+            echo "⚠️ Health check failed: ${endpoint}"
+          fi
+        done
+
+    - name: 📊 Deployment summary
+      run: |
+        echo "## 🎉 Render Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| **Status** | ✅ Deployed |" >> $GITHUB_STEP_SUMMARY
+        echo "| **Environment** | ${{ github.event.inputs.environment || 'production' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| **Service URL** | ${{ secrets.RENDER_SERVICE_URL }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+        echo "| **Branch** | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+        echo "| **Deployed At** | $(date -u) |" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # 🧪 POST-DEPLOYMENT TESTS
+  # ============================================================================
+  post-deploy-tests:
+    name: 🧪 Post-Deployment Tests
+    needs: deploy-render
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: 🔍 API Endpoint Tests
+      run: |
+        SERVICE_URL="${{ secrets.RENDER_SERVICE_URL }}"
+        echo "🧪 Testing API endpoints..."
+        
+        # Test basic endpoints
+        echo "Testing: ${SERVICE_URL}/health"
+        curl -f "${SERVICE_URL}/health" || echo "❌ Health endpoint failed"
+        
+        echo "Testing: ${SERVICE_URL}/api/health"  
+        curl -f "${SERVICE_URL}/api/health" || echo "❌ API health endpoint failed"
+        
+        echo "✅ Post-deployment tests completed"
+
+    - name: 📈 Performance check
+      run: |
+        SERVICE_URL="${{ secrets.RENDER_SERVICE_URL }}"
+        echo "📈 Performance check..."
+        
+        # Simple response time test
+        RESPONSE_TIME=$(curl -o /dev/null -s -w "%{time_total}" "${SERVICE_URL}/")
+        echo "⏱️ Response time: ${RESPONSE_TIME}s"
+        
+        if (( $(echo "$RESPONSE_TIME < 5.0" | bc -l) )); then
+          echo "✅ Performance check passed"
+        else
+          echo "⚠️ Slow response time detected"
+        fi

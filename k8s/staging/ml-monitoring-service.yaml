@@ -1,0 +1,132 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-monitoring-service
+  namespace: msmebazaar-staging
+  labels:
+    app: ml-monitoring-service
+    version: v1
+    environment: staging
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: ml-monitoring-service
+  template:
+    metadata:
+      labels:
+        app: ml-monitoring-service
+        version: v1
+    spec:
+      containers:
+      - name: ml-monitoring-service
+        image: ${ML_MONITORING_SERVICE_IMAGE}
+        ports:
+        - containerPort: 8005
+          name: http
+        env:
+        - name: POSTGRES_HOST
+          value: "postgres-main"
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DB
+          value: "msmebazaar"
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: password
+        - name: REDIS_HOST
+          value: "redis-main"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: MLFLOW_TRACKING_URI
+          value: "http://mlflow-server:5000"
+        - name: ENVIRONMENT
+          value: "staging"
+        - name: CELERY_BROKER_URL
+          value: "redis://redis-main:6379/0"
+        - name: CELERY_RESULT_BACKEND
+          value: "redis://redis-main:6379/0"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+        livenessProbe:
+          httpGet:
+            path: /api/models/status
+            port: 8005
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/models/status
+            port: 8005
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: model-storage
+          mountPath: /app/models
+      volumes:
+      - name: model-storage
+        persistentVolumeClaim:
+          claimName: model-storage-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-monitoring-service
+  namespace: msmebazaar-staging
+  labels:
+    app: ml-monitoring-service
+spec:
+  selector:
+    app: ml-monitoring-service
+  ports:
+  - port: 8005
+    targetPort: 8005
+    name: http
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ml-monitoring-service-ingress
+  namespace: msmebazaar-staging
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+spec:
+  tls:
+  - hosts:
+    - staging-api.msmebazaar.com
+    secretName: staging-api-tls
+  rules:
+  - host: staging-api.msmebazaar.com
+    http:
+      paths:
+      - path: /api/models
+        pathType: Prefix
+        backend:
+          service:
+            name: ml-monitoring-service
+            port:
+              number: 8005
+      - path: /api/retrain
+        pathType: Prefix
+        backend:
+          service:
+            name: ml-monitoring-service
+            port:
+              number: 8005

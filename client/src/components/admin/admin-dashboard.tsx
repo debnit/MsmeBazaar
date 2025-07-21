@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { RoleSwitcher } from './role-switcher';
 import { TestResults } from './test-results';
 import { useAuth } from '@/components/auth/auth-provider';
@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Play, RefreshCw, Settings, BarChart3, ExternalLink } from 'lucide-react';
+import { Play, RefreshCw, Settings, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface TestResult {
@@ -23,7 +23,13 @@ interface TestResult {
 }
 
 export function AdminDashboard() {
-  const { user, isAdmin, hasPermission } = useAuth();
+  const { user } = useAuth();
+  
+  // Helper functions for role checking
+  const isAdmin = user?.role === 'admin';
+  // Helper function for future permission checks
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const hasPermission = (permission: string) => user?.permissions?.includes(permission) ?? false;
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [isRunningTests, setIsRunningTests] = useState(false);
   const { toast } = useToast();
@@ -101,7 +107,7 @@ export function AdminDashboard() {
       let result: TestResult;
       
       try {
-        const response = await apiRequest(test.endpoint, {
+        await apiRequest(test.endpoint, {
           method: test.method || 'GET',
           ...(test.method === 'POST' && {
             body: JSON.stringify({ test: true })
@@ -160,7 +166,7 @@ export function AdminDashboard() {
     let result: TestResult;
     
     try {
-      const response = await apiRequest(originalTest.endpoint!, {
+      await apiRequest(originalTest.endpoint!, {
         method: originalTest.endpoint?.includes('POST') ? 'POST' : 'GET'
       });
       

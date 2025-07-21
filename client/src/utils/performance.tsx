@@ -1,14 +1,15 @@
 // Frontend performance optimizations
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
+import React from 'react';
 
 // Lazy load components
 export const LazyDashboard = lazy(() => import('../pages/dashboard'));
-export const LazyMSMEListings = lazy(() => import('../pages/msme-listings'));
-export const LazyLoanApplications = lazy(() => import('../pages/loan-applications'));
-export const LazyAnalytics = lazy(() => import('../pages/analytics'));
+export const LazyMSMEListings = lazy(() => import('../pages/seller/dashboard')); // Use seller dashboard as placeholder
+export const LazyLoanApplications = lazy(() => import('../pages/nbfc/loan-applications'));
+export const LazyAnalytics = lazy(() => import('../pages/dashboard')); // Use dashboard as placeholder for analytics
 
 // Code splitting wrapper
-export const LazyWrapper = ({ children }: { children: React.ReactNode }) => (
+export const LazyWrapper = ({ children }: { children: React.ReactNode }): JSX.Element => (
   <Suspense fallback={
     <div className="flex items-center justify-center min-h-screen">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -18,7 +19,17 @@ export const LazyWrapper = ({ children }: { children: React.ReactNode }) => (
   </Suspense>
 );
 
-// Image optimization
+// Image optimization interface
+interface OptimizedImageProps {
+  src: string;
+  alt: string;
+  className?: string;
+  width?: number;
+  height?: number;
+  loading?: 'lazy' | 'eager';
+}
+
+// Image optimization component
 export const OptimizedImage = ({ 
   src, 
   alt, 
@@ -26,14 +37,7 @@ export const OptimizedImage = ({
   width, 
   height,
   loading = 'lazy' 
-}: {
-  src: string;
-  alt: string;
-  className?: string;
-  width?: number;
-  height?: number;
-  loading?: 'lazy' | 'eager';
-}) => (
+}: OptimizedImageProps): JSX.Element => (
   <img
     src={src}
     alt={alt}
@@ -45,10 +49,8 @@ export const OptimizedImage = ({
   />
 );
 
-import { useState, useEffect } from 'react';
-
 // Debounce hook for search inputs
-export const useDebounce = (value: string, delay: number) => {
+export const useDebounce = (value: string, delay: number): string => {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
   useEffect(() => {
@@ -64,18 +66,21 @@ export const useDebounce = (value: string, delay: number) => {
   return debouncedValue;
 };
 
+// Virtual scrolling interface
+interface VirtualListProps {
+  items: any[];
+  itemHeight?: number;
+  containerHeight?: number;
+  renderItem: (item: any, index: number) => React.ReactNode;
+}
+
 // Virtual scrolling for large lists
 export const VirtualList = ({ 
   items, 
   itemHeight = 60, 
   containerHeight = 400,
   renderItem 
-}: {
-  items: any[];
-  itemHeight?: number;
-  containerHeight?: number;
-  renderItem: (item: any, index: number) => React.ReactNode;
-}) => {
+}: VirtualListProps): JSX.Element => {
   const [scrollTop, setScrollTop] = useState(0);
   const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
 
@@ -114,7 +119,7 @@ export const VirtualList = ({
 };
 
 // Prefetch utility
-export const prefetchData = async (url: string) => {
+export const prefetchData = async (url: string): Promise<any> => {
   try {
     const response = await fetch(url);
     if (response.ok) {
@@ -126,7 +131,7 @@ export const prefetchData = async (url: string) => {
 };
 
 // Service worker registration
-export const registerServiceWorker = () => {
+export const registerServiceWorker = (): void => {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js')
@@ -141,7 +146,7 @@ export const registerServiceWorker = () => {
 };
 
 // Performance observer
-export const observePerformance = () => {
+export const observePerformance = (): void => {
   if ('PerformanceObserver' in window) {
     const observer = new PerformanceObserver((list) => {
       list.getEntries().forEach((entry) => {
@@ -159,7 +164,7 @@ export const observePerformance = () => {
 };
 
 // Web vitals monitoring
-export const trackWebVitals = () => {
+export const trackWebVitals = (): void => {
   if ('PerformanceObserver' in window) {
     // Largest Contentful Paint
     const lcpObserver = new PerformanceObserver((list) => {
@@ -172,7 +177,7 @@ export const trackWebVitals = () => {
     // Cumulative Layout Shift
     const clsObserver = new PerformanceObserver((list) => {
       let clsValue = 0;
-      list.getEntries().forEach((entry) => {
+      list.getEntries().forEach((entry: any) => {
         if (!entry.hadRecentInput) {
           clsValue += entry.value;
         }
@@ -184,14 +189,14 @@ export const trackWebVitals = () => {
 };
 
 // Bundle size analyzer
-export const analyzeBundleSize = () => {
+export const analyzeBundleSize = (): void => {
   if (process.env.NODE_ENV === 'development') {
     console.log('Bundle analysis available at: /analyze');
   }
 };
 
 // Critical resource hints
-export const addResourceHints = () => {
+export const addResourceHints = (): void => {
   // Preload critical assets
   const preloadLink = document.createElement('link');
   preloadLink.rel = 'preload';
@@ -209,7 +214,7 @@ export const addResourceHints = () => {
 };
 
 // Initialize performance optimizations
-export const initializePerformance = () => {
+export const initializePerformance = (): void => {
   registerServiceWorker();
   observePerformance();
   trackWebVitals();

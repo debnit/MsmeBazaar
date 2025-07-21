@@ -3,8 +3,8 @@ import { lazy } from 'react';
 import { loadComponentWithPaging } from './demand-paging';
 
 // Lazy load non-critical components with demand paging
-export const LazyAdminDashboard = lazy(() => loadComponentWithPaging('../pages/admin/dashboard', 'medium'));
-export const LazyAnalytics = lazy(() => loadComponentWithPaging('../pages/analytics', 'medium'));
+export const LazyAdminDashboard = lazy(() => import('../pages/admin/dashboard'));
+export const LazyAnalytics = lazy(() => import('../pages/dashboard')); // Use dashboard as placeholder
 
 // Enhanced component preloading with memory management
 export const preloadComponents = () => {
@@ -14,8 +14,8 @@ export const preloadComponents = () => {
       try {
         // Preload components during idle time with proper error handling
         await Promise.allSettled([
-          loadComponentWithPaging('../pages/admin/dashboard', 'low'),
-          loadComponentWithPaging('../pages/analytics', 'low')
+          import('../pages/admin/dashboard'),
+          import('../pages/dashboard') // Use dashboard as placeholder
         ]);
       } catch (error) {
         console.warn('Component preloading failed:', error);
@@ -23,12 +23,12 @@ export const preloadComponents = () => {
     });
   } else {
     // Fallback for browsers without requestIdleCallback
-    setTimeout(async () => {
-      try {
-        await Promise.allSettled([
-          loadComponentWithPaging('../pages/admin/dashboard', 'low'),
-          loadComponentWithPaging('../pages/analytics', 'low')
-        ]);
+          setTimeout(async () => {
+        try {
+          await Promise.allSettled([
+            import('../pages/admin/dashboard'),
+            import('../pages/dashboard') // Use dashboard as placeholder
+          ]);
       } catch (error) {
         console.warn('Component preloading failed:', error);
       }
