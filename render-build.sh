@@ -9,7 +9,7 @@ echo "🚀 Starting Render build process..."
 export NODE_ENV=production
 
 echo "📦 Installing all dependencies for build (legacy peer deps)..."
-npm ci --no-audit --no-fund --legacy-peer-deps
+npm install --no-audit --no-fund --legacy-peer-deps
 
 echo "🏗️ Building client (frontend)..."
 npm run build:client
