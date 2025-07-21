@@ -41,30 +41,30 @@ apiClient.interceptors.response.use(
 
 // API endpoints
 export const dashboardApi = {
-  getStats: () => apiClient.get('/dashboard/stats'),
-  getRecentActivity: () => apiClient.get('/dashboard/activity'),
+  getStats: () => apiClient.get('/dashboard/stats').then(res => res.data),
+  getRecentActivity: () => apiClient.get('/dashboard/activity').then(res => res.data),
 };
 
 export const msmeApi = {
-  getListings: (params?: any) => apiClient.get('/msme/listings', { params }),
-  createListing: (data: any) => apiClient.post('/msme/listings', data),
-  create: (data: any) => apiClient.post('/msme/listings', data), // Alias for compatibility
-  updateListing: (id: string, data: any) => apiClient.put(`/msme/listings/${id}`, data),
-  deleteListing: (id: string) => apiClient.delete(`/msme/listings/${id}`),
-  getListing: (id: string) => apiClient.get(`/msme/listings/${id}`),
+  getListings: (params?: any) => apiClient.get('/msme/listings', { params }).then(res => res.data),
+  createListing: (data: any) => apiClient.post('/msme/listings', data).then(res => res.data),
+  create: (data: any) => apiClient.post('/msme/listings', data).then(res => res.data), // Alias for compatibility
+  updateListing: (id: string, data: any) => apiClient.put(`/msme/listings/${id}`, data).then(res => res.data),
+  deleteListing: (id: string) => apiClient.delete(`/msme/listings/${id}`).then(res => res.data),
+  getListing: (id: string) => apiClient.get(`/msme/listings/${id}`).then(res => res.data),
 };
 
 export const nbfcApi = {
-  getLoanApplications: (params?: any) => apiClient.get('/nbfc/applications', { params }),
-  updateApplication: (id: string, data: any) => apiClient.put(`/nbfc/applications/${id}`, data),
-  getApplication: (id: string) => apiClient.get(`/nbfc/applications/${id}`),
+  getLoanApplications: (params?: any) => apiClient.get('/nbfc/applications', { params }).then(res => res.data),
+  updateApplication: (id: string, data: any) => apiClient.put(`/nbfc/applications/${id}`, data).then(res => res.data),
+  getApplication: (id: string) => apiClient.get(`/nbfc/applications/${id}`).then(res => res.data),
 };
 
 export const loanApi = {
-  createApplication: (data: any) => apiClient.post('/loan/applications', data),
-  getApplications: (params?: any) => apiClient.get('/loan/applications', { params }),
-  getApplication: (id: string) => apiClient.get(`/loan/applications/${id}`),
-  updateApplication: (id: string, data: any) => apiClient.put(`/loan/applications/${id}`, data),
+  createApplication: (data: any) => apiClient.post('/loan/applications', data).then(res => res.data),
+  getApplications: (params?: any) => apiClient.get('/loan/applications', { params }).then(res => res.data),
+  getApplication: (id: string) => apiClient.get(`/loan/applications/${id}`).then(res => res.data),
+  updateApplication: (id: string, data: any) => apiClient.put(`/loan/applications/${id}`, data).then(res => res.data),
 };
 
 export const authApi = {
@@ -84,9 +84,9 @@ export const buyerApi = {
 };
 
 export const usersApi = {
-  getProfile: () => apiClient.get('/users/profile'),
-  updateProfile: (data: any) => apiClient.put('/users/profile', data),
-  getStats: () => apiClient.get('/users/stats'),
+  getProfile: () => apiClient.get('/users/profile').then(res => res.data),
+  updateProfile: (data: any) => apiClient.put('/users/profile', data).then(res => res.data),
+  getStats: () => apiClient.get('/users/stats').then(res => res.data),
 };
 
 export const notificationsApi = {
@@ -208,8 +208,8 @@ export const queryKeys = {
     stats: 'dashboard-stats',
     activity: 'dashboard-activity',
   },
-  dashboardStats: () => 'dashboard-stats',
-  userProfile: () => 'user-profile',
+  dashboardStats: () => ['dashboard-stats'],
+  userProfile: () => ['user-profile'],
   user: {
     profile: 'user-profile',
     stats: 'user-stats',

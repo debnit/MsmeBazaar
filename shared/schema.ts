@@ -283,30 +283,30 @@ export const complianceRecordsRelations = relations(complianceRecords, ({ one })
   }),
 }));
 
-// Schema definitions - Using correct drizzle-zod v0.7.0 syntax
-export const insertUserSchema = createInsertSchema(users, {
-  id: z.number().optional(),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
-}).omit(['id', 'createdAt', 'updatedAt']);
+// Schema definitions - Simplified approach for compatibility
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
 
-export const insertNbfcDetailsSchema = createInsertSchema(nbfcDetails, {
-  id: z.number().optional(),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
-}).omit(['id', 'createdAt', 'updatedAt']);
+export const insertNbfcDetailsSchema = createInsertSchema(nbfcDetails).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
 
-export const insertMsmeListingSchema = createInsertSchema(msmeListings, {
-  id: z.number().optional(),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
-}).omit(['id', 'createdAt', 'updatedAt']);
+export const insertMsmeListingSchema = createInsertSchema(msmeListings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
 
-export const insertLoanApplicationSchema = createInsertSchema(loanApplications, {
-  id: z.number().optional(),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
-}).omit(['id', 'createdAt', 'updatedAt']);
+export const insertLoanApplicationSchema = createInsertSchema(loanApplications).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
 
 export const insertBuyerInterestSchema = createInsertSchema(buyerInterests).omit({
   id: true,

@@ -61,10 +61,7 @@ export default function AuthPage() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginForm) => {
-      const response = await apiRequest('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
+      const response = await apiRequest('POST', '/api/auth/login', data);
       return response;
     },
     onSuccess: () => {
@@ -86,10 +83,7 @@ export default function AuthPage() {
 
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterForm) => {
-      const response = await apiRequest('/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
+      const response = await apiRequest('POST', '/api/auth/register', data);
       return response;
     },
     onSuccess: () => {
@@ -131,7 +125,10 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       <div className="absolute top-4 right-4">
-        <LanguageSelector />
+        <LanguageSelector 
+          currentLanguage={currentLanguage as 'en' | 'hi' | 'or'} 
+          onLanguageChange={(lang) => changeLanguage(lang)} 
+        />
       </div>
       
       <div className="container mx-auto px-4 py-8">

@@ -6,6 +6,9 @@ interface User {
   email: string;
   role: 'admin' | 'seller' | 'buyer' | 'agent' | 'nbfc';
   name: string;
+  firstName?: string;
+  lastName?: string;
+  userType?: 'admin' | 'seller' | 'buyer' | 'agent' | 'nbfc';
   permissions?: string[];
 }
 

@@ -1,6 +1,19 @@
 // Load environment variables first
 import dotenv from 'dotenv';
-dotenv.config();
+import { existsSync } from 'fs';
+import { join } from 'path';
+
+// Load .env.local first (if it exists), then .env
+const envLocalPath = join(process.cwd(), '.env.local');
+const envPath = join(process.cwd(), '.env');
+
+if (existsSync(envLocalPath)) {
+  dotenv.config({ path: envLocalPath });
+} else if (existsSync(envPath)) {
+  dotenv.config({ path: envPath });
+} else {
+  dotenv.config(); // fallback to default behavior
+}
 
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
