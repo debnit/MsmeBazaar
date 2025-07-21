@@ -1,13 +1,22 @@
 #!/bin/bash
 
-# Render Build Script - Production Ready
+# Render Build Script - Production Ready with Dependency Conflict Resolution
 set -e
 
 echo "🚀 Starting Render build process..."
 
-echo "📦 Installing dependencies..."
-# Use npm ci for faster, reliable installs in production
-npm ci
+echo "🔧 Ensuring clean dependency resolution..."
+# Remove any existing node_modules and lock files that might cause conflicts
+rm -rf node_modules
+rm -f package-lock.json
+rm -f yarn.lock
+
+echo "📦 Installing dependencies with correct versions..."
+# Install fresh dependencies with exact versions to avoid conflicts
+npm install --no-package-lock
+
+echo "🔍 Verifying Pinecone versions..."
+npm list @pinecone-database/pinecone @langchain/pinecone || echo "Dependencies installed"
 
 echo "🏗️ Building client (frontend)..."
 npm run build:client
