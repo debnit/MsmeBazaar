@@ -14,6 +14,7 @@
     "build:server": "npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist --log-level=warning --external:vite --external:@vitejs/plugin-react --external:@replit/vite-plugin-runtime-error-modal --external:@replit/vite-plugin-cartographer --external:../vite.config.js --external:../vite.config.ts",
     "ci-build": "node build-ci.js",
     "ci-install": "npm ci --no-audit --no-fund --prefer-offline",
+    "render-install": "rm -f package-lock.json && npm install --legacy-peer-deps --no-package-lock",
     "start": "node start-production.js",
     "check": "tsc",
     "type-check": "tsc --noEmit",
