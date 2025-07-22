@@ -10,6 +10,7 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # API Endpoints
       - key: VITE_API_BASE_URL
         value: https://msmebazaar-auth-api.onrender.com
       - key: VITE_AUTH_API_URL
@@ -20,6 +21,35 @@ services:
         value: https://msmebazaar-admin-api.onrender.com
       - key: VITE_PAYMENTS_API_URL
         value: https://msmebazaar-payments-api.onrender.com
+      - key: VITE_WHATSAPP_BOT_URL
+        value: https://msmebazaar-whatsapp-bot.onrender.com
+      # App Configuration
+      - key: VITE_APP_NAME
+        value: MSMEBazaar
+      - key: VITE_APP_VERSION
+        value: "2.0.0"
+      - key: VITE_APP_URL
+        value: https://msmebazaar-frontend.onrender.com
+      # Feature Flags for Gold Standard UI
+      - key: VITE_ENABLE_GAMIFICATION
+        value: "true"
+      - key: VITE_ENABLE_ANALYTICS
+        value: "true"
+      - key: VITE_ENABLE_PWA
+        value: "true"
+      - key: VITE_ENABLE_ACCESSIBILITY
+        value: "true"
+      - key: VITE_ENABLE_DARK_MODE
+        value: "true"
+      - key: VITE_ENABLE_ANIMATIONS
+        value: "true"
+      # Performance & UI Settings
+      - key: VITE_ENABLE_LAZY_LOADING
+        value: "true"
+      - key: VITE_ENABLE_IMAGE_OPTIMIZATION
+        value: "true"
+      - key: VITE_BUNDLE_ANALYZER
+        value: "false"
     buildFilter:
       paths: ["frontend/**"]
     autoDeploy: true
