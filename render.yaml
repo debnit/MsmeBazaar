@@ -25,199 +25,49 @@ services:
     region: oregon
     maxmemoryPolicy: allkeys-lru
 
-  # Recommendation Service
+  # MSMEBazaar Web (Next.js)
   - type: web
-    name: recommendation-service
-    env: python
-    buildCommand: |
-      cd microservices/recommendation-service
-      pip install -r requirements.txt
-    startCommand: |
-      cd microservices/recommendation-service
-      uvicorn app:app --host 0.0.0.0 --port $PORT --workers 4
-    plan: standard
-    region: oregon
-    healthCheckPath: /api/recommendation_stats
-    envVars:
-      - key: POSTGRES_HOST
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: host
-      - key: POSTGRES_PORT
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: port
-      - key: POSTGRES_DB
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_DB
-      - key: POSTGRES_USER
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_USER
-      - key: POSTGRES_PASSWORD
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_PASSWORD
-      - key: REDIS_HOST
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: port
-      - key: REDIS_PASSWORD
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: password
-      - key: ENVIRONMENT
-        value: production
-      - key: MLFLOW_TRACKING_URI
-        value: https://mlflow-server-msmebazaar.onrender.com
-    autoDeploy: true
-
-  # ML Monitoring Service
-  - type: web
-    name: ml-monitoring-service
-    env: python
-    buildCommand: |
-      cd microservices/ml-monitoring-service
-      pip install -r requirements.txt
-    startCommand: |
-      cd microservices/ml-monitoring-service
-      uvicorn app:app --host 0.0.0.0 --port $PORT --workers 2
-    plan: standard
-    region: oregon
-    healthCheckPath: /api/models/status
-    envVars:
-      - key: POSTGRES_HOST
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: host
-      - key: POSTGRES_PORT
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: port
-      - key: POSTGRES_DB
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_DB
-      - key: POSTGRES_USER
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_USER
-      - key: POSTGRES_PASSWORD
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_PASSWORD
-      - key: REDIS_HOST
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: port
-      - key: REDIS_PASSWORD
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: password
-      - key: ENVIRONMENT
-        value: production
-      - key: MLFLOW_TRACKING_URI
-        value: https://mlflow-server-msmebazaar.onrender.com
-      - key: CELERY_BROKER_URL
-        value: redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/0
-      - key: CELERY_RESULT_BACKEND
-        value: redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/0
-    autoDeploy: true
-
-  # Transaction Matching Service
-  - type: web
-    name: transaction-matching-service
-    env: python
-    buildCommand: |
-      cd microservices/transaction-matching-service
-      pip install -r requirements.txt
-    startCommand: |
-      cd microservices/transaction-matching-service
-      uvicorn app:app --host 0.0.0.0 --port $PORT --workers 2
-    plan: standard
-    region: oregon
-    healthCheckPath: /api/matching_stats
-    envVars:
-      - key: POSTGRES_HOST
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: host
-      - key: POSTGRES_PORT
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: port
-      - key: POSTGRES_DB
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_DB
-      - key: POSTGRES_USER
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_USER
-      - key: POSTGRES_PASSWORD
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_PASSWORD
-      - key: REDIS_HOST
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: port
-      - key: REDIS_PASSWORD
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: password
-      - key: ENVIRONMENT
-        value: production
-    autoDeploy: true
-
-  # MLflow Server
-  - type: web
-    name: mlflow-server
-    env: python
-    buildCommand: |
-      pip install mlflow psycopg2-binary boto3
-    startCommand: |
-      mlflow server --host 0.0.0.0 --port $PORT --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/mlflow --default-artifact-root s3://msmebazaar-mlflow-artifacts
+    name: msmebazaar-web
+    env: docker
+    dockerfilePath: ./apps/web/Dockerfile
+    dockerContext: ./apps/web
     plan: starter
     region: oregon
+    healthCheckPath: /api/health
+    domains:
+      - vyapaarmitra.in
     envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        value: https://msmebazaar-auth-api.onrender.com
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://vyapaarmitra.in
+      - key: NEXT_PUBLIC_WEB_URL
+        value: https://vyapaarmitra.in
+      - key: AUTH_API_URL
+        value: https://msmebazaar-auth-api.onrender.com
+      - key: MSME_API_URL
+        value: https://msmebazaar-msme-api.onrender.com
+      - key: CORS_ORIGINS
+        value: https://vyapaarmitra.in,https://msmebazaar-auth-api.onrender.com,https://msmebazaar-msme-api.onrender.com
+    autoDeploy: true
+
+  # Auth API (FastAPI)
+  - type: web
+    name: msmebazaar-auth-api
+    env: docker
+    dockerfilePath: ./apps/auth-api/Dockerfile
+    dockerContext: ./apps/auth-api
+    plan: starter
+    region: oregon
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          property: connectionString
       - key: POSTGRES_HOST
         fromService:
           type: pserv
@@ -228,6 +78,11 @@ services:
           type: pserv
           name: msmebazaar-postgres
           property: port
+      - key: POSTGRES_DB
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          envVarKey: POSTGRES_DB
       - key: POSTGRES_USER
         fromService:
           type: pserv
@@ -238,27 +93,89 @@ services:
           type: pserv
           name: msmebazaar-postgres
           envVarKey: POSTGRES_PASSWORD
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: msmebazaar-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: msmebazaar-redis
+          property: port
+      - key: REDIS_PASSWORD
+        fromService:
+          type: redis
+          name: msmebazaar-redis
+          property: password
+      - key: REDIS_URL
+        value: redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+      - key: FLASK_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: WEB_APP_URL
+        value: https://vyapaarmitra.in
+      - key: CORS_ORIGINS
+        value: https://vyapaarmitra.in
+      - key: ALLOWED_HOSTS
+        value: msmebazaar-auth-api.onrender.com,vyapaarmitra.in
+      # Secrets to be added via Render dashboard
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_NUMBER
+        sync: false
+      - key: TWILIO_WHATSAPP_NUMBER
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
       - key: AWS_ACCESS_KEY_ID
         sync: false
       - key: AWS_SECRET_ACCESS_KEY
         sync: false
-      - key: AWS_DEFAULT_REGION
-        value: us-west-2
+      - key: AWS_REGION
+        value: us-east-1
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_ENDPOINT
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: FROM_EMAIL
+        sync: false
     autoDeploy: true
 
-  # Celery Worker
-  - type: worker
-    name: celery-worker
-    env: python
-    buildCommand: |
-      cd microservices/ml-monitoring-service
-      pip install -r requirements.txt
-    startCommand: |
-      cd microservices/ml-monitoring-service
-      celery -A app.celery worker --loglevel=info --concurrency=2
+  # MSME API (FastAPI)
+  - type: web
+    name: msmebazaar-msme-api
+    env: docker
+    dockerfilePath: ./apps/msme-api/Dockerfile
+    dockerContext: ./apps/msme-api
     plan: starter
     region: oregon
+    healthCheckPath: /health
     envVars:
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          property: connectionString
       - key: POSTGRES_HOST
         fromService:
           type: pserv
@@ -299,38 +216,45 @@ services:
           type: redis
           name: msmebazaar-redis
           property: password
+      - key: REDIS_URL
+        value: redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+      - key: FLASK_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: AUTH_API_URL
+        value: https://msmebazaar-auth-api.onrender.com
+      - key: WEB_APP_URL
+        value: https://vyapaarmitra.in
+      - key: CORS_ORIGINS
+        value: https://vyapaarmitra.in,https://msmebazaar-auth-api.onrender.com
+      - key: ALLOWED_HOSTS
+        value: msmebazaar-msme-api.onrender.com,vyapaarmitra.in
+      # Secrets to be added via Render dashboard
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: WEAVIATE_URL
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        value: us-east-1
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_ENDPOINT
+        sync: false
+      - key: ELASTICSEARCH_URL
+        sync: false
       - key: CELERY_BROKER_URL
         value: redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/0
       - key: CELERY_RESULT_BACKEND
         value: redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/0
-      - key: ENVIRONMENT
-        value: production
-    autoDeploy: true
-
-  # Frontend (React)
-  - type: web
-    name: msmebazaar-frontend
-    env: static
-    buildCommand: |
-      cd frontend
-      npm ci
-      npm run build
-    staticPublishPath: ./frontend/build
-    plan: starter
-    region: oregon
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      - key: REACT_APP_API_URL
-        value: https://recommendation-service-msmebazaar.onrender.com
-      - key: REACT_APP_ML_MONITORING_URL
-        value: https://ml-monitoring-service-msmebazaar.onrender.com
-      - key: REACT_APP_TRANSACTION_MATCHING_URL
-        value: https://transaction-matching-service-msmebazaar.onrender.com
-      - key: REACT_APP_ENVIRONMENT
-        value: production
     autoDeploy: true
 
 databases:
