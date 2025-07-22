@@ -68,35 +68,60 @@ This guide covers the deployment of MSMEBazaar V2 on Render using the refactored
 - `JWT_SECRET` (for both APIs)
 
 ### Required Secrets (Add via Render Dashboard):
+
+#### 🔑 Critical Secrets (Required for basic functionality):
 ```bash
-# Twilio (SMS/WhatsApp)
-TWILIO_ACCOUNT_SID=your_account_sid
-TWILIO_AUTH_TOKEN=your_auth_token
+# Twilio (SMS/WhatsApp Communication)
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
 TWILIO_PHONE_NUMBER=+1234567890
 TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886
 
-# OpenAI
-OPENAI_API_KEY=your_openai_key
+# OpenAI (AI Features)
+OPENAI_API_KEY=your_openai_api_key
 
-# AWS/S3
-AWS_ACCESS_KEY_ID=your_access_key
-AWS_SECRET_ACCESS_KEY=your_secret_key
-S3_BUCKET=your_bucket_name
-S3_ENDPOINT=your_s3_endpoint
-
-# Razorpay (Payments)
-RAZORPAY_KEY_ID=your_key_id
-RAZORPAY_KEY_SECRET=your_key_secret
-
-# Email (SMTP)
+# Email (SMTP for notifications)
 SMTP_HOST=smtp.gmail.com
 SMTP_USER=your_email@gmail.com
 SMTP_PASSWORD=your_app_password
-FROM_EMAIL=noreply@msmebazaar.com
+SMTP_FROM_EMAIL=noreply@msmebazaar.com
+```
 
-# External Services (Optional)
+#### 💰 Payment Integration:
+```bash
+# Razorpay (Payment Processing)
+RAZORPAY_KEY_ID=your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+```
+
+#### ☁️ File Storage (Choose AWS S3 OR MinIO):
+```bash
+# Option 1: AWS S3 (Recommended for production)
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+S3_BUCKET_NAME=msmebazaar-prod-documents
+
+# Option 2: MinIO (Alternative to S3)
+MINIO_ENDPOINT=your_minio_endpoint
+MINIO_ACCESS_KEY=your_minio_access_key
+MINIO_SECRET_KEY=your_minio_secret_key
+MINIO_BUCKET_NAME=msmebazaar-documents
+```
+
+#### 🔍 Vector Database & Search (Optional):
+```bash
+# Weaviate (Vector Database)
 WEAVIATE_URL=your_weaviate_url
+WEAVIATE_API_KEY=your_weaviate_api_key
+
+# Elasticsearch (Search Engine)
 ELASTICSEARCH_URL=your_elasticsearch_url
+```
+
+#### 📊 Monitoring & Error Tracking (Optional):
+```bash
+# Sentry (Error Tracking)
+SENTRY_DSN=your_sentry_dsn
 ```
 
 ## 🚀 Deployment Steps
