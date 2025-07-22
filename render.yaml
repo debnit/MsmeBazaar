@@ -1,23 +1,26 @@
 services:
   # ===== DATABASE SERVICES =====
-
-  # PostgreSQL Database
   - type: pserv
     name: msmebazaar-postgres
     plan: starter
     region: singapore
     env: docker
+    dockerContext: .
     disk:
       name: postgres-data
       mountPath: /var/lib/postgresql/data
       sizeGB: 10
     envVars:
       - key: POSTGRES_DB
-        value: msmebazaar_v2
-      - key: POSTGRES_USER
         value: msmebazaar
+      - key: POSTGRES_USER
+        value: postgres
       - key: POSTGRES_PASSWORD
         generateValue: true
+    alerts:
+      - condition: deploy_failed
+        notificationChannels:
+          - email: your@email.com
 
   # Redis Cache & Queue
   - type: redis
@@ -28,10 +31,14 @@ services:
     ipAllowList:
       - source: 0.0.0.0/0
         description: Allow all connections
+    alerts:
+      - condition: deploy_failed
+        notificationChannels:
+          - email: your@email.com
 
   # ===== BACKEND MICROSERVICES =====
 
-  # Auth API Service (Port 8000)
+  # Auth API Service
   - type: web
     name: msmebazaar-auth-api
     env: docker
@@ -53,6 +60,8 @@ services:
           name: msmebazaar-redis
           type: redis
           property: connectionString
+      - key: NODE_ENV
+        value: production
       - key: SECRET_KEY
         generateValue: true
       - key: ALGORITHM
@@ -73,8 +82,12 @@ services:
         value: false
       - key: LOG_LEVEL
         value: INFO
+    alerts:
+      - condition: deploy_failed
+        notificationChannels:
+          - email: your@email.com
 
-  # MSME API Service (Port 8001)
+  # MSME API Service
   - type: web
     name: msmebazaar-msme-api
     env: docker
@@ -96,6 +109,8 @@ services:
           name: msmebazaar-redis
           type: redis
           property: connectionString
+      - key: NODE_ENV
+        value: production
       - key: OPENAI_API_KEY
         sync: false
       - key: AWS_ACCESS_KEY_ID
@@ -112,8 +127,12 @@ services:
         value: false
       - key: LOG_LEVEL
         value: INFO
+    alerts:
+      - condition: deploy_failed
+        notificationChannels:
+          - email: your@email.com
 
-  # Admin API Service (Port 8002)
+  # Admin API Service
   - type: web
     name: msmebazaar-admin-api
     env: docker
@@ -135,6 +154,8 @@ services:
           name: msmebazaar-redis
           type: redis
           property: connectionString
+      - key: NODE_ENV
+        value: production
       - key: GOOGLE_ANALYTICS_ID
         sync: false
       - key: SENTRY_DSN
@@ -145,8 +166,12 @@ services:
         value: false
       - key: LOG_LEVEL
         value: INFO
+    alerts:
+      - condition: deploy_failed
+        notificationChannels:
+          - email: your@email.com
 
-  # Payments API Service (Port 8003)
+  # Payments API Service
   - type: web
     name: msmebazaar-payments-api
     env: docker
@@ -168,6 +193,8 @@ services:
           name: msmebazaar-redis
           type: redis
           property: connectionString
+      - key: NODE_ENV
+        value: production
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
@@ -182,8 +209,12 @@ services:
         value: false
       - key: LOG_LEVEL
         value: INFO
+    alerts:
+      - condition: deploy_failed
+        notificationChannels:
+          - email: your@email.com
 
-  # WhatsApp Bot Service (Port 8004)
+  # WhatsApp Bot Service
   - type: web
     name: msmebazaar-whatsapp-bot
     env: docker
@@ -205,6 +236,8 @@ services:
           name: msmebazaar-redis
           type: redis
           property: connectionString
+      - key: NODE_ENV
+        value: production
       - key: TWILIO_ACCOUNT_SID
         sync: false
       - key: TWILIO_AUTH_TOKEN
@@ -219,9 +252,12 @@ services:
         value: false
       - key: LOG_LEVEL
         value: INFO
+    alerts:
+      - condition: deploy_failed
+        notificationChannels:
+          - email: your@email.com
 
   # ===== FRONTEND SERVICE =====
-
   - type: web
     name: msmebazaar-frontend
     env: node
@@ -235,6 +271,16 @@ services:
       paths:
         - frontend/**
     envVars:
+      - key: REACT_APP_BASE_URL
+        value: https://msme-api-msmebazaar.onrender.com
+      - key: REACT_APP_AUTH_URL
+        value: https://auth-api-msmebazaar.onrender.com
+      - key: REACT_APP_ADMIN_API_URL
+        value: https://admin-api-msmebazaar.onrender.com
+      - key: REACT_APP_PAYMENTS_API_URL
+        value: https://payments-api-msmebazaar.onrender.com
+      - key: REACT_APP_WHATSAPP_BOT_URL
+        value: https://whatsapp-bot-msmebazaar.onrender.com
       - key: VITE_API_BASE_URL
         value: https://msmebazaar-auth-api.onrender.com
       - key: VITE_APP_NAME
@@ -261,4 +307,8 @@ services:
         value: production
       - key: VITE_BUILD_MODE
         value: production
+    alerts:
+      - condition: deploy_failed
+        notificationChannels:
+          - email: your@email.com
         

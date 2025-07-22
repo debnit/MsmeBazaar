@@ -1,16 +1,7 @@
 # Render Blueprint for MSMESquare
 # This file defines the infrastructure for deploying MSMESquare to Render
 
-databases:
-  - name: msme-postgres
-    databaseName: msme_square
-    user: postgres
-    plan: starter
-    postgresMajorVersion: 15
-
-  - name: msme-redis
-    plan: starter
-    maxmemoryPolicy: allkeys-lru
+# Removed the 'databases:' section to avoid duplication and confusion.
 
 services:
   - type: web
@@ -39,7 +30,7 @@ services:
     healthCheckPath: /health
     domains:
       - msme-square-api.onrender.com
-    
+  
   - type: web
     name: msme-square-frontend
     runtime: static
