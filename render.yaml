@@ -26,19 +26,21 @@ services:
     region: oregon
     maxmemoryPolicy: allkeys-lru
 
-  # Frontend (Vite React App)
+  # Frontend (Vite React App - Static Deployment)
   - type: web
     name: msmebazaar-frontend
-    env: node
-    rootDir: frontend
-    buildCommand: npm ci && npm run build
-    startCommand: npm run preview -- --port $PORT --host
+    env: static
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: frontend/dist
     plan: starter
-    region: oregon
     domains:
       - vyapaarmitra.in
     buildFilter:
       paths: ["frontend/**"]
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
       - key: NODE_ENV
         value: production
@@ -55,9 +57,9 @@ services:
   # Auth API (FastAPI)
   - type: web
     name: msmebazaar-auth-api
-    env: docker
-    dockerfilePath: ./backend/auth-api/Dockerfile
-    dockerContext: ./backend/auth-api
+    env: python
+    buildCommand: pip install -r backend/auth-api/requirements.txt
+    startCommand: cd backend/auth-api && uvicorn main:app --host 0.0.0.0 --port $PORT
     plan: starter
     region: oregon
     healthCheckPath: /health
@@ -162,9 +164,9 @@ services:
   # MSME API (FastAPI)
   - type: web
     name: msmebazaar-msme-api
-    env: docker
-    dockerfilePath: ./backend/msme-api/Dockerfile
-    dockerContext: ./backend/msme-api
+    env: python
+    buildCommand: pip install -r backend/msme-api/requirements.txt
+    startCommand: cd backend/msme-api && uvicorn main:app --host 0.0.0.0 --port $PORT
     plan: starter
     region: oregon
     healthCheckPath: /health
@@ -267,9 +269,9 @@ services:
   # Admin API (FastAPI)
   - type: web
     name: msmebazaar-admin-api
-    env: docker
-    dockerfilePath: ./backend/admin-api/Dockerfile
-    dockerContext: ./backend/admin-api
+    env: python
+    buildCommand: pip install -r backend/admin-api/requirements.txt
+    startCommand: cd backend/admin-api && uvicorn main:app --host 0.0.0.0 --port $PORT
     plan: starter
     region: oregon
     healthCheckPath: /health
@@ -298,9 +300,9 @@ services:
   # WhatsApp Bot Service
   - type: web
     name: msmebazaar-whatsapp-bot
-    env: docker
-    dockerfilePath: ./backend/whatsapp-bot/Dockerfile
-    dockerContext: ./backend/whatsapp-bot
+    env: python
+    buildCommand: pip install -r backend/whatsapp-bot/requirements.txt
+    startCommand: cd backend/whatsapp-bot && python main.py
     plan: starter
     region: oregon
     healthCheckPath: /health
