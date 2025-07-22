@@ -1,0 +1,55 @@
+{
+  "name": "msmebazaar-admin-dashboard",
+  "version": "1.0.0",
+  "description": "Production-grade Admin Dashboard SaaS for MSMEBazaar",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "libs/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:web\" \"npm run dev:api\"",
+    "dev:web": "cd apps/web && npm run dev",
+    "dev:api": "cd apps/api && uvicorn main:app --reload --host 0.0.0.0 --port 8000",
+    "build": "npm run build:web && npm run build:api",
+    "build:web": "cd apps/web && npm run build",
+    "build:api": "cd apps/api && pip install -r requirements.txt",
+    "start": "concurrently \"npm run start:web\" \"npm run start:api\"",
+    "start:web": "cd apps/web && npm run start",
+    "start:api": "cd apps/api && uvicorn main:app --host 0.0.0.0 --port 8000",
+    "lint": "cd apps/web && npm run lint",
+    "type-check": "cd apps/web && npm run type-check",
+    "db:generate": "cd libs/schema && npx prisma generate",
+    "db:migrate": "cd libs/schema && npx prisma migrate dev",
+    "db:studio": "cd libs/schema && npx prisma studio",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build",
+    "test": "cd apps/web && npm run test",
+    "clean": "rm -rf node_modules apps/*/node_modules libs/*/node_modules"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.3.0",
+    "@types/node": "^20.10.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/msmebazaar/admin-dashboard.git"
+  },
+  "keywords": [
+    "admin-dashboard",
+    "msme",
+    "saas",
+    "workflow-automation",
+    "rbac",
+    "nextjs",
+    "fastapi"
+  ],
+  "author": "MSMEBazaar Team",
+  "license": "MIT"
+}
