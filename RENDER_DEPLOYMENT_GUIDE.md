@@ -1,206 +1,237 @@
-# MSMEBazaar V2 Render Deployment Guide
+# 🚀 MSMEBazaar Render Deployment Guide
 
-## 🎯 Overview
-This guide covers the deployment of MSMEBazaar V2 on Render using the refactored monorepo structure. All app folders have been moved to the root directory and the render.yaml has been updated accordingly.
+## 📋 **Overview**
+This guide covers deploying the MSMEBazaar monorepo to Render.com with 1 frontend and 5 backend microservices.
 
-## 📁 Monorepo Structure
+## 📁 **Project Structure**
 ```
-/
-├── apps/
-│   ├── web/                 # Next.js frontend (msmebazaar-web)
-│   ├── auth-api/           # FastAPI authentication service
-│   └── msme-api/           # FastAPI MSME business logic service
-├── render.yaml             # Main Render configuration
-└── ...other files
+msmebazaar/
+├── frontend/                 # Vite + React (Port: $PORT)
+│   ├── index.html
+│   ├── vite.config.ts
+│   └── package.json
+├── backend/
+│   ├── auth-api/            # FastAPI OTP Auth (Port: $PORT)
+│   ├── msme-api/            # MSME Onboarding (Port: $PORT)
+│   ├── admin-api/           # Admin Dashboard (Port: $PORT)
+│   ├── payments-api/        # Payment Gateway (Port: $PORT)
+│   └── whatsapp-bot/        # WhatsApp Bot (Port: $PORT)
+├── render.yaml              # Deployment configuration
+└── .env.example             # Environment variables template
 ```
 
-## 🚀 Services Configured
+## 🔧 **Services Configuration**
 
-### 1. **msmebazaar-web** (Next.js Frontend)
-- **Type**: Web service with Docker
-- **Dockerfile**: `./apps/web/Dockerfile`
-- **Domain**: vyapaarmitra.in (custom domain)
-- **Port**: 3000
-- **Health Check**: `/api/health`
+### **Frontend Service**
+- **Name**: `msmebazaar-frontend`
+- **Type**: Node.js Web Service
+- **Build**: `npm install && npm run build`
+- **Start**: `npm run preview -- --port $PORT --host 0.0.0.0`
+- **URL**: `https://msmebazaar-frontend.onrender.com`
 
-### 2. **msmebazaar-auth-api** (FastAPI Authentication)
-- **Type**: Web service with Docker
-- **Dockerfile**: `./apps/auth-api/Dockerfile`
-- **Port**: 8000 (standardized)
+### **Backend Services**
+All backend services follow this pattern:
+- **Type**: Python Web Service
+- **Build**: `pip install -r requirements.txt`
+- **Start**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
 - **Health Check**: `/health`
 
-### 3. **msmebazaar-msme-api** (FastAPI Business Logic)
-- **Type**: Web service with Docker
-- **Dockerfile**: `./apps/msme-api/Dockerfile`
-- **Port**: 8000 (standardized)
-- **Health Check**: `/health`
+#### Service URLs:
+1. **Auth API**: `https://msmebazaar-auth-api.onrender.com`
+2. **MSME API**: `https://msmebazaar-msme-api.onrender.com`
+3. **Admin API**: `https://msmebazaar-admin-api.onrender.com`
+4. **Payments API**: `https://msmebazaar-payments-api.onrender.com`
+5. **WhatsApp Bot**: `https://msmebazaar-whatsapp-bot.onrender.com`
 
-### 4. **msmebazaar-postgres** (PostgreSQL Database)
-- **Type**: PostgreSQL service
-- **Plan**: Standard
-- **Storage**: 20GB persistent disk
+## 🚀 **Deployment Steps**
 
-### 5. **msmebazaar-redis** (Redis Cache)
-- **Type**: Redis service
-- **Plan**: Standard
-- **Policy**: allkeys-lru
-
-## 🔧 Key Changes Made
-
-### ✅ Fixed Issues:
-1. **Removed msmebazaar-v2/ references** - All paths now work from monorepo root
-2. **Standardized Docker ports** - All APIs use port 8000 internally
-3. **Added health checks** - All services have proper health check endpoints
-4. **Custom domain configured** - vyapaarmitra.in set for web service
-5. **Environment variables** - Comprehensive env var setup from .env.example
-
-### 📝 Files Created/Modified:
-- ✅ `apps/web/Dockerfile` - Created production-ready Next.js Dockerfile
-- ✅ `apps/web/app/api/health/route.ts` - Added health check endpoint
-- ✅ `apps/web/next.config.js` - Removed standalone output (simplified)
-- ✅ `apps/msme-api/Dockerfile` - Updated port from 8002 to 8000
-- ✅ `render.yaml` - Complete refactor for monorepo structure
-
-## 🔐 Environment Variables Setup
-
-### Auto-Generated (Render will create):
-- `POSTGRES_PASSWORD`
-- `JWT_SECRET` (for both APIs)
-
-### Required Secrets (Add via Render Dashboard):
-
-#### 🔑 Critical Secrets (Required for basic functionality):
+### **1. Repository Setup**
 ```bash
-# Twilio (SMS/WhatsApp Communication)
-TWILIO_ACCOUNT_SID=your_twilio_account_sid
-TWILIO_AUTH_TOKEN=your_twilio_auth_token
+# Ensure your repo has the correct structure
+git add render.yaml
+git commit -m "Add Render deployment configuration"
+git push origin main
+```
+
+### **2. Render Dashboard Setup**
+1. Go to [Render Dashboard](https://dashboard.render.com)
+2. Click **"New"** → **"Blueprint"**
+3. Connect your GitHub repository
+4. Select the repository containing `render.yaml`
+5. Click **"Apply"**
+
+### **3. Environment Variables Setup**
+After deployment, configure these secrets in Render Dashboard:
+
+#### **Auth API Secrets:**
+```bash
+DATABASE_URL=postgresql://user:password@host:port/dbname
+REDIS_URL=redis://host:port/0
+TWILIO_ACCOUNT_SID=your_twilio_sid
+TWILIO_AUTH_TOKEN=your_twilio_token
 TWILIO_PHONE_NUMBER=+1234567890
+```
+
+#### **MSME API Secrets:**
+```bash
+DATABASE_URL=postgresql://user:password@host:port/dbname
+REDIS_URL=redis://host:port/0
+OPENAI_API_KEY=sk-your-openai-key
+AWS_ACCESS_KEY_ID=your-aws-key
+AWS_SECRET_ACCESS_KEY=your-aws-secret
+S3_BUCKET_NAME=your-bucket-name
+```
+
+#### **Payments API Secrets:**
+```bash
+DATABASE_URL=postgresql://user:password@host:port/dbname
+REDIS_URL=redis://host:port/0
+RAZORPAY_KEY_ID=rzp_your_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_secret
+STRIPE_PUBLISHABLE_KEY=pk_your_stripe_key
+STRIPE_SECRET_KEY=sk_your_stripe_secret
+```
+
+#### **WhatsApp Bot Secrets:**
+```bash
+REDIS_URL=redis://host:port/0
+TWILIO_ACCOUNT_SID=your_twilio_sid
+TWILIO_AUTH_TOKEN=your_twilio_token
 TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886
-
-# OpenAI (AI Features)
-OPENAI_API_KEY=your_openai_api_key
-
-# Email (SMTP for notifications)
-SMTP_HOST=smtp.gmail.com
-SMTP_USER=your_email@gmail.com
-SMTP_PASSWORD=your_app_password
-SMTP_FROM_EMAIL=noreply@msmebazaar.com
 ```
 
-#### 💰 Payment Integration:
+## 🔍 **Validation Checklist**
+
+### **Pre-Deployment**
+- [ ] All `main.py` files exist in backend services
+- [ ] All `requirements.txt` files exist in backend services
+- [ ] Frontend has `index.html` and `vite.config.ts`
+- [ ] `render.yaml` is in repository root
+- [ ] All services have health check endpoints
+
+### **Post-Deployment**
+- [ ] All 6 services deploy successfully
+- [ ] Frontend loads at service URL
+- [ ] All backend APIs respond to `/health`
+- [ ] Environment variables are configured
+- [ ] Inter-service communication works
+
+## 🛠️ **Development Workflow**
+
+### **Local Development**
 ```bash
-# Razorpay (Payment Processing)
-RAZORPAY_KEY_ID=your_razorpay_key_id
-RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+# Start all services locally
+./dev-start.sh
+
+# Or manually:
+# Frontend (Port 3000)
+cd frontend && npm run dev
+
+# Auth API (Port 8001)
+cd backend/auth-api && uvicorn main:app --reload --port 8001
+
+# MSME API (Port 8002)
+cd backend/msme-api && uvicorn main:app --reload --port 8002
 ```
 
-#### ☁️ File Storage (Choose AWS S3 OR MinIO):
+### **Environment Variables**
+Create `.env` files in each service directory:
+
 ```bash
-# Option 1: AWS S3 (Recommended for production)
-AWS_ACCESS_KEY_ID=your_aws_access_key
-AWS_SECRET_ACCESS_KEY=your_aws_secret_key
-S3_BUCKET_NAME=msmebazaar-prod-documents
-
-# Option 2: MinIO (Alternative to S3)
-MINIO_ENDPOINT=your_minio_endpoint
-MINIO_ACCESS_KEY=your_minio_access_key
-MINIO_SECRET_KEY=your_minio_secret_key
-MINIO_BUCKET_NAME=msmebazaar-documents
+# backend/auth-api/.env
+ENVIRONMENT=development
+DEBUG=true
+DATABASE_URL=postgresql://localhost:5432/msmebazaar
+REDIS_URL=redis://localhost:6379/0
+JWT_SECRET=your-dev-secret
+TWILIO_ACCOUNT_SID=your_twilio_sid
+TWILIO_AUTH_TOKEN=your_twilio_token
 ```
 
-#### 🔍 Vector Database & Search (Optional):
-```bash
-# Weaviate (Vector Database)
-WEAVIATE_URL=your_weaviate_url
-WEAVIATE_API_KEY=your_weaviate_api_key
+## 🔧 **Troubleshooting**
 
-# Elasticsearch (Search Engine)
-ELASTICSEARCH_URL=your_elasticsearch_url
+### **Common Issues**
+
+#### **Build Failures**
+- Check `requirements.txt` has all dependencies
+- Ensure Python version compatibility (3.11)
+- Verify `main.py` imports work correctly
+
+#### **Service Communication**
+- Update API URLs in frontend environment variables
+- Check CORS settings in backend services
+- Verify JWT token passing between services
+
+#### **Database Connection**
+- Ensure DATABASE_URL is correctly formatted
+- Check database permissions and network access
+- Verify connection pooling settings
+
+### **Health Check Endpoints**
+Each backend service should implement:
+```python
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "service-name"}
 ```
 
-#### 📊 Monitoring & Error Tracking (Optional):
-```bash
-# Sentry (Error Tracking)
-SENTRY_DSN=your_sentry_dsn
+### **CORS Configuration**
+Add to each FastAPI service:
+```python
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://msmebazaar-frontend.onrender.com"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 ```
 
-## 🚀 Deployment Steps
+## 📊 **Monitoring & Logs**
 
-### 1. Pre-deployment Checklist
-- [ ] Ensure all Dockerfiles are present and working
-- [ ] Verify health check endpoints exist
-- [ ] Check that no msmebazaar-v2/ paths remain in code
-- [ ] Test Docker builds locally (optional)
+### **Render Dashboard**
+- Monitor service health and uptime
+- View deployment logs and build output
+- Track resource usage and performance
+- Set up alerts for service failures
 
-### 2. Deploy to Render
-1. **Connect Repository**: Link your GitHub repo to Render
-2. **Import Blueprint**: Use the `render.yaml` file
-3. **Add Secrets**: Configure environment variables via dashboard
-4. **Deploy**: Render will automatically build and deploy all services
+### **Application Logs**
+- Use structured logging in Python services
+- Implement proper error handling
+- Set up log aggregation for debugging
 
-### 3. Post-deployment Configuration
-1. **Custom Domain**: Point vyapaarmitra.in DNS to Render
-2. **SSL Certificate**: Render will auto-provision SSL
-3. **Health Checks**: Verify all services are healthy
-4. **Database**: Run any necessary migrations
+## 🚀 **Production Optimizations**
 
-## 🔍 Health Check Endpoints
+### **Performance**
+- Enable HTTP/2 and compression
+- Implement proper caching strategies
+- Use connection pooling for databases
+- Optimize Docker images if using containers
 
-| Service | Health Check URL | Expected Response |
-|---------|-----------------|-------------------|
-| Web | `https://vyapaarmitra.in/api/health` | `{"status": "healthy"}` |
-| Auth API | `https://msmebazaar-auth-api.onrender.com/health` | `200 OK` |
-| MSME API | `https://msmebazaar-msme-api.onrender.com/health` | `200 OK` |
+### **Security**
+- Use environment variables for secrets
+- Implement proper CORS policies
+- Add rate limiting to APIs
+- Use HTTPS for all communications
 
-## 🌐 Service URLs
-
-| Service | URL |
-|---------|-----|
-| **Frontend** | https://vyapaarmitra.in |
-| **Auth API** | https://msmebazaar-auth-api.onrender.com |
-| **MSME API** | https://msmebazaar-msme-api.onrender.com |
-| **Database** | Internal (via connection string) |
-| **Redis** | Internal (via connection string) |
-
-## 🐛 Troubleshooting
-
-### Common Issues:
-1. **Build Failures**: Check Dockerfile syntax and dependencies
-2. **Health Check Failures**: Ensure endpoints return 200 status
-3. **Environment Variables**: Verify all required secrets are set
-4. **Database Connection**: Check PostgreSQL connection strings
-5. **CORS Issues**: Verify CORS_ORIGINS includes all necessary domains
-
-### Debugging Commands:
-```bash
-# Check service logs
-render logs <service-name>
-
-# Check build logs
-render builds <service-name>
-
-# Test health endpoints locally
-curl -f http://localhost:3000/api/health
-curl -f http://localhost:8000/health
-```
-
-## ✅ Success Criteria
-
-Your deployment is successful when:
-- [ ] All 5 services show "Healthy" status in Render dashboard
-- [ ] vyapaarmitra.in loads the Next.js frontend
-- [ ] API endpoints respond correctly
-- [ ] Database connections are established
-- [ ] No msmebazaar-v2/ path errors in logs
-
-## 📞 Support
-
-If you encounter issues:
-1. Check the Render dashboard for service status
-2. Review service logs for error messages
-3. Verify environment variables are set correctly
-4. Ensure custom domain DNS is properly configured
+### **Scaling**
+- Monitor resource usage
+- Implement horizontal scaling as needed
+- Use Redis for session management
+- Consider CDN for static assets
 
 ---
 
-**🎉 Ready for deployment!** Your MSMEBazaar V2 is now configured for seamless deployment on Render from the monorepo root.
+## 🎉 **Success!**
+Your MSMEBazaar application should now be successfully deployed on Render with:
+- ✅ 1 Frontend (Vite + React)
+- ✅ 5 Backend Services (FastAPI)
+- ✅ Auto-deployment on git push
+- ✅ Environment variable management
+- ✅ Health monitoring and logging
+
+**Frontend URL**: `https://msmebazaar-frontend.onrender.com`
+
+**API Base URL**: `https://msmebazaar-auth-api.onrender.com`

@@ -23,3 +23,7 @@ app.include_router(razorpay_router)
 @app.get("/")
 def read_root():
     return {"message": "Payments API is live"}
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "service": "payments-api"}

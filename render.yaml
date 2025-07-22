@@ -1,253 +1,87 @@
 services:
-  # PostgreSQL Database (Self-managed)
-  - type: pserv
-    name: msmebazaar-postgres
-    env: docker
-    dockerfilePath: ./infrastructure/docker/postgres/Dockerfile
-    plan: standard
-    region: oregon
-    ipAllowList: ["0.0.0.0/0"]
-    envVars:
-      - key: POSTGRES_DB
-        value: msmebazaar
-      - key: POSTGRES_USER
-        value: postgres
-      - key: POSTGRES_PASSWORD
-        generateValue: true
-    disk:
-      name: postgres-data
-      mountPath: /var/lib/postgresql/data
-      sizeGB: 20
-
-  # Redis Cache (Managed by Render)
-  - type: redis
-    name: msmebazaar-redis
-    plan: standard
-    region: oregon
-    maxmemoryPolicy: allkeys-lru
-
-  # Frontend (Vite React App - Static Deployment)
+  # Frontend - Vite React App
   - type: web
     name: msmebazaar-frontend
-    env: static
-    buildCommand: cd frontend && npm ci && npm run build
-    staticPublishPath: frontend/dist
-    plan: starter
-    domains:
-      - vyapaarmitra.in
-    buildFilter:
-      paths: ["frontend/**"]
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
+    env: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview -- --port $PORT --host 0.0.0.0
+    plan: free
     envVars:
       - key: NODE_ENV
         value: production
-      - key: VITE_API_URL
+      - key: VITE_API_BASE_URL
         value: https://msmebazaar-auth-api.onrender.com
-      - key: VITE_APP_URL
-        value: https://vyapaarmitra.in
       - key: VITE_AUTH_API_URL
         value: https://msmebazaar-auth-api.onrender.com
       - key: VITE_MSME_API_URL
         value: https://msmebazaar-msme-api.onrender.com
+      - key: VITE_ADMIN_API_URL
+        value: https://msmebazaar-admin-api.onrender.com
+      - key: VITE_PAYMENTS_API_URL
+        value: https://msmebazaar-payments-api.onrender.com
+    buildFilter:
+      paths: ["frontend/**"]
     autoDeploy: true
 
-  # Auth API (FastAPI)
+  # Auth API - OTP Authentication Service
   - type: web
     name: msmebazaar-auth-api
     env: python
-    buildCommand: pip install -r backend/auth-api/requirements.txt
-    startCommand: cd backend/auth-api && uvicorn main:app --host 0.0.0.0 --port $PORT
-    plan: starter
-    region: oregon
+    rootDir: backend/auth-api
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    plan: free
     healthCheckPath: /health
     envVars:
-      # Database Configuration
-      - key: DATABASE_URL
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: connectionString
-      - key: POSTGRES_HOST
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: host
-      - key: POSTGRES_PORT
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: port
-      - key: POSTGRES_DB
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_DB
-      - key: POSTGRES_USER
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_USER
-      - key: POSTGRES_PASSWORD
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_PASSWORD
-      
-      # Redis Configuration
-      - key: REDIS_CONNECTION_STRING
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: connectionString
-      
-      # Application Environment
+      - key: PYTHON_VERSION
+        value: "3.11"
       - key: ENVIRONMENT
         value: production
       - key: DEBUG
         value: "false"
-      - key: LOG_LEVEL
-        value: WARNING
-      
-      # JWT Configuration
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_ALGORITHM
         value: HS256
       - key: JWT_ACCESS_TOKEN_EXPIRE_MINUTES
         value: "30"
-      
-      # Service URLs
-      - key: WEB_APP_URL
-        value: https://vyapaarmitra.in
-      - key: CORS_ORIGINS
-        value: https://vyapaarmitra.in
-      
-      # Secrets (to be added via Render dashboard)
       - key: TWILIO_ACCOUNT_SID
         sync: false
       - key: TWILIO_AUTH_TOKEN
         sync: false
       - key: TWILIO_PHONE_NUMBER
         sync: false
-      - key: TWILIO_WHATSAPP_NUMBER
+      - key: DATABASE_URL
         sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: AWS_ACCESS_KEY_ID
-        sync: false
-      - key: AWS_SECRET_ACCESS_KEY
-        sync: false
-      - key: S3_BUCKET_NAME
-        sync: false
-      - key: RAZORPAY_KEY_ID
-        sync: false
-      - key: RAZORPAY_KEY_SECRET
-        sync: false
-      - key: SMTP_HOST
-        sync: false
-      - key: SMTP_USER
-        sync: false
-      - key: SMTP_PASSWORD
-        sync: false
-      - key: SMTP_FROM_EMAIL
+      - key: REDIS_URL
         sync: false
     autoDeploy: true
 
-  # MSME API (FastAPI)
+  # MSME API - Business Onboarding & Valuation
   - type: web
     name: msmebazaar-msme-api
     env: python
-    buildCommand: pip install -r backend/msme-api/requirements.txt
-    startCommand: cd backend/msme-api && uvicorn main:app --host 0.0.0.0 --port $PORT
-    plan: starter
-    region: oregon
+    rootDir: backend/msme-api
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    plan: free
     healthCheckPath: /health
     envVars:
-      # Database Configuration
-      - key: DATABASE_URL
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: connectionString
-      - key: POSTGRES_HOST
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: host
-      - key: POSTGRES_PORT
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: port
-      - key: POSTGRES_DB
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_DB
-      - key: POSTGRES_USER
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_USER
-      - key: POSTGRES_PASSWORD
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          envVarKey: POSTGRES_PASSWORD
-      
-      # Redis Configuration
-      - key: REDIS_CONNECTION_STRING
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: connectionString
-      
-      # Application Environment
+      - key: PYTHON_VERSION
+        value: "3.11"
       - key: ENVIRONMENT
         value: production
       - key: DEBUG
         value: "false"
-      - key: LOG_LEVEL
-        value: WARNING
-      
-      # JWT Configuration
       - key: JWT_SECRET
         generateValue: true
-      
-      # Service URLs
       - key: AUTH_API_URL
         value: https://msmebazaar-auth-api.onrender.com
-      - key: WEB_APP_URL
-        value: https://vyapaarmitra.in
-      - key: CORS_ORIGINS
-        value: https://vyapaarmitra.in,https://msmebazaar-auth-api.onrender.com
-      
-      # Celery Configuration
-      - key: CELERY_BROKER_URL
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: connectionString
-      - key: CELERY_RESULT_BACKEND
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: connectionString
-      
-      # Secrets (to be added via Render dashboard)
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: AWS_ACCESS_KEY_ID
@@ -256,79 +90,98 @@ services:
         sync: false
       - key: S3_BUCKET_NAME
         sync: false
-      - key: WEAVIATE_URL
-        sync: false
-      - key: WEAVIATE_API_KEY
-        sync: false
-      - key: ELASTICSEARCH_URL
-        sync: false
-      - key: SENTRY_DSN
-        sync: false
     autoDeploy: true
 
-  # Admin API (FastAPI)
+  # Admin API - Dashboard & Management
   - type: web
     name: msmebazaar-admin-api
     env: python
-    buildCommand: pip install -r backend/admin-api/requirements.txt
-    startCommand: cd backend/admin-api && uvicorn main:app --host 0.0.0.0 --port $PORT
-    plan: starter
-    region: oregon
+    rootDir: backend/admin-api
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    plan: free
     healthCheckPath: /health
     envVars:
-      # Database Configuration
-      - key: DATABASE_URL
-        fromService:
-          type: pserv
-          name: msmebazaar-postgres
-          property: connectionString
-      - key: REDIS_CONNECTION_STRING
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: connectionString
-      
-      # Application Environment
+      - key: PYTHON_VERSION
+        value: "3.11"
       - key: ENVIRONMENT
         value: production
+      - key: DEBUG
+        value: "false"
       - key: JWT_SECRET
         generateValue: true
-      - key: CORS_ORIGINS
-        value: https://vyapaarmitra.in
+      - key: AUTH_API_URL
+        value: https://msmebazaar-auth-api.onrender.com
+      - key: MSME_API_URL
+        value: https://msmebazaar-msme-api.onrender.com
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
     autoDeploy: true
 
-  # WhatsApp Bot Service
+  # Payments API - Razorpay/Stripe Gateway
+  - type: web
+    name: msmebazaar-payments-api
+    env: python
+    rootDir: backend/payments-api
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: AUTH_API_URL
+        value: https://msmebazaar-auth-api.onrender.com
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+    autoDeploy: true
+
+  # WhatsApp Bot API - Bot Connector
   - type: web
     name: msmebazaar-whatsapp-bot
     env: python
-    buildCommand: pip install -r backend/whatsapp-bot/requirements.txt
-    startCommand: cd backend/whatsapp-bot && python main.py
-    plan: starter
-    region: oregon
+    rootDir: backend/whatsapp-bot
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    plan: free
     healthCheckPath: /health
     envVars:
-      # Service URLs
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
       - key: AUTH_API_URL
         value: https://msmebazaar-auth-api.onrender.com
-      - key: WEB_APP_URL
-        value: https://vyapaarmitra.in
-      - key: REDIS_CONNECTION_STRING
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: connectionString
-      
-      # Environment
-      - key: FLASK_ENV
-        value: production
-      - key: LOG_LEVEL
-        value: INFO
-      
-      # Secrets
+      - key: MSME_API_URL
+        value: https://msmebazaar-msme-api.onrender.com
       - key: TWILIO_ACCOUNT_SID
         sync: false
       - key: TWILIO_AUTH_TOKEN
         sync: false
       - key: TWILIO_WHATSAPP_NUMBER
+        sync: false
+      - key: WEBHOOK_URL
+        value: https://msmebazaar-whatsapp-bot.onrender.com
+      - key: REDIS_URL
         sync: false
     autoDeploy: true
