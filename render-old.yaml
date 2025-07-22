@@ -1,0 +1,546 @@
+services:
+  # PostgreSQL Database (Self-managed)
+  - type: pserv
+    name: msmebazaar-postgres
+    env: docker
+    dockerfilePath: ./infrastructure/docker/postgres/Dockerfile
+    plan: standard
+    region: oregon
+    ipAllowList: ["0.0.0.0/0"]
+    envVars:
+      - key: POSTGRES_DB
+        value: msmebazaar
+      - key: POSTGRES_USER
+        value: postgres
+      - key: POSTGRES_PASSWORD
+        generateValue: true
+    disk:
+      name: postgres-data
+      mountPath: /var/lib/postgresql/data
+      sizeGB: 20
+
+  # Redis Cache (Managed by Render)
+  - type: redis
+    name: msmebazaar-redis
+    plan: standard
+    region: oregon
+    maxmemoryPolicy: allkeys-lru
+
+  # MSMEBazaar Web (Next.js)
+  - type: web
+    name: msmebazaar-web
+    env: docker
+    dockerfilePath: ./apps/web/Dockerfile
+    dockerContext: ./apps/web
+    plan: starter
+    region: oregon
+    healthCheckPath: /api/health
+    domains:
+      - vyapaarmitra.in
+    envVars:
+      # Application Environment
+      - key: NODE_ENV
+        value: production
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      
+      # Frontend URLs
+      - key: NEXT_PUBLIC_API_URL
+        value: https://msmebazaar-auth-api.onrender.com
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://vyapaarmitra.in
+      - key: NEXT_PUBLIC_WEB_URL
+        value: https://vyapaarmitra.in
+      - key: WEB_APP_URL
+        value: https://vyapaarmitra.in
+      
+      # Service URLs
+      - key: AUTH_API_URL
+        value: https://msmebazaar-auth-api.onrender.com
+      - key: MSME_API_URL
+        value: https://msmebazaar-msme-api.onrender.com
+      
+      # CORS Configuration
+      - key: CORS_ORIGINS
+        value: https://vyapaarmitra.in,https://msmebazaar-auth-api.onrender.com,https://msmebazaar-msme-api.onrender.com
+      - key: CORS_METHODS
+        value: GET,POST,PUT,DELETE,OPTIONS
+      - key: CORS_HEADERS
+        value: Content-Type,Authorization
+      
+      # API Configuration
+      - key: API_VERSION
+        value: v1
+      - key: API_PREFIX
+        value: /api
+      - key: API_DOCS_URL
+        value: /docs
+      - key: API_REDOC_URL
+        value: /redoc
+      
+      # Pagination
+      - key: DEFAULT_PAGE_SIZE
+        value: "20"
+      - key: MAX_PAGE_SIZE
+        value: "100"
+    autoDeploy: true
+
+  # Auth API (FastAPI)
+  - type: web
+    name: msmebazaar-auth-api
+    env: docker
+    dockerfilePath: ./apps/auth-api/Dockerfile
+    dockerContext: ./apps/auth-api
+    plan: starter
+    region: oregon
+    healthCheckPath: /health
+    envVars:
+      # Database Configuration
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          property: connectionString
+      - key: TEST_DATABASE_URL
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          property: connectionString
+      - key: POSTGRES_HOST
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          property: host
+      - key: POSTGRES_PORT
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          property: port
+      - key: POSTGRES_DB
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          envVarKey: POSTGRES_DB
+      - key: POSTGRES_USER
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          envVarKey: POSTGRES_USER
+      - key: POSTGRES_PASSWORD
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          envVarKey: POSTGRES_PASSWORD
+      
+      # Database Pool Settings
+      - key: DB_POOL_MIN_SIZE
+        value: "10"
+      - key: DB_POOL_MAX_SIZE
+        value: "20"
+      - key: DB_POOL_TIMEOUT
+        value: "30"
+      
+      # Redis Configuration (Using connectionString)
+      - key: REDIS_CONNECTION_STRING
+        fromService:
+          type: redis
+          name: msmebazaar-redis
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: msmebazaar-redis
+          property: connectionString
+      - key: REDIS_DB
+        value: "0"
+      
+      # Session and Cache TTL
+      - key: SESSION_TTL
+        value: "86400"
+      - key: CACHE_TTL
+        value: "3600"
+      - key: OTP_TTL
+        value: "300"
+      
+      # JWT Configuration
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "30"
+      - key: JWT_REFRESH_TOKEN_EXPIRE_DAYS
+        value: "7"
+      
+      # Security Settings
+      - key: BCRYPT_ROUNDS
+        value: "12"
+      - key: RATE_LIMIT_REQUESTS
+        value: "100"
+      - key: RATE_LIMIT_WINDOW
+        value: "60"
+      
+      # Application Environment
+      - key: NODE_ENV
+        value: production
+      - key: FLASK_ENV
+        value: production
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: LOG_LEVEL
+        value: WARNING
+      - key: LOG_FORMAT
+        value: json
+      
+      # Service URLs
+      - key: WEB_APP_URL
+        value: https://vyapaarmitra.in
+      - key: AUTH_API_URL
+        value: https://msmebazaar-auth-api.onrender.com
+      - key: MSME_API_URL
+        value: https://msmebazaar-msme-api.onrender.com
+      - key: AUTH_API_PORT
+        value: "8000"
+      - key: MSME_API_PORT
+        value: "8000"
+      
+      # CORS Configuration
+      - key: CORS_ORIGINS
+        value: https://vyapaarmitra.in
+      - key: CORS_METHODS
+        value: GET,POST,PUT,DELETE,OPTIONS
+      - key: CORS_HEADERS
+        value: Content-Type,Authorization
+      - key: ALLOWED_HOSTS
+        value: msmebazaar-auth-api.onrender.com,vyapaarmitra.in
+      
+      # API Configuration
+      - key: API_VERSION
+        value: v1
+      - key: API_PREFIX
+        value: /api
+      - key: API_DOCS_URL
+        value: /docs
+      - key: API_REDOC_URL
+        value: /redoc
+      - key: ENABLE_SWAGGER
+        value: "false"
+      - key: ENABLE_REDOC
+        value: "false"
+      - key: ENABLE_DEBUG_TOOLBAR
+        value: "false"
+      
+      # Pagination
+      - key: DEFAULT_PAGE_SIZE
+        value: "20"
+      - key: MAX_PAGE_SIZE
+        value: "100"
+      
+      # File Upload Settings
+      - key: MAX_FILE_SIZE
+        value: "10485760"
+      - key: ALLOWED_FILE_TYPES
+        value: pdf,doc,docx,jpg,jpeg,png
+      
+      # Business Logic Configuration
+      - key: VALUATION_BASIC_PRICE
+        value: "199"
+      - key: VALUATION_PREMIUM_PRICE
+        value: "499"
+      - key: VALUATION_ENTERPRISE_PRICE
+        value: "999"
+      - key: MATCH_SIMILARITY_THRESHOLD
+        value: "0.7"
+      - key: MAX_MATCH_RESULTS
+        value: "10"
+      - key: KYC_REQUIRED_DOCUMENTS
+        value: pan,gst,bank_statement
+      - key: KYC_VERIFICATION_TIMEOUT
+        value: "72"
+      
+      # Secrets to be added via Render dashboard
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_NUMBER
+        sync: false
+      - key: TWILIO_WHATSAPP_NUMBER
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4
+      - key: OPENAI_EMBEDDING_MODEL
+        value: text-embedding-ada-002
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        value: ap-south-1
+      - key: S3_BUCKET_NAME
+        sync: false
+      - key: MINIO_ENDPOINT
+        sync: false
+      - key: MINIO_ACCESS_KEY
+        sync: false
+      - key: MINIO_SECRET_KEY
+        sync: false
+      - key: MINIO_BUCKET_NAME
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: WEAVIATE_URL
+        sync: false
+      - key: WEAVIATE_API_KEY
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: SENTRY_ENVIRONMENT
+        value: production
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM_NAME
+        value: MSMEBazaar
+      - key: SMTP_FROM_EMAIL
+        sync: false
+    autoDeploy: true
+
+  # MSME API (FastAPI)
+  - type: web
+    name: msmebazaar-msme-api
+    env: docker
+    dockerfilePath: ./apps/msme-api/Dockerfile
+    dockerContext: ./apps/msme-api
+    plan: starter
+    region: oregon
+    healthCheckPath: /health
+    envVars:
+      # Database Configuration
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          property: connectionString
+      - key: TEST_DATABASE_URL
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          property: connectionString
+      - key: POSTGRES_HOST
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          property: host
+      - key: POSTGRES_PORT
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          property: port
+      - key: POSTGRES_DB
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          envVarKey: POSTGRES_DB
+      - key: POSTGRES_USER
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          envVarKey: POSTGRES_USER
+      - key: POSTGRES_PASSWORD
+        fromService:
+          type: pserv
+          name: msmebazaar-postgres
+          envVarKey: POSTGRES_PASSWORD
+      
+      # Database Pool Settings
+      - key: DB_POOL_MIN_SIZE
+        value: "10"
+      - key: DB_POOL_MAX_SIZE
+        value: "20"
+      - key: DB_POOL_TIMEOUT
+        value: "30"
+      
+      # Redis Configuration (Using connectionString)
+      - key: REDIS_CONNECTION_STRING
+        fromService:
+          type: redis
+          name: msmebazaar-redis
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: msmebazaar-redis
+          property: connectionString
+      - key: REDIS_DB
+        value: "0"
+      
+      # Session and Cache TTL
+      - key: SESSION_TTL
+        value: "86400"
+      - key: CACHE_TTL
+        value: "3600"
+      - key: OTP_TTL
+        value: "300"
+      
+      # JWT Configuration
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "30"
+      - key: JWT_REFRESH_TOKEN_EXPIRE_DAYS
+        value: "7"
+      
+      # Security Settings
+      - key: BCRYPT_ROUNDS
+        value: "12"
+      - key: RATE_LIMIT_REQUESTS
+        value: "100"
+      - key: RATE_LIMIT_WINDOW
+        value: "60"
+      
+      # Application Environment
+      - key: NODE_ENV
+        value: production
+      - key: FLASK_ENV
+        value: production
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: LOG_LEVEL
+        value: WARNING
+      - key: LOG_FORMAT
+        value: json
+      
+      # Service URLs
+      - key: AUTH_API_URL
+        value: https://msmebazaar-auth-api.onrender.com
+      - key: MSME_API_URL
+        value: https://msmebazaar-msme-api.onrender.com
+      - key: WEB_APP_URL
+        value: https://vyapaarmitra.in
+      - key: AUTH_API_PORT
+        value: "8000"
+      - key: MSME_API_PORT
+        value: "8000"
+      
+      # CORS Configuration
+      - key: CORS_ORIGINS
+        value: https://vyapaarmitra.in,https://msmebazaar-auth-api.onrender.com
+      - key: CORS_METHODS
+        value: GET,POST,PUT,DELETE,OPTIONS
+      - key: CORS_HEADERS
+        value: Content-Type,Authorization
+      - key: ALLOWED_HOSTS
+        value: msmebazaar-msme-api.onrender.com,vyapaarmitra.in
+      
+      # API Configuration
+      - key: API_VERSION
+        value: v1
+      - key: API_PREFIX
+        value: /api
+      - key: API_DOCS_URL
+        value: /docs
+      - key: API_REDOC_URL
+        value: /redoc
+      - key: ENABLE_SWAGGER
+        value: "false"
+      - key: ENABLE_REDOC
+        value: "false"
+      - key: ENABLE_DEBUG_TOOLBAR
+        value: "false"
+      
+      # Pagination
+      - key: DEFAULT_PAGE_SIZE
+        value: "20"
+      - key: MAX_PAGE_SIZE
+        value: "100"
+      
+      # File Upload Settings
+      - key: MAX_FILE_SIZE
+        value: "10485760"
+      - key: ALLOWED_FILE_TYPES
+        value: pdf,doc,docx,jpg,jpeg,png
+      
+      # Business Logic Configuration
+      - key: VALUATION_BASIC_PRICE
+        value: "199"
+      - key: VALUATION_PREMIUM_PRICE
+        value: "499"
+      - key: VALUATION_ENTERPRISE_PRICE
+        value: "999"
+      - key: MATCH_SIMILARITY_THRESHOLD
+        value: "0.7"
+      - key: MAX_MATCH_RESULTS
+        value: "10"
+      - key: KYC_REQUIRED_DOCUMENTS
+        value: pan,gst,bank_statement
+      - key: KYC_VERIFICATION_TIMEOUT
+        value: "72"
+      
+      # Celery Configuration
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: msmebazaar-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: msmebazaar-redis
+          property: connectionString
+      
+      # Secrets to be added via Render dashboard
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4
+      - key: OPENAI_EMBEDDING_MODEL
+        value: text-embedding-ada-002
+      - key: WEAVIATE_URL
+        sync: false
+      - key: WEAVIATE_API_KEY
+        sync: false
+      - key: FAISS_INDEX_PATH
+        value: ./data/faiss_index
+      - key: FAISS_DIMENSION
+        value: "1536"
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        value: ap-south-1
+      - key: S3_BUCKET_NAME
+        sync: false
+      - key: MINIO_ENDPOINT
+        sync: false
+      - key: MINIO_ACCESS_KEY
+        sync: false
+      - key: MINIO_SECRET_KEY
+        sync: false
+      - key: MINIO_BUCKET_NAME
+        sync: false
+      - key: ELASTICSEARCH_URL
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: SENTRY_ENVIRONMENT
+        value: production
+    autoDeploy: true
