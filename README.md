@@ -1,315 +1,392 @@
-# MSMESquare - National MSME Marketplace Platform
+# MSMEBazaar V2.0 🚀
 
-MSMESquare is a comprehensive fintech marketplace designed to connect MSMEs (Micro, Small & Medium Enterprises) with buyers, sellers, agents, and NBFCs (Non-Banking Financial Companies) for seamless business acquisition financing in India. The platform serves as a one-stop solution for MSME transactions, loan applications, and compliance management.
+A modern, scalable platform for onboarding MSMEs and connecting them with buyers, investors, and acquisition opportunities. Built with AI-powered matching and comprehensive valuation services.
 
-## 🚀 Features
+## 🌟 Features
 
-### Core Platform Features
-- **Multi-language Support**: English, Hindi, and Odia localization for low-literacy users
-- **Mobile-first Authentication**: OTP-based mobile number authentication
-- **Geographic Proximity Matching**: Haversine formula-based location matching for all 30 Odisha districts
-- **ML-powered Valuation Engine**: Comprehensive business valuation with industry benchmarks
-- **Intelligent Matchmaking**: AI-driven buyer-seller matching algorithms
-- **Gamification System**: Points, badges, and leaderboards for user engagement
-- **Compliance Management**: Automated RBI compliance checking for NBFCs
-- **Document Generation**: Automated legal document creation
+### Core Functionality
+- **MSME Onboarding**: Complete profile creation with document management
+- **AI-Powered Matching**: Semantic search using OpenAI embeddings and Weaviate
+- **Valuation Engine**: ML-based business valuation with PDF report generation
+- **Admin Dashboard**: Comprehensive management interface with analytics
+- **Payment Integration**: Razorpay integration for valuation services
 
-### User Roles
-- **Sellers**: MSME owners looking to sell their businesses
-- **Buyers**: Investors and companies looking to acquire MSMEs
-- **Agents**: Intermediaries facilitating transactions
-- **NBFCs**: Financial institutions providing acquisition loans
-- **Admins**: Platform administrators
+### Technical Highlights
+- **Microservices Architecture**: Scalable, maintainable service design
+- **Modern Tech Stack**: FastAPI, Next.js, PostgreSQL, Redis, Weaviate
+- **AI Integration**: OpenAI embeddings for semantic matching
+- **Real-time Processing**: Celery for background tasks
+- **Comprehensive Monitoring**: Prometheus, Grafana, structured logging
+- **Production Ready**: Docker containerization, CI/CD pipeline
 
-## 🛠️ Technology Stack
+## 🏗️ Architecture
 
-### Frontend
-- **React 18** with TypeScript
-- **Vite** for build tooling
-- **Tailwind CSS** + **shadcn/ui** for styling
-- **TanStack Query** for data fetching
-- **Wouter** for routing
-- **React Hook Form** + **Zod** for form validation
-
-### Backend
-- **Node.js** with **Express.js**
-- **TypeScript** for type safety
-- **PostgreSQL** with **Drizzle ORM**
-- **JWT** authentication
-- **bcrypt** for password hashing
-
-### Machine Learning
-- **Custom Valuation Engine** with industry-specific metrics
-- **Geographic Proximity Algorithm** using Haversine formula
-- **Matchmaking Algorithm** with weighted scoring
-
-### DevOps & Deployment
-- **Docker** containerization
-- **Docker Compose** for local development
-- **Render** and **Railway** deployment configurations
-- **PostgreSQL** database
-- **Redis** for caching (optional)
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Frontend (Next.js)                     │
+├─────────────────────────────────────────────────────────────┤
+│                     API Gateway (Nginx)                     │
+├─────────────────────────────────────────────────────────────┤
+│  Auth API │ MSME API │ Valuation API │ Match API │ Admin API │
+├─────────────────────────────────────────────────────────────┤
+│     PostgreSQL     │     Redis     │   Weaviate   │  MinIO   │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+
-- PostgreSQL 14+
-- npm or yarn
+- Docker & Docker Compose
+- Node.js 18+ (for local development)
+- Python 3.11+ (for local development)
 
-### Local Development
+### Environment Setup
 
 1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd msme-square
-   ```
+```bash
+git clone https://github.com/yourusername/msmebazaar-v2.git
+cd msmebazaar-v2
+```
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+2. **Set up environment variables**
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+```
 
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
+3. **Start the services**
+```bash
+cd devops
+docker-compose up -d
+```
 
-4. **Set up the database**
-   ```bash
-   npm run db:push
-   ```
+4. **Access the application**
+- Frontend: http://localhost:3000
+- Admin Dashboard: http://localhost:3000/admin
+- API Documentation: http://localhost:8001/docs (Auth API)
 
-5. **Start the development server**
-   ```bash
-   npm run dev
-   ```
+### Services Overview
 
-The application will be available at `http://localhost:5000`
+| Service | Port | Description |
+|---------|------|-------------|
+| Frontend | 3000 | Next.js web application |
+| Auth API | 8001 | Authentication & user management |
+| MSME API | 8002 | MSME profile & document management |
+| Valuation API | 8003 | Business valuation & PDF generation |
+| Match API | 8004 | AI-powered matching service |
+| Admin API | 8005 | Admin dashboard & analytics |
+| PostgreSQL | 5432 | Primary database |
+| Redis | 6379 | Caching & session storage |
+| Weaviate | 8080 | Vector database for embeddings |
+| MinIO | 9000 | S3-compatible object storage |
+
+## 📊 API Documentation
+
+### Authentication Flow
+```
+POST /api/register          # Register new user
+POST /api/verify-otp        # Verify OTP
+POST /api/login             # Login user
+POST /api/refresh-token     # Refresh JWT token
+```
+
+### MSME Management
+```
+POST /api/msme/profile      # Create MSME profile
+GET  /api/msme/profile      # Get MSME profile
+PUT  /api/msme/profile      # Update MSME profile
+POST /api/msme/documents/upload  # Upload documents
+```
+
+### Valuation Services
+```
+POST /api/valuation/request      # Request valuation
+GET  /api/valuation/{id}         # Get valuation status
+POST /api/valuation/{id}/payment # Create payment
+POST /api/valuation/{id}/report  # Generate PDF report
+```
+
+### AI Matching
+```
+POST /api/match/request          # Create match request
+GET  /api/match/request/{id}/results  # Get match results
+POST /api/match/search           # Semantic search
+```
+
+## 🛠️ Development
+
+### Local Development Setup
+
+1. **Backend Services**
+```bash
+# Start each service in separate terminals
+cd apps/auth-api && python -m uvicorn main:app --reload --port 8001
+cd apps/msme-api && python -m uvicorn main:app --reload --port 8002
+cd apps/valuation-api && python -m uvicorn main:app --reload --port 8003
+cd apps/match-api && python -m uvicorn main:app --reload --port 8004
+cd apps/admin-api && python -m uvicorn main:app --reload --port 8005
+```
+
+2. **Frontend**
+```bash
+cd apps/web
+npm install
+npm run dev
+```
+
+3. **Database Migration**
+```bash
+cd apps/auth-api
+alembic upgrade head
+```
+
+### Testing
+
+```bash
+# Backend tests
+cd apps/auth-api
+pytest
+
+# Frontend tests
+cd apps/web
+npm test
+
+# Integration tests
+cd tests
+pytest integration/
+```
+
+## 🔧 Configuration
 
 ### Environment Variables
 
 ```env
 # Database
-DATABASE_URL=postgresql://username:password@localhost:5432/msme_square
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/msmebazaar
 
-# Authentication
-JWT_SECRET=your-secret-key-here
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
 
-# SMS/OTP Service (Optional - uses mock service by default)
-TWILIO_ACCOUNT_SID=your-twilio-account-sid
-TWILIO_AUTH_TOKEN=your-twilio-auth-token
-TWILIO_PHONE_NUMBER=your-twilio-phone-number
+# JWT
+JWT_SECRET=your-secret-key
 
-# Application
-NODE_ENV=development
-PORT=5000
+# OpenAI
+OPENAI_API_KEY=your-openai-key
+
+# Twilio (SMS)
+TWILIO_ACCOUNT_SID=your-twilio-sid
+TWILIO_AUTH_TOKEN=your-twilio-token
+TWILIO_PHONE_NUMBER=your-twilio-number
+
+# AWS/MinIO
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+S3_BUCKET=msmebazaar-documents
+
+# Razorpay
+RAZORPAY_KEY_ID=your-razorpay-key
+RAZORPAY_KEY_SECRET=your-razorpay-secret
+
+# Weaviate
+WEAVIATE_URL=http://localhost:8080
+WEAVIATE_API_KEY=your-weaviate-key
 ```
 
-## 🐳 Docker Deployment
+## 📈 Monitoring & Observability
 
-### Using Docker Compose (Recommended)
-
-1. **Build and start all services**
-   ```bash
-   docker-compose up --build
-   ```
-
-2. **Run database migrations**
-   ```bash
-   docker-compose exec app npm run db:push
-   ```
-
-### Using Docker Only
-
-1. **Build the image**
-   ```bash
-   docker build -t msme-square .
-   ```
-
-2. **Run the container**
-   ```bash
-   docker run -p 5000:5000 \
-     -e DATABASE_URL=your-database-url \
-     -e JWT_SECRET=your-jwt-secret \
-     msme-square
-   ```
-
-## ☁️ Cloud Deployment
-
-### Render Deployment
-
-1. **Push to GitHub**
-   ```bash
-   git push origin main
-   ```
-
-2. **Connect to Render**
-   - Go to [Render Dashboard](https://render.com/dashboard)
-   - Connect your GitHub repository
-   - Use the `deploy/render.yaml` configuration
-
-3. **Set environment variables**
-   - Configure database connection
-   - Set JWT secret and other required variables
-
-### Railway Deployment
-
-1. **Install Railway CLI**
-   ```bash
-   npm install -g @railway/cli
-   ```
-
-2. **Deploy to Railway**
-   ```bash
-   railway login
-   railway up
-   ```
-
-3. **Configure services**
-   - PostgreSQL database
-   - Redis (optional)
-   - Environment variables
-
-## 📱 Mobile Authentication
-
-The platform supports mobile number-based authentication with OTP verification:
-
-### SMS Service Configuration
-
-For production, configure Twilio:
-```env
-TWILIO_ACCOUNT_SID=your-account-sid
-TWILIO_AUTH_TOKEN=your-auth-token
-TWILIO_PHONE_NUMBER=your-twilio-phone-number
-```
-
-For development, the system uses a mock SMS service that logs OTPs to the console.
-
-### Authentication Flow
-
-1. User enters mobile number
-2. System sends 6-digit OTP
-3. User enters OTP for verification
-4. System creates user account or logs in existing user
-5. JWT token issued for session management
-
-## 🧠 Machine Learning Features
-
-### Valuation Engine
-
-The ML valuation engine considers:
-- Financial metrics (revenue, profit, assets)
-- Industry multipliers and benchmarks
-- Geographic location factors
-- Growth potential and market position
-- Risk assessment and time-to-market
-
-### Matchmaking Algorithm
-
-The matchmaking system uses:
-- Industry compatibility matrix
-- Geographic proximity scoring (Haversine formula)
-- Budget and size matching
-- Risk profile alignment
-- Timeline preferences
-
-## 🗄️ Database Schema
-
-### Core Tables
-- `users` - User accounts with role-based access
-- `msme_listings` - Business listings from sellers
-- `loan_applications` - Loan requests from buyers
-- `buyer_interests` - Buyer interest in specific MSMEs
-- `nbfc_details` - NBFC-specific information
-- `loan_products` - NBFC loan offerings
-- `compliance_records` - Regulatory compliance tracking
-
-### Relations
-- Users can have multiple MSME listings
-- Listings can have multiple buyer interests
-- Loan applications link buyers, MSMEs, and NBFCs
-- Compliance records track NBFC regulatory status
-
-## 🔐 Security Features
-
-- **JWT Authentication** with secure token management
-- **Password Hashing** using bcrypt
-- **Rate Limiting** on authentication endpoints
-- **Input Validation** using Zod schemas
-- **SQL Injection Protection** via Drizzle ORM
-- **HTTPS Enforcement** in production
-
-## 🌍 Internationalization
-
-### Supported Languages
-- **English** (en) - Primary language
-- **Hindi** (hi) - National language support
-- **Odia** (or) - Regional language for Odisha
-
-### Features
-- Dynamic language switching
-- Localized number and date formatting
-- Text-to-speech support for low-literacy users
-- Cultural adaptation for Indian market
-
-## 📊 Monitoring & Analytics
-
-### Built-in Analytics
-- User engagement metrics
-- Transaction success rates
-- Geographic distribution analysis
-- Performance monitoring
+### Metrics
+- **Prometheus**: Metrics collection at http://localhost:9090
+- **Grafana**: Dashboards at http://localhost:3001 (admin/admin)
 
 ### Logging
-- Structured logging with Winston
+- Structured logging with trace IDs
+- Centralized log aggregation
 - Error tracking and alerting
-- Performance monitoring
-- Security event logging
+
+### Health Checks
+```bash
+# Check service health
+curl http://localhost:8001/health
+curl http://localhost:8002/health
+curl http://localhost:8003/health
+curl http://localhost:8004/health
+curl http://localhost:8005/health
+```
+
+## 🚢 Deployment
+
+### Production Deployment
+
+1. **Build and push images**
+```bash
+docker build -t msmebazaar/auth-api:latest apps/auth-api
+docker push msmebazaar/auth-api:latest
+# Repeat for all services
+```
+
+2. **Deploy to cloud**
+```bash
+# Using Railway
+railway up
+
+# Using Render
+render deploy
+
+# Using Kubernetes
+kubectl apply -f k8s/
+```
+
+### CI/CD Pipeline
+
+The project includes GitHub Actions workflows for:
+- Automated testing
+- Security scanning
+- Docker image building
+- Deployment to staging/production
+
+## 🔒 Security
+
+### Authentication & Authorization
+- JWT-based authentication
+- Role-based access control (RBAC)
+- OTP verification for registration
+- Rate limiting on sensitive endpoints
+
+### Data Protection
+- Input validation and sanitization
+- SQL injection prevention
+- XSS protection
+- CORS configuration
+- Secure file upload handling
+
+### Infrastructure Security
+- Container security scanning
+- Dependency vulnerability checks
+- Environment variable encryption
+- Network security policies
+
+## 📱 Frontend Features
+
+### User Interface
+- **Modern Design**: Tailwind CSS with shadcn/ui components
+- **Responsive**: Mobile-first responsive design
+- **Animations**: Framer Motion for smooth transitions
+- **Charts**: Recharts for data visualization
+- **Forms**: React Hook Form with Zod validation
+
+### Admin Dashboard
+- **Analytics**: Comprehensive business metrics
+- **MSME Management**: Onboarding queue and approval workflow
+- **Document Verification**: KYC document review system
+- **Valuation Oversight**: Trigger and override valuations
+- **System Health**: Monitor service status
+
+## 🤖 AI Features
+
+### Semantic Matching
+- OpenAI embeddings for text understanding
+- Weaviate vector database for similarity search
+- Elasticsearch fallback for traditional search
+- Multi-factor matching algorithm
+
+### Valuation Engine
+- XGBoost ML model for business valuation
+- Feature engineering from financial data
+- Confidence scoring and explanation
+- Automated PDF report generation
+
+## 📊 Business Intelligence
+
+### Analytics Dashboard
+- Registration trends and patterns
+- Industry distribution analysis
+- Verification level tracking
+- Revenue and transaction metrics
+- Geographic distribution
+
+### Reporting
+- Automated PDF generation
+- Excel export functionality
+- Custom date range filtering
+- Multi-format data export
+
+## 🔄 Background Processing
+
+### Celery Tasks
+- Valuation processing
+- Email notifications
+- Document processing
+- Data synchronization
+- Cleanup operations
+
+### Queue Management
+- Redis as message broker
+- Task monitoring and retry logic
+- Dead letter queue handling
+- Distributed task execution
+
+## 🧪 Testing Strategy
+
+### Test Coverage
+- Unit tests for business logic
+- Integration tests for API endpoints
+- End-to-end tests for user flows
+- Performance tests for scalability
+
+### Quality Assurance
+- Code quality checks with SonarQube
+- Security scanning with Snyk
+- Dependency vulnerability scanning
+- Automated testing in CI/CD
+
+## 📚 Documentation
+
+### API Documentation
+- OpenAPI/Swagger specifications
+- Interactive API explorer
+- Code examples and tutorials
+- Postman collections
+
+### Developer Guide
+- Architecture documentation
+- Database schema diagrams
+- Deployment guides
+- Troubleshooting guides
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests if applicable
+4. Add tests for new functionality
 5. Submit a pull request
+
+### Code Standards
+- Follow PEP 8 for Python code
+- Use ESLint and Prettier for JavaScript
+- Write comprehensive tests
+- Document your changes
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
+## 🙏 Acknowledgments
+
+- OpenAI for embedding models
+- Weaviate for vector search
+- FastAPI for modern Python APIs
+- Next.js for React framework
+- All open-source contributors
+
+## 📞 Support
 
 For support and questions:
-- Create an issue in the GitHub repository
-- Check the documentation in `/docs`
-- Review the troubleshooting guide
-
-## 🔮 Roadmap
-
-### Phase 1 (Current)
-- ✅ Core marketplace functionality
-- ✅ Mobile authentication
-- ✅ ML valuation engine
-- ✅ Geographic matching
-
-### Phase 2 (Planned)
-- 🔄 Advanced compliance automation
-- 🔄 Enhanced ML models
-- 🔄 Mobile app development
-- 🔄 Payment gateway integration
-
-### Phase 3 (Future)
-- 🔄 Multi-state expansion
-- 🔄 Advanced analytics dashboard
-- 🔄 API marketplace
-- 🔄 Blockchain integration
+- 📧 Email: support@msmebazaar.com
+- 💬 Discord: [Join our community](https://discord.gg/msmebazaar)
+- 📖 Documentation: [docs.msmebazaar.com](https://docs.msmebazaar.com)
 
 ---
-MSMEBazaar V2
-Production-ready monorepo with PostgreSQL, Razorpay, Auth, and CI/CD.
 
-
-**MSMESquare** - Empowering India's MSME ecosystem through technology and innovation.
+**MSMEBazaar V2.0** - Empowering MSMEs with AI-driven technology 🚀
