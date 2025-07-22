@@ -1,0 +1,477 @@
+services:
+  # ===== DATABASE SERVICES =====
+  
+  # PostgreSQL Database
+  - type: pserv
+    name: msmebazaar-postgres
+    plan: starter
+    region: singapore
+    env: docker
+    disk:
+      name: postgres-data
+      mountPath: /var/lib/postgresql/data
+      sizeGB: 10
+    envVars:
+      - key: POSTGRES_DB
+        value: msmebazaar_v2
+      - key: POSTGRES_USER
+        value: msmebazaar
+      - key: POSTGRES_PASSWORD
+        generateValue: true
+        sync: false
+
+  # Redis Cache & Queue
+  - type: redis
+    name: msmebazaar-redis
+    plan: starter
+    region: singapore
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: Allow all connections
+
+  # ===== BACKEND MICROSERVICES =====
+
+  # Auth API Service (Port 8000)
+  - type: web
+    name: msmebazaar-auth-api
+    env: docker
+    plan: starter
+    region: singapore
+    dockerfilePath: ./backend/auth-api/Dockerfile
+    dockerContext: ./backend/auth-api
+    healthCheckPath: /health
+    buildFilter:
+      paths:
+        - backend/auth-api/**
+      ignoredPaths:
+        - frontend/**
+        - backend/msme-api/**
+        - backend/admin-api/**
+        - backend/payments-api/**
+        - backend/whatsapp-bot/**
+    envVars:
+      # Database
+      - key: DATABASE_URL
+        fromDatabase:
+          name: msmebazaar-postgres
+          property: connectionString
+      
+      # Redis
+      - key: REDIS_URL
+        fromService:
+          name: msmebazaar-redis
+          type: redis
+          property: connectionString
+      
+      # JWT & Auth
+      - key: SECRET_KEY
+        generateValue: true
+        sync: false
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 30
+      - key: REFRESH_TOKEN_EXPIRE_DAYS
+        value: 7
+      
+      # External APIs
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      
+      # App Settings
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+      - key: LOG_LEVEL
+        value: INFO
+
+  # MSME API Service (Port 8001)
+  - type: web
+    name: msmebazaar-msme-api
+    env: docker
+    plan: starter
+    region: singapore
+    dockerfilePath: ./backend/msme-api/Dockerfile
+    dockerContext: ./backend/msme-api
+    healthCheckPath: /health
+    buildFilter:
+      paths:
+        - backend/msme-api/**
+      ignoredPaths:
+        - frontend/**
+        - backend/auth-api/**
+        - backend/admin-api/**
+        - backend/payments-api/**
+        - backend/whatsapp-bot/**
+    envVars:
+      # Database
+      - key: DATABASE_URL
+        fromDatabase:
+          name: msmebazaar-postgres
+          property: connectionString
+      
+      # Redis
+      - key: REDIS_URL
+        fromService:
+          name: msmebazaar-redis
+          type: redis
+          property: connectionString
+      
+      # Auth Service
+      - key: AUTH_API_URL
+        fromService:
+          name: msmebazaar-auth-api
+          type: web
+          property: url
+      
+      # External APIs
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        value: ap-south-1
+      - key: S3_BUCKET_NAME
+        value: msmebazaar-documents
+      
+      # App Settings
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+      - key: LOG_LEVEL
+        value: INFO
+
+  # Admin API Service (Port 8002)
+  - type: web
+    name: msmebazaar-admin-api
+    env: docker
+    plan: starter
+    region: singapore
+    dockerfilePath: ./backend/admin-api/Dockerfile
+    dockerContext: ./backend/admin-api
+    healthCheckPath: /health
+    buildFilter:
+      paths:
+        - backend/admin-api/**
+      ignoredPaths:
+        - frontend/**
+        - backend/auth-api/**
+        - backend/msme-api/**
+        - backend/payments-api/**
+        - backend/whatsapp-bot/**
+    envVars:
+      # Database
+      - key: DATABASE_URL
+        fromDatabase:
+          name: msmebazaar-postgres
+          property: connectionString
+      
+      # Redis
+      - key: REDIS_URL
+        fromService:
+          name: msmebazaar-redis
+          type: redis
+          property: connectionString
+      
+      # Other Services
+      - key: AUTH_API_URL
+        fromService:
+          name: msmebazaar-auth-api
+          type: web
+          property: url
+      - key: MSME_API_URL
+        fromService:
+          name: msmebazaar-msme-api
+          type: web
+          property: url
+      
+      # Analytics & Monitoring
+      - key: GOOGLE_ANALYTICS_ID
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      
+      # App Settings
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+      - key: LOG_LEVEL
+        value: INFO
+
+  # Payments API Service (Port 8003)
+  - type: web
+    name: msmebazaar-payments-api
+    env: docker
+    plan: starter
+    region: singapore
+    dockerfilePath: ./backend/payments-api/Dockerfile
+    dockerContext: ./backend/payments-api
+    healthCheckPath: /health
+    buildFilter:
+      paths:
+        - backend/payments-api/**
+      ignoredPaths:
+        - frontend/**
+        - backend/auth-api/**
+        - backend/msme-api/**
+        - backend/admin-api/**
+        - backend/whatsapp-bot/**
+    envVars:
+      # Database
+      - key: DATABASE_URL
+        fromDatabase:
+          name: msmebazaar-postgres
+          property: connectionString
+      
+      # Redis
+      - key: REDIS_URL
+        fromService:
+          name: msmebazaar-redis
+          type: redis
+          property: connectionString
+      
+      # Auth Service
+      - key: AUTH_API_URL
+        fromService:
+          name: msmebazaar-auth-api
+          type: web
+          property: url
+      
+      # Payment Providers
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      
+      # App Settings
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+      - key: LOG_LEVEL
+        value: INFO
+
+  # WhatsApp Bot Service (Port 8004)
+  - type: web
+    name: msmebazaar-whatsapp-bot
+    env: docker
+    plan: starter
+    region: singapore
+    dockerfilePath: ./backend/whatsapp-bot/Dockerfile
+    dockerContext: ./backend/whatsapp-bot
+    healthCheckPath: /health
+    buildFilter:
+      paths:
+        - backend/whatsapp-bot/**
+      ignoredPaths:
+        - frontend/**
+        - backend/auth-api/**
+        - backend/msme-api/**
+        - backend/admin-api/**
+        - backend/payments-api/**
+    envVars:
+      # Database
+      - key: DATABASE_URL
+        fromDatabase:
+          name: msmebazaar-postgres
+          property: connectionString
+      
+      # Redis
+      - key: REDIS_URL
+        fromService:
+          name: msmebazaar-redis
+          type: redis
+          property: connectionString
+      
+      # Other Services
+      - key: AUTH_API_URL
+        fromService:
+          name: msmebazaar-auth-api
+          type: web
+          property: url
+      - key: MSME_API_URL
+        fromService:
+          name: msmebazaar-msme-api
+          type: web
+          property: url
+      
+      # WhatsApp & Communication
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_NUMBER
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      
+      # App Settings
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+      - key: LOG_LEVEL
+        value: INFO
+
+  # ===== FRONTEND SERVICE =====
+
+  # Vite React Frontend
+  - type: web
+    name: msmebazaar-frontend
+    env: node
+    plan: starter
+    region: singapore
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    rootDir: frontend
+    healthCheckPath: /
+    buildFilter:
+      paths:
+        - frontend/**
+      ignoredPaths:
+        - backend/**
+    # Custom domain (optional)
+    # domains:
+    #   - msmebazaar.com
+    #   - www.msmebazaar.com
+    routes:
+      # SPA routing - serve index.html for all routes
+      - type: rewrite
+        source: /((?!.*\.).*) 
+        destination: /index.html
+    envVars:
+      # API Endpoints
+      - key: VITE_API_BASE_URL
+        value: https://msmebazaar-auth-api.onrender.com
+      - key: VITE_AUTH_API_URL
+        fromService:
+          name: msmebazaar-auth-api
+          type: web
+          property: url
+      - key: VITE_MSME_API_URL
+        fromService:
+          name: msmebazaar-msme-api
+          type: web
+          property: url
+      - key: VITE_ADMIN_API_URL
+        fromService:
+          name: msmebazaar-admin-api
+          type: web
+          property: url
+      - key: VITE_PAYMENTS_API_URL
+        fromService:
+          name: msmebazaar-payments-api
+          type: web
+          property: url
+      - key: VITE_WHATSAPP_BOT_URL
+        fromService:
+          name: msmebazaar-whatsapp-bot
+          type: web
+          property: url
+      
+      # App Configuration
+      - key: VITE_APP_NAME
+        value: MSMEBazaar V2
+      - key: VITE_APP_VERSION
+        value: "2.0.0"
+      - key: VITE_APP_URL
+        value: https://msmebazaar-frontend.onrender.com
+      
+      # External Services (Public Keys)
+      - key: VITE_STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: VITE_GOOGLE_ANALYTICS_ID
+        sync: false
+      - key: VITE_SENTRY_DSN
+        sync: false
+      
+      # Feature Flags
+      - key: VITE_ENABLE_ANALYTICS
+        value: true
+      - key: VITE_ENABLE_PWA
+        value: true
+      - key: VITE_ENABLE_NOTIFICATIONS
+        value: true
+      - key: VITE_ENABLE_DARK_MODE
+        value: true
+      
+      # Build Settings
+      - key: NODE_ENV
+        value: production
+      - key: VITE_BUILD_MODE
+        value: production
+
+# ===== ENVIRONMENT VARIABLE GROUPS =====
+# (These help organize secrets in Render dashboard)
+
+envVarGroups:
+  - name: database-config
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: msmebazaar-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: msmebazaar-redis
+          type: redis
+          property: connectionString
+
+  - name: auth-secrets
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+        sync: false
+      - key: ALGORITHM
+        value: HS256
+
+  - name: payment-secrets
+    envVars:
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+
+  - name: communication-secrets
+    envVars:
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: WHATSAPP_PHONE_NUMBER
+        sync: false
+
+  - name: external-apis
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: GOOGLE_ANALYTICS_ID
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
