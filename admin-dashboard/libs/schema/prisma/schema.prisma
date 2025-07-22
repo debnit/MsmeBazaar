@@ -1,0 +1,532 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===== MULTI-TENANT CORE =====
+
+model Organization {
+  id                String   @id @default(cuid())
+  name              String
+  slug              String   @unique // for custom domains
+  domain            String?  @unique // custom domain
+  logo              String?
+  primaryColor      String   @default("#3b82f6")
+  secondaryColor    String   @default("#10b981")
+  
+  // Billing & Subscription
+  stripeCustomerId     String?  @unique
+  stripeSubscriptionId String?  @unique
+  plan                 String   @default("free") // free, starter, pro, enterprise
+  billingEmail         String
+  trialEndsAt          DateTime?
+  subscriptionStatus   String   @default("trialing") // trialing, active, past_due, canceled
+  
+  // Limits based on plan
+  maxUsers             Int      @default(5)
+  maxMsmes             Int      @default(100)
+  maxDeals             Int      @default(50)
+  
+  // Settings
+  timezone             String   @default("Asia/Kolkata")
+  currency             String   @default("INR")
+  language             String   @default("en")
+  
+  // Metadata
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  deletedAt            DateTime?
+  
+  // Relations
+  users                User[]
+  msmes                MSME[]
+  deals                Deal[]
+  workflows            WorkflowInstance[]
+  notifications        Notification[]
+  activities           ActivityLog[]
+  billingInvoices      BillingInvoice[]
+  
+  @@map("organizations")
+}
+
+model BillingInvoice {
+  id               String   @id @default(cuid())
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  stripeInvoiceId  String   @unique
+  amount           Int      // in cents
+  currency         String   @default("inr")
+  status           String   // paid, pending, failed
+  period           String   // monthly, yearly
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  @@map("billing_invoices")
+}
+
+// ===== RBAC & AUTHENTICATION =====
+
+enum UserRole {
+  SUPER_ADMIN    // Platform admin - can access all orgs
+  ADMIN          // Org admin - full access within org
+  TEAM_LEAD      // Team management + deals
+  ANALYST        // Valuations + reports
+  FIELD_AGENT    // MSME data entry + basic ops
+  FRANCHISE      // Limited regional access
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  SUSPENDED
+}
+
+model User {
+  id             String     @id @default(cuid())
+  organizationId String?    // null for SUPER_ADMIN
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  email          String     @unique
+  password       String
+  firstName      String
+  lastName       String
+  avatar         String?
+  phone          String?
+  
+  role           UserRole   @default(FIELD_AGENT)
+  status         UserStatus @default(PENDING)
+  
+  // Permissions & Access
+  permissions    String[]   // JSON array of specific permissions
+  regions        String[]   // Allowed regions/cities (for regional restriction)
+  departments    String[]   // Sales, Operations, Finance, etc.
+  
+  // Auth & Security
+  emailVerified  Boolean    @default(false)
+  lastLoginAt    DateTime?
+  refreshToken   String?
+  resetToken     String?
+  resetTokenExpiry DateTime?
+  
+  // Metadata
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  createdById    String?
+  createdBy      User?      @relation("UserCreatedBy", fields: [createdById], references: [id])
+  createdUsers   User[]     @relation("UserCreatedBy")
+  
+  // Relations
+  assignedDeals  Deal[]     @relation("AssignedAgent")
+  activities     ActivityLog[]
+  notifications  Notification[]
+  
+  @@map("users")
+}
+
+// ===== MSME MANAGEMENT =====
+
+enum MSMEStatus {
+  NEW
+  CONTACTED
+  KYC_PENDING
+  KYC_COMPLETED
+  VERIFIED
+  VALUATED
+  ACTIVE
+  INACTIVE
+  BLACKLISTED
+}
+
+enum MSMECategory {
+  MICRO
+  SMALL
+  MEDIUM
+}
+
+enum MSMEType {
+  MANUFACTURING
+  SERVICE
+  TRADING
+}
+
+model MSME {
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  // Basic Info
+  name            String
+  slug            String       // URL-friendly name
+  description     String?
+  logo            String?
+  website         String?
+  
+  // Classification
+  category        MSMECategory
+  type            MSMEType
+  sector          String       // Manufacturing, IT, Textile, etc.
+  subSector       String?
+  
+  // Contact
+  contactPerson   String
+  email           String
+  phone           String
+  alternatePhone  String?
+  
+  // Address
+  address         String
+  city            String
+  state           String
+  pincode         String
+  country         String       @default("India")
+  
+  // Business Details
+  registrationNo  String?
+  gstNo           String?
+  panNo           String?
+  udyamNo         String?      // MSME registration number
+  incorporationDate DateTime?
+  
+  // Financial
+  annualRevenue   Decimal?     @db.Decimal(15, 2)
+  employeeCount   Int?
+  yearEstablished Int?
+  
+  // Status & Workflow
+  status          MSMEStatus   @default(NEW)
+  kycStatus       String       @default("pending") // pending, approved, rejected
+  verificationNotes String?
+  
+  // Valuation
+  lastValuation   Decimal?     @db.Decimal(15, 2)
+  valuationDate   DateTime?
+  valuationStatus String?      // pending, completed, expired
+  
+  // Interest & Matching
+  lookingFor      String[]     // buyer, seller, investor, partner
+  interests       String[]     // sectors they're interested in
+  priceRange      String?      // 1-5L, 5-10L, 10-50L, etc.
+  
+  // Metadata
+  source          String?      // website, referral, agent, etc.
+  priority        String       @default("medium") // low, medium, high, urgent
+  tags            String[]
+  notes           String?
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  // Relations
+  deals           Deal[]
+  documents       MSMEDocument[]
+  valuations      Valuation[]
+  activities      ActivityLog[]
+  
+  @@unique([organizationId, slug])
+  @@map("msmes")
+}
+
+model MSMEDocument {
+  id         String   @id @default(cuid())
+  msmeId     String
+  msme       MSME     @relation(fields: [msmeId], references: [id], onDelete: Cascade)
+  
+  name       String
+  type       String   // kyc, financial, legal, other
+  url        String
+  size       Int?
+  mimeType   String?
+  
+  uploadedAt DateTime @default(now())
+  uploadedBy String
+  
+  @@map("msme_documents")
+}
+
+// ===== DEAL & WORKFLOW MANAGEMENT =====
+
+enum DealStatus {
+  PENDING
+  CONTACTED
+  INTERESTED
+  NEGOTIATION
+  DUE_DILIGENCE
+  AGREEMENT
+  CLOSED
+  REJECTED
+  ON_HOLD
+}
+
+enum DealType {
+  ACQUISITION
+  MERGER
+  PARTNERSHIP
+  INVESTMENT
+  ASSET_SALE
+}
+
+model Deal {
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  title           String
+  description     String?
+  type            DealType
+  status          DealStatus   @default(PENDING)
+  
+  // Parties
+  buyerMsmeId     String?
+  buyerMsme       MSME?        @relation(fields: [buyerMsmeId], references: [id])
+  sellerInfo      Json?        // If seller is not in our MSME database
+  
+  // Financial
+  dealValue       Decimal?     @db.Decimal(15, 2)
+  currency        String       @default("INR")
+  commission      Decimal?     @db.Decimal(5, 2) // percentage
+  
+  // Assignment
+  assignedAgentId String?
+  assignedAgent   User?        @relation("AssignedAgent", fields: [assignedAgentId], references: [id])
+  
+  // Timeline
+  expectedCloseDate DateTime?
+  actualCloseDate   DateTime?
+  
+  // Metadata
+  priority        String       @default("medium")
+  tags            String[]
+  notes           String?
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  // Relations
+  activities      ActivityLog[]
+  documents       DealDocument[]
+  
+  @@map("deals")
+}
+
+model DealDocument {
+  id         String   @id @default(cuid())
+  dealId     String
+  deal       Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  
+  name       String
+  type       String   // nda, loi, agreement, due_diligence, other
+  url        String
+  size       Int?
+  
+  uploadedAt DateTime @default(now())
+  uploadedBy String
+  
+  @@map("deal_documents")
+}
+
+// ===== VALUATION ENGINE =====
+
+model Valuation {
+  id              String       @id @default(cuid())
+  msmeId          String
+  msme            MSME         @relation(fields: [msmeId], references: [id], onDelete: Cascade)
+  
+  // Valuation Details
+  method          String       // dcf, market_multiple, asset_based, etc.
+  estimatedValue  Decimal      @db.Decimal(15, 2)
+  currency        String       @default("INR")
+  confidence      Int          // 0-100
+  
+  // Input Data
+  financialData   Json         // Revenue, profit, assets, etc.
+  marketData      Json         // Comparables, multiples, etc.
+  assumptions     Json         // Growth rates, discount rates, etc.
+  
+  // Analysis
+  strengths       String[]
+  weaknesses      String[]
+  opportunities   String[]
+  threats         String[]
+  
+  // Report
+  reportUrl       String?
+  reportGenerated Boolean      @default(false)
+  
+  // Metadata
+  status          String       @default("draft") // draft, completed, approved
+  analystId       String?
+  reviewerId      String?
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  @@map("valuations")
+}
+
+// ===== WORKFLOW AUTOMATION =====
+
+model WorkflowTemplate {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  category        String   // msme_onboarding, deal_process, kyc_verification
+  
+  // Workflow Definition
+  steps           Json     // Array of workflow steps
+  triggers        Json     // When to start this workflow
+  conditions      Json     // Conditional logic
+  
+  isActive        Boolean  @default(true)
+  version         String   @default("1.0")
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  instances       WorkflowInstance[]
+  
+  @@map("workflow_templates")
+}
+
+model WorkflowInstance {
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  templateId      String
+  template        WorkflowTemplate @relation(fields: [templateId], references: [id])
+  
+  // Context
+  entityType      String       // msme, deal, user
+  entityId        String
+  
+  // State
+  currentStep     String
+  status          String       @default("running") // running, completed, failed, paused
+  progress        Int          @default(0) // 0-100
+  
+  // Data
+  context         Json         // Workflow variables and data
+  history         Json         // Step execution history
+  
+  // Timeline
+  startedAt       DateTime     @default(now())
+  completedAt     DateTime?
+  
+  @@map("workflow_instances")
+}
+
+// ===== NOTIFICATIONS & COMMUNICATION =====
+
+enum NotificationType {
+  EMAIL
+  WHATSAPP
+  SMS
+  IN_APP
+  WEBHOOK
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  OPENED
+}
+
+model Notification {
+  id              String             @id @default(cuid())
+  organizationId  String
+  organization    Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  type            NotificationType
+  status          NotificationStatus @default(PENDING)
+  
+  // Recipients
+  recipientId     String?
+  recipient       User?              @relation(fields: [recipientId], references: [id])
+  recipientEmail  String?
+  recipientPhone  String?
+  
+  // Content
+  title           String
+  message         String
+  templateId      String?
+  templateData    Json?
+  
+  // Delivery
+  providerId      String?            // Twilio message ID, SendGrid ID, etc.
+  deliveredAt     DateTime?
+  openedAt        DateTime?
+  
+  // Context
+  entityType      String?            // msme, deal, user
+  entityId        String?
+  
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  
+  @@map("notifications")
+}
+
+// ===== ACTIVITY LOGGING =====
+
+model ActivityLog {
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  // Actor
+  userId          String?
+  user            User?        @relation(fields: [userId], references: [id])
+  userEmail       String?      // For system actions
+  
+  // Action
+  action          String       // created, updated, deleted, etc.
+  entityType      String       // msme, deal, user, etc.
+  entityId        String
+  entityName      String?
+  
+  // Details
+  description     String
+  changes         Json?        // Before/after values
+  metadata        Json?        // Additional context
+  
+  // Context
+  ipAddress       String?
+  userAgent       String?
+  source          String?      // web, api, system
+  
+  createdAt       DateTime     @default(now())
+  
+  // Relations
+  msme            MSME?        @relation(fields: [entityId], references: [id])
+  deal            Deal?        @relation(fields: [entityId], references: [id])
+  
+  @@map("activity_logs")
+}
+
+// ===== SYSTEM CONFIGURATION =====
+
+model SystemConfig {
+  id              String   @id @default(cuid())
+  key             String   @unique
+  value           Json
+  description     String?
+  category        String   @default("general")
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("system_config")
+}

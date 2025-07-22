@@ -1,0 +1,284 @@
+services:
+  # PostgreSQL Database
+  - type: pserv
+    name: msmebazaar-admin-postgres
+    env: docker
+    plan: starter
+    region: singapore
+    dockerfilePath: ./docker/postgres/Dockerfile
+    dockerContext: ./docker/postgres
+    envVars:
+      - key: POSTGRES_DB
+        value: msmebazaar_admin
+      - key: POSTGRES_USER
+        value: msmebazaar
+      - key: POSTGRES_PASSWORD
+        generateValue: true
+        sync: false
+    disk:
+      name: postgres-data
+      mountPath: /var/lib/postgresql/data
+      sizeGB: 10
+
+  # Redis Cache & Queue
+  - type: redis
+    name: msmebazaar-admin-redis
+    plan: starter
+    region: singapore
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: Allow all connections
+
+  # FastAPI Backend
+  - type: web
+    name: msmebazaar-admin-api
+    env: python
+    region: singapore
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    rootDir: apps/api
+    healthCheckPath: /health
+    buildFilter:
+      paths:
+        - apps/api/**
+        - libs/schema/**
+      ignoredPaths:
+        - apps/web/**
+    envVars:
+      # Database
+      - key: DATABASE_URL
+        fromDatabase:
+          name: msmebazaar-admin-postgres
+          property: connectionString
+      
+      # Redis
+      - key: REDIS_URL
+        fromService:
+          name: msmebazaar-admin-redis
+          type: redis
+          property: connectionString
+      
+      # Authentication & Security
+      - key: SECRET_KEY
+        generateValue: true
+        sync: false
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 30
+      - key: REFRESH_TOKEN_EXPIRE_DAYS
+        value: 7
+      
+      # Stripe Billing
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      
+      # External APIs
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      
+      # AWS S3 for File Storage
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        value: ap-south-1
+      - key: S3_BUCKET_NAME
+        value: msmebazaar-admin-uploads
+      
+      # Application Settings
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+      - key: CORS_ORIGINS
+        value: https://admin.msmebazaar.com,https://*.msmebazaar.com
+      - key: ALLOWED_HOSTS
+        value: admin-api.msmebazaar.com,*.render.com
+      
+      # Monitoring
+      - key: SENTRY_DSN
+        sync: false
+      - key: LOG_LEVEL
+        value: INFO
+
+  # Celery Worker for Background Tasks
+  - type: worker
+    name: msmebazaar-admin-worker
+    env: python
+    region: singapore
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: celery -A core.celery worker --loglevel=info --concurrency=2
+    rootDir: apps/api
+    buildFilter:
+      paths:
+        - apps/api/**
+        - libs/schema/**
+      ignoredPaths:
+        - apps/web/**
+    envVars:
+      # Database
+      - key: DATABASE_URL
+        fromDatabase:
+          name: msmebazaar-admin-postgres
+          property: connectionString
+      
+      # Redis
+      - key: REDIS_URL
+        fromService:
+          name: msmebazaar-admin-redis
+          type: redis
+          property: connectionString
+      
+      # Authentication & Security
+      - key: SECRET_KEY
+        generateValue: true
+        sync: false
+      
+      # External APIs (same as API service)
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        value: ap-south-1
+      - key: S3_BUCKET_NAME
+        value: msmebazaar-admin-uploads
+      
+      # Application Settings
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+
+  # Next.js Frontend
+  - type: web
+    name: msmebazaar-admin-frontend
+    env: node
+    region: singapore
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    rootDir: apps/web
+    healthCheckPath: /api/health
+    buildFilter:
+      paths:
+        - apps/web/**
+        - libs/ui/**
+      ignoredPaths:
+        - apps/api/**
+    # Custom domains and routing
+    domains:
+      - admin.msmebazaar.com
+    routes:
+      - type: rewrite
+        source: /api/(.*) 
+        destination: https://msmebazaar-admin-api.onrender.com/api/v1/$1
+      - type: rewrite
+        source: /((?!api).*)
+        destination: /$1
+    envVars:
+      # API Configuration
+      - key: NEXT_PUBLIC_API_URL
+        value: https://msmebazaar-admin-api.onrender.com
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://admin.msmebazaar.com
+      
+      # Stripe (Public Keys)
+      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        sync: false
+      
+      # Application Settings
+      - key: NEXT_PUBLIC_ENVIRONMENT
+        value: production
+      - key: NEXT_PUBLIC_APP_NAME
+        value: MSMEBazaar Admin Dashboard
+      - key: NEXT_PUBLIC_APP_VERSION
+        value: "1.0.0"
+      
+      # Analytics & Monitoring
+      - key: NEXT_PUBLIC_GOOGLE_ANALYTICS_ID
+        sync: false
+      - key: NEXT_PUBLIC_SENTRY_DSN
+        sync: false
+      
+      # Feature Flags
+      - key: NEXT_PUBLIC_ENABLE_ANALYTICS
+        value: true
+      - key: NEXT_PUBLIC_ENABLE_NOTIFICATIONS
+        value: true
+      - key: NEXT_PUBLIC_ENABLE_BILLING
+        value: true
+      - key: NEXT_PUBLIC_ENABLE_WORKFLOWS
+        value: true
+
+# Environment Groups for easier management
+envVarGroups:
+  - name: stripe-config
+    envVars:
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY  
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+
+  - name: external-apis
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+
+  - name: aws-config
+    envVars:
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        value: ap-south-1
+      - key: S3_BUCKET_NAME
+        value: msmebazaar-admin-uploads
+
+# Additional static site for documentation (optional)
+  - type: web
+    name: msmebazaar-admin-docs
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    rootDir: docs
+    domains:
+      - docs-admin.msmebazaar.com
+    buildFilter:
+      paths:
+        - docs/**
+    envVars:
+      - key: NODE_ENV
+        value: production
