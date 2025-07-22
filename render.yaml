@@ -1,16 +1,17 @@
 services:
-  # PostgreSQL Database
+  # PostgreSQL Database (Self-managed)
   - type: pserv
     name: msmebazaar-postgres
     env: docker
     dockerfilePath: ./infrastructure/docker/postgres/Dockerfile
     plan: standard
     region: oregon
+    ipAllowList: ["0.0.0.0/0"]
     envVars:
       - key: POSTGRES_DB
-        value: msmebazaar_v2
-      - key: POSTGRES_USER
         value: msmebazaar
+      - key: POSTGRES_USER
+        value: postgres
       - key: POSTGRES_PASSWORD
         generateValue: true
     disk:
@@ -18,7 +19,7 @@ services:
       mountPath: /var/lib/postgresql/data
       sizeGB: 20
 
-  # Redis Cache
+  # Redis Cache (Managed by Render)
   - type: redis
     name: msmebazaar-redis
     plan: standard
@@ -141,24 +142,17 @@ services:
       - key: DB_POOL_TIMEOUT
         value: "30"
       
-      # Redis Configuration
-      - key: REDIS_HOST
+      # Redis Configuration (Using connectionString)
+      - key: REDIS_CONNECTION_STRING
         fromService:
           type: redis
           name: msmebazaar-redis
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: port
-      - key: REDIS_PASSWORD
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: password
+          property: connectionString
       - key: REDIS_URL
-        value: redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/0
+        fromService:
+          type: redis
+          name: msmebazaar-redis
+          property: connectionString
       - key: REDIS_DB
         value: "0"
       
@@ -380,24 +374,17 @@ services:
       - key: DB_POOL_TIMEOUT
         value: "30"
       
-      # Redis Configuration
-      - key: REDIS_HOST
+      # Redis Configuration (Using connectionString)
+      - key: REDIS_CONNECTION_STRING
         fromService:
           type: redis
           name: msmebazaar-redis
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: port
-      - key: REDIS_PASSWORD
-        fromService:
-          type: redis
-          name: msmebazaar-redis
-          property: password
+          property: connectionString
       - key: REDIS_URL
-        value: redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/0
+        fromService:
+          type: redis
+          name: msmebazaar-redis
+          property: connectionString
       - key: REDIS_DB
         value: "0"
       
@@ -509,9 +496,15 @@ services:
       
       # Celery Configuration
       - key: CELERY_BROKER_URL
-        value: redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/0
+        fromService:
+          type: redis
+          name: msmebazaar-redis
+          property: connectionString
       - key: CELERY_RESULT_BACKEND
-        value: redis://:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/0
+        fromService:
+          type: redis
+          name: msmebazaar-redis
+          property: connectionString
       
       # Secrets to be added via Render dashboard
       - key: OPENAI_API_KEY
@@ -551,41 +544,3 @@ services:
       - key: SENTRY_ENVIRONMENT
         value: production
     autoDeploy: true
-
-databases:
-  - name: msmebazaar-postgres
-    databaseName: msmebazaar_v2
-    user: msmebazaar
-
-envVarGroups:
-  - name: database-config
-    envVars:
-      - key: POSTGRES_DB
-        value: msmebazaar_v2
-      - key: POSTGRES_USER
-        value: msmebazaar
-  
-  - name: redis-config
-    envVars:
-      - key: REDIS_DB
-        value: "0"
-  
-  - name: jwt-config
-    envVars:
-      - key: JWT_ALGORITHM
-        value: HS256
-      - key: JWT_ACCESS_TOKEN_EXPIRE_MINUTES
-        value: "30"
-      - key: JWT_REFRESH_TOKEN_EXPIRE_DAYS
-        value: "7"
-  
-  - name: api-config
-    envVars:
-      - key: API_VERSION
-        value: v1
-      - key: API_PREFIX
-        value: /api
-      - key: DEFAULT_PAGE_SIZE
-        value: "20"
-      - key: MAX_PAGE_SIZE
-        value: "100"
