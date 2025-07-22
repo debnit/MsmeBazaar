@@ -262,4 +262,3 @@ services:
       - key: VITE_BUILD_MODE
         value: production
 
-#generated from chatgpt
