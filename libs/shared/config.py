@@ -5,7 +5,8 @@ Provides centralized configuration management with validation and type safety.
 
 import os
 from typing import List, Optional, Union
-from pydantic import BaseSettings, Field, validator
+from pydantic_settings import BaseSettings
+from pydantic import Field, validator
 from enum import Enum
 
 
