@@ -1,7 +1,8 @@
 'use client'
 
-import RazorpayCheckoutButton from '@/components/payments/RazorpayCheckoutButton'; // ✅ no curly braces
 
+
+import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation'
 
 export default function PaymentPage() {

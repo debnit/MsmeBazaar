@@ -94,6 +94,7 @@ export default function RegisterPage() {
         phone: formatPhoneNumber(data.phone),
         email: data.email || undefined,
         name: data.name || undefined,
+        role: data.role , // 👈 explicitly include role to satisfy type
       };
 
       const response = await authApi.register(formattedData);
