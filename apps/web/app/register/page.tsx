@@ -352,10 +352,11 @@ export default function RegisterPage() {
                         border: '1px solid #d1d5db',
                         textAlign: 'center',
                       }}
-                      focusStyle={{
-                        border: '1px solid #0ea5e9',
-                        outline: 'none',
-                      }}
+                      //focusStyle={{
+                        //border: '1px solid #0ea5e9',
+                        //outline: 'none',
+                      //}}
+                      inputClassName="otp-input"
                     />
                   </div>
 
