@@ -2,7 +2,8 @@
 'use client';
 
 import { useEffect } from 'react'
-import RazorpayCheckoutButton from '@/components/payments/RazorpayCheckoutButton'
+import RazorpayCheckoutButton from '@/components/payments/RazorpayCheckoutButton'; // ✅ no curly braces
+
 
 export default function CheckoutPage() {
   const loadRazorpayScript = () => {
