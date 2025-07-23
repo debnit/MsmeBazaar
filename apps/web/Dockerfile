@@ -1,22 +1,24 @@
-# base image
-FROM node:20-alpine AS base
+# Use official Node.js image as base
+FROM node:18-alpine
 
+# Set working directory
 WORKDIR /app
-COPY package*.json ./
+
+# Install dependencies
+COPY package.json package-lock.json ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/*/package.json ./packages/*/
+
+# Install dependencies for all workspaces
 RUN npm install --workspaces
+
+# Copy full monorepo for build context
 COPY . .
 
+# Build the web app
 WORKDIR /app/apps/web
 RUN npm run build
 
-# final image
-FROM node:20-alpine AS runner
-WORKDIR /app
-
-COPY --from=base /app/apps/web/.next ./.next
-COPY --from=base /app/apps/web/package.json ./package.json
-COPY --from=base /app/apps/web/public ./public
-COPY --from=base /app/apps/web/node_modules ./node_modules
-
+# Start with next start
 EXPOSE 3000
 CMD ["npm", "start"]
