@@ -60,6 +60,9 @@
   "author": "MSMEBazaar Team",
   "license": "MIT",
   "dependencies": {
-    "next": "^14.2.30"
+    "@babel/core": "^7.28.0",
+    "next": "^14.2.30",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   }
 }
