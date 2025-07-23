@@ -7,14 +7,14 @@ const nextConfig = {
     domains: ['localhost', 'minio', 'your-s3-bucket.s3.amazonaws.com'],
   },
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://api.vyapaarmitra.in',
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'https://vyapaarmitra.in',
   },
   async rewrites() {
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL}/api/:path*`,
+        destination: 'https://api.vyapaarmitra.in/api/:path*', // ✅ hardcoded to avoid build errors
       },
     ];
   },
