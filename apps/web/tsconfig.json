@@ -1,23 +1,20 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../../.json",
   "compilerOptions": {
     "baseUrl": ".", // resolves @/* relative to apps/web/
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     },
     "allowJs": true,
     "incremental": true,
     "plugins": [
-      {
-        "name": "next"
-      }
+      { "name": "next" }
     ]
   },
   "include": [
-    ".",
-    ".next/types/**/*.ts"
+    ".",                    // all files in apps/web/
+    "types",                // include types folder if present
+    ".next/types/**/*.ts"   // for Next.js type support
   ],
   "exclude": [
     "node_modules"
