@@ -1,48 +1,14 @@
 {
-  "name": "msmebazaar-v2",
+  "name": "@msmebazaar/web",
   "version": "2.0.0",
   "private": true,
-  "description": "A modular platform to onboard MSMEs and match them with buyers, investors, and acquisition opportunities",
-  "workspaces": [
-    "apps/*",
-    "libs/*"
-  ],
   "scripts": {
-    "dev": "concurrently \"npm run dev:web\" \"npm run dev:api\"",
-    "dev:web": "npm --workspace apps/web run dev",
-    "dev:api": "cd apps/auth-api && uvicorn main:app --reload --port 8000",
-
-    "build": "npm run build:web && npm run build:api",
-    "build:web": "npm --workspace apps/web run build",
-    "build:api": "echo 'Building API services...'",
-
-    "start": "npm run start:web",
-    "start:web": "npm --workspace apps/web run start",
-
-    "test": "npm run test:web && npm run test:api",
-    "test:web": "jest --passWithNoTests",
-    "test:api": "cd apps/auth-api && pytest",
-    "test:e2e": "npm --workspace apps/web run test:e2e",
-
-    "lint": "npm run lint:web && npm run lint:api",
-    "lint:web": "eslint . --ext .js,.ts,.jsx,.tsx",
-    "lint:api": "cd apps/auth-api && ruff check .",
-
-    "format": "npm run format:web && npm run format:api",
-    "format:web": "prettier --write .",
-    "format:api": "cd apps/auth-api && ruff format .",
-
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
-    "docker:build": "docker-compose build",
-
-    "db:push": "cd libs/db && npx prisma db push",
-    "db:migrate": "cd libs/db && npx prisma migrate dev",
-    "db:studio": "cd libs/db && npx prisma studio",
-
-    "deploy": "npm run build && npm run docker:build",
-    "clean": "rm -rf node_modules apps/*/node_modules libs/*/node_modules",
-    "reset": "npm run clean && npm install"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "jest --passWithNoTests",
+    "lint": "eslint . --ext .js,.ts,.jsx,.tsx",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "next": "^14.1.0",
@@ -53,7 +19,6 @@
     "@types/node": "^20.10.5",
     "@types/react": "^18.2.41",
     "@types/react-dom": "^18.2.17",
-    "concurrently": "^8.2.2",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react": "^7.33.2",
@@ -62,20 +27,5 @@
     "prettier": "^3.2.5",
     "ts-jest": "^29.1.1",
     "typescript": "^5.3.3"
-  },
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=9.0.0"
-  },
-  "keywords": [
-    "msme",
-    "marketplace",
-    "ai-matching",
-    "valuation",
-    "nextjs",
-    "fastapi",
-    "microservices"
-  ],
-  "author": "MSMEBazaar Team",
-  "license": "MIT"
+  }
 }
