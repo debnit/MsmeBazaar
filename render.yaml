@@ -313,7 +313,7 @@ services:
     env: static
     buildCommand: |
       cd frontend
-      npm ci
+      npm install
       npm run build
     staticPublishPath: ./frontend/build
     plan: starter

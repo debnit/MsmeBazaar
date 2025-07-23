@@ -112,7 +112,7 @@ module.exports = defineConfig({
         // CI-specific configuration
         config.video = true;
         config.screenshotOnRunFailure = true;
-        config.env.cursorAI = true; // Always enable cursor overlay in CI
+        configcd.cursorAI = true; // Always enable cursor overlay in CI
       }
       
       return config;
