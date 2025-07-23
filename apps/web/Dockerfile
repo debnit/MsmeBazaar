@@ -1,24 +1,48 @@
-# Use official Node.js image as base
-FROM node:18-alpine
+# ============================
+# 1️⃣ Base Build Stage
+# ============================
+FROM node:18-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Install dependencies
+# Copy only necessary files for dependency installation
 COPY package.json package-lock.json ./
-COPY apps/web/package.json ./apps/web/
-COPY packages/*/package.json ./packages/*/
+COPY .npmrc .npmrc
+COPY apps/web/package.json ./apps/web/package.json
 
-# Install dependencies for all workspaces
-RUN npm install --workspaces
+# Optional: If you have shared packages
+COPY packages/*/package.json ./packages/
 
-# Copy full monorepo for build context
+# Install all dependencies across workspaces
+RUN npm install --workspaces --include-workspace-root
+
+# Copy entire monorepo to allow building
 COPY . .
 
-# Build the web app
+# Build Next.js app
 WORKDIR /app/apps/web
 RUN npm run build
 
-# Start with next start
+
+# ============================
+# 2️⃣ Final Production Image
+# ============================
+FROM node:18-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Copy production files from builder
+COPY --from=builder /app/apps/web/.next ./.next
+COPY --from=builder /app/apps/web/public ./public
+COPY --from=builder /app/apps/web/package.json ./package.json
+COPY --from=builder /app/node_modules ./node_modules
+
+# Optional: Set a non-root user for security
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+
 EXPOSE 3000
+
 CMD ["npm", "start"]
