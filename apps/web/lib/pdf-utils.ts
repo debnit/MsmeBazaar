@@ -1,7 +1,9 @@
-// lib/pdf-utils.ts (or any server-side lib file)
+// lib/pdf-utils.tsx (or any server-side lib file)
 
+import React from 'react';
 import { pdf } from '@react-pdf/renderer';
-import AdminReportPDF from '@/components/pdf/admin-report-pdf';
+// Update the import path below if AdminReportPDF is located elsewhere
+import AdminReportPDF from '../components/AdminReportPDF'; // <-- Ensure this file exists at the specified path
 
 // Server-side function to generate PDF blob
 export const generateAdminPDF = async (data: any): Promise<Blob> => {
