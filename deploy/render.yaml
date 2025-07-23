@@ -12,10 +12,9 @@ databases:
 services:
   - type: web
     name: msme-square-api
-    runtime: node
+    runtime: docker
     plan: starter
-    buildCommand: npm install --workspaces && npm run build --workspace=@msmebazaar/api
-    startCommand: npm start --workspace=@msmebazaar/api
+    dockerfilePath: ./apps/api/Dockerfile
     envVars:
       - key: NODE_ENV
         value: production
@@ -39,10 +38,9 @@ services:
 
   - type: web
     name: msme-square-frontend
-    runtime: node # ⬅️ was static, changed to node
+    runtime: docker
     plan: starter
-    buildCommand: npm install --workspaces && npm run build --workspace=@msmebazaar/web
-    startCommand: npm start --workspace=@msmebazaar/web
+    dockerfilePath: ./apps/web/Dockerfile
     envVars:
       - key: NODE_ENV
         value: production
@@ -58,9 +56,9 @@ services:
 
   - type: worker
     name: msme-square-scheduler
-    runtime: node
-    buildCommand: npm install --workspaces
-    startCommand: npm run scheduler --workspace=@msmebazaar/scheduler
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./apps/scheduler/Dockerfile
     envVars:
       - key: NODE_ENV
         value: production
