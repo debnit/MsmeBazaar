@@ -2,12 +2,13 @@
 module.exports = {
   darkMode: ["class"],
   content: [
-    './pages/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './app/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
-    '../../libs/ui/**/*.{ts,tsx}',
-  ],
+  './app/**/*.{js,ts,jsx,tsx}',
+  './pages/**/*.{js,ts,jsx,tsx}',
+  './components/**/*.{js,ts,jsx,tsx}',
+  './client/**/*.{js,ts,jsx,tsx}',        // if client folder is used
+  './server/**/*.{js,ts,jsx,tsx}',        // if server logic present
+  '../../libs/**/*.{js,ts,jsx,tsx}',       // shared UI/lib packages
+],
   theme: {
     container: {
       center: true,
