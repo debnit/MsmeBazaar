@@ -1,5 +1,5 @@
 {
-  "extends": "../../.json",
+  "extends": "../../tisconfig.json",
   "compilerOptions": {
     "baseUrl": ".", // resolves @/* relative to apps/web/
     "paths": {
