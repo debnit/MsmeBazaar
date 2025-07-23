@@ -33,7 +33,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Install production deps only
-RUN install --omit=dev &&  npm cache clean --force
+RUN npm install --omit=dev &&  npm cache clean --force
 
 # Copy built output and necessary shared folders
 COPY --from=base /app/dist ./dist
