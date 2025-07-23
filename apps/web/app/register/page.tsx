@@ -342,18 +342,18 @@ export default function RegisterPage() {
                       value={otp}
                       onChange={setOtp}
                       numInputs={6}
-                      separator={<span className="mx-1"></span>}
+                     // separator={<span className="mx-1"></span>}
                       inputStyle={{
                         width: '40px',
                         height: '40px',
                         margin: '0 4px',
-                        fontSize: '16px',
-                        borderRadius: '8px',
+                        fontSize: '18px',
+                        borderRadius: '4px',
                         border: '1px solid #d1d5db',
                         textAlign: 'center',
                       }}
                       focusStyle={{
-                        border: '2px solid #0ea5e9',
+                        border: '1px solid #0ea5e9',
                         outline: 'none',
                       }}
                     />
