@@ -339,25 +339,16 @@ export default function RegisterPage() {
                 <div className="space-y-4">
                   <div className="flex justify-center">
                     <OtpInput
-                      value={otp}
-                      onChange={setOtp}
-                      numInputs={6}
-                     // separator={<span className="mx-1"></span>}
-                      inputStyle={{
-                        width: '40px',
-                        height: '40px',
-                        margin: '0 4px',
-                        fontSize: '18px',
-                        borderRadius: '4px',
-                        border: '1px solid #d1d5db',
-                        textAlign: 'center',
-                      }}
-                      //focusStyle={{
-                        //border: '1px solid #0ea5e9',
-                        //outline: 'none',
-                      //}}
-                     // inputClassName="otp-input"
-                    />
+                        value={otp}
+                        onChange={setOtp}
+                        numInputs={6}
+                        renderInput={(props) => (
+                          <input
+                            {...props}
+                            className="w-10 h-10 mx-1 text-center text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        )}
+                      />
                   </div>
 
                   <div className="flex flex-col gap-3">
