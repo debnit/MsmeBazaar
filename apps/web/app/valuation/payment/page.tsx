@@ -3,7 +3,7 @@
 
 
 import { Button } from '@/components/ui/button';
-import{ RazorpayCheckoutButton } from '@/components/payments/RazorpayCheckoutButton';
+import RazorpayCheckoutButton from '@/components/payments/RazorpayCheckoutButton';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation'
 
