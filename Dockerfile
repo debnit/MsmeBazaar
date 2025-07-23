@@ -10,7 +10,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Install all deps including devDeps for build
-RUN npm ci
+RUN npm install
 
 # Copy the rest of the code
 COPY . .
@@ -33,7 +33,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Install production deps only
-RUN npm ci --omit=dev && npm cache clean --force
+RUN install --omit=dev && cache clean --force
 
 # Copy built output and necessary shared folders
 COPY --from=base /app/dist ./dist
