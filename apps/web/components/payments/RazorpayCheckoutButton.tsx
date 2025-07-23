@@ -46,5 +46,5 @@ export default function RazorpayCheckoutButton({
   return <Button onClick={handleClick}>Pay ₹{amount/100} to Unlock Valuation</Button>
 }
 // apps/web/components/payments/RazorpayCheckoutButton.tsx
-const RazorpayCheckoutButton = (...) => { ... }
-export default RazorpayCheckoutButton;
+
+//export default RazorpayCheckoutButton;
