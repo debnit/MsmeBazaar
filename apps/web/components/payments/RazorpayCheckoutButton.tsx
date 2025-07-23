@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button'
 import { useEffect } from 'react'
 
+
 export default function RazorpayCheckoutButton({
   amount,
   email,
@@ -44,3 +45,6 @@ export default function RazorpayCheckoutButton({
 
   return <Button onClick={handleClick}>Pay ₹{amount/100} to Unlock Valuation</Button>
 }
+// apps/web/components/payments/RazorpayCheckoutButton.tsx
+const RazorpayCheckoutButton = (...) => { ... }
+export default RazorpayCheckoutButton;
