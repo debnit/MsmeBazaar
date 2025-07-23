@@ -356,7 +356,7 @@ export default function RegisterPage() {
                         //border: '1px solid #0ea5e9',
                         //outline: 'none',
                       //}}
-                      inputClassName="otp-input"
+                     // inputClassName="otp-input"
                     />
                   </div>
 
