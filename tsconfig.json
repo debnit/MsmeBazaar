@@ -6,7 +6,7 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "strict": false,
+    "strict": true,
     "noEmit": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
@@ -14,41 +14,33 @@
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      // NEW: Updated to match `apps/web` structure
       "@/*": ["apps/web/*"],
-      "@/app/*": ["apps/web/app/*"],
       "@/components/*": ["apps/web/components/*"],
+      "@/app/*": ["apps/web/app/*"],
       "@/lib/*": ["apps/web/lib/*"],
       "@/hooks/*": ["apps/web/hooks/*"],
       "@/utils/*": ["apps/web/utils/*"],
-
-      // SHARED
-      "@shared/*": ["shared/*"],
-      "@/shared/*": ["shared/*"],
-
-      // OPTIONAL: still support legacy `client/` if needed temporarily
-      "@client/*": ["client/src/*"]
+      "@shared/*": ["shared/*"]
     }
   },
   "include": [
-    "apps/web/**/*",
-    "shared/**/*",
-    "client/src/types/**/*",
+    "apps/web",
+    "shared",
+    "client/src/types",
     "client/src/vite-env.d.ts",
-    "client/src/sw.ts",
-    "server/**/*"
+    "client/src/sw.ts"
   ],
   "exclude": [
     "node_modules",
     "dist",
     "build",
-    "shared/schema.ts",
-    "server/**/*.ts",
+    "server",
+    "apps/api",
+    "ml",
     "**/*.test.ts",
     "**/*.spec.ts"
   ],
   "references": [
     { "path": "apps/web" }
-    // You can add other packages (e.g. apps/api) as needed
   ]
 }
