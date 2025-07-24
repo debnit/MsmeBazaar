@@ -4,9 +4,10 @@ import pickle
 import numpy as np
 import os
 
+
 router = APIRouter()
 # Resolve the model path relative to this file
-model_path = os.path.join(os.path.dirname(__file__), "..", "models", "valuation_xgb.pkl")
+model_path = os.path.join(os.path.dirname("apps/ml-api/models/valuation_xgb.pkl"), "..", "models", "valuation_xgb.pkl")
 model_path = os.path.abspath(model_path)
 
 
