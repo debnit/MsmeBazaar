@@ -16,12 +16,12 @@ export default function HomePage() {
               <span className="text-sm bg-brand-100 text-brand-700 px-2 py-1 rounded-full">v2.0</span>
             </div>
             <nav className="flex items-center space-x-4">
-              <Link href="/register">
+              <a href="/register">
                 <Button variant="outline">Register</Button>
-              </Link>
-              <Link href="/login">
+              </a>
+              <a href="/login">
                 <Button>Login</Button>
-              </Link>
+              </a>
             </nav>
           </div>
         </div>
