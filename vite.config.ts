@@ -22,12 +22,18 @@ export default defineConfig({
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
   },
   resolve: {
-    alias: {
-      "@": path.resolve(import.meta.dirname, "client", "src"),
-      "@shared": path.resolve(import.meta.dirname, "shared"),
-      "@assets": path.resolve(import.meta.dirname, "attached_assets"),
-    },
-  },
+  alias: {
+    "@": path.resolve(__dirname, "client", "src"),
+    "@components": path.resolve(__dirname, "client", "src", "components"),
+    "@pages": path.resolve(__dirname, "client", "src", "pages"),
+    "@lib": path.resolve(__dirname, "client", "src", "lib"),
+    "@hooks": path.resolve(__dirname, "client", "src", "hooks"),
+    "@utils": path.resolve(__dirname, "client", "src", "utils"),
+    "@shared": path.resolve(__dirname, "shared"),
+    "@assets": path.resolve(__dirname, "attached_assets")
+  }
+},
+
   root: path.resolve(import.meta.dirname, "client"),
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
