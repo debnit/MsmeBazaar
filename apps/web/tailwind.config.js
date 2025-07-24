@@ -5,10 +5,11 @@ module.exports = {
   './app/**/*.{js,ts,jsx,tsx}',
   './pages/**/*.{js,ts,jsx,tsx}',
   './components/**/*.{js,ts,jsx,tsx}',
-  './client/**/*.{js,ts,jsx,tsx}',        // if client folder is used
-  './server/**/*.{js,ts,jsx,tsx}',        // if server logic present
-  '../../libs/**/*.{js,ts,jsx,tsx}',       // shared UI/lib packages
+  '../../libs/**/*.{js,ts,jsx,tsx}',
+  '!../../node_modules',
+  '!../../**/node_modules',
 ],
+
   theme: {
     container: {
       center: true,
