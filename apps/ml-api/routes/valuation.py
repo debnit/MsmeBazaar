@@ -2,11 +2,17 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 import pickle
 import numpy as np
+import os
 
 router = APIRouter()
+# Resolve the model path relative to this file
+model_path = os.path.join(os.path.dirname(__file__), "..", "models", "valuation_xgb.pkl")
+model_path = os.path.abspath(model_path)
+
+
 
 # Load model
-with open("models/valuation_xgb.pkl", "rb") as f:
+with open(model_path, "rb") as f:
     model = pickle.load(f)
 
 class ValuationRequest(BaseModel):
