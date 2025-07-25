@@ -1,4 +1,5 @@
-xgboost
-pandas
+fastapi
 scikit-learn
+pydantic
+uvicorn
 joblib
