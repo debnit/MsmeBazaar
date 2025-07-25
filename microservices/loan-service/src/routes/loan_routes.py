@@ -36,8 +36,6 @@ class LoanApplicationRequest(BaseModel):
     amount: float = Field(..., gt=0, description="Loan amount requested")
     tenure_months: int = Field(..., gt=0, le=360, description="Loan tenure in months")
     purpose: str = Field(..., min_length=10, description="Purpose of the loan")
-    collateral_details: Optional[Dict[str, Any]] = Field(None, description="Collateral information")
-    guarantor_details: Optional[Dict[str, Any]] = Field(None, description="Guarantor information")
 
 class LoanApplication(BaseModel):
     id: str
@@ -49,10 +47,6 @@ class LoanApplication(BaseModel):
     status: LoanStatus
     created_at: datetime
     updated_at: datetime
-    collateral_details: Optional[Dict[str, Any]] = None
-    guarantor_details: Optional[Dict[str, Any]] = None
-    risk_score: Optional[float] = None
-    interest_rate: Optional[float] = None
 
 class LoanApplicationResponse(BaseModel):
     id: str
@@ -60,18 +54,19 @@ class LoanApplicationResponse(BaseModel):
     message: str
     next_steps: List[str]
 
+@router.get("/health")
+async def loans_health():
+    """Health check for loans routes"""
+    return {"status": "healthy", "module": "loan_routes"}
+
 @router.post("/applications", response_model=LoanApplicationResponse)
 async def create_loan_application(
-    application: LoanApplicationRequest,
-    token: str = Depends(security)
+    application: LoanApplicationRequest
 ):
     """
     Create a new loan application
     """
     try:
-        # Validate business exists and user has permission
-        # This would typically involve database queries and auth validation
-        
         # Create loan application ID
         application_id = f"LA_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{application.business_id[:8]}"
         
@@ -97,15 +92,11 @@ async def create_loan_application(
         )
 
 @router.get("/applications/{application_id}", response_model=LoanApplication)
-async def get_loan_application(
-    application_id: str,
-    token: str = Depends(security)
-):
+async def get_loan_application(application_id: str):
     """
     Get loan application details by ID
     """
     try:
-        # Fetch from database (placeholder)
         logger.info(f"Fetching loan application {application_id}")
         
         # This would be a database query
@@ -118,9 +109,7 @@ async def get_loan_application(
             purpose="Working capital for inventory purchase",
             status=LoanStatus.UNDER_REVIEW,
             created_at=datetime.now(),
-            updated_at=datetime.now(),
-            risk_score=75.5,
-            interest_rate=12.5
+            updated_at=datetime.now()
         )
         
         return application
@@ -132,13 +121,12 @@ async def get_loan_application(
             detail="Loan application not found"
         )
 
-@router.get("/applications", response_model=List[LoanApplication])
+@router.get("/applications")
 async def list_loan_applications(
     business_id: Optional[str] = None,
     status: Optional[LoanStatus] = None,
     limit: int = 10,
-    offset: int = 0,
-    token: str = Depends(security)
+    offset: int = 0
 ):
     """
     List loan applications with filtering
@@ -149,63 +137,16 @@ async def list_loan_applications(
         # This would be a database query with filters
         applications = []  # Placeholder
         
-        return applications
+        return {
+            "applications": applications,
+            "total": 0,
+            "limit": limit,
+            "offset": offset
+        }
     
     except Exception as e:
         logger.error(f"Error listing loan applications: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to list loan applications"
-        )
-
-@router.put("/applications/{application_id}/submit")
-async def submit_loan_application(
-    application_id: str,
-    token: str = Depends(security)
-):
-    """
-    Submit loan application for review
-    """
-    try:
-        logger.info(f"Submitting loan application {application_id}")
-        
-        # Validate all required documents are uploaded
-        # Update status to submitted
-        # Trigger underwriting workflow
-        
-        return {
-            "id": application_id,
-            "status": LoanStatus.SUBMITTED,
-            "message": "Application submitted successfully",
-            "next_steps": ["Application is under review", "You will be notified of the decision"]
-        }
-    
-    except Exception as e:
-        logger.error(f"Error submitting loan application {application_id}: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to submit loan application"
-        )
-
-@router.delete("/applications/{application_id}")
-async def cancel_loan_application(
-    application_id: str,
-    token: str = Depends(security)
-):
-    """
-    Cancel a loan application (only if in draft or submitted status)
-    """
-    try:
-        logger.info(f"Cancelling loan application {application_id}")
-        
-        # Check if application can be cancelled
-        # Update status and send notifications
-        
-        return {"message": "Loan application cancelled successfully"}
-    
-    except Exception as e:
-        logger.error(f"Error cancelling loan application {application_id}: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to cancel loan application"
         )

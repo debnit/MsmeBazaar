@@ -80,39 +80,6 @@ export interface BusinessCreateRequest {
   established: string;
 }
 
-// Valuation Types
-export interface ValuationRequest {
-  businessId: string;
-  method: 'dcf' | 'market' | 'asset' | 'hybrid';
-  financialData: {
-    annualRevenue: number;
-    netProfit: number;
-    totalAssets: number;
-    totalLiabilities: number;
-    growthRate?: number;
-  };
-  marketData?: {
-    industryMultiple?: number;
-    comparableCompanies?: string[];
-  };
-}
-
-export interface Valuation {
-  id: string;
-  businessId: string;
-  method: string;
-  valuationAmount: number;
-  confidenceLevel: number;
-  factors: Array<{
-    factor: string;
-    impact: 'positive' | 'negative' | 'neutral';
-    weight: number;
-    value?: any;
-  }>;
-  createdAt: string;
-  validUntil: string;
-}
-
 // Loan Types
 export interface LoanApplication {
   id: string;
@@ -126,8 +93,6 @@ export interface LoanApplication {
   updatedAt: string;
   riskScore?: number;
   interestRate?: number;
-  collateralDetails?: Record<string, any>;
-  guarantorDetails?: Record<string, any>;
 }
 
 export interface LoanApplicationRequest {
@@ -136,8 +101,6 @@ export interface LoanApplicationRequest {
   amount: number;
   tenureMonths: number;
   purpose: string;
-  collateralDetails?: Record<string, any>;
-  guarantorDetails?: Record<string, any>;
 }
 
 // Exit Strategy Types
@@ -160,61 +123,6 @@ export interface ExitStrategyRequest {
   targetValuation: number;
   timelineMonths: number;
   reasons: string[];
-  preferences?: Record<string, any>;
-}
-
-// Investment Types
-export interface Investment {
-  id: string;
-  businessId: string;
-  investorId: string;
-  amount: number;
-  equity: number;
-  type: 'seed' | 'series_a' | 'series_b' | 'series_c' | 'debt' | 'convertible';
-  status: 'proposed' | 'negotiating' | 'due_diligence' | 'completed' | 'rejected';
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Matching Types
-export interface MatchCriteria {
-  industry?: string[];
-  location?: string[];
-  revenueRange?: {
-    min: number;
-    max: number;
-  };
-  valuationRange?: {
-    min: number;
-    max: number;
-  };
-  investmentType?: string[];
-  riskLevel?: 'low' | 'medium' | 'high';
-}
-
-export interface Match {
-  id: string;
-  businessId: string;
-  investorId: string;
-  matchScore: number;
-  factors: Array<{
-    factor: string;
-    score: number;
-    weight: number;
-  }>;
-  status: 'pending' | 'viewed' | 'interested' | 'contacted' | 'rejected';
-  createdAt: string;
-}
-
-// Analytics Types
-export interface BusinessMetrics {
-  totalBusinesses: number;
-  totalValuation: number;
-  totalInvestments: number;
-  totalLoans: number;
-  averageValuation: number;
-  industryBreakdown: Record<string, number>;
-  locationBreakdown: Record<string, number>;
 }
 
 // Error Types
@@ -223,33 +131,4 @@ export interface ApiError {
   message: string;
   details?: Record<string, any>;
   timestamp: string;
-}
-
-// File Upload Types
-export interface FileUpload {
-  id: string;
-  filename: string;
-  contentType: string;
-  size: number;
-  url: string;
-  createdAt: string;
-}
-
-export interface DocumentUpload {
-  type: 'financial_statement' | 'bank_statement' | 'kyc_document' | 'collateral_document' | 'other';
-  file: FileUpload;
-  verified: boolean;
-  verifiedAt?: string;
-}
-
-// Notification Types
-export interface Notification {
-  id: string;
-  userId: string;
-  type: 'info' | 'warning' | 'error' | 'success';
-  title: string;
-  message: string;
-  read: boolean;
-  actionUrl?: string;
-  createdAt: string;
 }

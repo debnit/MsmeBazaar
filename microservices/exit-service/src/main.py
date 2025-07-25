@@ -2,6 +2,14 @@
 Exit-as-a-Service microservice for MSME lifecycle management
 Provides exit strategy planning, valuation, and execution services
 """
+import os
+import sys
+from pathlib import Path
+
+# Add the workspace root to Python path for imports
+workspace_root = Path(__file__).parent.parent.parent.parent
+sys.path.insert(0, str(workspace_root))
+
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer
@@ -51,7 +59,6 @@ class ExitStrategy(BaseModel):
     created_at: datetime
     updated_at: datetime
     completion_percentage: float = 0.0
-    estimated_completion: Optional[datetime] = None
 
 class ExitStrategyRequest(BaseModel):
     business_id: str = Field(..., description="Unique business identifier")
@@ -59,29 +66,11 @@ class ExitStrategyRequest(BaseModel):
     target_valuation: float = Field(..., gt=0, description="Target valuation amount")
     timeline_months: int = Field(..., gt=0, le=120, description="Target timeline in months")
     reasons: List[str] = Field(..., description="Reasons for exit")
-    preferences: Dict[str, Any] = Field(default_factory=dict, description="Exit preferences")
-
-class ValuationRequest(BaseModel):
-    business_id: str
-    valuation_method: str = Field(..., description="DCF, Market, Asset, etc.")
-    financial_data: Dict[str, Any]
-    market_data: Optional[Dict[str, Any]] = None
-
-class Valuation(BaseModel):
-    id: str
-    business_id: str
-    method: str
-    valuation_amount: float
-    confidence_level: float
-    factors: List[Dict[str, Any]]
-    created_at: datetime
-    valid_until: datetime
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events"""
     logger.info("Starting Exit Service...")
-    # Initialize database connections, etc.
     yield
     logger.info("Shutting down Exit Service...")
 
@@ -107,7 +96,7 @@ app.add_middleware(
 @app.get("/")
 async def root():
     """Health check endpoint"""
-    return {"message": "Exit Service is running", "version": "1.0.0"}
+    return {"message": "Exit Service is running", "version": "1.0.0", "service": "exit-service"}
 
 @app.get("/health")
 async def health_check():
@@ -116,17 +105,13 @@ async def health_check():
         "status": "healthy",
         "service": "exit-service",
         "version": "1.0.0",
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
+        "environment": os.getenv("ENVIRONMENT", "development")
     }
 
 @app.post("/api/v1/exit-strategies", response_model=ExitStrategy)
-async def create_exit_strategy(
-    request: ExitStrategyRequest,
-    token: str = Depends(security)
-):
-    """
-    Create a new exit strategy for a business
-    """
+async def create_exit_strategy(request: ExitStrategyRequest):
+    """Create a new exit strategy for a business"""
     try:
         logger.info(f"Creating exit strategy for business {request.business_id}")
         
@@ -143,15 +128,10 @@ async def create_exit_strategy(
             status=ExitStatus.PLANNING,
             created_at=datetime.now(),
             updated_at=datetime.now(),
-            completion_percentage=5.0,  # Initial planning phase
-            estimated_completion=datetime.now().replace(
-                month=datetime.now().month + request.timeline_months
-            ) if request.timeline_months <= 12 else None
+            completion_percentage=5.0
         )
         
-        # Save to database (placeholder)
         logger.info(f"Exit strategy {strategy_id} created successfully")
-        
         return strategy
     
     except Exception as e:
@@ -162,13 +142,8 @@ async def create_exit_strategy(
         )
 
 @app.get("/api/v1/exit-strategies/{strategy_id}", response_model=ExitStrategy)
-async def get_exit_strategy(
-    strategy_id: str,
-    token: str = Depends(security)
-):
-    """
-    Get exit strategy details by ID
-    """
+async def get_exit_strategy(strategy_id: str):
+    """Get exit strategy details by ID"""
     try:
         logger.info(f"Fetching exit strategy {strategy_id}")
         
@@ -182,10 +157,7 @@ async def get_exit_strategy(
             status=ExitStatus.PREPARATION,
             created_at=datetime.now(),
             updated_at=datetime.now(),
-            completion_percentage=25.0,
-            estimated_completion=datetime.now().replace(
-                month=datetime.now().month + 15
-            )
+            completion_percentage=25.0
         )
         
         return strategy
@@ -197,133 +169,9 @@ async def get_exit_strategy(
             detail="Exit strategy not found"
         )
 
-@app.get("/api/v1/businesses/{business_id}/exit-strategies", response_model=List[ExitStrategy])
-async def list_business_exit_strategies(
-    business_id: str,
-    status_filter: Optional[ExitStatus] = None,
-    token: str = Depends(security)
-):
-    """
-    List all exit strategies for a business
-    """
-    try:
-        logger.info(f"Listing exit strategies for business {business_id}")
-        
-        # This would be a database query with filters
-        strategies = []  # Placeholder
-        
-        return strategies
-    
-    except Exception as e:
-        logger.error(f"Error listing exit strategies: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to list exit strategies"
-        )
-
-@app.post("/api/v1/valuations", response_model=Valuation)
-async def perform_business_valuation(
-    request: ValuationRequest,
-    token: str = Depends(security)
-):
-    """
-    Perform business valuation for exit planning
-    """
-    try:
-        logger.info(f"Performing valuation for business {request.business_id}")
-        
-        # This would integrate with valuation models
-        # For now, using placeholder logic
-        
-        revenue = request.financial_data.get("annual_revenue", 0)
-        profit = request.financial_data.get("net_profit", 0)
-        assets = request.financial_data.get("total_assets", 0)
-        
-        # Simple valuation calculation (would be replaced with sophisticated models)
-        if request.valuation_method.lower() == "dcf":
-            # Discounted Cash Flow
-            valuation_amount = profit * 8  # 8x net profit multiple
-            confidence_level = 0.75
-        elif request.valuation_method.lower() == "market":
-            # Market multiple
-            valuation_amount = revenue * 2.5  # Industry multiple
-            confidence_level = 0.65
-        elif request.valuation_method.lower() == "asset":
-            # Asset-based
-            valuation_amount = assets * 1.2  # Asset value with premium
-            confidence_level = 0.85
-        else:
-            valuation_amount = (revenue * 2 + profit * 6) / 2  # Hybrid approach
-            confidence_level = 0.70
-        
-        valuation_id = f"VAL_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{request.business_id[:8]}"
-        
-        valuation = Valuation(
-            id=valuation_id,
-            business_id=request.business_id,
-            method=request.valuation_method,
-            valuation_amount=valuation_amount,
-            confidence_level=confidence_level,
-            factors=[
-                {"factor": "Revenue Growth", "impact": "positive", "weight": 0.3},
-                {"factor": "Profit Margins", "impact": "positive", "weight": 0.25},
-                {"factor": "Market Position", "impact": "positive", "weight": 0.2},
-                {"factor": "Industry Trends", "impact": "neutral", "weight": 0.15},
-                {"factor": "Management Quality", "impact": "positive", "weight": 0.1}
-            ],
-            created_at=datetime.now(),
-            valid_until=datetime.now().replace(month=datetime.now().month + 6)
-        )
-        
-        return valuation
-    
-    except Exception as e:
-        logger.error(f"Error performing valuation: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to perform valuation"
-        )
-
-@app.get("/api/v1/valuations/{valuation_id}", response_model=Valuation)
-async def get_valuation(
-    valuation_id: str,
-    token: str = Depends(security)
-):
-    """
-    Get valuation details by ID
-    """
-    try:
-        logger.info(f"Fetching valuation {valuation_id}")
-        
-        # This would be a database query
-        valuation = Valuation(
-            id=valuation_id,
-            business_id="BUSINESS_123",
-            method="DCF",
-            valuation_amount=4500000.0,
-            confidence_level=0.75,
-            factors=[
-                {"factor": "Revenue Growth", "impact": "positive", "weight": 0.3},
-                {"factor": "Profit Margins", "impact": "positive", "weight": 0.25}
-            ],
-            created_at=datetime.now(),
-            valid_until=datetime.now().replace(month=datetime.now().month + 6)
-        )
-        
-        return valuation
-    
-    except Exception as e:
-        logger.error(f"Error fetching valuation {valuation_id}: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Valuation not found"
-        )
-
-@app.get("/api/v1/exit-types", response_model=List[Dict[str, Any]])
+@app.get("/api/v1/exit-types")
 async def get_exit_types():
-    """
-    Get available exit types with descriptions
-    """
+    """Get available exit types with descriptions"""
     exit_types = [
         {
             "type": ExitType.ACQUISITION,
@@ -334,7 +182,7 @@ async def get_exit_types():
         },
         {
             "type": ExitType.MERGER,
-            "name": "Merger",
+            "name": "Merger", 
             "description": "Combination with another business",
             "typical_timeline": "18-36 months",
             "complexity": "High"
@@ -345,113 +193,10 @@ async def get_exit_types():
             "description": "Going public through stock exchange listing",
             "typical_timeline": "24-48 months",
             "complexity": "Very High"
-        },
-        {
-            "type": ExitType.STRATEGIC_SALE,
-            "name": "Strategic Sale",
-            "description": "Sale to strategic buyer in same industry",
-            "typical_timeline": "12-18 months",
-            "complexity": "Medium"
-        },
-        {
-            "type": ExitType.MANAGEMENT_BUYOUT,
-            "name": "Management Buyout",
-            "description": "Sale to existing management team",
-            "typical_timeline": "6-12 months",
-            "complexity": "Low"
-        },
-        {
-            "type": ExitType.SUCCESSION,
-            "name": "Family Succession",
-            "description": "Transfer to family members",
-            "typical_timeline": "12-60 months",
-            "complexity": "Medium"
         }
     ]
     
-    return exit_types
-
-@app.put("/api/v1/exit-strategies/{strategy_id}/status")
-async def update_exit_strategy_status(
-    strategy_id: str,
-    status_data: Dict[str, Any],
-    token: str = Depends(security)
-):
-    """
-    Update exit strategy status and progress
-    """
-    try:
-        logger.info(f"Updating exit strategy {strategy_id} status")
-        
-        new_status = status_data.get("status")
-        progress = status_data.get("completion_percentage", 0)
-        notes = status_data.get("notes", "")
-        
-        # Update in database (placeholder)
-        # Send notifications to stakeholders
-        
-        return {
-            "strategy_id": strategy_id,
-            "status": new_status,
-            "completion_percentage": progress,
-            "message": "Exit strategy status updated successfully",
-            "updated_at": datetime.now().isoformat()
-        }
-    
-    except Exception as e:
-        logger.error(f"Error updating exit strategy status: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update exit strategy status"
-        )
-
-@app.get("/api/v1/market-insights")
-async def get_market_insights(
-    industry: Optional[str] = None,
-    business_size: Optional[str] = None,
-    region: Optional[str] = None
-):
-    """
-    Get market insights for exit planning
-    """
-    try:
-        logger.info("Fetching market insights")
-        
-        # This would integrate with market data providers
-        insights = {
-            "market_conditions": {
-                "overall_sentiment": "positive",
-                "m_and_a_activity": "high",
-                "average_multiples": {
-                    "revenue_multiple": 2.5,
-                    "ebitda_multiple": 8.2
-                }
-            },
-            "industry_trends": [
-                "Digital transformation driving valuations",
-                "ESG compliance becoming important",
-                "Consolidation in traditional sectors"
-            ],
-            "timing_recommendations": {
-                "current_market": "favorable",
-                "recommended_action": "proceed_with_caution",
-                "best_timing": "Q2-Q3 2024"
-            },
-            "valuation_benchmarks": {
-                "industry_average": 4200000,
-                "top_quartile": 6800000,
-                "median": 3500000
-            }
-        }
-        
-        return insights
-    
-    except Exception as e:
-        logger.error(f"Error fetching market insights: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to fetch market insights"
-        )
+    return {"exit_types": exit_types}
 
 if __name__ == "__main__":
     uvicorn.run(

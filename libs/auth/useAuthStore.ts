@@ -1,7 +1,5 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
 
 interface User {
   id: string;
@@ -41,16 +39,10 @@ interface RegisterData {
 type AuthStore = AuthState & AuthActions;
 
 // API base URL - would come from environment variables
-const API_BASE_URL = Platform.select({
-  web: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
-  default: 'http://localhost:8000', // For mobile
-});
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-// Storage configuration based on platform
-const storage = Platform.select({
-  web: createJSONStorage(() => localStorage),
-  default: createJSONStorage(() => AsyncStorage),
-});
+// Simple storage for web (localStorage)
+const storage = createJSONStorage(() => localStorage);
 
 export const useAuthStore = create<AuthStore>()(
   persist(
@@ -195,7 +187,7 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'auth-storage',
-      storage: storage!,
+      storage: storage,
       partialize: (state) => ({
         user: state.user,
         token: state.token,
@@ -232,17 +224,3 @@ export const useAuthenticatedFetch = () => {
     return response;
   };
 };
-
-// Auto-refresh token on app startup
-if (Platform.OS !== 'web') {
-  // For mobile apps, check token validity on startup
-  const checkTokenValidity = () => {
-    const { token, refreshToken } = useAuthStore.getState();
-    if (token) {
-      refreshToken();
-    }
-  };
-
-  // Check token validity when the store is initialized
-  setTimeout(checkTokenValidity, 1000);
-}
