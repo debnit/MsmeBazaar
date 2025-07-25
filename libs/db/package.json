@@ -18,8 +18,9 @@
     "nanoid": "^5.0.4"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "dotenv-cli": "^9.0.0",
     "prisma": "^5.7.1",
-    "tsx": "^4.6.2",
-    "@types/bcryptjs": "^2.4.6"
+    "tsx": "^4.6.2"
   }
 }

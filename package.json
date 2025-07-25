@@ -32,6 +32,7 @@
     "db:push": "cd libs/db && npx prisma db push",
     "db:migrate": "cd libs/db && npx prisma migrate dev",
     "db:studio": "cd libs/db && npx prisma studio",
+    "drizzle:generate": "dotenv -e .env -- drizzle-kit generate",
     "deploy": "npm run build && npm run docker:build",
     "clean": "rm -rf node_modules apps/*/node_modules libs/*/node_modules",
     "reset": "npm run clean && npm install"
