@@ -1,17 +1,6 @@
 {
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "lib": ["ES2020", "DOM", "DOM.Iterable", "WebWorker"],
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "noEmit": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
       "@/*": ["apps/web/*"],
@@ -41,6 +30,16 @@
     "**/*.spec.ts"
   ],
   "references": [
-    { "path": "apps/web" }
+    { "path": "./apps/web" },
+    { "path": "./apps/mobile" },
+    { "path": "./libs/ui" },
+    { "path": "./libs/auth" },
+    { "path": "./libs/api" },
+    { "path": "./libs/core" },
+    { "path": "./libs/hooks" },
+    { "path": "./libs/utils" },
+    { "path": "./libs/db" },
+    { "path": "./libs/shared" },
+    { "path": "./libs/analytics-engine" }
   ]
 }

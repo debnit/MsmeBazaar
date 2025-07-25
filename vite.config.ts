@@ -22,17 +22,38 @@ export default defineConfig({
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
   },
   resolve: {
-  alias: {
-    "@": path.resolve(__dirname, "client", "src"),
-    "@components": path.resolve(__dirname, "client", "src", "components"),
-    "@pages": path.resolve(__dirname, "client", "src", "pages"),
-    "@lib": path.resolve(__dirname, "client", "src", "lib"),
-    "@hooks": path.resolve(__dirname, "client", "src", "hooks"),
-    "@utils": path.resolve(__dirname, "client", "src", "utils"),
-    "@shared": path.resolve(__dirname, "shared"),
-    "@assets": path.resolve(__dirname, "attached_assets")
-  }
-},
+    alias: {
+      // Root alias for current context
+      "@": path.resolve(__dirname, "client", "src"),
+      
+      // Shared libraries with full monorepo support
+      "@msmebazaar/ui": path.resolve(__dirname, "libs/ui/src"),
+      "@msmebazaar/auth": path.resolve(__dirname, "libs/auth/src"),
+      "@msmebazaar/api": path.resolve(__dirname, "libs/api/src"),
+      "@msmebazaar/core": path.resolve(__dirname, "libs/core/src"),
+      "@msmebazaar/hooks": path.resolve(__dirname, "libs/hooks/src"),
+      "@msmebazaar/utils": path.resolve(__dirname, "libs/utils/src"),
+      "@msmebazaar/db": path.resolve(__dirname, "libs/db/src"),
+      "@msmebazaar/shared": path.resolve(__dirname, "libs/shared/src"),
+      "@msmebazaar/analytics-engine": path.resolve(__dirname, "libs/analytics-engine/src"),
+      
+      // App-specific aliases
+      "@msmebazaar/web": path.resolve(__dirname, "apps/web/src"),
+      "@msmebazaar/mobile": path.resolve(__dirname, "apps/mobile/src"),
+      
+      // Legacy aliases for backward compatibility
+      "@components": path.resolve(__dirname, "client", "src", "components"),
+      "@pages": path.resolve(__dirname, "client", "src", "pages"),
+      "@lib": path.resolve(__dirname, "client", "src", "lib"),
+      "@hooks": path.resolve(__dirname, "client", "src", "hooks"),
+      "@utils": path.resolve(__dirname, "client", "src", "utils"),
+      "@shared": path.resolve(__dirname, "shared"),
+      "@assets": path.resolve(__dirname, "attached_assets"),
+      "@types": path.resolve(__dirname, "client", "src", "types"),
+      "@styles": path.resolve(__dirname, "client", "src", "styles"),
+      "@public": path.resolve(__dirname, "public")
+    }
+  },
 
   root: path.resolve(import.meta.dirname, "client"),
   build: {
@@ -81,6 +102,16 @@ export default defineConfig({
           'stripe-vendor': [
             '@stripe/react-stripe-js',
             '@stripe/stripe-js'
+          ],
+          
+          // MSMEBazaar shared libraries
+          'msmebazaar-libs': [
+            '@msmebazaar/ui',
+            '@msmebazaar/auth',
+            '@msmebazaar/api',
+            '@msmebazaar/core',
+            '@msmebazaar/hooks',
+            '@msmebazaar/utils'
           ]
         },
         
@@ -114,6 +145,30 @@ export default defineConfig({
     fs: {
       strict: true,
       deny: ["**/.*"],
+      // Allow serving files from the monorepo
+      allow: [
+        // Allow serving from workspace root
+        path.resolve(__dirname),
+        // Allow serving from libs
+        path.resolve(__dirname, "libs"),
+        // Allow serving from apps
+        path.resolve(__dirname, "apps"),
+        // Allow serving from shared
+        path.resolve(__dirname, "shared")
+      ]
     },
   },
+  // Optimize dependencies for monorepo
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      '@msmebazaar/ui',
+      '@msmebazaar/auth',
+      '@msmebazaar/api',
+      '@msmebazaar/core',
+      '@msmebazaar/hooks',
+      '@msmebazaar/utils'
+    ]
+  }
 });

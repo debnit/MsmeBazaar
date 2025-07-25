@@ -1,0 +1,116 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable", "WebWorker"],
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "useDefineForClassFields": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowImportingTsExtensions": false,
+    "declaration": true,
+    "declarationMap": true,
+    "incremental": true,
+    "composite": true,
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "paths": {
+      // Root alias for current app/lib context
+      "@/*": ["./src/*", "./*"],
+      
+      // Shared libraries
+      "@msmebazaar/ui": ["libs/ui/src/index.ts", "libs/ui/index.ts"],
+      "@msmebazaar/ui/*": ["libs/ui/src/*", "libs/ui/*"],
+      "@msmebazaar/auth": ["libs/auth/src/index.ts", "libs/auth/index.ts"],
+      "@msmebazaar/auth/*": ["libs/auth/src/*", "libs/auth/*"],
+      "@msmebazaar/api": ["libs/api/src/index.ts", "libs/api/index.ts"],
+      "@msmebazaar/api/*": ["libs/api/src/*", "libs/api/*"],
+      "@msmebazaar/core": ["libs/core/src/index.ts", "libs/core/index.ts"],
+      "@msmebazaar/core/*": ["libs/core/src/*", "libs/core/*"],
+      "@msmebazaar/hooks": ["libs/hooks/src/index.ts", "libs/hooks/index.ts"],
+      "@msmebazaar/hooks/*": ["libs/hooks/src/*", "libs/hooks/*"],
+      "@msmebazaar/utils": ["libs/utils/src/index.ts", "libs/utils/index.ts"],
+      "@msmebazaar/utils/*": ["libs/utils/src/*", "libs/utils/*"],
+      "@msmebazaar/db": ["libs/db/src/index.ts", "libs/db/index.ts"],
+      "@msmebazaar/db/*": ["libs/db/src/*", "libs/db/*"],
+      "@msmebazaar/shared": ["libs/shared/src/index.ts", "libs/shared/index.ts"],
+      "@msmebazaar/shared/*": ["libs/shared/src/*", "libs/shared/*"],
+      "@msmebazaar/analytics-engine": ["libs/analytics-engine/src/index.ts", "libs/analytics-engine/index.ts"],
+      "@msmebazaar/analytics-engine/*": ["libs/analytics-engine/src/*", "libs/analytics-engine/*"],
+      
+      // App-specific aliases
+      "@msmebazaar/web": ["apps/web/src/index.ts", "apps/web/index.ts"],
+      "@msmebazaar/web/*": ["apps/web/src/*", "apps/web/*"],
+      "@msmebazaar/mobile": ["apps/mobile/src/index.ts", "apps/mobile/index.ts"],
+      "@msmebazaar/mobile/*": ["apps/mobile/src/*", "apps/mobile/*"],
+      
+      // API services
+      "@msmebazaar/auth-api": ["apps/auth-api/src/index.ts", "apps/auth-api/index.ts"],
+      "@msmebazaar/auth-api/*": ["apps/auth-api/src/*", "apps/auth-api/*"],
+      "@msmebazaar/admin-api": ["apps/admin-api/src/index.ts", "apps/admin-api/index.ts"],
+      "@msmebazaar/admin-api/*": ["apps/admin-api/src/*", "apps/admin-api/*"],
+      "@msmebazaar/match-api": ["apps/match-api/src/index.ts", "apps/match-api/index.ts"],
+      "@msmebazaar/match-api/*": ["apps/match-api/src/*", "apps/match-api/*"],
+      "@msmebazaar/ml-api": ["apps/ml-api/src/index.ts", "apps/ml-api/index.ts"],
+      "@msmebazaar/ml-api/*": ["apps/ml-api/src/*", "apps/ml-api/*"],
+      "@msmebazaar/msme-api": ["apps/msme-api/src/index.ts", "apps/msme-api/index.ts"],
+      "@msmebazaar/msme-api/*": ["apps/msme-api/src/*", "apps/msme-api/*"],
+      "@msmebazaar/payments-api": ["apps/payments-api/src/index.ts", "apps/payments-api/index.ts"],
+      "@msmebazaar/payments-api/*": ["apps/payments-api/src/*", "apps/payments-api/*"],
+      "@msmebazaar/valuation-api": ["apps/valuation-api/src/index.ts", "apps/valuation-api/index.ts"],
+      "@msmebazaar/valuation-api/*": ["apps/valuation-api/src/*", "apps/valuation-api/*"],
+      "@msmebazaar/whatsapp-bot": ["apps/whatsapp-bot/src/index.ts", "apps/whatsapp-bot/index.ts"],
+      "@msmebazaar/whatsapp-bot/*": ["apps/whatsapp-bot/src/*", "apps/whatsapp-bot/*"],
+      
+      // Microservices
+      "@msmebazaar/loan-service": ["microservices/loan-service/src/index.ts", "microservices/loan-service/index.ts"],
+      "@msmebazaar/loan-service/*": ["microservices/loan-service/src/*", "microservices/loan-service/*"],
+      "@msmebazaar/exit-service": ["microservices/exit-service/src/index.ts", "microservices/exit-service/index.ts"],
+      "@msmebazaar/exit-service/*": ["microservices/exit-service/src/*", "microservices/exit-service/*"],
+      
+      // Legacy aliases for backward compatibility
+      "@shared/*": ["libs/shared/src/*", "libs/shared/*", "shared/*"],
+      "@components/*": ["./src/components/*", "./components/*"],
+      "@pages/*": ["./src/pages/*", "./pages/*"],
+      "@lib/*": ["./src/lib/*", "./lib/*"],
+      "@hooks/*": ["./src/hooks/*", "./hooks/*"],
+      "@utils/*": ["./src/utils/*", "./utils/*"],
+      "@assets/*": ["./src/assets/*", "./assets/*", "attached_assets/*"],
+      "@types/*": ["./src/types/*", "./types/*"],
+      "@styles/*": ["./src/styles/*", "./styles/*"],
+      "@public/*": ["./public/*"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.js",
+    "**/*.jsx",
+    "**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "out",
+    ".next",
+    "coverage",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "**/cypress/**",
+    "**/e2e/**",
+    "**/playwright/**"
+  ]
+}

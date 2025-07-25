@@ -1,0 +1,183 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env.*local", "**/.env"],
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build", "^db:generate"],
+      "outputs": [
+        "dist/**",
+        ".next/**",
+        "!.next/cache/**",
+        "build/**",
+        "out/**"
+      ],
+      "env": [
+        "NODE_ENV",
+        "NEXT_PUBLIC_*",
+        "VITE_*",
+        "DATABASE_URL",
+        "NEXTAUTH_SECRET",
+        "NEXTAUTH_URL"
+      ]
+    },
+    "dev": {
+      "dependsOn": ["^db:generate"],
+      "cache": false,
+      "persistent": true,
+      "env": [
+        "NODE_ENV",
+        "NEXT_PUBLIC_*",
+        "VITE_*",
+        "DATABASE_URL",
+        "NEXTAUTH_SECRET",
+        "NEXTAUTH_URL"
+      ]
+    },
+    "start": {
+      "dependsOn": ["build"],
+      "cache": false,
+      "persistent": true
+    },
+    "test": {
+      "dependsOn": ["^build", "^db:generate"],
+      "outputs": ["coverage/**"],
+      "inputs": [
+        "src/**/*.tsx",
+        "src/**/*.ts",
+        "src/**/*.js",
+        "src/**/*.jsx",
+        "test/**/*.ts",
+        "test/**/*.tsx",
+        "**/__tests__/**/*.ts",
+        "**/__tests__/**/*.tsx",
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/*.spec.ts",
+        "**/*.spec.tsx"
+      ]
+    },
+    "test:watch": {
+      "dependsOn": ["^db:generate"],
+      "cache": false,
+      "persistent": true
+    },
+    "test:e2e": {
+      "dependsOn": ["^build", "^db:generate"],
+      "cache": false,
+      "inputs": [
+        "cypress/**",
+        "e2e/**",
+        "playwright/**"
+      ]
+    },
+    "lint": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "inputs": [
+        "src/**/*.tsx",
+        "src/**/*.ts",
+        "src/**/*.js",
+        "src/**/*.jsx",
+        "**/*.json",
+        ".eslintrc*",
+        "eslint.config.*"
+      ]
+    },
+    "lint:fix": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "inputs": [
+        "src/**/*.tsx",
+        "src/**/*.ts",
+        "src/**/*.js",
+        "src/**/*.jsx"
+      ]
+    },
+    "format": {
+      "outputs": [],
+      "inputs": [
+        "src/**/*.tsx",
+        "src/**/*.ts",
+        "src/**/*.js",
+        "src/**/*.jsx",
+        "**/*.json",
+        "**/*.md",
+        ".prettierrc*",
+        "prettier.config.*"
+      ]
+    },
+    "format:check": {
+      "outputs": [],
+      "inputs": [
+        "src/**/*.tsx",
+        "src/**/*.ts",
+        "src/**/*.js",
+        "src/**/*.jsx",
+        "**/*.json",
+        "**/*.md"
+      ]
+    },
+    "type-check": {
+      "dependsOn": ["^build", "^db:generate"],
+      "outputs": [],
+      "inputs": [
+        "src/**/*.tsx",
+        "src/**/*.ts",
+        "**/*.d.ts",
+        "tsconfig.json",
+        "tsconfig.*.json"
+      ]
+    },
+    "clean": {
+      "cache": false
+    },
+    "db:generate": {
+      "cache": false,
+      "inputs": [
+        "prisma/schema.prisma",
+        "schema.prisma"
+      ],
+      "outputs": [
+        "node_modules/.prisma/**",
+        "generated/**"
+      ]
+    },
+    "db:push": {
+      "cache": false,
+      "dependsOn": ["db:generate"]
+    },
+    "db:migrate": {
+      "cache": false,
+      "dependsOn": ["db:generate"]
+    },
+    "db:studio": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["db:generate"]
+    },
+    "db:seed": {
+      "cache": false,
+      "dependsOn": ["db:generate", "db:push"]
+    },
+    "docker:build": {
+      "dependsOn": ["build"],
+      "inputs": [
+        "Dockerfile",
+        "docker-compose*.yml",
+        ".dockerignore"
+      ]
+    },
+    "deploy": {
+      "dependsOn": ["build", "test", "lint", "type-check"],
+      "outputs": []
+    }
+  },
+  "globalEnv": [
+    "NODE_ENV",
+    "CI",
+    "VERCEL",
+    "DATABASE_URL",
+    "REDIS_URL",
+    "JWT_SECRET"
+  ]
+}
