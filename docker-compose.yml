@@ -198,6 +198,56 @@ services:
       - ./libs:/app/libs
     restart: unless-stopped
 
+  # Loan Service
+  loan-service:
+    build:
+      context: ./microservices/loan-service
+      dockerfile: Dockerfile
+    container_name: msmebazaar-loan-service
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/msmebazaar_v2
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - ENVIRONMENT=development
+    ports:
+      - "8004:8004"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./microservices/loan-service:/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Exit Service
+  exit-service:
+    build:
+      context: ./microservices/exit-service
+      dockerfile: Dockerfile
+    container_name: msmebazaar-exit-service
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/msmebazaar_v2
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - ENVIRONMENT=development
+    ports:
+      - "8005:8005"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./microservices/exit-service:/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # Next.js Web Application
   web:
     build:
@@ -217,6 +267,8 @@ services:
       - valuation-api
       - match-api
       - admin-api
+      - loan-service
+      - exit-service
     volumes:
       - ./apps/web:/app
       - ./libs:/app/libs
