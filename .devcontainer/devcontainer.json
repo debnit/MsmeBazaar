@@ -38,7 +38,6 @@
     "humao.rest-client",
     "mikestead.dotenv"
   ],
-  "postCreateCommand": "bash .devcontainer/post-create.sh",
   "forwardPorts": [3000, 8001, 8002, 8003, 8004, 8005, 5000],
   "remoteUser": "vscode"
 }
