@@ -5,6 +5,7 @@
     "context": "."
   },
   "workspaceFolder": "/workspace",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
   "settings": {
     "terminal.integrated.shell.linux": "/bin/bash",
     "python.defaultInterpreterPath": "/usr/local/bin/python",
