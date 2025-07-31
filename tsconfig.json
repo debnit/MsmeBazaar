@@ -2,43 +2,51 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
-    "lib": ["ES2020", "DOM", "DOM.Iterable", "WebWorker"],
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "noEmit": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
+    "moduleResolution": "Node",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+
+    
     "baseUrl": ".",
     "paths": {
       "@/*": ["client/src/*"],
-      "@/components/*": ["client/src/components/*"],
-      "@/app/*": ["client/src/app/*"],
-      "@/lib/*": ["client/src/lib/*"],
-      "@/hooks/*": ["client/src/hooks/*"],
-      "@/utils/*": ["client/src/utils/*"],
-      "@shared/*": ["shared/*"]
-    }
+      "@components/*": ["client/src/components/*"],
+      "@pages/*": ["client/src/pages/*"],
+      "@hooks/*": ["client/src/hooks/*"],
+      "@utils/*": ["client/src/utils/*"],
+      "@lib/*": ["client/src/lib/*"],
+      "@shared/*": ["libs/shared/src/*"]
+    },
+
+    
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+
+    
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "noEmit": true
   },
   "include": [
     "client/src",
-    "shared",
-    "client/src/types",
-    "client/src/vite-env.d.ts",
-    "client/src/sw.ts"
+    "libs",
+    "apps",
+    "vite.config.ts"
   ],
   "exclude": [
     "node_modules",
     "dist",
     "build",
-    "server",
-    "apps/api",
-    "ml",
-    "**/*.test.ts",
-    "**/*.spec.ts"
+    "**/*.spec.ts",
+    "**/*.test.ts"
   ],
   "references": [
     { "path": "client" }
