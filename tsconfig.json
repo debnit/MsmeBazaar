@@ -14,17 +14,17 @@
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["apps/web/*"],
-      "@/components/*": ["apps/web/components/*"],
-      "@/app/*": ["apps/web/app/*"],
-      "@/lib/*": ["apps/web/lib/*"],
-      "@/hooks/*": ["apps/web/hooks/*"],
-      "@/utils/*": ["apps/web/utils/*"],
+      "@/*": ["client/src/*"],
+      "@/components/*": ["client/src/components/*"],
+      "@/app/*": ["client/src/app/*"],
+      "@/lib/*": ["client/src/lib/*"],
+      "@/hooks/*": ["client/src/hooks/*"],
+      "@/utils/*": ["client/src/utils/*"],
       "@shared/*": ["shared/*"]
     }
   },
   "include": [
-    "apps/web",
+    "client/src",
     "shared",
     "client/src/types",
     "client/src/vite-env.d.ts",
@@ -41,6 +41,6 @@
     "**/*.spec.ts"
   ],
   "references": [
-    { "path": "apps/web" }
+    { "path": "client" }
   ]
 }

@@ -5,11 +5,11 @@
   "description": "A modular platform to onboard MSMEs and match them with buyers, investors, and acquisition opportunities",
   "workspaces": [
     "apps/*",
-    "libs/*"
+    "libs/*",
+    "client"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev:web\" \"npm run dev:api\"",
-    "dev:web": "cd apps/web && npm run dev",
+    "dev": "pnpm --filter msmebazaar/client dev",
     "dev:api": "cd apps/auth-api && uvicorn main:app --reload --port 8000",
     "build": "npm run build:web && npm run build:api",
     "build:web": "cd apps/web && npm run build",
