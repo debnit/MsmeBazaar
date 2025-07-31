@@ -1,27 +1,33 @@
-import { defineConfig } from "vite";
+import { defineConfig, mergeConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import { fileURLToPath } from "url";
+import baseConfig from "../vite.config"; // import root config
 
-export default defineConfig({
-  plugins: [react()],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "src")
-    }
-  },
-  server: {
-    port: 5173,
-    open: true,
-    proxy: {
-      "/api": {
-        target: "http://localhost:8000", // Auth API backend
-        changeOrigin: true,
-        secure: false
-      }
-    }
-  },
-  build: {
-    outDir: "dist",
-    sourcemap: true
-  }
-});
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export default defineConfig(({ mode }) =>
+  mergeConfig(baseConfig, {
+    plugins: [react()],
+    root: __dirname,
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "src"),
+        "@components": path.resolve(__dirname, "src/components"),
+        "@pages": path.resolve(__dirname, "src/pages"),
+        "@lib": path.resolve(__dirname, "src/lib"),
+        "@hooks": path.resolve(__dirname, "src/hooks"),
+        "@utils": path.resolve(__dirname, "src/utils"),
+      },
+    },
+    server: {
+      port: 5173,
+      proxy: {
+        "/api": {
+          target: "http://localhost:8000",
+          changeOrigin: true,
+        },
+      },
+    },
+  })
+);
