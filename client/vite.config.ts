@@ -9,9 +9,6 @@ const __dirname = path.dirname(__filename);
 
 export default defineConfig({
   plugins: [react()],
-  css: {
-    postcss: path.resolve(__dirname, "../postcss.config.js"), // Always use root PostCSS config
-  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
