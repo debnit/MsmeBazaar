@@ -9,7 +9,7 @@
     "client"
   ],
   "scripts": {
-    "dev": "pnpm --filter msmebazaar/client dev",
+    "dev": "cd client && npm run build",
     "dev:api": "cd apps/auth-api && uvicorn main:app --reload --port 8000",
     "build": "npm run build:web && npm run build:api",
     "build:web": "cd apps/web && npm run build",
