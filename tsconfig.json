@@ -3,7 +3,8 @@
     "target": "ES2020",
     "module": "ESNext",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
@@ -22,6 +23,10 @@
       "@shared/*": ["libs/shared/src/*"]
     }
   },
-  "include": ["client/src", "vite.config.ts"],
+  "include": [
+    "client/src",
+    "vite.config.ts",
+    "client/vite-env.d.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }
