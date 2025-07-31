@@ -2,6 +2,7 @@
   "name": "msmebazaar-v2",
   "version": "2.0.0",
   "private": true,
+  "type": "module",
   "description": "A modular platform to onboard MSMEs and match them with buyers, investors, and acquisition opportunities",
   "workspaces": [
     "apps/*",
