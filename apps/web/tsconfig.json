@@ -3,18 +3,25 @@
   "compilerOptions": {
     "baseUrl": ".", // resolves @/* relative to apps/web/
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./*"
+      ]
     },
     "allowJs": true,
     "incremental": true,
     "plugins": [
-      { "name": "next" }
-    ]
+      {
+        "name": "next"
+      }
+    ],
+    "noEmit": true,
+    "isolatedModules": true,
+    "jsx": "preserve"
   },
   "include": [
-    ".",                    // all files in apps/web/
-    "types",                // include types folder if present
-    ".next/types/**/*.ts"   // for Next.js type support
+    ".", // all files in apps/web/
+    "types", // include types folder if present
+    ".next/types/**/*.ts" // for Next.js type support
   ],
   "exclude": [
     "node_modules"
