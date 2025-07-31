@@ -473,7 +473,7 @@ env:
     name: 🚀 Deploy to Render
     needs: build-and-deploy
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && contains(github.event.head_commit.message, '[deploy]')
     environment: production
     
     steps:
@@ -515,7 +515,7 @@ env:
     name: 🚄 Deploy to Railway
     needs: build-and-deploy
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[railway]'))
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[deploy]'))
     environment: production
     
     steps:

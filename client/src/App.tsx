@@ -1,3 +1,4 @@
+import './index.css';
 import React from "react";
 import { Switch, Route } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -23,6 +24,8 @@ import AdminHub from "@/pages/admin/index";
 import RevenueDashboard from "@/pages/admin/revenue-dashboard";
 import WhatsAppDashboard from "@/pages/admin/whatsapp-dashboard";
 import { VaaSDemoPage } from "@/pages/vaas-demo";
+import './index.css';
+
 
 // Accessibility and keyboard navigation component
 const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

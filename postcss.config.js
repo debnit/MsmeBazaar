@@ -1,6 +1,7 @@
+// root/postcss.config.js
 export default {
   plugins: {
-    tailwindcss: {},
+    tailwindcss: { config: "./tailwind.config.ts" }, // Explicitly point to root Tailwind config
     autoprefixer: {},
   },
-}
+};
