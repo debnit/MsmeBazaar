@@ -2,16 +2,18 @@
 
 /**
  * Auto-install missing dependencies for apps/web (Next.js frontend)
- * 
+ *
  * Scans all .ts, .tsx, .js, .jsx files for imports and installs any missing packages.
+ * Works from anywhere in the repo because it resolves paths relative to this script.
  */
 
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
 
-// Change this if your frontend app folder changes
-const WEB_DIR = path.resolve("apps/web");
+// Always resolve paths relative to repo root
+const ROOT_DIR = path.resolve(__dirname, "..");
+const WEB_DIR = path.join(ROOT_DIR, "apps/web");
 const PACKAGE_JSON_PATH = path.join(WEB_DIR, "package.json");
 
 // Ensure package.json exists
@@ -20,15 +22,20 @@ if (!fs.existsSync(PACKAGE_JSON_PATH)) {
   process.exit(1);
 }
 
-// Read existing dependencies
+// Read package.json
 const pkg = JSON.parse(fs.readFileSync(PACKAGE_JSON_PATH, "utf8"));
+const packageName = pkg.name || "@msmebazaar/web";
+
+console.log(`📦 Target workspace package: ${packageName}`);
+
+// Gather existing dependencies
 const existingDeps = new Set([
   ...Object.keys(pkg.dependencies || {}),
-  ...Object.keys(pkg.devDependencies || {})
+  ...Object.keys(pkg.devDependencies || {}),
 ]);
 
 /**
- * Recursively scan directory for files
+ * Recursively scan directory for .ts, .tsx, .js, .jsx files
  */
 function scanDir(dir, files = []) {
   for (const file of fs.readdirSync(dir)) {
@@ -77,7 +84,7 @@ console.log("📦 Missing dependencies found:\n", missingDeps.join("\n"));
 
 // Install in correct workspace scope
 try {
-  execSync(`pnpm add -F @msmebazaar/web ${missingDeps.join(" ")}`, { stdio: "inherit" });
+  execSync(`pnpm add -F ${packageName} ${missingDeps.join(" ")}`, { stdio: "inherit" });
   console.log("✅ All missing dependencies installed successfully for apps/web!");
 } catch (err) {
   console.error("❌ Failed to install missing dependencies:", err);
