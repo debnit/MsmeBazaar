@@ -1,724 +1,687 @@
 """
-MSMEBazaar Authentication Service
-Secure authentication and authorization service with comprehensive security features
+MSMEBazaar V2.0 Authentication API
+Handles user registration, login, OTP verification, and token management.
 """
 
-import os
-import time
-import secrets
-from datetime import datetime
-from typing import Dict, Any, Optional, List
-from contextlib import asynccontextmanager
-
-from fastapi import FastAPI, Request, Response, HTTPException, Depends, status
+from fastapi import FastAPI, HTTPException, Depends, status, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, EmailStr, Field
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import JSONResponse, PlainTextResponse
+from contextlib import asynccontextmanager
 import asyncpg
+import redis.asyncio as redis
+from datetime import datetime
+import structlog
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from prometheus_client import Counter, Histogram, generate_latest
+import uuid
+from typing import Optional
 
-# Import shared security components
+# Import shared utilities
 import sys
-sys.path.append('/workspace/microservices/shared')
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../libs'))
 
-from security.security_headers import SecurityHeadersMiddleware, CORSSecurityMiddleware
-from security.rate_limiter import RateLimitMiddleware, rate_limiter, auth_rate_limit, otp_rate_limit
-from middlewares.auth_guard import (
-    require_auth, require_admin, optional_auth, get_current_user,
-    get_current_user_id, security
+from shared.config import get_settings
+from shared.models import (
+    TokenResponse, OTPResponse, ErrorResponse, UserProfile,
+    BaseResponse, HealthCheckResponse, ServiceHealth
 )
-from utils.jwt_handler import jwt_handler, create_token_pair
-from utils.logger import (
-    configure_logging, get_logger, get_security_logger, get_performance_logger
-)
-
-# Environment configuration
-ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/msmebazaar")
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
-SECRET_KEY = os.getenv("SECRET_KEY", secrets.token_urlsafe(32))
-
-# Configure logging
-configure_logging(
-    service_name="auth-service",
-    log_level=os.getenv("LOG_LEVEL", "INFO"),
-    enable_json=ENVIRONMENT == "production",
-    enable_audit=True
+from shared.exceptions import (
+    setup_exception_handlers, MSMEBazaarException,
+    AuthenticationException, ValidationException, BusinessLogicException,
+    RateLimitException, ExternalServiceException, ErrorCode,
+    raise_user_not_found, raise_invalid_otp, raise_unauthorized,
+    raise_rate_limit_exceeded, raise_external_service_error
 )
 
-logger = get_logger("auth-service")
-security_logger = get_security_logger()
-performance_logger = get_performance_logger()
+# Local imports
+from config import settings
+from database import db, get_db_connection, get_redis_client
+from models import (
+    RegisterRequest, VerifyOTPRequest, LoginRequest, ResendOTPRequest,
+    RefreshTokenRequest, UserCreate, OTPPurpose
+)
+from services.auth_service import AuthService
 
+# Configure structured logging
+structlog.configure(
+    processors=[
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        structlog.processors.JSONRenderer()
+    ],
+    context_class=dict,
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    wrapper_class=structlog.stdlib.BoundLogger,
+    cache_logger_on_first_use=True,
+)
+
+logger = structlog.get_logger()
+
+# Get shared settings
+shared_settings = get_settings()
+
+# Initialize Sentry for error tracking
+if shared_settings.monitoring.sentry_dsn:
+    sentry_sdk.init(
+        dsn=shared_settings.monitoring.sentry_dsn,
+        integrations=[FastApiIntegration()],
+        traces_sample_rate=0.1,
+        environment=shared_settings.monitoring.sentry_environment
+    )
+
+# Prometheus metrics for monitoring
+REQUEST_COUNT = Counter(
+    'auth_api_requests_total', 
+    'Total requests to auth API', 
+    ['method', 'endpoint', 'status_code']
+)
+REQUEST_DURATION = Histogram(
+    'auth_api_request_duration_seconds', 
+    'Request duration in seconds',
+    ['method', 'endpoint']
+)
+OTP_SENT = Counter(
+    'auth_api_otp_sent_total', 
+    'Total OTPs sent', 
+    ['purpose', 'status']
+)
+OTP_VERIFIED = Counter(
+    'auth_api_otp_verified_total', 
+    'Total OTPs verified', 
+    ['purpose', 'status']
+)
+ACTIVE_SESSIONS = Counter(
+    'auth_api_active_sessions_total',
+    'Total active user sessions'
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan manager"""
+    """
+    Application lifespan handler for startup and shutdown events.
+    Manages database connections and other resources.
+    """
     # Startup
-    logger.info("Auth service starting up")
-    
-    # Initialize components
-    await rate_limiter.initialize()
-    await jwt_handler.initialize()
-    
-    logger.info("Auth service startup complete")
+    logger.info("🚀 Starting MSMEBazaar Auth API service")
+    try:
+        await db.connect()
+        logger.info("✅ Database connection established")
+    except Exception as e:
+        logger.error(f"❌ Failed to connect to database: {e}")
+        raise
     
     yield
     
     # Shutdown
-    logger.info("Auth service shutting down")
+    logger.info("🔄 Shutting down MSMEBazaar Auth API service")
+    try:
+        await db.disconnect()
+        logger.info("✅ Database connection closed")
+    except Exception as e:
+        logger.error(f"❌ Error during shutdown: {e}")
 
-
-# Initialize FastAPI app
+# Initialize FastAPI application with comprehensive configuration
 app = FastAPI(
-    title="MSMEBazaar Auth Service",
-    description="Secure authentication and authorization service for MSMEBazaar platform",
-    version="1.0.0",
-    docs_url="/docs" if ENVIRONMENT == "development" else None,
-    redoc_url="/redoc" if ENVIRONMENT == "development" else None,
-    lifespan=lifespan
+    title="MSMEBazaar Auth API",
+    description="""
+    ## Authentication Service for MSMEBazaar V2.0
+    
+    This service handles:
+    - User registration with OTP verification
+    - Login with phone number and OTP
+    - JWT token management (access and refresh tokens)
+    - Session management with Redis
+    - Rate limiting and security measures
+    
+    ### Authentication Flow:
+    1. **Registration**: POST `/api/register` → OTP sent to phone
+    2. **Verification**: POST `/api/verify-otp` → JWT tokens returned
+    3. **Login**: POST `/api/login` → OTP sent to registered phone
+    4. **Token Refresh**: POST `/api/refresh-token` → New access token
+    
+    ### Security Features:
+    - Rate limiting on OTP requests
+    - JWT token expiration and refresh
+    - Redis-based session management
+    - Input validation and sanitization
+    """,
+    version="2.0.0",
+    lifespan=lifespan,
+    docs_url="/docs" if shared_settings.application.enable_swagger else None,
+    redoc_url="/redoc" if shared_settings.application.enable_redoc else None,
+    openapi_tags=[
+        {
+            "name": "Authentication",
+            "description": "User registration, login, and token management"
+        },
+        {
+            "name": "Health",
+            "description": "Service health and monitoring endpoints"
+        }
+    ]
 )
 
-# Add security middleware
-app.add_middleware(SecurityHeadersMiddleware, environment=ENVIRONMENT)
-app.add_middleware(CORSSecurityMiddleware, environment=ENVIRONMENT)
-app.add_middleware(RateLimitMiddleware)
+# Setup exception handlers for standardized error responses
+setup_exception_handlers(app)
 
-# Performance monitoring middleware
+# Add CORS middleware with proper configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=shared_settings.application.cors_origins,
+    allow_credentials=True,
+    allow_methods=shared_settings.application.cors_methods,
+    allow_headers=shared_settings.application.cors_headers,
+)
+
+# Add trusted host middleware for production security
+if shared_settings.is_production():
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=["msmebazaar.com", "*.msmebazaar.com"]
+    )
+
+# Middleware for request logging, metrics, and request ID tracking
 @app.middleware("http")
-async def performance_monitoring_middleware(request: Request, call_next):
-    """Monitor request performance"""
-    start_time = time.time()
+async def request_middleware(request: Request, call_next):
+    """
+    Middleware to handle request logging, metrics collection, and request ID tracking.
+    Adds request ID to all requests for distributed tracing.
+    """
+    start_time = datetime.utcnow()
     
-    # Add correlation ID for request tracing
-    correlation_id = request.headers.get("X-Correlation-ID") or secrets.token_urlsafe(8)
-    request.state.correlation_id = correlation_id
+    # Generate unique request ID for tracing
+    request_id = str(uuid.uuid4())
+    request.state.request_id = request_id
+    
+    # Extract client IP and user agent for logging
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+    
+    # Log incoming request
+    logger.info(
+        "Incoming request",
+        request_id=request_id,
+        method=request.method,
+        url=str(request.url),
+        client_ip=client_ip,
+        user_agent=user_agent
+    )
     
     try:
+        # Process request
         response = await call_next(request)
         
-        # Calculate response time
-        duration_ms = (time.time() - start_time) * 1000
+        # Calculate request duration
+        duration = (datetime.utcnow() - start_time).total_seconds()
         
-        # Log performance metrics
-        performance_logger.log_request_timing(
-            endpoint=str(request.url.path),
+        # Log successful request completion
+        logger.info(
+            "Request completed",
+            request_id=request_id,
             method=request.method,
-            duration_ms=duration_ms,
+            url=str(request.url),
             status_code=response.status_code,
-            correlation_id=correlation_id
+            duration=duration
         )
         
-        # Add correlation ID to response headers
-        response.headers["X-Correlation-ID"] = correlation_id
+        # Update Prometheus metrics
+        REQUEST_COUNT.labels(
+            method=request.method, 
+            endpoint=request.url.path,
+            status_code=response.status_code
+        ).inc()
+        
+        REQUEST_DURATION.labels(
+            method=request.method,
+            endpoint=request.url.path
+        ).observe(duration)
+        
+        # Add request ID to response headers for client-side tracking
+        response.headers["X-Request-ID"] = request_id
         
         return response
         
     except Exception as e:
-        duration_ms = (time.time() - start_time) * 1000
-        
+        # Log request failure
+        duration = (datetime.utcnow() - start_time).total_seconds()
         logger.error(
             "Request failed",
-            endpoint=str(request.url.path),
+            request_id=request_id,
             method=request.method,
-            duration_ms=duration_ms,
+            url=str(request.url),
             error=str(e),
-            correlation_id=correlation_id
+            duration=duration
         )
         
+        # Update error metrics
+        REQUEST_COUNT.labels(
+            method=request.method,
+            endpoint=request.url.path,
+            status_code=500
+        ).inc()
+        
+        # Re-raise the exception to be handled by exception handlers
         raise
 
-
-# Pydantic models
-class UserRegistration(BaseModel):
-    email: EmailStr
-    password: str = Field(..., min_length=8)
-    full_name: str = Field(..., min_length=2, max_length=100)
-    phone: str = Field(..., pattern=r'^[+]?[1-9]\d{1,14}$')
-    user_type: str = Field(..., regex="^(msme_owner|buyer|investor)$")
-    company_name: Optional[str] = None
-    gst_number: Optional[str] = None
-
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
-    device_id: Optional[str] = None
-
-class OTPRequest(BaseModel):
-    phone: str = Field(..., pattern=r'^[+]?[1-9]\d{1,14}$')
-
-class OTPVerification(BaseModel):
-    phone: str = Field(..., pattern=r'^[+]?[1-9]\d{1,14}$')
-    otp: str = Field(..., pattern=r'^\d{6}$')
-
-class PasswordReset(BaseModel):
-    email: EmailStr
-
-class PasswordUpdate(BaseModel):
-    token: str
-    new_password: str = Field(..., min_length=8)
-
-class TokenRefresh(BaseModel):
-    refresh_token: str
-
-
-# Database connection
-async def get_db_connection():
-    """Get database connection"""
-    return await asyncpg.connect(DATABASE_URL)
-
-
-# Helper functions
-def get_client_ip(request: Request) -> str:
-    """Extract client IP address"""
-    forwarded_for = request.headers.get("X-Forwarded-For")
-    if forwarded_for:
-        return forwarded_for.split(",")[0].strip()
-    return request.client.host
-
-
-async def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify password against hash"""
-    from passlib.context import CryptContext
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-async def hash_password(password: str) -> str:
-    """Hash password"""
-    from passlib.context import CryptContext
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    return pwd_context.hash(password)
-
-
-# API Endpoints
-
-@app.get("/health")
+# Health check endpoint with comprehensive service monitoring
+@app.get("/health", response_model=HealthCheckResponse, tags=["Health"])
 async def health_check():
-    """Health check endpoint"""
-    return {
-        "status": "healthy",
-        "service": "auth-service",
-        "timestamp": datetime.utcnow(),
-        "version": "1.0.0"
-    }
-
-
-@app.post("/api/auth/register")
-async def register_user(
-    user_data: UserRegistration,
-    request: Request,
-    _: None = Depends(auth_rate_limit)
-):
-    """Register a new user"""
-    client_ip = get_client_ip(request)
+    """
+    Comprehensive health check endpoint that monitors all service dependencies.
     
+    Returns:
+        HealthCheckResponse: Detailed health status of the service and its dependencies
+    """
+    start_time = datetime.utcnow()
+    services = []
+    overall_status = "healthy"
+    
+    # Check database connection
     try:
-        conn = await get_db_connection()
+        db_start = datetime.utcnow()
+        async with db.get_connection() as conn:
+            await conn.fetchval("SELECT 1")
+        db_duration = (datetime.utcnow() - db_start).total_seconds()
         
-        # Check if user already exists
-        existing_user = await conn.fetchrow(
-            "SELECT id FROM users WHERE email = $1 OR phone = $2",
-            user_data.email, user_data.phone
+        services.append(ServiceHealth(
+            service="postgresql",
+            status="healthy",
+            response_time=db_duration,
+            details={"connection_pool": "active"}
+        ))
+        
+        logger.info("Database health check passed", response_time=db_duration)
+        
+    except Exception as e:
+        services.append(ServiceHealth(
+            service="postgresql",
+            status="unhealthy",
+            response_time=0.0,
+            details={"error": str(e)}
+        ))
+        overall_status = "unhealthy"
+        logger.error("Database health check failed", error=str(e))
+    
+    # Check Redis connection
+    try:
+        redis_start = datetime.utcnow()
+        redis_client = await db.get_redis()
+        await redis_client.ping()
+        redis_duration = (datetime.utcnow() - redis_start).total_seconds()
+        
+        services.append(ServiceHealth(
+            service="redis",
+            status="healthy",
+            response_time=redis_duration,
+            details={"connection": "active"}
+        ))
+        
+        logger.info("Redis health check passed", response_time=redis_duration)
+        
+    except Exception as e:
+        services.append(ServiceHealth(
+            service="redis",
+            status="unhealthy",
+            response_time=0.0,
+            details={"error": str(e)}
+        ))
+        overall_status = "unhealthy"
+        logger.error("Redis health check failed", error=str(e))
+    
+    # Calculate total uptime (placeholder - should be tracked from service start)
+    total_uptime = (datetime.utcnow() - start_time).total_seconds()
+    
+    return HealthCheckResponse(
+        success=overall_status == "healthy",
+        message=f"Auth API is {overall_status}",
+        status=overall_status,
+        services=services,
+        uptime=total_uptime,
+        version="2.0.0"
+    )
+
+# Metrics endpoint for Prometheus monitoring
+@app.get("/metrics", tags=["Health"])
+async def metrics():
+    """
+    Prometheus metrics endpoint for monitoring and alerting.
+    
+    Returns:
+        PlainTextResponse: Prometheus-formatted metrics data
+    """
+    return PlainTextResponse(
+        generate_latest(),
+        media_type="text/plain; version=0.0.4; charset=utf-8"
+    )
+
+# Authentication endpoints
+@app.post("/api/register", response_model=OTPResponse)
+async def register_user(
+    request: RegisterRequest,
+    db_conn: asyncpg.Connection = Depends(get_db_connection),
+    redis_client: redis.Redis = Depends(get_redis_client)
+):
+    """
+    Register a new user and send OTP for verification
+    
+    - **phone**: Phone number with country code (e.g., +919876543210)
+    - **name**: User's full name (optional)
+    - **email**: User's email address (optional)
+    - **role**: User role (MSME, BUYER, ADMIN)
+    """
+    try:
+        auth_service = AuthService(db_conn, redis_client)
+        
+        # Create user data
+        user_data = UserCreate(
+            phone=request.phone,
+            email=request.email,
+            name=request.name,
+            role=request.role
         )
         
-        if existing_user:
-            security_logger.log_auth_failure(
-                attempted_user=user_data.email,
-                method="registration",
-                ip_address=client_ip,
-                reason="user_already_exists"
-            )
+        # Register user
+        result = await auth_service.register_user(user_data)
+        
+        if not result["success"]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User with this email or phone already exists"
+                detail=result["message"]
             )
         
-        # Hash password
-        hashed_password = await hash_password(user_data.password)
-        
-        # Insert user
-        user_id = await conn.fetchval(
-            """
-            INSERT INTO users (email, password_hash, full_name, phone, user_type, 
-                              company_name, gst_number, is_verified, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, false, $8)
-            RETURNING id
-            """,
-            user_data.email, hashed_password, user_data.full_name,
-            user_data.phone, user_data.user_type, user_data.company_name,
-            user_data.gst_number, datetime.utcnow()
-        )
-        
-        await conn.close()
-        
-        # Create verification token
-        verification_token = jwt_handler.create_email_verification_token(
-            user_data.email, str(user_id)
-        )
-        
-        # Log successful registration
-        security_logger.log_auth_success(
-            user_id=str(user_id),
-            method="registration",
-            ip_address=client_ip,
-            email=user_data.email
-        )
+        # Update metrics
+        OTP_SENT.labels(purpose=OTPPurpose.REGISTRATION.value).inc()
         
         logger.info(
-            "User registered successfully",
-            user_id=user_id,
-            email=user_data.email,
-            user_type=user_data.user_type
+            "User registration initiated",
+            phone=request.phone,
+            role=request.role.value
         )
         
-        return {
-            "message": "User registered successfully",
-            "user_id": user_id,
-            "verification_token": verification_token
-        }
+        return result["otp_response"]
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("Registration failed", error=str(e), email=user_data.email)
+        logger.error("Registration failed", error=str(e), phone=request.phone)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Registration failed"
+            detail="Registration failed. Please try again."
         )
 
-
-@app.post("/api/auth/login")
-async def login_user(
-    login_data: UserLogin,
-    request: Request,
-    _: None = Depends(auth_rate_limit)
+@app.post("/api/verify-otp", response_model=TokenResponse)
+async def verify_otp(
+    request: VerifyOTPRequest,
+    db_conn: asyncpg.Connection = Depends(get_db_connection),
+    redis_client: redis.Redis = Depends(get_redis_client)
 ):
-    """Authenticate user and return tokens"""
-    client_ip = get_client_ip(request)
+    """
+    Verify OTP and complete registration or login
     
+    - **phone**: Phone number with country code
+    - **otp**: 6-digit OTP code
+    - **purpose**: Purpose of OTP (REGISTRATION, LOGIN, etc.)
+    """
     try:
-        conn = await get_db_connection()
+        auth_service = AuthService(db_conn, redis_client)
         
-        # Get user by email
-        user = await conn.fetchrow(
-            """
-            SELECT id, email, password_hash, full_name, user_type, 
-                   is_verified, is_active, failed_login_attempts, locked_until
-            FROM users WHERE email = $1
-            """,
-            login_data.email
+        # Verify OTP
+        result = await auth_service.verify_otp(request.phone, request.otp, request.purpose)
+        
+        if not result["success"]:
+            OTP_VERIFIED.labels(purpose=request.purpose.value, status="failed").inc()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=result["message"]
+            )
+        
+        # Update metrics
+        OTP_VERIFIED.labels(purpose=request.purpose.value, status="success").inc()
+        
+        logger.info(
+            "OTP verified successfully",
+            phone=request.phone,
+            purpose=request.purpose.value
+        )
+        
+        return TokenResponse(
+            access_token=result["tokens"]["access_token"],
+            refresh_token=result["tokens"]["refresh_token"],
+            token_type=result["tokens"]["token_type"],
+            expires_in=result["tokens"]["expires_in"],
+            user=result["user"]
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("OTP verification failed", error=str(e), phone=request.phone)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="OTP verification failed. Please try again."
+        )
+
+@app.post("/api/login", response_model=OTPResponse)
+async def login_user(
+    request: LoginRequest,
+    db_conn: asyncpg.Connection = Depends(get_db_connection),
+    redis_client: redis.Redis = Depends(get_redis_client)
+):
+    """
+    Initiate login by sending OTP to registered phone number
+    
+    - **phone**: Registered phone number with country code
+    """
+    try:
+        auth_service = AuthService(db_conn, redis_client)
+        
+        # Initiate login
+        result = await auth_service.login_user(request.phone)
+        
+        if not result.success:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=result.message
+            )
+        
+        # Update metrics
+        OTP_SENT.labels(purpose=OTPPurpose.LOGIN.value).inc()
+        
+        logger.info("Login OTP sent", phone=request.phone)
+        
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Login failed", error=str(e), phone=request.phone)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Login failed. Please try again."
+        )
+
+@app.post("/api/resend-otp", response_model=OTPResponse)
+async def resend_otp(
+    request: ResendOTPRequest,
+    db_conn: asyncpg.Connection = Depends(get_db_connection),
+    redis_client: redis.Redis = Depends(get_redis_client)
+):
+    """
+    Resend OTP for registration or login
+    
+    - **phone**: Phone number with country code
+    - **purpose**: Purpose of OTP (REGISTRATION, LOGIN, etc.)
+    """
+    try:
+        auth_service = AuthService(db_conn, redis_client)
+        
+        # Get user
+        user = await db_conn.fetchrow(
+            "SELECT id FROM users WHERE phone = $1",
+            request.phone
         )
         
         if not user:
-            security_logger.log_auth_failure(
-                attempted_user=login_data.email,
-                method="login",
-                ip_address=client_ip,
-                reason="user_not_found"
-            )
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
             )
         
-        # Check account status
-        if not user['is_active']:
-            security_logger.log_auth_failure(
-                attempted_user=login_data.email,
-                method="login",
-                ip_address=client_ip,
-                reason="account_disabled"
-            )
+        # Resend OTP
+        result = await auth_service.send_otp(user['id'], request.phone, request.purpose)
+        
+        if not result.success:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Account is disabled"
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=result.message
             )
         
-        # Check if account is locked
-        if user['locked_until'] and user['locked_until'] > datetime.utcnow():
-            security_logger.log_auth_failure(
-                attempted_user=login_data.email,
-                method="login",
-                ip_address=client_ip,
-                reason="account_locked"
-            )
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Account is temporarily locked"
-            )
+        # Update metrics
+        OTP_SENT.labels(purpose=request.purpose.value).inc()
         
-        # Verify password
-        if not await verify_password(login_data.password, user['password_hash']):
-            # Increment failed login attempts
-            failed_attempts = user['failed_login_attempts'] + 1
-            locked_until = None
-            
-            if failed_attempts >= 5:
-                from datetime import timedelta
-                locked_until = datetime.utcnow() + timedelta(minutes=30)
-            
-            await conn.execute(
-                "UPDATE users SET failed_login_attempts = $1, locked_until = $2 WHERE id = $3",
-                failed_attempts, locked_until, user['id']
-            )
-            
-            security_logger.log_auth_failure(
-                attempted_user=login_data.email,
-                method="login",
-                ip_address=client_ip,
-                reason="invalid_password",
-                failed_attempts=failed_attempts
-            )
-            
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password"
-            )
+        logger.info("OTP resent", phone=request.phone, purpose=request.purpose.value)
         
-        # Reset failed login attempts on successful login
-        await conn.execute(
-            "UPDATE users SET failed_login_attempts = 0, locked_until = NULL, last_login = $1 WHERE id = $2",
-            datetime.utcnow(), user['id']
-        )
-        
-        await conn.close()
-        
-        # Create tokens
-        user_data = {
-            "user_id": str(user['id']),
-            "email": user['email'],
-            "full_name": user['full_name'],
-            "user_type": user['user_type'],
-            "roles": [user['user_type']],  # Basic role assignment
-            "permissions": []  # Would be populated based on user type
-        }
-        
-        tokens = create_token_pair(user_data, login_data.device_id)
-        
-        # Log successful authentication
-        security_logger.log_auth_success(
-            user_id=str(user['id']),
-            method="login",
-            ip_address=client_ip,
-            device_id=login_data.device_id
-        )
-        
-        logger.info(
-            "User logged in successfully",
-            user_id=user['id'],
-            email=user['email']
-        )
-        
-        return {
-            "message": "Login successful",
-            "user": {
-                "id": user['id'],
-                "email": user['email'],
-                "full_name": user['full_name'],
-                "user_type": user['user_type'],
-                "is_verified": user['is_verified']
-            },
-            **tokens
-        }
+        return result
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("Login failed", error=str(e), email=login_data.email)
+        logger.error("OTP resend failed", error=str(e), phone=request.phone)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Login failed"
+            detail="Failed to resend OTP. Please try again."
         )
 
-
-@app.post("/api/auth/refresh")
-async def refresh_tokens(
-    token_data: TokenRefresh,
-    request: Request
+@app.post("/api/refresh-token", response_model=TokenResponse)
+async def refresh_token(
+    request: RefreshTokenRequest,
+    db_conn: asyncpg.Connection = Depends(get_db_connection),
+    redis_client: redis.Redis = Depends(get_redis_client)
 ):
-    """Refresh access token using refresh token"""
+    """
+    Refresh access token using refresh token
+    
+    - **refresh_token**: Valid refresh token
+    """
     try:
-        new_tokens = await jwt_handler.refresh_access_token(token_data.refresh_token)
+        auth_service = AuthService(db_conn, redis_client)
         
-        if not new_tokens:
+        # Refresh token
+        result = await auth_service.refresh_token(request.refresh_token)
+        
+        # Get user info
+        from jose import jwt
+        payload = jwt.decode(request.refresh_token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+        user_id = payload.get("sub")
+        
+        user = await db_conn.fetchrow(
+            "SELECT id, phone, email, name, role, is_verified, is_active, created_at, updated_at FROM users WHERE id = $1",
+            user_id
+        )
+        
+        if not user:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired refresh token"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
             )
         
-        return {
-            "message": "Tokens refreshed successfully",
-            **new_tokens
-        }
+        from models import UserResponse, Role
+        user_response = UserResponse(
+            id=user['id'],
+            phone=user['phone'],
+            email=user['email'],
+            name=user['name'],
+            role=Role(user['role']),
+            is_verified=user['is_verified'],
+            is_active=user['is_active'],
+            created_at=user['created_at'],
+            updated_at=user['updated_at']
+        )
+        
+        return TokenResponse(
+            access_token=result["access_token"],
+            refresh_token=result["refresh_token"],
+            token_type=result["token_type"],
+            expires_in=result["expires_in"],
+            user=user_response
+        )
         
     except HTTPException:
         raise
     except Exception as e:
         logger.error("Token refresh failed", error=str(e))
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Token refresh failed"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token"
         )
 
-
-@app.post("/api/auth/logout")
-async def logout_user(
-    request: Request,
-    user: Dict[str, Any] = Depends(require_auth)
+@app.post("/api/logout")
+async def logout(
+    request: RefreshTokenRequest,
+    db_conn: asyncpg.Connection = Depends(get_db_connection),
+    redis_client: redis.Redis = Depends(get_redis_client)
 ):
-    """Logout user and invalidate tokens"""
+    """
+    Logout user by invalidating session
+    
+    - **refresh_token**: Valid refresh token
+    """
     try:
-        # Get token JTI for blacklisting
-        jti = user.get("jti")
-        if jti:
-            await jwt_handler.blacklist_token(jti)
+        auth_service = AuthService(db_conn, redis_client)
         
-        # Log logout
-        security_logger.log_auth_success(
-            user_id=user.get("sub"),
-            method="logout",
-            ip_address=get_client_ip(request)
-        )
+        # Logout user
+        success = await auth_service.logout(request.refresh_token)
+        
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Logout failed"
+            )
+        
+        logger.info("User logged out successfully")
         
         return {"message": "Logged out successfully"}
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Logout failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Logout failed"
+            detail="Logout failed. Please try again."
         )
-
-
-@app.post("/api/auth/otp/send")
-async def send_otp(
-    otp_request: OTPRequest,
-    request: Request,
-    _: None = Depends(otp_rate_limit)
-):
-    """Send OTP to phone number"""
-    try:
-        # Generate 6-digit OTP
-        otp = f"{secrets.randbelow(1000000):06d}"
-        
-        # Store OTP in Redis with 5-minute expiry
-        redis_client = await rate_limiter.redis_client
-        await redis_client.setex(f"otp:{otp_request.phone}", 300, otp)
-        
-        # TODO: Integrate with SMS service (Twilio, AWS SNS, etc.)
-        # For now, we'll just log it (remove in production)
-        if ENVIRONMENT == "development":
-            logger.info("OTP generated", phone=otp_request.phone, otp=otp)
-        
-        logger.info("OTP sent successfully", phone=otp_request.phone)
-        
-        return {"message": "OTP sent successfully"}
-        
-    except Exception as e:
-        logger.error("OTP sending failed", error=str(e), phone=otp_request.phone)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to send OTP"
-        )
-
-
-@app.post("/api/auth/otp/verify")
-async def verify_otp(
-    otp_data: OTPVerification,
-    request: Request,
-    _: None = Depends(auth_rate_limit)
-):
-    """Verify OTP"""
-    try:
-        # Get OTP from Redis
-        redis_client = await rate_limiter.redis_client
-        stored_otp = await redis_client.get(f"otp:{otp_data.phone}")
-        
-        if not stored_otp or stored_otp != otp_data.otp:
-            security_logger.log_auth_failure(
-                attempted_user=otp_data.phone,
-                method="otp_verification",
-                ip_address=get_client_ip(request),
-                reason="invalid_otp"
-            )
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid OTP"
-            )
-        
-        # Delete OTP after successful verification
-        await redis_client.delete(f"otp:{otp_data.phone}")
-        
-        logger.info("OTP verified successfully", phone=otp_data.phone)
-        
-        return {"message": "OTP verified successfully"}
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error("OTP verification failed", error=str(e), phone=otp_data.phone)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="OTP verification failed"
-        )
-
-
-@app.get("/api/auth/profile")
-async def get_user_profile(
-    request: Request,
-    user: Dict[str, Any] = Depends(require_auth)
-):
-    """Get current user profile"""
-    try:
-        conn = await get_db_connection()
-        
-        user_profile = await conn.fetchrow(
-            """
-            SELECT id, email, full_name, phone, user_type, company_name, 
-                   gst_number, is_verified, created_at, last_login
-            FROM users WHERE id = $1
-            """,
-            int(user["sub"])
-        )
-        
-        await conn.close()
-        
-        if not user_profile:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
-        
-        # Log data access
-        security_logger.log_data_access(
-            user_id=user["sub"],
-            resource="user_profile",
-            action="read"
-        )
-        
-        return {
-            "user": dict(user_profile)
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error("Failed to get user profile", error=str(e), user_id=user.get("sub"))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get user profile"
-        )
-
-
-@app.get("/api/auth/admin/users")
-async def list_users(
-    request: Request,
-    user: Dict[str, Any] = Depends(require_admin),
-    page: int = 1,
-    limit: int = 20
-):
-    """List users (admin only)"""
-    try:
-        conn = await get_db_connection()
-        
-        offset = (page - 1) * limit
-        
-        users = await conn.fetch(
-            """
-            SELECT id, email, full_name, phone, user_type, company_name,
-                   is_verified, is_active, created_at, last_login
-            FROM users
-            ORDER BY created_at DESC
-            LIMIT $1 OFFSET $2
-            """,
-            limit, offset
-        )
-        
-        total_users = await conn.fetchval("SELECT COUNT(*) FROM users")
-        
-        await conn.close()
-        
-        # Log admin action
-        security_logger.log_admin_action(
-            admin_user_id=user["sub"],
-            action="list_users",
-            target="users_table"
-        )
-        
-        return {
-            "users": [dict(user) for user in users],
-            "total": total_users,
-            "page": page,
-            "limit": limit
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error("Failed to list users", error=str(e))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to list users"
-        )
-
-
-@app.get("/metrics")
-async def get_prometheus_metrics():
-    """Prometheus metrics endpoint"""
-    from prometheus_client import generate_latest
-    return Response(
-        content=generate_latest(),
-        media_type="text/plain"
-    )
-
 
 # Error handlers
 @app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    """Handle HTTP exceptions"""
-    logger.warning(
-        "HTTP exception",
-        status_code=exc.status_code,
-        detail=exc.detail,
-        path=request.url.path
-    )
-    
+async def http_exception_handler(request, exc):
     return JSONResponse(
         status_code=exc.status_code,
-        content={
-            "error": exc.detail,
-            "status_code": exc.status_code,
-            "timestamp": datetime.utcnow().isoformat()
-        }
+        content=ErrorResponse(
+            error=exc.__class__.__name__,
+            message=exc.detail
+        ).dict()
     )
-
 
 @app.exception_handler(Exception)
-async def general_exception_handler(request: Request, exc: Exception):
-    """Handle general exceptions"""
-    logger.error(
-        "Unhandled exception",
-        error=str(exc),
-        path=request.url.path,
-        exc_info=True
-    )
-    
+async def general_exception_handler(request, exc):
+    logger.error("Unhandled exception", error=str(exc), path=request.url.path)
     return JSONResponse(
         status_code=500,
-        content={
-            "error": "Internal server error",
-            "status_code": 500,
-            "timestamp": datetime.utcnow().isoformat()
-        }
+        content=ErrorResponse(
+            error="InternalServerError",
+            message="An unexpected error occurred"
+        ).dict()
     )
-
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8001,
-        reload=ENVIRONMENT == "development",
-        log_config=None  # We handle logging ourselves
-    )
+    uvicorn.run(app, host="0.0.0.0", port=8000)
