@@ -16,7 +16,7 @@ export interface RegisterRequest {
   phone: string;
   name?: string;
   email?: string;
-  role: 'MSME' | 'BUYER' | 'ADMIN';
+  role: 'MSME' | 'BUYER' |'AGENT' | 'USER';
 }
 
 export interface VerifyOTPRequest {

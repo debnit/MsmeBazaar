@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+psycopg2-binary
+SQLAlchemy
+python-dotenv
+redis>=5.0.0
+prometheus_client>=0.20.0
+asyncpg
+asyncpg
+httpx
