@@ -1,30 +1,56 @@
-from pydantic_settings import BaseSettings
+# app/config.py
 from functools import lru_cache
+from pydantic_settings import BaseSettings
+from pydantic import Field
+import os
+import sys
+
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "MSMEBazaar Auth Service"
-    ENVIRONMENT: str = "development"
-    DEBUG: bool = True
+    # Core
+    ENV: str = Field(default="development", description="Environment name")
+    DEBUG: bool = Field(default=False, description="Enable debug mode")
 
-    DATABASE_URL: str
-    REDIS_URL: str
-    JWT_SECRET: str
-    JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    # Database
+    DATABASE_URL: str = Field(..., description="PostgreSQL connection string")
 
-    TWILIO_ACCOUNT_SID: str
-    TWILIO_AUTH_TOKEN: str
-    TWILIO_FROM_NUMBER: str
+    # Redis
+    REDIS_URL: str = Field(..., description="Redis connection string")
 
-    PROMETHEUS_ENABLED: bool = True
-    SENTRY_DSN: str | None = None
+    # Auth / Security
+    JWT_SECRET: str = Field(..., description="JWT secret key")
+    JWT_ALGORITHM: str = Field(default="HS256", description="JWT signing algorithm")
+    JWT_EXPIRATION_SECONDS: int = Field(default=3600, description="JWT expiration in seconds")
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    # Twilio (for OTP)
+    TWILIO_ACCOUNT_SID: str = Field(..., description="Twilio account SID")
+    TWILIO_AUTH_TOKEN: str = Field(..., description="Twilio auth token")
+    TWILIO_FROM_NUMBER: str = Field(..., description="Twilio sender number")
 
-@lru_cache
+    # Monitoring & Logging
+    SENTRY_DSN: str | None = Field(default=None, description="Sentry DSN for error tracking")
+    PROMETHEUS_ENABLED: bool = Field(default=True, description="Enable Prometheus metrics")
+
+    # Application
+    PROJECT_NAME: str = Field(default="Auth Service", description="Name of the service")
+    API_V1_PREFIX: str = Field(default="/api/v1", description="API version prefix")
+
+    model_config = {
+        # Use .env for real values in dev/local
+        "env_file": os.path.join(os.path.dirname(__file__), "..", ".env.example"),
+        "env_file_encoding": "utf-8",
+        "case_sensitive": True
+    }
+
+
+@lru_cache()
 def get_settings() -> Settings:
-    return Settings()
+    """Cached settings object."""
+    try:
+        return Settings()
+    except Exception as e:
+        print(f"❌ Failed to load settings: {e}", file=sys.stderr)
+        raise
+
 
 settings = get_settings()

@@ -38,7 +38,7 @@ const dirs = [
   "apps/sadmin-saas/pages",
 
   // --- Admin SaaS ---
-  "apps/admin-web",
+  "apps/admin-saas",
   "apps/admin-saas/features/nbfc-onboarding",
   "apps/admin-saas/features/global-loan-rules",
   "apps/admin-saas/features/loan-analytics",
@@ -127,16 +127,14 @@ dirs.forEach((dir) => {
 
 // ------------------ 3. MOVE CODE PRESERVING HISTORY ------------------ //
 const moveMap: Record<string, string> = {
+  
+  "client/src/components/loan": "apps/web/features/user -m ""/loan",
   "client/src/pages/buyer": "apps/web/features/buyer",
   "client/src/pages/seller": "apps/web/features/seller",
   "client/src/pages/agent": "apps/web/features/agent",
   "client/src/pages/nbfc": "apps/web/features/nbfc",
-  "frontend/src/auth": "apps/web/features/auth",
-  "frontend/src/components": "apps/web/components",
+  "apps/web/components/admin": "apps/admin-SaaS",
   "frontend/src/lib": "apps/web/lib",
-  "microservices/auth-service/src": "microservices/auth-service/src",
-  "microservices/msme-service/src": "microservices/msme-service/src",
-  "microservices/loan-service/src": "microservices/loan-service/src",
   "libs/shared/schema": "libs/shared/schema",
   "libs/shared/utils": "libs/shared/utils",
   "shared/constants": "libs/shared/constants",

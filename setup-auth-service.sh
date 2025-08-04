@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     SENTRY_DSN: str | None = None
 
     class Config:
-        env_file = ".env"
+        env_file = ".env.example"
         case_sensitive = True
 
 @lru_cache
@@ -156,8 +156,8 @@ cat > $AUTH_DIR/requirements.txt <<'EOL'
 fastapi==0.111.0
 uvicorn[standard]==0.30.0
 pydantic-settings==2.3.0
-SQLAlchemy==2.0.31
-psycopg2-binary==2.9.9
+sqlalchemy[asyncio]==2.0.31
+asyncpg==0.29.0
 redis==5.0.4
 passlib[argon2]==1.7.4
 python-jose[cryptography]==3.3.0
@@ -184,12 +184,12 @@ EOL
 # 9. Create .env.example
 # ====================================================
 cat > $AUTH_DIR/.env.example <<'EOL'
-DATABASE_URL=postgresql+psycopg2://user:password@localhost:5432/msmebazaar_auth
-REDIS_URL=redis://localhost:6379/0
-JWT_SECRET=change_this_secret
-TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxx
-TWILIO_AUTH_TOKEN=your_twilio_auth_token
-TWILIO_FROM_NUMBER=+1234567890
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/msmebazaar
+REDIS_URL=redis://localhost:6379
+JWT_SECRET=2vLeBDsN6xU5+ZgoLDMlfZ07qS5nqvRMuwDCdO6EOQs=
+TWILIO_ACCOUNT_SID=AC01330a8304f53fa9048179c9f9658ca8
+TWILIO_AUTH_TOKEN=682928ff74d5b59dde39f3aa04740a8d
+TWILIO_FROM_NUMBER=+91-8260895728
 EOL
 
 # ====================================================
