@@ -1,10 +1,16 @@
-import apiClient from './client';
+import axios from "axios";
 
-export const complianceApi = {
-  verifyAadhaar: (aadhaar: string) =>
-    apiClient.post('/compliance/aadhaar', { aadhaar }).then(res => res.data),
-  verifyGST: (gst: string) =>
-    apiClient.post('/compliance/gst', { gst }).then(res => res.data),
-  getComplianceStatus: (entityId: string) =>
-    apiClient.get(`/compliance/status/${entityId}`).then(res => res.data),
-};
+const API_URL =
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL || "http://localhost:6000/api";
+
+export const complianceClient = axios.create({
+  baseURL: `${API_URL}/compliance`,
+  timeout: 10000,
+  headers: { "Content-Type": "application/json" },
+});
+
+// Example API Call
+export async function example() {
+  const { data } = await complianceClient.get("/");
+  return data;
+}

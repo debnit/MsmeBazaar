@@ -1,7 +1,16 @@
-import apiClient from './client';
+import axios from "axios";
 
-export const sellerApi = {
-  getSellers: () => apiClient.get('/seller/list').then(res => res.data),
-  registerSeller: (data: { name: string; email: string }) =>
-    apiClient.post('/seller/register', data).then(res => res.data),
-};
+const API_URL =
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL || "http://localhost:6000/api";
+
+export const sellerserviceClient = axios.create({
+  baseURL: `${API_URL}/sellerservice`,
+  timeout: 10000,
+  headers: { "Content-Type": "application/json" },
+});
+
+// Example API Call
+export async function example() {
+  const { data } = await sellerserviceClient.get("/");
+  return data;
+}

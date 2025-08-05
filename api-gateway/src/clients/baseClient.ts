@@ -1,29 +1,26 @@
 import axios from "axios";
-import axiosRetry from "axios-retry";
-import { createCircuitBreaker } from "../services/circuitBreaker";
-import { logger } from "../utils/logger";
+import CircuitBreaker from "opossum";
+import { v4 as uuidv4 } from "uuid";
 
-export function createHttpClient(baseURL: string, timeout = 5000) {
-  const client = axios.create({ baseURL, timeout });
-
-  // Retry failed requests (network or 5xx)
-  axiosRetry(client, {
-    retries: 3,
-    retryDelay: axiosRetry.exponentialDelay,
-    retryCondition: err =>
-      axiosRetry.isNetworkOrIdempotentRequestError(err) || err.response?.status >= 500
+export function createBaseClient(baseURL: string) {
+  const instance = axios.create({
+    baseURL,
+    timeout: 8000,
+    headers: { "Content-Type": "application/json" }
   });
 
-  // Wrap with circuit breaker
-  const breaker = createCircuitBreaker(async (config: any) => {
-    const res = await client.request(config);
-    return res.data;
+  instance.interceptors.request.use(config => {
+    config.headers["X-Request-ID"] = uuidv4();
+    return config;
   });
+
+  const breaker = new CircuitBreaker(
+    (requestConfig: any) => instance(requestConfig),
+    { timeout: 10000, errorThresholdPercentage: 50, resetTimeout: 30000 }
+  );
 
   return {
-    request: (config: any) => breaker.fire(config).catch(err => {
-      logger.error(`[HTTP Client Error] ${err.message}`);
-      throw err;
-    })
+    request: (config: any) => breaker.fire(config),
+    axiosInstance: instance
   };
 }

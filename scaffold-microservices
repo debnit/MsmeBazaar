@@ -1,0 +1,162 @@
+import os
+from pathlib import Path
+
+BASE_DIR = Path("microservices")
+SKIP_SERVICES = {"auth-service", "notification-service"}
+
+SERVICES = [
+    "msme-service", "valuation-service", "matchmaking-service", "admin-service",
+    "compliance-service", "eaasservice", "gamificationservice", "loanservice",
+    "mlmonitoringservice", "msmelistingservice", "nbfcservice", "paymentservice",
+    "recommendationservice", "searchmatchmakingservice", "sellerservice",
+    "transactionmatchingservice", "userprofileservice"
+]
+
+REQUIREMENTS = """fastapi
+uvicorn
+pydantic
+sqlalchemy
+databases
+redis
+python-dotenv
+loguru
+"""
+
+DOCKERFILE = """FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+"""
+
+MAIN_PY = """from fastapi import FastAPI
+from app.api.v1.routes import items, health
+from app.core.logger import logger
+
+app = FastAPI(title="Service API")
+
+app.include_router(health.router, prefix="/health", tags=["Health"])
+app.include_router(items.router, prefix="/items", tags=["Items"])
+
+@app.on_event("startup")
+async def startup_event():
+    logger.info("🚀 Service starting up...")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    logger.info("🛑 Service shutting down...")
+"""
+
+CONFIG_PY = """import os
+from dotenv import load_dotenv
+load_dotenv()
+
+class Settings:
+    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "Service API")
+    DB_URL: str = os.getenv("DB_URL", "sqlite:///./app.db")
+    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")
+
+settings = Settings()
+"""
+
+LOGGER_PY = """from loguru import logger
+import sys
+
+logger.remove()
+logger.add(sys.stdout, format="{time} | {level} | {message}", level="INFO")
+"""
+
+EXCEPTIONS_PY = """from fastapi import Request
+from fastapi.responses import JSONResponse
+
+async def http_error_handler(_: Request, exc: Exception):
+    return JSONResponse(status_code=500, content={"error": str(exc)})
+"""
+
+HEALTH_ROUTE = """from fastapi import APIRouter
+
+router = APIRouter()
+
+@router.get("/")
+async def health_check():
+    return {"status": "ok"}
+"""
+
+ITEMS_ROUTE = """from fastapi import APIRouter
+from typing import List
+from app.schemas.item import Item, ItemCreate
+from app.services.item_service import ItemService
+
+router = APIRouter()
+service = ItemService()
+
+@router.get("/", response_model=List[Item])
+async def get_items():
+    return service.get_all()
+
+@router.post("/", response_model=Item)
+async def create_item(item: ItemCreate):
+    return service.create(item)
+"""
+
+ITEM_SCHEMA = """from pydantic import BaseModel
+
+class ItemBase(BaseModel):
+    name: str
+
+class ItemCreate(ItemBase):
+    pass
+
+class Item(ItemBase):
+    id: int
+
+    class Config:
+        orm_mode = True
+"""
+
+ITEM_SERVICE = """from app.schemas.item import Item, ItemCreate
+
+class ItemService:
+    def __init__(self):
+        self._items = []
+        self._counter = 1
+
+    def get_all(self):
+        return self._items
+
+    def create(self, item: ItemCreate):
+        new_item = Item(id=self._counter, **item.dict())
+        self._items.append(new_item)
+        self._counter += 1
+        return new_item
+"""
+
+def create_microservice(name):
+    service_dir = BASE_DIR / name
+    os.makedirs(service_dir / "app" / "api" / "v1" / "routes", exist_ok=True)
+    os.makedirs(service_dir / "app" / "core", exist_ok=True)
+    os.makedirs(service_dir / "app" / "schemas", exist_ok=True)
+    os.makedirs(service_dir / "app" / "services", exist_ok=True)
+    os.makedirs(service_dir / "tests" / "unit", exist_ok=True)
+    os.makedirs(service_dir / "tests" / "integration", exist_ok=True)
+
+    # Write core files
+    (service_dir / "requirements.txt").write_text(REQUIREMENTS)
+    (service_dir / "Dockerfile").write_text(DOCKERFILE)
+    (service_dir / "app" / "main.py").write_text(MAIN_PY)
+    (service_dir / "app" / "config.py").write_text(CONFIG_PY)
+    (service_dir / "app" / "core" / "logger.py").write_text(LOGGER_PY)
+    (service_dir / "app" / "core" / "exceptions.py").write_text(EXCEPTIONS_PY)
+    (service_dir / "app" / "api" / "v1" / "routes" / "health.py").write_text(HEALTH_ROUTE)
+    (service_dir / "app" / "api" / "v1" / "routes" / "items.py").write_text(ITEMS_ROUTE)
+    (service_dir / "app" / "schemas" / "item.py").write_text(ITEM_SCHEMA)
+    (service_dir / "app" / "services" / "item_service.py").write_text(ITEM_SERVICE)
+
+    print(f"✅ Created Python microservice: {name}")
+
+if __name__ == "__main__":
+    for svc in SERVICES:
+        if svc not in SKIP_SERVICES:
+            create_microservice(svc)
+    print("\n🎯 All Python microservices scaffolded successfully!")

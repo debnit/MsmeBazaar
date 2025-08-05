@@ -1,6 +1,16 @@
-import apiClient from './client';
+import axios from "axios";
 
-export const recommendationApi = {
-  getRecommendations: (userId: string, context?: string) =>
-    apiClient.get(`/recommendation/user/${userId}`, { params: { context } }).then(res => res.data),
-};
+const API_URL =
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL || "http://localhost:6000/api";
+
+export const recommendationserviceClient = axios.create({
+  baseURL: `${API_URL}/recommendationservice`,
+  timeout: 10000,
+  headers: { "Content-Type": "application/json" },
+});
+
+// Example API Call
+export async function example() {
+  const { data } = await recommendationserviceClient.get("/");
+  return data;
+}

@@ -1,47 +1,32 @@
 import { Router } from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { verifyJwt } from "../middlewares/auth";
-import { config } from "../config/env";
 import { createCircuitBreaker } from "../services/circuitBreaker";
-import { logger } from "../utils/logger";
+import { servicesConfig } from "../config/services";
 
 const router = Router();
 
-const services = {
-  auth: config.AUTH_SERVICE_URL,
-  msme: config.MSME_SERVICE_URL,
-  valuation: config.VALUATION_SERVICE_URL,
-  matchmaking: config.MATCHMAKING_SERVICE_URL,
-  notification: config.NOTIFICATION_SERVICE_URL
-};
-
-function createServiceProxy(serviceName: string, serviceUrl: string) {
+function createServiceProxy(serviceName: string, serviceUrl: string, requireAuth = true) {
   const proxy = createProxyMiddleware({
     target: serviceUrl,
     changeOrigin: true,
-    pathRewrite: path => path.replace(new RegExp(`^/api/v1/${serviceName}`), ""),
-    onError: (err, req, res) => {
-      logger.error(`[Proxy Error] ${serviceName}: ${err.message}`);
-      res.status(503).json({ error: `Service ${serviceName} unavailable` });
-    }
+    pathRewrite: path => path.replace(new RegExp(`^/api/${serviceName}`), "")
   });
 
-  const breaker = createCircuitBreaker((req, res) =>
-    new Promise((resolve, reject) => {
-      proxy(req, res, err => (err ? reject(err) : resolve(null)));
-    })
+  const breaker = createCircuitBreaker((req: any, res: any) =>
+    new Promise((resolve, reject) => proxy(req, res, err => err ? reject(err) : resolve(null)))
   );
 
-  return (req, res, next) => breaker.fire(req, res).catch(next);
+  const chain = requireAuth
+    ? [verifyJwt, (req: any, res: any, next: any) => breaker.fire(req, res).catch(next)]
+    : [(req: any, res: any, next: any) => breaker.fire(req, res).catch(next)];
+
+  router.use(`/${serviceName}`, ...chain);
 }
 
-// Public
-router.use("/auth", createServiceProxy("auth", services.auth));
-
-// Protected
-router.use("/msme", verifyJwt, createServiceProxy("msme", services.msme));
-router.use("/valuation", verifyJwt, createServiceProxy("valuation", services.valuation));
-router.use("/matchmaking", verifyJwt, createServiceProxy("matchmaking", services.matchmaking));
-router.use("/notification", verifyJwt, createServiceProxy("notification", services.notification));
+createServiceProxy("auth", servicesConfig.auth, false);
+(Object.keys(servicesConfig) as (keyof typeof servicesConfig)[])
+  .filter(s => s !== "auth")
+  .forEach(serviceName => createServiceProxy(serviceName, servicesConfig[serviceName], true));
 
 export default router;

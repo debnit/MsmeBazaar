@@ -11,7 +11,7 @@ export function verifyJwt(req: AuthenticatedRequest, res: Response, next: NextFu
   if (!token) return res.status(401).json({ error: "Missing token" });
 
   try {
-    const payload = jwt.verify(token, config.JWT_SECRET);
+    const payload = jwt.verify(token, config.jwtSecret);
     req.user = payload;
     next();
   } catch {

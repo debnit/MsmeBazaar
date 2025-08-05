@@ -1,0 +1,10 @@
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+class Settings:
+    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "Service API")
+    DB_URL: str = os.getenv("DB_URL", "sqlite:///./app.db")
+    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")
+
+settings = Settings()

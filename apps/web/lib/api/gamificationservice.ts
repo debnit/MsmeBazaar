@@ -1,8 +1,16 @@
-import apiClient from './client';
+import axios from "axios";
 
-export const gamificationApi = {
-  getUserBadges: (userId: string) =>
-    apiClient.get(`/gamification/badges/${userId}`).then(res => res.data),
-  awardBadge: (userId: string, badgeId: string) =>
-    apiClient.post(`/gamification/award`, { userId, badgeId }).then(res => res.data),
-};
+const API_URL =
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL || "http://localhost:6000/api";
+
+export const gamificationserviceClient = axios.create({
+  baseURL: `${API_URL}/gamificationservice`,
+  timeout: 10000,
+  headers: { "Content-Type": "application/json" },
+});
+
+// Example API Call
+export async function example() {
+  const { data } = await gamificationserviceClient.get("/");
+  return data;
+}

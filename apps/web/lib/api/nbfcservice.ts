@@ -1,7 +1,16 @@
-import apiClient from './client';
+import axios from "axios";
 
-export const nbfcApi = {
-  getNBFCList: () => apiClient.get('/nbfc/list').then(res => res.data),
-  getNBFCDetails: (id: string) =>
-    apiClient.get(`/nbfc/${id}`).then(res => res.data),
-};
+const API_URL =
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL || "http://localhost:6000/api";
+
+export const nbfcserviceClient = axios.create({
+  baseURL: `${API_URL}/nbfcservice`,
+  timeout: 10000,
+  headers: { "Content-Type": "application/json" },
+});
+
+// Example API Call
+export async function example() {
+  const { data } = await nbfcserviceClient.get("/");
+  return data;
+}

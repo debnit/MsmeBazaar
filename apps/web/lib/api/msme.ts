@@ -1,12 +1,16 @@
-import api from "./http";
+import axios from "axios";
 
-cexport const msmeApi = {
-  async getBusinessDetails(id: string) {
-    const { data } = await api.get(`/msme/business/${id}`);
-    return data;
-  },
-  async createBusiness(payload: any) {
-    const { data } = await api.post(`/msme/business`, payload);
-    return data;
-  }
-};
+const API_URL =
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL || "http://localhost:6000/api";
+
+export const msmeClient = axios.create({
+  baseURL: `${API_URL}/msme`,
+  timeout: 10000,
+  headers: { "Content-Type": "application/json" },
+});
+
+// Example API Call
+export async function example() {
+  const { data } = await msmeClient.get("/");
+  return data;
+}
