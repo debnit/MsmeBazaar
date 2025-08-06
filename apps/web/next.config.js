@@ -1,21 +1,22 @@
-/** @type {import('next').NextConfig} */
+const path = require('path');
+
 const nextConfig = {
   reactStrictMode: true,
 
   images: {
-    domains: ['localhost', 'minio', 'your-s3-bucket.s3.amazonaws.com'], // ✅ Replace domain if needed
+    domains: ['localhost', 'minio', 'your-s3-bucket.s3.amazonaws.com'],
   },
 
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://api.vyapaarmitra.in',
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'https://vyapaarmitra.in',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   },
 
   async rewrites() {
     return [
       {
         source: '/api/:path*',
-        destination: 'https://api.vyapaarmitra.in/api/:path*', // ✅ can also use env here
+        destination: `${process.env.NEXT_PUBLIC_API_URL}/api/:path*`,
       },
     ];
   },
@@ -31,6 +32,11 @@ const nextConfig = {
         ],
       },
     ];
+  },
+
+  webpack: (config) => {
+    config.resolve.alias['@'] = path.resolve(__dirname);
+    return config;
   },
 };
 

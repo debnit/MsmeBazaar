@@ -201,7 +201,7 @@ export function errorHandler(err: any, _req: Request, res: Response, _next: Next
 );
 
 // ====== 8. Env config ======
-fs.writeFileSync(
+fs.writeFileSync( 
   path.join(srcDir, "config/env.ts"),
   `import dotenv from "dotenv";
 dotenv.config();

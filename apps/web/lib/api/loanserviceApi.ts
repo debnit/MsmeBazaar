@@ -3,7 +3,7 @@ import axios from "axios";
 const API_URL =
   process.env.NEXT_PUBLIC_API_GATEWAY_URL || "http://localhost:6000/api";
 
-export const loanserviceClient = axios.create({
+export const loanserviceApi = axios.create({
   baseURL: `${API_URL}/loanservice`,
   timeout: 10000,
   headers: { "Content-Type": "application/json" },
@@ -11,6 +11,6 @@ export const loanserviceClient = axios.create({
 
 // Example API Call
 export async function example() {
-  const { data } = await loanserviceClient.get("/");
+  const { data } = await loanserviceApi.get("/");
   return data;
 }

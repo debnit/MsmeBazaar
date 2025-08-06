@@ -1,4 +1,4 @@
-#!/mnt/d/MsmeBazaar/venv/bin/python3
+#!/home/deb/projects/msmebazaar/venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

@@ -3,9 +3,7 @@
   "compilerOptions": {
     "baseUrl": ".", // resolves @/* relative to apps/web/
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     },
     "allowJs": true,
     "incremental": true,

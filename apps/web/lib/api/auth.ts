@@ -1,16 +1,19 @@
-import axios from "axios";
+import apiClient from "./client";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_GATEWAY_URL || "http://localhost:6000/api";
+// Auth-specific API instance
+export const authApi = {
+  example: async () => {
+    const { data } = await apiClient.get("/auth");
+    return data;
+  },
+  register: async (payload: any) => {
+    const { data } = await apiClient.post("/auth/register", payload);
+    return data;
+  },
+  login: async (payload: any) => {
+    const { data } = await apiClient.post("/auth/login", payload);
+    return data;
+  },
+};
 
-export const authClient = axios.create({
-  baseURL: `${API_URL}/auth`,
-  timeout: 10000,
-  headers: { "Content-Type": "application/json" },
-});
-
-// Example API Call
-export async function example() {
-  const { data } = await authClient.get("/");
-  return data;
-}
+export default authApi;
