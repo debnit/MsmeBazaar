@@ -1,8 +1,7 @@
 from sqlalchemy import Column, String, Boolean, DateTime, Enum
 from sqlalchemy.sql import func
 import enum
-from app.models import Base
-
+from app.utils.db import Base
 
 class RoleEnum(str, enum.Enum):
     MSME = "MSME"
@@ -13,7 +12,7 @@ class RoleEnum(str, enum.Enum):
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(String, primary_key=True, index=True)   
+    id = Column(String, primary_key=True, index=True)
     phone = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=True)
     name = Column(String, nullable=True)

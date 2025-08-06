@@ -6,8 +6,8 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
 
-    DATABASE_URL: str
-    REDIS_URL: str
+    DATABASE_URL: str="postgresql+asyncpg://postgres:postgres@localhost:5432/msmebazaar"
+    REDIS_URL: str="redis://localhost:6379"
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
