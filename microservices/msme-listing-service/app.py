@@ -1,3 +1,4 @@
+from libs.db.session import get_db
 """
 MSME Listing Service - FastAPI + PostgreSQL + S3
 Handles MSME registration, asset info, financials, tags

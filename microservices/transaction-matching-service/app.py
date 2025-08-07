@@ -1,3 +1,4 @@
+from libs.db.session import get_db
 """
 Transaction Matching Service for MSMEBazaar v2.0
 Intelligent matching of buyers and sellers based on requirements and offerings

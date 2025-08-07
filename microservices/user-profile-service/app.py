@@ -1,3 +1,4 @@
+from libs.db.session import get_db
 """
 User Profile Service - FastAPI + PostgreSQL
 Handles Sellers, Buyers, Agents, KYC, onboarding data

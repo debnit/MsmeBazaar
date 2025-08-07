@@ -1,3 +1,4 @@
+from libs.db.session import get_db
 """
 Search & Matchmaking Service - ElasticSearch + Python ML
 Handles buyer-seller matching, filtering, ranking

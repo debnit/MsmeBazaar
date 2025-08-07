@@ -1,3 +1,4 @@
+from libs.db.session import get_db
 """
 Valuation Engine - Python ML Model (XGBoost/CatBoost/LightGBM)
 Predicts fair market value based on turnover, assets, sector, location

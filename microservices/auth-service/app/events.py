@@ -19,6 +19,6 @@ def register_startup_shutdown(app: FastAPI):
         logger.info("✅ Shutdown tasks completed")
 
     def register_startup_shutdown(app: FastAPI):
-    app.add_event_handler("startup", startup_event)
-    app.add_event_handler("shutdown", shutdown_event)
+        app.add_event_handler("startup", startup_event)
+        app.add_event_handler("shutdown", shutdown_event)
 

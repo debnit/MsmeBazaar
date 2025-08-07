@@ -1,3 +1,4 @@
+from libs.db.session import get_db
 """
 Tests for ML Monitoring Service API
 """
