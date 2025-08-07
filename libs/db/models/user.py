@@ -23,3 +23,10 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    kyc = relationship("KYC", uselist=False, back_populates="user")
+    otp_codes = relationship('OTPCode', back_populates='user')
+    profile = relationship('Profile', uselist=False, back_populates='user')
+    businesses = relationship('Business', back_populates='user')
+    addresses = relationship("Address", back_populates="user", cascade="all, delete")
+
+

@@ -1,16 +1,19 @@
-from app.core.security import verify_password, create_access_token
-from datetime import timedelta
+from passlib.context import CryptContext
+from datetime import datetime, timedelta
+from jose import jwt
+from libs.shared.auth.config import settings  # example config import
 
-# This is placeholder logic, you should integrate with your DB user model
-async def authenticate_user(username: str, password: str):
-    # Replace this with DB lookup
-    fake_user = {"username": "admin", "hashed_password": "$argon2id$v=19$m=65536,t=3,p=4$..."}
-    if username != fake_user["username"]:
-        return None
-    if not verify_password(password, fake_user["hashed_password"]):
-        return None
-    return fake_user
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def create_jwt_for_user(user: dict) -> str:
-    access_token_expires = timedelta(minutes=30)
-    return create_access_token({"sub": user["username"]}, expires_delta=access_token_expires)
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm="HS256")
+    return encoded_jwt

@@ -1,31 +1,30 @@
+from datetime import timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from libs.shared.models import.user import User
-from app.schemas.user import UserCreate, UserRead
-from app.core.security import hash_password
-from uuid import uuid4
+from sqlalchemy.future import select
 
-async def create_user(db: AsyncSession, payload: UserCreate) -> UserRead:
-    db_user = User(
+from app.core.security import verify_password, create_access_token
+from app.models.user import User
+
+async def authenticate_user(db: AsyncSession, username: str, password: str):
+    result = await db.execute(select(User).where(User.username == username))
+    user = result.scalar_one_or_none()
+    if not user or not verify_password(password, user.hashed_password):
+        return None
+    return user
+
+def create_jwt_for_user(user: User) -> str:
+    access_token_expires = timedelta(minutes=30)
+    return create_access_token({"sub": user.username}, expires_delta=access_token_expires)
+
+async def create_user(user_in: UserCreate, db: AsyncSession):
+    user = User(
         id=str(uuid4()),
-        phone=payload.phone,
-        email=payload.email,
-        name=payload.full_name,
-        role=payload.role,
-        is_verified=False,
-        is_active=True,
-        hashed_password=hash_password(payload.password)
+        phone=user_in.phone,
+        email=user_in.email,
+        name=user_in.name,
+        password=get_password_hash(user_in.password)
     )
-    db.add(db_user)
+    db.add(user)
     await db.commit()
-    await db.refresh(db_user)
-    return UserRead.model_validate(db_user)
-
-async def get_user_by_phone(db: AsyncSession, phone: str) -> User | None:
-    result = await db.execute(select(User).where(User.phone == phone))
-    return result.scalar_one_or_none()
-
-async def get_user_by_id(db: AsyncSession, user_id: str):
-    """Fetch a user by ID."""
-    result = await db.execute(select(User).where(User.id == user_id))
-    return result.scalar_one_or_none()
+    await db.refresh(user)
+    return user
