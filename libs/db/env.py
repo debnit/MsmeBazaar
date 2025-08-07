@@ -10,7 +10,9 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 # Add project root to sys.path so imports work
-sys.path.append(BASE_DIR)
+project_root = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(project_root))
+
 
 # Import your Base metadata
 from libs.db.base import Base  # Ensure this imports all models

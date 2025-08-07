@@ -13,7 +13,6 @@ VERSIONS_DIR="$ALEMBIC_DIR/versions"
 mkdir -p $MODELS_DIR $VERSIONS_DIR
 touch $DB_DIR/__init__.py
 touch $MODELS_DIR/__init__.py
-
 cat > $DB_DIR/base.py <<'EOF'
 from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
