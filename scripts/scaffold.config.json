@@ -1,0 +1,82 @@
+import os
+import shutil
+import json
+import glob
+import importlib.util
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+LIBS_MODELS_PATH = ROOT / "libs" / "db" / "models"
+SHARED_CONFIG_PATH = ROOT / "libs" / "shared" / "config.py"
+GENERATE_SCRIPT = ROOT / "scripts" / "generate_pydantic_and_routes.py"
+MICROSERVICES_PATH = ROOT / "microservices"
+
+def snake_to_camel(snake_str):
+    return ''.join(word.capitalize() for word in snake_str.split('_'))
+
+def extract_model_classes(file_path): """Return all model classes from a given Python file"""
+    module_name = Path(file_path).stem
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    from sqlalchemy.orm import DeclarativeMeta
+    return [name for name, obj in vars(module).items() if isinstance(obj, DeclarativeMeta)
+]
+
+def scaffold_service(service_name: str):
+    print(f"\n🚀 Scaffolding service: {service_name}")
+    service_path = MICROSERVICES_PATH / service_name
+    models_dir = service_path / "models"
+    schemas_dir = service_path / "schemas"
+    routes_dir = service_path / "routes"
+
+    # 1. Ensure base directories
+    for dir_path in [models_dir, schemas_dir, routes_dir
+]:
+        os.makedirs(dir_path, exist_ok=True)
+        print(f"✅ Ensured directory: {dir_path}")
+
+    # 2. Copy shared config
+    shutil.copy(SHARED_CONFIG_PATH, service_path / "config.py")
+    print(f"✅ Copied shared config to: {service_path / 'config.py'}")
+
+    # 3. Find all model files for the service
+    model_files = sorted(glob.glob(f"{LIBS_MODELS_PATH}/{service_name.replace('-', '_')}*.py"))
+    if not model_files:
+        print(f"❌ No model files found for service '{service_name}'")
+        return
+
+    # 4. Copy models and generate schemas + routes
+    for model_file in model_files:
+        model_filename = Path(model_file).name
+        dest_model_path = models_dir / model_filename
+        shutil.copy(model_file, dest_model_path)
+        print(f"🔗 Linked DB model: {model_filename} → {dest_model_path}")
+
+        # 5. Extract models from file and generate schemas/routes
+        model_classes = extract_model_classes(model_file)
+        if not model_classes:
+            print(f"⚠️  No SQLAlchemy models found in {model_filename}")
+            continue
+
+        for model_class in model_classes:
+            print(f"⚙️ Generating schema + route for: {model_class}")
+            os.system(f"python {GENERATE_SCRIPT} {dest_model_path} {model_class}")
+
+    # 6. Print API Gateway snippet
+    print("\n🔁 API Gateway Registration Snippet:")
+    print(json.dumps({
+    "route": f"/api/{service_name.replace('-service', '')}",
+    "service": service_name,
+    "auth_required": True
+}, indent=2))
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) != 2:
+        print("Usage: python scaffold_service.py <service-name>")
+    else:
+        scaffold_service(sys.argv[
+    1
+])

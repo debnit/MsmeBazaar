@@ -1,0 +1,8 @@
+{
+    "valuation-service": {
+        "model_file": "libs/db/models/valuation_report.py",
+        "model_class": "ValuationReport",
+        "route_prefix": "/valuation",
+        "auth_required": true
+    }
+}

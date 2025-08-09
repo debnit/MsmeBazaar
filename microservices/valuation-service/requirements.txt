@@ -1,8 +1,0 @@
-fastapi
-uvicorn
-pydantic
-sqlalchemy
-databases
-redis
-python-dotenv
-loguru
